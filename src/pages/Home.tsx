@@ -18,6 +18,7 @@ import {
 import { PLATFORM_NAME, asset } from '../config'
 import { brokers, formatPriceShort } from '../data/demo'
 import { Avatar, DemoTag, EASE, Logo, Reveal } from '../components/ui'
+import '../styles/builder.css'
 import '../styles/home.css'
 
 const rise = (i: number) => ({
@@ -45,6 +46,7 @@ const features = [
     title: 'קהילה ופיד מקצועי',
     text: 'שאלות, טיפים מהשטח והתייעצויות עם מתווכים שמבינים בדיוק מה עובר עליך.',
     wide: true,
+    visual: 'faces',
   },
   {
     to: '/app/community?tab=board',
@@ -70,6 +72,7 @@ const features = [
     title: 'דף נחיתה אישי',
     text: 'שלוש תבניות יוקרה, תצוגה חיה וביו שנכתב בעזרת AI. מוכן תוך דקות.',
     wide: true,
+    visual: 'templates',
   },
   {
     to: '/app/folder',
@@ -297,6 +300,24 @@ export default function Home() {
                   <span className="bento-go">
                     לצפייה במסך <ArrowLeft />
                   </span>
+                  {f.visual === 'faces' && (
+                    <span className="bento-visual bento-faces" aria-hidden>
+                      {brokers.slice(0, 6).map((b) => (
+                        <Avatar key={b.id} src={b.avatar} name="" size={44} />
+                      ))}
+                    </span>
+                  )}
+                  {f.visual === 'templates' && (
+                    <span className="bento-visual" aria-hidden>
+                      {(['night', 'gallery', 'line'] as const).map((id) => (
+                        <span key={id} className={`tpl-thumb tpl-${id}`}>
+                          <i />
+                          <b>מאיה</b>
+                          <u />
+                        </span>
+                      ))}
+                    </span>
+                  )}
                   <span className="bento-glow" aria-hidden />
                 </Link>
               </Reveal>

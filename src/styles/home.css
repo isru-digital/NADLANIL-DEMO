@@ -145,7 +145,7 @@
 /* floating collage */
 .hero-stage {
   position: relative;
-  height: clamp(420px, 44vw, 560px);
+  height: clamp(480px, 47vw, 620px);
 }
 .float {
   position: absolute;
@@ -410,18 +410,18 @@
   gap: clamp(24px, 5vw, 72px);
   align-items: center;
 }
-.principle-num span {
+.principle-num > span {
   display: block;
   font-family: var(--font-display);
   font-weight: 900;
-  font-size: clamp(6.5rem, 21vw, 19rem);
-  line-height: 0.82;
+  font-size: clamp(6rem, 17vw, 15.5rem);
+  line-height: 0.86;
+  white-space: nowrap;
   letter-spacing: -0.06em;
   background: linear-gradient(170deg, #f6e6b8 0%, var(--gold) 38%, #6f5519 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  filter: drop-shadow(0 30px 60px rgba(201, 162, 75, 0.22));
 }
 .principle-copy p {
   margin-top: 20px;
@@ -479,6 +479,28 @@
   transform: translateY(-4px);
   border-color: var(--line-gold);
   box-shadow: var(--shadow-2);
+}
+.bento-visual {
+  position: absolute;
+  inset-block-start: 26px;
+  inset-inline-end: 26px;
+  display: flex;
+  gap: 8px;
+}
+.bento-faces .avatar {
+  margin-inline-start: -12px;
+  box-shadow: 0 0 0 2.5px #151c39;
+}
+.bento-visual .tpl-thumb {
+  width: 84px;
+  height: 60px;
+  transition: transform var(--t-slow) var(--ease);
+}
+.bento-card:hover .bento-visual .tpl-thumb:nth-child(1) {
+  transform: translateY(-4px) rotate(-3deg);
+}
+.bento-card:hover .bento-visual .tpl-thumb:nth-child(3) {
+  transform: translateY(-4px) rotate(3deg);
 }
 .bento-go {
   display: inline-flex;
@@ -640,7 +662,7 @@
       linear-gradient(180deg, rgba(6, 9, 20, 0.88) 0%, rgba(8, 12, 26, 0.72) 50%, var(--navy-950) 100%);
   }
   .hero-stage {
-    height: 430px;
+    height: 520px;
     max-width: 480px;
     width: 100%;
     margin-inline: auto;
@@ -671,7 +693,10 @@
     flex: 1 1 100%;
   }
   .hero-stage {
-    height: 400px;
+    height: 500px;
+  }
+  .principle-num > span {
+    font-size: 30vw;
   }
   .float-fee strong {
     font-size: 46px;
@@ -685,6 +710,16 @@
   }
   .bento > .bento-wide {
     grid-column: span 1;
+  }
+  .bento-visual .tpl-thumb {
+    width: 58px;
+    height: 44px;
+  }
+  .bento-visual .tpl-thumb b {
+    display: none;
+  }
+  .bento-faces .avatar:nth-child(n + 5) {
+    display: none;
   }
   .bento-card {
     min-height: 0;
