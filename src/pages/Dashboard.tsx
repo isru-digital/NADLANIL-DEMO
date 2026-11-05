@@ -15,6 +15,7 @@ import {
   UserPlus,
 } from 'lucide-react'
 import { CURRENT_BROKER_ID } from '../config'
+import { topicById } from '../config/topics'
 import { brokerById, crmStages, dashboardLeads, dashboardReminders } from '../data/demo'
 import { useStore } from '../store'
 import { Avatar, EASE, PageHead } from '../components/ui'
@@ -32,12 +33,12 @@ const greeting = () => {
 const stats = [
   { label: 'לידים חדשים', value: 4, hint: '2 מהבוקר', icon: UserPlus },
   { label: 'סיורים השבוע', value: 3, hint: 'הקרוב היום ב-17:30', icon: CalendarCheck },
-  { label: 'פניות מלוח השיתוף', value: 2, hint: 'מתווכים שמעוניינים בנכס שלך', icon: Handshake },
+  { label: 'פניות משיתופי פעולה', value: 2, hint: 'מתווכים שמעוניינים בנכס שלך', icon: Handshake },
   { label: 'צפיות בדף הנחיתה', value: 128, hint: 'ב-7 הימים האחרונים', icon: Eye },
 ]
 
 const shortcuts = [
-  { to: '/app/crm', label: 'פרסום נכס לקהילה', icon: Share2 },
+  { to: '/app/crm', label: 'פרסום בקהילה מה-CRM', icon: Share2 },
   { to: '/app/builder', label: 'עריכת דף הנחיתה', icon: LayoutTemplate },
   { to: '/app/folder', label: 'פולדר ללקוח', icon: FolderOpen },
   { to: '/app/brokers', label: 'חיפוש מתווך', icon: Search },
@@ -53,7 +54,8 @@ const item = {
 }
 
 export default function Dashboard() {
-  const { crm, posts, liked, remindersDone, toggleReminder } = useStore()
+  const { crm, items, liked, remindersDone, toggleReminder } = useStore()
+  const posts = items.filter((it) => !it.property && !it.search && !it.referral)
   const me = brokerById(CURRENT_BROKER_ID)
   const firstName = me.name.split(' ')[0]
   const maxStage = Math.max(...crmStages.map((s) => crm.filter((c) => c.status === s.id).length), 1)
@@ -129,7 +131,7 @@ export default function Dashboard() {
                       <div>
                         <div className="post-mini-head">
                           <strong>{author.name}</strong>
-                          <span className="tag tag-gold">{p.topic}</span>
+                          <span className="tag tag-gold">{topicById(p.topicId).short}</span>
                           <time>{p.time}</time>
                         </div>
                         <p>{p.body}</p>

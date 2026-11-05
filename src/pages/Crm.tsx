@@ -1,37 +1,134 @@
 import { useEffect, useState } from 'react'
 import type { DragEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { AnimatePresence, LayoutGroup, motion } from 'framer-motion'
 import {
   ArrowLeft,
   BedDouble,
   Check,
   ChevronLeft,
-  EyeOff,
   Handshake,
   Home,
   Lock,
   MapPin,
   Plus,
   Share2,
+  Sparkles,
   UserSearch,
+  Zap,
 } from 'lucide-react'
 import { CURRENT_BROKER_ID } from '../config'
-import { brokerById, crmStages, formatPrice, formatPriceShort } from '../data/demo'
-import type { BoardCard, CrmItem, CrmStatus } from '../data/demo'
+import { REFERRAL_DISCLAIMER, REFERRAL_TERMS, topicById, topics } from '../config/topics'
+import type { TopicId } from '../config/topics'
+import { brokerById, cities, crmStages, fitsSearch, formatPriceShort, roomsLabel, simulatedListings } from '../data/demo'
+import type { CommunityItem, CrmItem, CrmStatus } from '../data/demo'
 import { useStore } from '../store'
-import { Avatar, EASE, Modal, PageHead, Photo } from '../components/ui'
+import type { MatchAlert } from '../store'
+import { EASE, Modal, PageHead, Photo } from '../components/ui'
+import CommunityCard from '../components/CommunityCard'
 import '../styles/crm.css'
+import '../styles/crm-publish.css'
 
 type Kind = 'all' | 'property' | 'client'
 
+/** The message a CRM item becomes in a given topic. Client name and phone are never part of it. */
+const draftFor = (item: CrmItem, topicId: TopicId, authorId: string): CommunityItem => {
+  const base = { id: `m-${item.id}`, topicId, authorId, time: 'עכשיו', likes: 0, comments: [], sourceId: item.id }
+  if (topicId === 'coop') {
+    return {
+      ...base,
+      city: item.city,
+      title: item.title,
+      body: 'נכס בבלעדיות אצלי. פתוח לשיתוף פעולה עם מתווך שיש לו קונה מתאים.',
+      image: item.image,
+      property: { area: item.area, rooms: item.rooms, price: item.price, split: 'חלוקת עמלה שווה', showPrice: true },
+    }
+  }
+  if (topicId === 'seeking' && item.search) {
+    return {
+      ...base,
+      city: item.search.cities[0],
+      title: `מחפש לקונה חם: ${roomsLabel(item.search)} ב${item.search.cities.join(' או ב')}`,
+      body: 'קונה רציני ומוכן לעסקה. מי שיש לו נכס מתאים, גם שקט, דברו איתי.',
+      search: item.search,
+    }
+  }
+  const isClient = item.kind === 'client'
+  return {
+    ...base,
+    topicId: 'referrals',
+    city: 'תל אביב',
+    title: isClient ? 'קונה שמחפש מחוץ לאזור שלי' : 'מוכר עם נכס נוסף בעיר אחרת',
+    body: isClient
+      ? 'לקוח שלי מחפש נכס בעיר שאני לא עובדת בה. מחפשת מתווך מקומי שילווה אותו עד הסגירה.'
+      : 'בעל נכס שאני מלווה רוצה למכור נכס נוסף בעיר אחרת. מחפשת מתווך מקומי שייקח את זה.',
+    referral: { side: isClient ? 'buyer' : 'seller', toCity: 'ירושלים', terms: REFERRAL_TERMS },
+  }
+}
+
+/** Publishes to the community and reports whether the new message matches something. */
+function usePublisher() {
+  const { items, addItem, addNotice, showMatch } = useStore()
+  const me = brokerById(CURRENT_BROKER_ID)
+
+  return (source: CrmItem, draft: CommunityItem): MatchAlert | null => {
+    const stamp = Date.now()
+    addItem({ ...draft, id: `${draft.id}-${stamp}`, fresh: true }, source.id)
+
+    if (draft.property) {
+      const p = { city: draft.city, rooms: draft.property.rooms, price: draft.property.price }
+      const hit = items.find((it) => it.search && it.authorId !== me.id && fitsSearch(it.search, p))
+      if (hit) {
+        const broker = brokerById(hit.authorId)
+        const alert: MatchAlert = {
+          id: `ma-${stamp}`,
+          kind: 'found',
+          title: 'נמצאה התאמה',
+          text: `הנכס שלך מתאים לבקשה של ${broker.name}: "${hit.title}".`,
+          topicId: 'seeking',
+          itemId: hit.id,
+          brokerId: broker.id,
+        }
+        addNotice({ id: alert.id, kind: 'match', title: alert.title, text: alert.text, time: 'עכשיו', read: false, topicId: 'seeking', itemId: hit.id })
+        return alert
+      }
+    }
+
+    if (draft.search) {
+      // demo simulation: a few seconds later "another broker" lists a property that fits this saved search
+      const sim = simulatedListings[source.id]
+      if (sim && !items.some((it) => it.id.startsWith(sim.id))) {
+        window.setTimeout(() => {
+          const id = `${sim.id}-${stamp}`
+          const broker = brokerById(sim.authorId)
+          addItem({ ...sim, id, fresh: true })
+          const alert: MatchAlert = {
+            id: `ma-${stamp}`,
+            kind: 'incoming',
+            title: 'זה יכול להתאים לך',
+            text: `${broker.name} פרסם עכשיו "${sim.title}". זה מתאים לבקשה ששמרת.`,
+            topicId: 'coop',
+            itemId: id,
+            brokerId: broker.id,
+          }
+          addNotice({ id: alert.id, kind: 'match', title: alert.title, text: alert.text, time: 'עכשיו', read: false, topicId: 'coop', itemId: id })
+          showMatch(alert)
+        }, 6500)
+      }
+    }
+    return null
+  }
+}
+
 export default function Crm() {
-  const { crm, moveCrm, publishedIds, toast } = useStore()
+  const { crm, moveCrm, publishedIds, toast, autoPublish, setAutoPublish, showMatch } = useStore()
+  const me = brokerById(CURRENT_BROKER_ID)
+  const publishNow = usePublisher()
   const [kind, setKind] = useState<Kind>('all')
   const [stage, setStage] = useState<CrmStatus>('new')
   const [dragId, setDragId] = useState<string | null>(null)
   const [overStage, setOverStage] = useState<CrmStatus | null>(null)
-  const [publishing, setPublishing] = useState<CrmItem | null>(null)
+  const [publishing, setPublishing] = useState<{ item: CrmItem; topicId: TopicId } | null>(null)
 
   const items = kind === 'all' ? crm : crm.filter((c) => c.kind === kind)
 
@@ -43,9 +140,14 @@ export default function Crm() {
     setOverStage(null)
   }
 
-  const nextStage = (s: CrmStatus) => {
-    const i = crmStages.findIndex((x) => x.id === s)
-    return crmStages[i + 1]
+  const nextStage = (s: CrmStatus) => crmStages[crmStages.findIndex((x) => x.id === s) + 1]
+
+  /** Marking a property as שת"פ: opens the preview, or publishes right away when auto-publish is on. */
+  const markCoop = (item: CrmItem) => {
+    if (!autoPublish) return setPublishing({ item, topicId: 'coop' })
+    const alert = publishNow(item, draftFor(item, 'coop', me.id))
+    toast('פורסם אוטומטית בנושא "נכסים לשיתוף פעולה"')
+    if (alert) window.setTimeout(() => showMatch(alert), 900)
   }
 
   return (
@@ -53,7 +155,7 @@ export default function Crm() {
       <PageHead
         eyebrow="CRM"
         title="לקוחות ונכסים"
-        subtitle="כל העבודה שלך על לוח אחד, מהפנייה הראשונה ועד הסגירה. הלוח הזה פרטי ורק אתה רואה אותו."
+        subtitle="כל העבודה שלך על לוח אחד. מסמנים שת&quot;פ או לוחצים &quot;פרסם בקהילה&quot;, והפריט הופך להודעה בנושא המתאים."
       >
         <div className="seg" role="group" aria-label="סוג כרטיס">
           {(
@@ -85,6 +187,28 @@ export default function Crm() {
           כרטיס חדש
         </button>
       </PageHead>
+
+      <button
+        className={`auto-bar${autoPublish ? ' is-on' : ''}`}
+        role="switch"
+        aria-checked={autoPublish}
+        onClick={() => setAutoPublish(!autoPublish)}
+      >
+        <span className="auto-icon">
+          <Zap />
+        </span>
+        <span className="auto-text">
+          <strong>פרסם אוטומטית נכסים שסומנו שת"פ</strong>
+          <span>
+            {autoPublish
+              ? 'פועל: סימון שת"פ מפרסם את הנכס מיד, בלי שלב אישור. נתוני לקוח לעולם לא מתפרסמים אוטומטית.'
+              : 'כבוי: לפני כל פרסום מוצגת תצוגה מקדימה לאישור.'}
+          </span>
+        </span>
+        <span className="switch" aria-hidden>
+          <i />
+        </span>
+      </button>
 
       {/* phone: one stage at a time */}
       <div className="stage-tabs chip-row" role="tablist" aria-label="שלב">
@@ -128,7 +252,8 @@ export default function Crm() {
                 <div className="kan-list">
                   {col.map((it) => {
                     const next = nextStage(it.status)
-                    const published = !!publishedIds[it.id]
+                    const publishedTo = publishedIds[it.id]
+                    const isProperty = it.kind === 'property'
                     return (
                       <motion.div
                         key={it.id}
@@ -151,11 +276,24 @@ export default function Crm() {
                           {it.image && <Photo src={it.image} alt={it.title} ratio="16 / 8" className="kan-photo" />}
                           <div className="kan-body">
                             <div className="kan-top">
-                              <span className={`tag ${it.kind === 'property' ? 'tag-gold' : 'tag-blue'}`}>
-                                {it.kind === 'property' ? <Home /> : <UserSearch />}
-                                {it.kind === 'property' ? 'נכס' : 'לקוח'}
+                              <span className={`tag ${isProperty ? 'tag-gold' : 'tag-blue'}`}>
+                                {isProperty ? <Home /> : <UserSearch />}
+                                {isProperty ? 'נכס' : 'לקוח'}
                               </span>
-                              <span className="kan-updated">{it.updated}</span>
+                              {isProperty ? (
+                                <button
+                                  className={`coop-pill${publishedTo === 'coop' ? ' is-on' : ''}`}
+                                  aria-pressed={publishedTo === 'coop'}
+                                  disabled={!!publishedTo}
+                                  onClick={() => markCoop(it)}
+                                  title='סימון שת"פ הופך את הנכס להודעה בנושא "נכסים לשיתוף פעולה"'
+                                >
+                                  <Handshake />
+                                  שת"פ
+                                </button>
+                              ) : (
+                                <span className="kan-updated">{it.updated}</span>
+                              )}
                             </div>
                             <h3>{it.title}</h3>
                             <div className="kan-meta">
@@ -169,7 +307,7 @@ export default function Crm() {
                               </span>
                             </div>
                             <div className="kan-price">
-                              <span>{it.kind === 'property' ? 'מחיר' : 'תקציב עד'}</span>
+                              <span>{isProperty ? 'מחיר' : 'תקציב עד'}</span>
                               <strong className="num">{formatPriceShort(it.price)}</strong>
                             </div>
                             <div className="kan-client">
@@ -178,15 +316,18 @@ export default function Crm() {
                             </div>
                             <p className="kan-note">{it.note}</p>
                             <div className="kan-actions">
-                              {published ? (
-                                <span className="tag tag-green kan-published">
+                              {publishedTo ? (
+                                <Link to={`/app/community?topic=${publishedTo}`} className="tag tag-green kan-published">
                                   <Check />
                                   פורסם בקהילה
-                                </span>
+                                </Link>
                               ) : (
-                                <button className="btn btn-sm kan-publish" onClick={() => setPublishing(it)}>
+                                <button
+                                  className="btn btn-sm kan-publish"
+                                  onClick={() => setPublishing({ item: it, topicId: isProperty ? 'coop' : 'seeking' })}
+                                >
                                   <Share2 />
-                                  פרסם לקהילה
+                                  פרסם בקהילה
                                 </button>
                               )}
                               {next && (
@@ -214,7 +355,7 @@ export default function Crm() {
       </LayoutGroup>
       <p className="kan-hint">טיפ: אפשר לגרור כרטיס בין השלבים, או ללחוץ על החץ כדי לקדם אותו.</p>
 
-      <PublishModal item={publishing} onClose={() => setPublishing(null)} />
+      <PublishModal request={publishing} onClose={() => setPublishing(null)} publishNow={publishNow} />
     </>
   )
 }
@@ -223,178 +364,209 @@ export default function Crm() {
 
 type Step = 'form' | 'sending' | 'done'
 
-function PublishModal({ item: current, onClose }: { item: CrmItem | null; onClose: () => void }) {
-  // keep the last item mounted while the modal animates out
-  const [shown, setShown] = useState<CrmItem | null>(null)
-  useEffect(() => {
-    if (current) setShown(current)
-  }, [current])
-  const item = current ?? shown
-  const { publishToBoard } = useStore()
+function PublishModal({
+  request,
+  onClose,
+  publishNow,
+}: {
+  request: { item: CrmItem; topicId: TopicId } | null
+  onClose: () => void
+  publishNow: (source: CrmItem, draft: CommunityItem) => MatchAlert | null
+}) {
   const navigate = useNavigate()
   const me = brokerById(CURRENT_BROKER_ID)
+  // keep the last request mounted while the modal animates out
+  const [shown, setShown] = useState(request)
   const [step, setStep] = useState<Step>('form')
-  const [fields, setFields] = useState({ area: true, rooms: true, price: true, image: true, client: false, notes: false })
-  const [desc, setDesc] = useState('')
-  const [split, setSplit] = useState('חלוקת עמלה שווה')
+  const [draft, setDraft] = useState<CommunityItem | null>(null)
+  const [alert, setAlert] = useState<MatchAlert | null>(null)
 
   useEffect(() => {
-    if (!current) return
-    const item = current
+    if (!request) return
+    setShown(request)
     setStep('form')
-    setFields({ area: true, rooms: true, price: true, image: true, client: false, notes: false })
-    setSplit('חלוקת עמלה שווה')
-    setDesc(
-      item.kind === 'property'
-        ? 'נכס בבלעדיות אצלי. מחפשת מתווך עם קונה מתאים לעסקה משותפת.'
-        : 'לקוח רציני ומוכן לעסקה. מחפשת מתווך עם נכס מתאים.',
-    )
-  }, [current])
+    setAlert(null)
+    setDraft(draftFor(request.item, request.topicId, me.id))
+  }, [request, me.id])
 
-  if (!item) return null
-
-  const isProperty = item.kind === 'property'
-  const note = [desc.trim(), fields.client && `איש קשר: ${item.client}.`, fields.notes && item.note]
-    .filter(Boolean)
-    .join(' ')
-
-  const preview: BoardCard = {
-    id: `m-${item.id}`,
-    kind: item.kind,
-    title: item.title,
-    area: fields.area ? item.area : 'האזור יימסר בפנייה',
-    rooms: fields.rooms ? item.rooms : undefined,
-    price: fields.price ? item.price : undefined,
-    note,
-    split,
-    brokerId: me.id,
-    time: 'עכשיו',
-    image: isProperty && fields.image ? item.image : undefined,
-    fresh: true,
-  }
+  const current = request ?? shown
+  if (!current || !draft) return null
+  const { item } = current
+  const topic = topicById(draft.topicId)
+  const options = topics.filter((t) => t.fromCrm.includes(item.kind))
+  const patch = (p: Partial<CommunityItem>) => setDraft((d) => (d ? { ...d, ...p } : d))
 
   const publish = () => {
     setStep('sending')
     window.setTimeout(() => {
-      publishToBoard({ ...preview, id: `m-${item.id}-${Date.now()}` }, item.id)
+      setAlert(publishNow(item, draft))
       setStep('done')
     }, 1100)
   }
 
-  const toggle = (k: keyof typeof fields) => setFields((f) => ({ ...f, [k]: !f[k] }))
-
-  const publicFields: [keyof typeof fields, string, string][] = [
-    ['area', 'אזור', item.area],
-    ['rooms', 'מספר חדרים', `${item.rooms} חדרים`],
-    ['price', isProperty ? 'מחיר מבוקש' : 'תקציב', formatPrice(item.price)],
-    ...(isProperty && item.image ? ([['image', 'תמונת הנכס', 'תמונה ראשית']] as [keyof typeof fields, string, string][]) : []),
-  ]
+  const go = (topicId: TopicId, itemId?: string) =>
+    navigate(`/app/community?topic=${topicId}${itemId ? `&item=${itemId}` : ''}`)
 
   return (
     <Modal
-      open={!!current}
+      open={!!request}
       wide={step === 'form'}
       onClose={step === 'sending' ? () => {} : onClose}
-      title={step === 'form' ? 'פרסום לקהילה' : undefined}
-      subtitle={step === 'form' ? 'בוחרים מה יופיע בלוח השיתוף. פרטי הלקוח מוסתרים כברירת מחדל.' : undefined}
+      title={step === 'form' ? 'פרסום בקהילה' : undefined}
+      subtitle={step === 'form' ? 'בוחרים נושא, רואים בדיוק מה ייחשף, עורכים ומאשרים.' : undefined}
     >
       <AnimatePresence mode="wait" initial={false}>
         {step === 'form' && (
           <motion.div key="form" exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
             <div className="modal-body publish">
               <div className="publish-fields">
-                <fieldset>
-                  <legend>מה מוצג לקהילה</legend>
-                  <div className="switch-row is-locked">
-                    <div>
-                      <strong>כותרת</strong>
-                      <span>{item.title}</span>
-                    </div>
-                    <span className="tag">תמיד מוצג</span>
-                  </div>
-                  {publicFields.map(([k, label, value]) => (
-                    <Switch key={k} label={label} value={value} on={fields[k]} onToggle={() => toggle(k)} />
-                  ))}
-                </fieldset>
-
-                <fieldset className="private">
-                  <legend>
-                    <Lock />
-                    פרטים פרטיים
-                  </legend>
-                  <Switch label="שם הלקוח" value={item.client} on={fields.client} onToggle={() => toggle('client')} lock />
-                  <Switch label="הערות פנימיות" value={item.note} on={fields.notes} onToggle={() => toggle('notes')} lock />
-                </fieldset>
-
-                <label className="field">
-                  <span>תיאור קצר לקהילה</span>
-                  <textarea className="textarea publish-desc" value={desc} onChange={(e) => setDesc(e.target.value)} />
-                </label>
-
                 <div className="field">
-                  <span className="field-label">חלוקת עמלה</span>
-                  <div className="chip-row">
-                    {['חלוקת עמלה שווה', 'חלוקה לפי סיכום'].map((s) => (
-                      <button key={s} type="button" className="chip" aria-pressed={split === s} onClick={() => setSplit(s)}>
-                        {s}
+                  <span className="field-label">לאיזה נושא?</span>
+                  <div className="topic-menu" role="radiogroup" aria-label="נושא בקהילה">
+                    {options.map((t) => (
+                      <button
+                        key={t.id}
+                        role="radio"
+                        aria-checked={draft.topicId === t.id}
+                        className={`topic-opt tone-${t.tone}${draft.topicId === t.id ? ' is-on' : ''}`}
+                        onClick={() => setDraft(draftFor(item, t.id, me.id))}
+                      >
+                        <span className="topic-opt-icon">
+                          <t.icon />
+                        </span>
+                        <span>
+                          <strong>{t.name}</strong>
+                          <em>{t.description}</em>
+                        </span>
                       </button>
                     ))}
+                  </div>
+                </div>
+
+                {draft.property && (
+                  <>
+                    <fieldset>
+                      <legend>מה מוצג לקהילה</legend>
+                      <Switch
+                        label="מחיר מבוקש"
+                        value={formatPriceShort(item.price)}
+                        on={draft.property.showPrice !== false}
+                        onToggle={() =>
+                          patch({ property: { ...draft.property!, showPrice: draft.property!.showPrice === false } })
+                        }
+                      />
+                      {item.image && (
+                        <Switch
+                          label="תמונת הנכס"
+                          value="תמונה ראשית"
+                          on={!!draft.image}
+                          onToggle={() => patch({ image: draft.image ? undefined : item.image })}
+                        />
+                      )}
+                    </fieldset>
+                    <div className="field">
+                      <span className="field-label">חלוקת עמלה</span>
+                      <div className="chip-row">
+                        {['חלוקת עמלה שווה', 'חלוקה לפי סיכום'].map((s) => (
+                          <button
+                            key={s}
+                            type="button"
+                            className="chip"
+                            aria-pressed={draft.property!.split === s}
+                            onClick={() => patch({ property: { ...draft.property!, split: s } })}
+                          >
+                            {s}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {draft.search && item.search && (
+                  <div className="field">
+                    <span className="field-label">הפרמטרים שיוצגו (לחיצה מסירה או מחזירה)</span>
+                    <div className="chip-row">
+                      {item.search.wants.map((w) => {
+                        const on = draft.search!.wants.includes(w)
+                        return (
+                          <button
+                            key={w}
+                            type="button"
+                            className="chip"
+                            aria-pressed={on}
+                            onClick={() =>
+                              patch({
+                                search: {
+                                  ...draft.search!,
+                                  wants: on ? draft.search!.wants.filter((x) => x !== w) : [...draft.search!.wants, w],
+                                },
+                              })
+                            }
+                          >
+                            {on && <Check />}
+                            {w}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {draft.referral && (
+                  <>
+                    <div className="field">
+                      <span className="field-label">באיזו עיר דרוש מתווך?</span>
+                      <div className="chip-row">
+                        {cities
+                          .filter((c) => c !== draft.city)
+                          .map((c) => (
+                            <button
+                              key={c}
+                              type="button"
+                              className="chip"
+                              aria-pressed={draft.referral!.toCity === c}
+                              onClick={() => patch({ referral: { ...draft.referral!, toCity: c } })}
+                            >
+                              {c}
+                            </button>
+                          ))}
+                      </div>
+                    </div>
+                    <div className="ci-terms">
+                      <strong>{REFERRAL_TERMS}</strong>
+                      <span>{REFERRAL_DISCLAIMER}</span>
+                    </div>
+                  </>
+                )}
+
+                <label className="field">
+                  <span>כותרת</span>
+                  <input className="input" value={draft.title ?? ''} onChange={(e) => patch({ title: e.target.value })} />
+                </label>
+                <label className="field">
+                  <span>טקסט ההודעה</span>
+                  <textarea className="textarea publish-desc" value={draft.body} onChange={(e) => patch({ body: e.target.value })} />
+                </label>
+
+                <div className="privacy-lock">
+                  <Lock />
+                  <div>
+                    <strong>שם וטלפון הלקוח לא מתפרסמים לעולם</strong>
+                    <span>"{item.client}" וההערות הפנימיות נשארים רק ב-CRM שלך.</span>
                   </div>
                 </div>
               </div>
 
               <div className="publish-preview">
-                <span className="field-label">כך זה ייראה בלוח השיתוף</span>
-                <div className="card preview-card">
-                  {preview.image && <Photo src={preview.image} alt="" ratio="16 / 9" eager />}
-                  <div className="board-body">
-                    <span className={`tag ${isProperty ? 'tag-gold' : 'tag-blue'}`}>
-                      {isProperty ? <Handshake /> : <UserSearch />}
-                      {isProperty ? 'נכס לשיתוף פעולה' : 'לקוח מחפש'}
-                    </span>
-                    <h3>{preview.title}</h3>
-                    <div className="board-meta">
-                      <span>
-                        <MapPin />
-                        {preview.area}
-                      </span>
-                      {preview.rooms && (
-                        <span>
-                          <BedDouble />
-                          <span className="num">{preview.rooms}</span> חדרים
-                        </span>
-                      )}
-                    </div>
-                    {preview.price != null && (
-                      <div className="board-price">
-                        <span>{isProperty ? 'מחיר מבוקש' : 'תקציב עד'}</span>
-                        <strong className="num">{formatPrice(preview.price)}</strong>
-                      </div>
-                    )}
-                    {note && <p className="board-note">{note}</p>}
-                  </div>
-                  <div className="board-foot">
-                    <div className="board-broker">
-                      <Avatar src={me.avatar} name={me.name} size={34} />
-                      <div>
-                        <strong>{me.name}</strong>
-                        <span>{split}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                {!fields.client && (
-                  <span className="privacy-note">
-                    <EyeOff />
-                    שם הלקוח לא יופיע בפרסום
-                  </span>
-                )}
+                <span className="field-label">תצוגה מקדימה: בדיוק כך זה ייראה בקהילה</span>
+                <CommunityCard item={draft} preview />
               </div>
             </div>
             <div className="modal-foot">
               <button className="btn btn-gold" onClick={publish}>
                 <Share2 />
-                פרסום ללוח השיתוף
+                אישור ופרסום
               </button>
               <button className="btn btn-quiet" onClick={onClose}>
                 ביטול
@@ -414,7 +586,7 @@ function PublishModal({ item: current, onClose }: { item: CrmItem | null; onClos
             role="status"
           >
             <span className="spinner" />
-            <strong>מפרסם ללוח השיתוף...</strong>
+            <strong>מפרסם בנושא "{topic.name}"...</strong>
           </motion.div>
         )}
 
@@ -458,11 +630,36 @@ function PublishModal({ item: current, onClose }: { item: CrmItem | null; onClos
                 </svg>
               </motion.span>
             </div>
-            <h2>{isProperty ? 'הנכס פורסם בלוח השיתוף' : 'הלקוח פורסם בלוח השיתוף'}</h2>
-            <p>מתווכים בקהילה יכולים לפנות אליך כבר עכשיו. פרטי הלקוח נשארו רק אצלך.</p>
+            <h2>פורסם בנושא "{topic.name}"</h2>
+            <p>
+              {draft.search
+                ? 'הבקשה נשמרה ולא תיבלע. כשמתווך אחר יפרסם נכס מתאים, תקפוץ לך התראה.'
+                : 'מתווכים מהאזור יכולים לפנות אליך כבר עכשיו. פרטי הלקוח נשארו רק אצלך.'}
+            </p>
+
+            {alert && (
+              <motion.div
+                className="match-inline"
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.7, ease: EASE }}
+              >
+                <span className="match-spark">
+                  <Sparkles />
+                </span>
+                <div>
+                  <strong>{alert.title}</strong>
+                  <span>{alert.text}</span>
+                </div>
+                <button className="btn btn-gold btn-sm" onClick={() => go(alert.topicId, alert.itemId)}>
+                  לצפייה
+                </button>
+              </motion.div>
+            )}
+
             <div className="publish-done-actions">
-              <button className="btn btn-gold" onClick={() => navigate('/app/community?tab=board')}>
-                מעבר ללוח השיתוף
+              <button className={`btn ${alert ? 'btn-ghost' : 'btn-gold'}`} onClick={() => go(draft.topicId)}>
+                מעבר לנושא בקהילה
                 <ArrowLeft />
               </button>
               <button className="btn btn-ghost" onClick={onClose}>
@@ -476,24 +673,12 @@ function PublishModal({ item: current, onClose }: { item: CrmItem | null; onClos
   )
 }
 
-function Switch({
-  label,
-  value,
-  on,
-  onToggle,
-  lock = false,
-}: {
-  label: string
-  value: string
-  on: boolean
-  onToggle: () => void
-  lock?: boolean
-}) {
+function Switch({ label, value, on, onToggle }: { label: string; value: string; on: boolean; onToggle: () => void }) {
   return (
     <button type="button" className={`switch-row${on ? ' is-on' : ''}`} role="switch" aria-checked={on} onClick={onToggle}>
       <div>
         <strong>{label}</strong>
-        <span>{lock && !on ? 'מוסתר מהקהילה' : value}</span>
+        <span>{value}</span>
       </div>
       <span className="switch" aria-hidden>
         <i />

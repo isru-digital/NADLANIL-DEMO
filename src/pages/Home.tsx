@@ -49,10 +49,10 @@ const features = [
     visual: 'faces',
   },
   {
-    to: '/app/community?tab=board',
+    to: '/app/community?topic=coop',
     icon: Handshake,
-    title: 'לוח שיתוף',
-    text: 'נכס לשיתוף פעולה או לקוח שמחפש. מפרסמים בלחיצה ומוצאים שותף לעסקה.',
+    title: 'שיתופי פעולה והפניות',
+    text: 'נכס לשיתוף פעולה, הפניה למתווך בעיר אחרת או חיפוש לקונה. כל בקשה נשמרת בנושא שלה.',
   },
   {
     to: '/app/brokers',
@@ -103,7 +103,7 @@ const principles = [
 const steps = [
   { title: 'מצטרפים בחינם', text: 'פותחים פרופיל, בוחרים אזורי פעילות והתמחויות ונכנסים לקהילה.' },
   { title: 'מנהלים הכול במקום אחד', text: 'לקוחות, נכסים, תזכורות, דף נחיתה אישי ופולדר ללקוח.' },
-  { title: 'משתפים פעולה', text: 'מפרסמים ללוח השיתוף נכס או לקוח שמחפש, ומוצאים שותף מתוך הקהילה.' },
+  { title: 'משתפים פעולה', text: 'פותחים נכס לשיתוף פעולה או שומרים חיפוש לקונה, והמערכת מתריעה כשיש התאמה.' },
 ]
 
 export default function Home() {
@@ -140,9 +140,13 @@ export default function Home() {
             <a href="#features">מה בפנים</a>
             <a href="#principle">העיקרון</a>
             <a href="#how">איך זה עובד</a>
+            <Link to="/about">אודות</Link>
           </nav>
           <div className="home-nav-cta">
-            <Link to="/app" className="btn btn-gold btn-sm">
+            <Link to="/app" className="home-login">
+              כניסה
+            </Link>
+            <Link to="/join" className="btn btn-gold btn-sm">
               הצטרפות
             </Link>
           </div>
@@ -173,7 +177,7 @@ export default function Home() {
               אישי. בחינם, ובלי שהפלטפורמה לוקחת עמלה.
             </motion.p>
             <motion.div className="hero-cta" {...rise(5)}>
-              <Link to="/app" className="btn btn-gold btn-lg">
+              <Link to="/join" className="btn btn-gold btn-lg">
                 הצטרפות חינם
                 <ArrowLeft />
               </Link>
@@ -356,7 +360,7 @@ export default function Home() {
               שעובדים בשביל עצמם.
             </h2>
             <p>קהילה חינמית. 100% מהעמלה אצלך.</p>
-            <Link to="/app" className="btn btn-gold btn-lg">
+            <Link to="/join" className="btn btn-gold btn-lg">
               הצטרפות חינם
               <ArrowLeft />
             </Link>
@@ -371,6 +375,7 @@ export default function Home() {
             <p>קהילה חינמית למתווכים עצמאיים.</p>
           </div>
           <nav className="foot-links" aria-label="קישורים">
+            <Link to="/about">אודות</Link>
             <Link to="/app">אזור החבר</Link>
             <Link to="/app/community">קהילה</Link>
             <Link to="/app/brokers">אינדקס מתווכים</Link>

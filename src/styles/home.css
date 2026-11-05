@@ -60,6 +60,27 @@
   transform: scaleX(1);
 }
 
+.home-nav-cta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.home-login {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 12px;
+  border-radius: var(--r-sm);
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-dim);
+  transition: color var(--t) var(--ease);
+}
+.home-login:hover {
+  color: var(--text);
+}
+
 /* ------------------------------------------------------------------ hero */
 .hero {
   position: relative;

@@ -16,6 +16,7 @@ import { CURRENT_BROKER_ID } from '../config'
 import { brokerById } from '../data/demo'
 import { useStore } from '../store'
 import { Avatar, DemoTag, EASE, Logo, Modal } from '../components/ui'
+import MatchAlert from '../components/MatchAlert'
 import '../styles/shell.css'
 
 const nav = [
@@ -143,6 +144,8 @@ export default function AppShell() {
           <span>עוד</span>
         </button>
       </nav>
+
+      <MatchAlert />
 
       <Modal open={moreOpen} onClose={() => setMoreOpen(false)} title="עוד כלים">
         <div className="modal-body more-sheet">

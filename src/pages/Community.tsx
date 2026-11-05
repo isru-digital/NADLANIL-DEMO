@@ -2,514 +2,407 @@ import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import {
-  BedDouble,
-  Check,
-  Handshake,
-  Heart,
-  MapPin,
-  MessageCircle,
-  Search,
-  Send,
-  Share2,
-  UserSearch,
-} from 'lucide-react'
+import { Bell, Check, LayoutGrid, MapPin, MessageCircle, Radar, Search, Send, Share2, Sparkles, X } from 'lucide-react'
 import { CURRENT_BROKER_ID } from '../config'
-import { brokerById, brokers, formatPrice, topics } from '../data/demo'
-import type { BoardCard, Comment, Post } from '../data/demo'
+import { topicById, topics } from '../config/topics'
+import type { TopicId } from '../config/topics'
+import { brokerById, cities, fitsSearch, formatPriceShort, roomsLabel } from '../data/demo'
+import type { CommunityItem } from '../data/demo'
 import { useStore } from '../store'
-import { Avatar, EASE, PageHead, Photo } from '../components/ui'
+import { Avatar, EASE, Modal, PageHead } from '../components/ui'
+import CommunityCard from '../components/CommunityCard'
 import '../styles/community.css'
 
-type Tab = 'feed' | 'board'
+type View = TopicId | 'all'
 
 export default function Community() {
   const [params, setParams] = useSearchParams()
-  const tab: Tab = params.get('tab') === 'board' ? 'board' : 'feed'
-  const { board } = useStore()
-  const hasFresh = board.some((c) => c.fresh)
-
-  const setTab = (t: Tab) => setParams(t === 'board' ? { tab: 'board' } : {}, { replace: true })
-
-  return (
-    <>
-      <PageHead
-        eyebrow="קהילה"
-        title={tab === 'feed' ? 'הפיד של הקהילה' : 'לוח שיתוף'}
-        subtitle={
-          tab === 'feed'
-            ? 'שאלות, טיפים והתייעצויות בין מתווכים עצמאיים.'
-            : 'נכסים לשיתוף פעולה ולקוחות שמחפשים. מוצאים שותף וסוגרים עסקה יחד.'
-        }
-      >
-        <div className="seg" role="tablist" aria-label="תצוגת קהילה">
-          {(['feed', 'board'] as Tab[]).map((t) => (
-            <button
-              key={t}
-              role="tab"
-              aria-selected={tab === t}
-              className={`seg-btn${tab === t ? ' is-active' : ''}`}
-              onClick={() => setTab(t)}
-            >
-              {tab === t && (
-                <motion.span
-                  layoutId="community-seg"
-                  className="seg-pill"
-                  transition={{ type: 'spring', stiffness: 420, damping: 36 }}
-                />
-              )}
-              <span className="seg-label">
-                {t === 'feed' ? 'פיד' : 'לוח שיתוף'}
-                {t === 'board' && <b className={`seg-count num${hasFresh ? ' is-fresh' : ''}`}>{board.length}</b>}
-              </span>
-            </button>
-          ))}
-        </div>
-      </PageHead>
-
-      <AnimatePresence mode="wait" initial={false}>
-        <motion.div
-          key={tab}
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -6 }}
-          transition={{ duration: 0.26, ease: EASE }}
-        >
-          {tab === 'feed' ? <Feed onOpenBoard={() => setTab('board')} /> : <Board />}
-        </motion.div>
-      </AnimatePresence>
-    </>
-  )
-}
-
-/* ==================================================================== feed */
-
-function Feed({ onOpenBoard }: { onOpenBoard: () => void }) {
-  const { posts, addPost, board, toast } = useStore()
+  const { items, myCities, setMyCities, notices, markNoticesRead, clearFresh, addItem, toast } = useStore()
   const me = brokerById(CURRENT_BROKER_ID)
-  const [topic, setTopic] = useState('הכול')
-  const [draft, setDraft] = useState('')
-  const [draftTopic, setDraftTopic] = useState(topics[0])
+  const raw = params.get('topic')
+  const view: View = topics.some((t) => t.id === raw) ? (raw as TopicId) : 'all'
+  const topic = view === 'all' ? null : topicById(view)
+  const focusId = params.get('item')
 
-  const visible = useMemo(() => (topic === 'הכול' ? posts : posts.filter((p) => p.topic === topic)), [posts, topic])
+  const [citiesOpen, setCitiesOpen] = useState(false)
+  const [noticesOpen, setNoticesOpen] = useState(false)
+  const [draft, setDraft] = useState('')
+  const composeTopics = topics.filter((t) => t.compose)
+  const [draftTopic, setDraftTopic] = useState<TopicId>(composeTopics[0].id)
+  const unread = notices.filter((n) => !n.read).length
+
+  const setView = (v: View) => setParams(v === 'all' ? {} : { topic: v }, { replace: true })
+
+  const inCities = (it: CommunityItem) =>
+    myCities.length === 0 ||
+    it.authorId === me.id ||
+    myCities.includes(it.city) ||
+    !!it.search?.cities.some((c) => myCities.includes(c)) ||
+    (!!it.referral && myCities.includes(it.referral.toCity))
+
+  const scoped = useMemo(() => items.filter(inCities), [items, myCities]) // eslint-disable-line react-hooks/exhaustive-deps
+  const visible = view === 'all' ? scoped : scoped.filter((it) => it.topicId === view)
+
+  // which messages fit something of mine
+  const myProperties = items.filter((it) => it.authorId === me.id && it.property)
+  const mySearches = items.filter((it) => it.authorId === me.id && it.search)
+  const matchFor = (it: CommunityItem) => {
+    if (it.authorId === me.id) return undefined
+    if (it.search) {
+      const p = myProperties.find((m) => fitsSearch(it.search!, { city: m.city, rooms: m.property!.rooms, price: m.property!.price }))
+      return p ? `הנכס שלך "${p.title}" מתאים לבקשה הזאת` : undefined
+    }
+    if (it.property) {
+      const s = mySearches.find((m) => fitsSearch(m.search!, { city: it.city, rooms: it.property!.rooms, price: it.property!.price }))
+      return s ? `זה יכול להתאים לך: "${s.title}"` : undefined
+    }
+    return undefined
+  }
+
+  // "new" highlight settles after a while
+  useEffect(() => {
+    if (!items.some((c) => c.fresh)) return
+    const t = window.setTimeout(clearFresh, 12000)
+    return () => window.clearTimeout(t)
+  }, [items, clearFresh])
+
+  // deep link from an alert: bring the message into view
+  useEffect(() => {
+    if (!focusId) return
+    const t = window.setTimeout(() => {
+      document.getElementById(`ci-${focusId}`)?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+    }, 450)
+    return () => window.clearTimeout(t)
+  }, [focusId, view])
+
+  useEffect(() => {
+    if (topic?.compose) setDraftTopic(topic.id)
+  }, [topic])
 
   const submit = (e: FormEvent) => {
     e.preventDefault()
     const body = draft.trim()
     if (!body) return
-    addPost({
+    addItem({
       id: `u${Date.now()}`,
+      topicId: draftTopic,
       authorId: me.id,
-      topic: draftTopic,
+      city: 'תל אביב',
+      time: 'עכשיו',
       body,
       likes: 0,
-      time: 'עכשיו',
       comments: [],
+      fresh: true,
     })
     setDraft('')
-    setTopic('הכול')
-    toast('הפוסט פורסם בקהילה')
+    toast(`פורסם בנושא "${topicById(draftTopic).name}"`)
   }
 
-  return (
-    <div className="feed-layout">
-      <div className="feed-main">
-        <form className="card composer" onSubmit={submit}>
-          <div className="composer-top">
-            <Avatar src={me.avatar} name={me.name} size={44} ring />
-            <label className="sr-only" htmlFor="composer">
-              כתיבת פוסט
-            </label>
-            <textarea
-              id="composer"
-              className="composer-input"
-              rows={2}
-              placeholder="מה חדש אצלך? שאלה, טיפ או בקשה לשיתוף פעולה"
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-            />
-          </div>
-          <div className="composer-bottom">
-            <div className="composer-topics" role="group" aria-label="נושא הפוסט">
-              {topics.slice(0, 4).map((t) => (
-                <button
-                  key={t}
-                  type="button"
-                  className={`tag${draftTopic === t ? ' tag-gold' : ''}`}
-                  aria-pressed={draftTopic === t}
-                  onClick={() => setDraftTopic(t)}
-                >
-                  {t}
-                </button>
-              ))}
-            </div>
-            <button className="btn btn-gold btn-sm" disabled={!draft.trim()}>
-              <Send />
-              פרסום
-            </button>
-          </div>
-        </form>
-
-        <div className="chip-row feed-filter" role="group" aria-label="סינון לפי נושא">
-          {['הכול', ...topics].map((t) => (
-            <button key={t} className="chip" aria-pressed={topic === t} onClick={() => setTopic(t)}>
-              {t}
-            </button>
-          ))}
-        </div>
-
-        <div className="post-list">
-          <AnimatePresence mode="popLayout" initial={false}>
-            {visible.map((p) => (
-              <motion.div
-                key={p.id}
-                layout
-                initial={{ opacity: 0, y: 18, scale: 0.98 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.98 }}
-                transition={{ duration: 0.35, ease: EASE }}
-              >
-                <PostCard post={p} />
-              </motion.div>
-            ))}
-          </AnimatePresence>
-          {visible.length === 0 && (
-            <div className="empty card">
-              <Search />
-              <strong>עדיין אין פוסטים בנושא הזה</strong>
-              <span>אפשר להיות הראשונים לכתוב.</span>
-            </div>
-          )}
-        </div>
-      </div>
-
-      <aside className="feed-side">
-        <section className="card card-pad">
-          <div className="block-head">
-            <h2>חדש בלוח השיתוף</h2>
-          </div>
-          <ul className="side-board">
-            {board.slice(0, 3).map((c) => (
-              <li key={c.id}>
-                <span className={`tag ${c.kind === 'property' ? 'tag-gold' : 'tag-blue'}`}>
-                  {c.kind === 'property' ? 'נכס לשיתוף פעולה' : 'לקוח מחפש'}
-                </span>
-                <strong>{c.title}</strong>
-                <span>{c.area}</span>
-              </li>
-            ))}
-          </ul>
-          <button className="btn btn-ghost btn-sm btn-block" onClick={onOpenBoard}>
-            <Handshake />
-            לכל הלוח
-          </button>
-        </section>
-
-        <section className="card card-pad">
-          <div className="block-head">
-            <h2>מחוברים עכשיו</h2>
-            <span className="faint num">{brokers.length - 4}</span>
-          </div>
-          <ul className="online">
-            {brokers.slice(1, 7).map((b) => (
-              <li key={b.id}>
-                <span className="online-face">
-                  <Avatar src={b.avatar} name={b.name} size={38} />
-                  <i aria-hidden />
-                </span>
-                <div>
-                  <strong>{b.name}</strong>
-                  <span>{b.area}</span>
-                </div>
-              </li>
-            ))}
-          </ul>
-          <Link to="/app/brokers" className="link-more">
-            לאינדקס המתווכים
-          </Link>
-        </section>
-      </aside>
-    </div>
-  )
-}
-
-function PostCard({ post }: { post: Post }) {
-  const { liked, toggleLike, toast } = useStore()
-  const author = brokerById(post.authorId)
-  const me = brokerById(CURRENT_BROKER_ID)
-  const isLiked = !!liked[post.id]
-  const [open, setOpen] = useState(false)
-  const [extra, setExtra] = useState<Comment[]>([])
-  const [reply, setReply] = useState('')
-  const comments = [...post.comments, ...extra]
-
-  const send = (e: FormEvent) => {
-    e.preventDefault()
-    if (!reply.trim()) return
-    setExtra((c) => [...c, { authorId: me.id, body: reply.trim(), time: 'עכשיו' }])
-    setReply('')
-  }
-
-  return (
-    <article className="card post">
-      <header className="post-head">
-        <Avatar src={author.avatar} name={author.name} size={46} />
-        <div className="post-author">
-          <strong>{author.name}</strong>
-          <span>
-            {author.area} · {post.time}
-          </span>
-        </div>
-        <span className="tag tag-gold">{post.topic}</span>
-      </header>
-
-      <p className="post-body">{post.body}</p>
-
-      <footer className="post-actions">
-        <button
-          className={`post-action like${isLiked ? ' is-liked' : ''}`}
-          onClick={() => toggleLike(post.id)}
-          aria-pressed={isLiked}
-          aria-label={isLiked ? 'ביטול לייק' : 'לייק'}
-        >
-          <span className="like-icon">
-            <motion.span
-              key={String(isLiked)}
-              initial={{ scale: isLiked ? 0.4 : 1 }}
-              animate={{ scale: 1 }}
-              transition={{ type: 'spring', stiffness: 500, damping: 14 }}
-            >
-              <Heart />
-            </motion.span>
-            <AnimatePresence>
-              {isLiked && (
-                <motion.i
-                  className="like-burst"
-                  initial={{ scale: 0.4, opacity: 0.9 }}
-                  animate={{ scale: 2.4, opacity: 0 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.6, ease: EASE }}
-                />
-              )}
-            </AnimatePresence>
-          </span>
-          <span className="num">{post.likes + (isLiked ? 1 : 0)}</span>
-        </button>
-        <button className="post-action" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
-          <MessageCircle />
-          <span>
-            <span className="num">{comments.length}</span> תגובות
-          </span>
-        </button>
-        <button className="post-action post-share" onClick={() => toast('בדמו השיתוף אינו פעיל')}>
-          <Share2 />
-          <span>שיתוף</span>
-        </button>
-      </footer>
-
-      <AnimatePresence initial={false}>
-        {open && (
-          <motion.div
-            className="comments"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.32, ease: EASE }}
-          >
-            <div className="comments-in">
-              {comments.map((c, i) => {
-                const a = brokerById(c.authorId)
-                return (
-                  <div className="comment" key={i}>
-                    <Avatar src={a.avatar} name={a.name} size={34} />
-                    <div className="comment-bubble">
-                      <div>
-                        <strong>{a.name}</strong>
-                        <time>{c.time}</time>
-                      </div>
-                      <p>{c.body}</p>
-                    </div>
-                  </div>
-                )
-              })}
-              <form className="comment-form" onSubmit={send}>
-                <Avatar src={me.avatar} name={me.name} size={34} />
-                <label className="sr-only" htmlFor={`reply-${post.id}`}>
-                  כתיבת תגובה
-                </label>
-                <input
-                  id={`reply-${post.id}`}
-                  className="input"
-                  placeholder="כתיבת תגובה..."
-                  value={reply}
-                  onChange={(e) => setReply(e.target.value)}
-                />
-                <button className="icon-btn" aria-label="שליחת תגובה" disabled={!reply.trim()}>
-                  <Send />
-                </button>
-              </form>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </article>
-  )
-}
-
-/* =================================================================== board */
-
-type BoardFilter = 'all' | 'property' | 'client'
-
-function Board() {
-  const { board, clearFresh } = useStore()
-  const [filter, setFilter] = useState<BoardFilter>('all')
-  const visible = filter === 'all' ? board : board.filter((c) => c.kind === filter)
-
-  // keep the "new" highlight long enough to be noticed, then settle
-  useEffect(() => {
-    if (!board.some((c) => c.fresh)) return
-    const t = window.setTimeout(clearFresh, 9000)
-    return () => window.clearTimeout(t)
-  }, [board, clearFresh])
+  const toggleCity = (c: string) => setMyCities(myCities.includes(c) ? myCities.filter((x) => x !== c) : [...myCities, c])
 
   return (
     <>
-      <div className="board-bar">
-        <div className="chip-row" role="group" aria-label="סינון הלוח">
-          {(
-            [
-              ['all', 'הכול'],
-              ['property', 'נכסים לשיתוף פעולה'],
-              ['client', 'לקוחות מחפשים'],
-            ] as [BoardFilter, string][]
-          ).map(([id, label]) => (
-            <button key={id} className="chip" aria-pressed={filter === id} onClick={() => setFilter(id)}>
-              {label}
-              <b className="num chip-count">
-                {id === 'all' ? board.length : board.filter((c) => c.kind === id).length}
-              </b>
-            </button>
+      <PageHead
+        eyebrow="קהילה"
+        title={topic ? topic.name : 'כל הנושאים'}
+        subtitle={topic ? topic.description : 'כל מה שקורה עכשיו בקהילה, לפי הערים שבחרת.'}
+      >
+        <button className="btn btn-ghost" onClick={() => setCitiesOpen(true)}>
+          <MapPin />
+          {myCities.length === 0 ? 'כל הערים' : myCities.length === 1 ? myCities[0] : `${myCities.length} ערים`}
+        </button>
+        <button
+          className="btn btn-ghost bell"
+          aria-label={`התראות, ${unread} חדשות`}
+          onClick={() => setNoticesOpen(true)}
+        >
+          <Bell />
+          התראות
+          {unread > 0 && <b className="bell-count num">{unread}</b>}
+        </button>
+      </PageHead>
+
+      <div className="comm">
+        {/* ----------------------------------------------------- topics */}
+        <nav className="comm-rail" aria-label="נושאי הקהילה">
+          <RailButton
+            active={view === 'all'}
+            onClick={() => setView('all')}
+            icon={<LayoutGrid />}
+            label="כל הנושאים"
+            count={scoped.length}
+          />
+          {topics.map((t) => (
+            <RailButton
+              key={t.id}
+              active={view === t.id}
+              onClick={() => setView(t.id)}
+              icon={<t.icon />}
+              label={t.name}
+              count={scoped.filter((it) => it.topicId === t.id).length}
+              fresh={scoped.some((it) => it.topicId === t.id && it.fresh)}
+            />
           ))}
+        </nav>
+
+        {/* ------------------------------------------------------- feed */}
+        <div className="comm-feed">
+          {myCities.length > 0 && (
+            <div className="city-bar">
+              <span>מוצג לפי:</span>
+              {myCities.map((c) => (
+                <button key={c} className="tag tag-gold city-chip" onClick={() => toggleCity(c)} aria-label={`הסרת ${c}`}>
+                  {c}
+                  <X />
+                </button>
+              ))}
+              <button className="city-clear" onClick={() => setMyCities([])}>
+                הצגת כל הארץ
+              </button>
+            </div>
+          )}
+
+          {!topic || topic.compose ? (
+            <form className="card composer" onSubmit={submit}>
+              <div className="composer-top">
+                <Avatar src={me.avatar} name={me.name} size={44} ring />
+                <label className="sr-only" htmlFor="composer">
+                  כתיבת פוסט
+                </label>
+                <textarea
+                  id="composer"
+                  className="composer-input"
+                  rows={2}
+                  placeholder={
+                    draftTopic === 'knowledge'
+                      ? 'יש שאלה? משא ומתן, בלעדיות, פולואפ למוכרים...'
+                      : draftTopic === 'wins'
+                        ? 'סגרת עסקה? ספרו לנו'
+                        : 'מה חדש אצלך בשטח?'
+                  }
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                />
+              </div>
+              <div className="composer-bottom">
+                <div className="composer-topics" role="group" aria-label="נושא הפוסט">
+                  {composeTopics.map((t) => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      className={`tag${draftTopic === t.id ? ' tag-gold' : ''}`}
+                      aria-pressed={draftTopic === t.id}
+                      onClick={() => setDraftTopic(t.id)}
+                    >
+                      <t.icon />
+                      {t.short}
+                    </button>
+                  ))}
+                </div>
+                <button className="btn btn-gold btn-sm" disabled={!draft.trim()}>
+                  <Send />
+                  פרסום
+                </button>
+              </div>
+            </form>
+          ) : (
+            <div className="card crm-hint">
+              <span className="icon-badge">
+                <topic.icon />
+              </span>
+              <div>
+                <strong>הודעות בנושא הזה נוצרות ישירות מה-CRM</strong>
+                <span>
+                  {topic.id === 'seeking'
+                    ? 'בוחרים לקוח, לוחצים "פרסם בקהילה", והבקשה נשמרת כאן. בלי שם ובלי טלפון של הלקוח.'
+                    : topic.id === 'coop'
+                      ? 'מסמנים שת"פ על נכס, והוא הופך להודעה כאן עם תמונה, אזור, חדרים ומחיר.'
+                      : 'בוחרים לקוח או נכס, מציינים את עיר היעד, וההפניה מתפרסמת כאן.'}
+                </span>
+              </div>
+              <Link to="/app/crm" className="btn btn-gold btn-sm">
+                <Share2 />
+                פרסום מה-CRM
+              </Link>
+            </div>
+          )}
+
+          <div className="ci-list">
+            <AnimatePresence mode="popLayout" initial={false}>
+              {visible.map((it) => (
+                <motion.div
+                  key={it.id}
+                  layout
+                  initial={{ opacity: 0, y: 26, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.97 }}
+                  transition={{ duration: 0.5, ease: EASE }}
+                >
+                  <CommunityCard item={it} match={matchFor(it)} />
+                </motion.div>
+              ))}
+            </AnimatePresence>
+            {visible.length === 0 && (
+              <div className="empty card">
+                <Search />
+                <strong>אין כרגע הודעות בנושא הזה בערים שבחרת</strong>
+                <span>אפשר להרחיב את רשימת הערים או לעבור לנושא אחר.</span>
+                <button className="btn btn-ghost btn-sm" onClick={() => setMyCities([])}>
+                  הצגת כל הארץ
+                </button>
+              </div>
+            )}
+          </div>
         </div>
-        <Link to="/app/crm" className="btn btn-ghost btn-sm">
-          <Share2 />
-          פרסום מתוך ה-CRM
-        </Link>
+
+        {/* ------------------------------------------------------- side */}
+        <aside className="comm-side">
+          <section className="card card-pad">
+            <div className="block-head">
+              <h2>הבקשות השמורות שלי</h2>
+              <Radar className="side-radar" />
+            </div>
+            {mySearches.length === 0 ? (
+              <p className="side-empty">
+                עדיין לא שמרת בקשת חיפוש. מפרסמים לקוח מה-CRM בנושא "מחפש לקונה", והמערכת תתריע כשיתפרסם נכס מתאים.
+              </p>
+            ) : (
+              <ul className="saved-list">
+                {mySearches.map((s) => (
+                  <li key={s.id}>
+                    <strong>{s.title}</strong>
+                    <span>
+                      {s.search!.cities.join(', ')} · {roomsLabel(s.search!)} · עד {formatPriceShort(s.search!.budget)}
+                    </span>
+                    <em>
+                      <i aria-hidden />
+                      פעילה, מחפשת התאמות
+                    </em>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <Link to="/app/crm" className="link-more">
+              פרסום בקשה מה-CRM
+            </Link>
+          </section>
+
+          <section className="card card-pad">
+            <div className="block-head">
+              <h2>התראות אחרונות</h2>
+              {unread > 0 && <span className="tag tag-gold num">{unread} חדשות</span>}
+            </div>
+            <ul className="notice-list">
+              {notices.slice(0, 4).map((n) => (
+                <li key={n.id} className={n.read ? '' : 'is-unread'}>
+                  <button onClick={() => setParams({ topic: n.topicId, item: n.itemId }, { replace: true })}>
+                    <span className={`notice-icon kind-${n.kind}`}>{n.kind === 'match' ? <Sparkles /> : <MessageCircle />}</span>
+                    <span className="notice-main">
+                      <strong>{n.title}</strong>
+                      <span>{n.text}</span>
+                      <time>{n.time}</time>
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        </aside>
       </div>
 
-      <div className="board-grid">
-        <AnimatePresence mode="popLayout" initial={false}>
-          {visible.map((c) => (
-            <motion.div
-              key={c.id}
-              layout
-              initial={{ opacity: 0, y: 30, scale: 0.94 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.96 }}
-              transition={{ duration: 0.55, ease: EASE }}
-            >
-              <BoardItem card={c} />
-            </motion.div>
-          ))}
-        </AnimatePresence>
-      </div>
-      {visible.length === 0 && (
-        <div className="empty card">
-          <Handshake />
-          <strong>אין כרגע כרטיסים מהסוג הזה</strong>
-          <span>פרסום ראשון מתוך ה-CRM יופיע כאן מיד.</span>
+      {/* ------------------------------------------------- cities picker */}
+      <Modal
+        open={citiesOpen}
+        onClose={() => setCitiesOpen(false)}
+        title="הערים שלי"
+        subtitle="בוחרים עיר אחת או כמה ערים, ורואים רק מה שרלוונטי אליהן."
+      >
+        <div className="modal-body">
+          <div className="city-grid">
+            {cities.map((c) => {
+              const on = myCities.includes(c)
+              return (
+                <button key={c} className={`city-opt${on ? ' is-on' : ''}`} role="checkbox" aria-checked={on} onClick={() => toggleCity(c)}>
+                  <span className="pick-check">{on && <Check />}</span>
+                  {c}
+                  <b className="num">{items.filter((it) => it.city === c).length}</b>
+                </button>
+              )
+            })}
+          </div>
         </div>
-      )}
+        <div className="modal-foot">
+          <button className="btn btn-gold" onClick={() => setCitiesOpen(false)}>
+            {myCities.length === 0 ? 'הצגת כל הארץ' : `הצגת ${myCities.length} ערים`}
+          </button>
+          {myCities.length > 0 && (
+            <button className="btn btn-quiet" onClick={() => setMyCities([])}>
+              ניקוי
+            </button>
+          )}
+        </div>
+      </Modal>
+
+      {/* --------------------------------------------------- notifications */}
+      <Modal
+        open={noticesOpen}
+        onClose={() => {
+          setNoticesOpen(false)
+          markNoticesRead()
+        }}
+        title="התראות"
+        subtitle="תגובות לפוסטים שלך והתאמות לבקשות ולנכסים שפרסמת."
+      >
+        <div className="modal-body">
+          <ul className="notice-list notice-list-lg">
+            {notices.map((n) => (
+              <li key={n.id} className={n.read ? '' : 'is-unread'}>
+                <button
+                  onClick={() => {
+                    setNoticesOpen(false)
+                    markNoticesRead()
+                    setParams({ topic: n.topicId, item: n.itemId }, { replace: true })
+                  }}
+                >
+                  <span className={`notice-icon kind-${n.kind}`}>{n.kind === 'match' ? <Sparkles /> : <MessageCircle />}</span>
+                  <span className="notice-main">
+                    <strong>{n.title}</strong>
+                    <span>{n.text}</span>
+                    <time>{n.time}</time>
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </Modal>
     </>
   )
 }
 
-function BoardItem({ card }: { card: BoardCard }) {
-  const { interested, toggleInterested, toast } = useStore()
-  const broker = brokerById(card.brokerId)
-  const mine = card.brokerId === CURRENT_BROKER_ID
-  const sent = !!interested[card.id]
-  const isProperty = card.kind === 'property'
-
+function RailButton({
+  active,
+  onClick,
+  icon,
+  label,
+  count,
+  fresh,
+}: {
+  active: boolean
+  onClick: () => void
+  icon: React.ReactNode
+  label: string
+  count: number
+  fresh?: boolean
+}) {
   return (
-    <article className={`card board-card${card.fresh ? ' is-fresh' : ''}`}>
-      {card.image ? (
-        <Photo src={card.image} alt={card.title} ratio="16 / 9" className="board-photo">
-          <span className="tag tag-gold board-kind">
-            <Handshake />
-            נכס לשיתוף פעולה
-          </span>
-        </Photo>
-      ) : (
-        <div className={`board-band ${isProperty ? 'band-gold' : 'band-blue'}`}>
-          <span className={`tag ${isProperty ? 'tag-gold' : 'tag-blue'}`}>
-            {isProperty ? <Handshake /> : <UserSearch />}
-            {isProperty ? 'נכס לשיתוף פעולה' : 'לקוח מחפש'}
-          </span>
-        </div>
+    <button className={`rail-btn${active ? ' is-active' : ''}`} onClick={onClick} aria-current={active ? 'page' : undefined}>
+      {active && (
+        <motion.span layoutId="rail-active" className="rail-pill" transition={{ type: 'spring', stiffness: 420, damping: 36 }} />
       )}
-      {card.fresh && <span className="fresh-flag">חדש בלוח</span>}
-
-      <div className="board-body">
-        <h3>{card.title}</h3>
-        <div className="board-meta">
-          <span>
-            <MapPin />
-            {card.area}
-          </span>
-          {card.rooms && (
-            <span>
-              <BedDouble />
-              <span className="num">{card.rooms}</span> חדרים
-            </span>
-          )}
-        </div>
-        {card.price != null && (
-          <div className="board-price">
-            <span>{isProperty ? 'מחיר מבוקש' : 'תקציב עד'}</span>
-            <strong className="num">{formatPrice(card.price)}</strong>
-          </div>
-        )}
-        {card.note && <p className="board-note">{card.note}</p>}
-        <span className="board-split">
-          <Handshake />
-          {card.split}
-        </span>
-      </div>
-
-      <footer className="board-foot">
-        <div className="board-broker">
-          <Avatar src={broker.avatar} name={broker.name} size={36} />
-          <div>
-            <strong>{mine ? 'פורסם על ידך' : broker.name}</strong>
-            <span>{card.time}</span>
-          </div>
-        </div>
-        {mine ? (
-          <span className="tag tag-green">
-            <Check />
-            באוויר
-          </span>
-        ) : (
-          <button
-            className={`btn btn-sm ${sent ? 'btn-ghost is-sent' : 'btn-gold'}`}
-            onClick={() => {
-              toggleInterested(card.id)
-              if (!sent) toast(`הפנייה נשלחה אל ${broker.name}`)
-            }}
-            aria-pressed={sent}
-          >
-            {sent ? (
-              <>
-                <Check />
-                הפנייה נשלחה
-              </>
-            ) : (
-              'יש לי התאמה'
-            )}
-          </button>
-        )}
-      </footer>
-    </article>
+      <span className="rail-icon">{icon}</span>
+      <span className="rail-label">{label}</span>
+      <b className={`rail-count num${fresh ? ' is-fresh' : ''}`}>{count}</b>
+    </button>
   )
 }

@@ -3,6 +3,9 @@
 // אין כאן אנשים אמיתיים, טלפונים אמיתיים או נכסים אמיתיים.
 // ---------------------------------------------------------------------------
 
+import type { TopicId } from '../config/topics'
+import { REFERRAL_TERMS } from '../config/topics'
+
 export type Broker = {
   id: string
   name: string
@@ -13,18 +16,6 @@ export type Broker = {
   avatar: string
   bio: string
   years: number
-}
-
-export type Comment = { authorId: string; body: string; time: string }
-
-export type Post = {
-  id: string
-  authorId: string
-  topic: string
-  body: string
-  likes: number
-  time: string
-  comments: Comment[]
 }
 
 export type CrmStatus = 'new' | 'active' | 'tour' | 'negotiation' | 'closed'
@@ -44,21 +35,18 @@ export type CrmItem = {
   image?: string
   sqm?: number
   floor?: string
+  /** city used for community filtering and matching */
+  city: string
+  /** clients only: what the buyer is looking for (never includes name or phone) */
+  search?: SearchSpec
 }
 
-export type BoardCard = {
-  id: string
-  kind: ItemKind
-  title: string
-  area: string
-  rooms?: string
-  price?: number
-  note?: string
-  split: string
-  brokerId: string
-  time: string
-  image?: string
-  fresh?: boolean
+export type SearchSpec = {
+  cities: string[]
+  roomsMin: number
+  roomsMax: number
+  budget: number
+  wants: string[]
 }
 
 export type Testimonial = { id: string; name: string; role: string; body: string }
@@ -218,157 +206,6 @@ export const brokers: Broker[] = [
 
 export const brokerById = (id: string) => brokers.find((b) => b.id === id) ?? brokers[0]
 
-// ------------------------------------------------------------------- posts
-
-export const topics = [
-  'שיתופי פעולה',
-  'שיווק',
-  'טיפים מהשטח',
-  'שאלות',
-  'משפטי ומיסוי',
-  'שוק ומגמות',
-]
-
-export const posts: Post[] = [
-  {
-    id: 'p1',
-    authorId: 'b2',
-    topic: 'שיתופי פעולה',
-    time: 'לפני 12 דקות',
-    likes: 18,
-    body: 'יש לי לקוח רציני שמחפש בית פרטי בהרצליה פיתוח, מגרש של חצי דונם לפחות, תקציב גבוה. מי שמחזיק נכס שעוד לא יצא לשוק - דברו איתי. חלוקה שווה, כמובן.',
-    comments: [
-      { authorId: 'b5', time: 'לפני 8 דקות', body: 'יש לי משהו שיכול להתאים ברחוב שקט. שולחת לך פרטים.' },
-      { authorId: 'b1', time: 'לפני 3 דקות', body: 'מעבירה לך לקוחה שמוכרת בדיוק נכס כזה. תעדכן איך הלך.' },
-    ],
-  },
-  {
-    id: 'p2',
-    authorId: 'b7',
-    topic: 'שיווק',
-    time: 'לפני שעה',
-    likes: 34,
-    body: 'ניסיתי החודש לצלם סיור וידאו קצר לכל נכס חדש במקום רק תמונות. ההבדל בכמות הפניות מורגש מאוד. מי שרוצה, אשמח לשתף את מבנה הסרטון שעובד לי.',
-    comments: [
-      { authorId: 'b6', time: 'לפני 50 דקות', body: 'אשמח מאוד. אצלי הסרטונים יוצאים ארוכים מדי.' },
-      { authorId: 'b10', time: 'לפני 41 דקות', body: 'גם אני. במיוחד מעניין אותי איך את פותחת את הסרטון.' },
-      { authorId: 'b7', time: 'לפני 30 דקות', body: 'מעלה מחר פוסט מסודר עם דוגמה.' },
-    ],
-  },
-  {
-    id: 'p3',
-    authorId: 'b8',
-    topic: 'טיפים מהשטח',
-    time: 'לפני שעתיים',
-    likes: 52,
-    body: 'טיפ של ותיק: לפני כל פגישת בלעדיות אני מכין דף אחד עם שלוש עסקאות דומות שנסגרו באזור ועם תוכנית שיווק ברורה. בעלי נכסים רוצים לראות תהליך, לא הבטחות.',
-    comments: [
-      { authorId: 'b4', time: 'לפני שעה', body: 'אימצתי. פשוט ועובד.' },
-      { authorId: 'b9', time: 'לפני שעה', body: 'תודה אלון, כל פוסט שלך שווה זהב.' },
-    ],
-  },
-  {
-    id: 'p4',
-    authorId: 'b10',
-    topic: 'שאלות',
-    time: 'לפני 3 שעות',
-    likes: 9,
-    body: 'מחפשת המלצה על צלם נדל"ן טוב באזור מודיעין והשפלה. מישהו שמגיע בזמן ויודע לצלם גם דירות קטנות בצורה מחמיאה.',
-    comments: [
-      { authorId: 'b6', time: 'לפני שעתיים', body: 'שולח לך בפרטי את מי שאני עובד איתו כבר שלוש שנים.' },
-    ],
-  },
-  {
-    id: 'p5',
-    authorId: 'b3',
-    topic: 'שיתופי פעולה',
-    time: 'לפני 5 שעות',
-    likes: 27,
-    body: 'משפחה מחו"ל מגיעה לשבוע הבא ומחפשת דירת אבן ברחביה או בטלביה, ארבעה חדרים ומעלה עם מרפסת. מי שיש לו נכס מתאים, גם שקט, אשמח לתאם סיור.',
-    comments: [
-      { authorId: 'b1', time: 'לפני 4 שעות', body: 'אין לי בירושלים, אבל אם הם שוקלים גם תל אביב אני כאן.' },
-    ],
-  },
-  {
-    id: 'p6',
-    authorId: 'b4',
-    topic: 'שוק ומגמות',
-    time: 'אתמול',
-    likes: 21,
-    body: 'מרגיש בשבועות האחרונים יותר תנועה של משפחות צעירות שבודקות את הכרמל. מעניין אם גם אצלכם באזורים אחרים יש שינוי בסוג הפניות.',
-    comments: [
-      { authorId: 'b9', time: 'אתמול', body: 'אצלנו בדרום יש יותר פניות של משקיעים מהמרכז.' },
-      { authorId: 'b5', time: 'אתמול', body: 'ברעננה בעיקר משפרי דיור, פחות קונים ראשונים.' },
-    ],
-  },
-  {
-    id: 'p7',
-    authorId: 'b5',
-    topic: 'טיפים מהשטח',
-    time: 'אתמול',
-    likes: 40,
-    body: 'הרגל קטן ששינה לי את העבודה: אחרי כל סיור אני שולחת ללקוח סיכום של שלוש שורות. מה אהב, מה פחות, ומה הצעד הבא. זה חוסך המון אי הבנות.',
-    comments: [
-      { authorId: 'b2', time: 'אתמול', body: 'מעולה. מתחיל מהיום.' },
-    ],
-  },
-  {
-    id: 'p8',
-    authorId: 'b6',
-    topic: 'משפטי ומיסוי',
-    time: 'לפני יומיים',
-    likes: 15,
-    body: 'מי מכיר עורך דין מקרקעין שזמין ומסביר בגובה העיניים באזור השפלה? יש לי לקוחות צעירים בעסקה ראשונה ואני רוצה שירגישו בטוחים.',
-    comments: [
-      { authorId: 'b8', time: 'לפני יומיים', body: 'יש לי המלצה חמה, מעביר לך.' },
-      { authorId: 'b10', time: 'לפני יומיים', body: 'גם לי, תבדוק את שניהם.' },
-    ],
-  },
-  {
-    id: 'p9',
-    authorId: 'b9',
-    topic: 'שיווק',
-    time: 'לפני יומיים',
-    likes: 12,
-    body: 'העליתי השבוע דף נחיתה אישי דרך הבונה שכאן. לקח לי פחות מרבע שעה, ושני לקוחות כבר אמרו שזה נראה כמו של משרד גדול. ממליץ למי שעוד לא ניסה.',
-    comments: [
-      { authorId: 'b7', time: 'לפני יומיים', body: 'ראיתי, נראה מצוין. באיזו תבנית בחרת?' },
-    ],
-  },
-  {
-    id: 'p10',
-    authorId: 'b1',
-    topic: 'שיתופי פעולה',
-    time: 'לפני 3 ימים',
-    likes: 31,
-    body: 'סגרנו השבוע עסקה משותפת עם יונתן על פנטהאוז בצפון הישן. הלקוח שלו, הנכס שלי, חלוקה שווה ואפס דרמות. ככה שיתוף פעולה אמור להיראות.',
-    comments: [
-      { authorId: 'b2', time: 'לפני 3 ימים', body: 'תענוג לעבוד איתך. לעסקה הבאה.' },
-      { authorId: 'b3', time: 'לפני 3 ימים', body: 'מזל טוב לשניכם.' },
-    ],
-  },
-  {
-    id: 'p11',
-    authorId: 'b8',
-    topic: 'שאלות',
-    time: 'לפני 4 ימים',
-    likes: 7,
-    body: 'איך אתם מנהלים תזכורות לחידוש בלעדיות? אני עדיין עובד עם יומן נייר ומרגיש שהגיע הזמן להתקדם.',
-    comments: [
-      { authorId: 'b4', time: 'לפני 4 ימים', body: 'בלוח הלקוחות כאן. מוסיף תזכורת לכל נכס וזה קופץ בדשבורד.' },
-    ],
-  },
-  {
-    id: 'p12',
-    authorId: 'b7',
-    topic: 'שוק ומגמות',
-    time: 'לפני 5 ימים',
-    likes: 19,
-    body: 'הרבה פניות מתושבי חוץ בחודש האחרון, בעיקר לדירות עם נוף פתוח לים. מי שעובד עם קהל דומה, שווה שנדבר על שיתוף מלאי.',
-    comments: [],
-  },
-]
-
 // --------------------------------------------------------------------- crm
 
 export const crmStages: { id: CrmStatus; label: string }[] = [
@@ -382,6 +219,7 @@ export const crmStages: { id: CrmStatus; label: string }[] = [
 export const crmItems: CrmItem[] = [
   {
     id: 'c1',
+    city: 'תל אביב',
     kind: 'property',
     title: 'פנטהאוז 5 חדרים עם נוף לים',
     area: 'תל אביב - הצפון הישן',
@@ -397,6 +235,7 @@ export const crmItems: CrmItem[] = [
   },
   {
     id: 'c2',
+    city: 'הרצליה',
     kind: 'property',
     title: 'וילה עם בריכה וגינה',
     area: 'הרצליה פיתוח',
@@ -412,6 +251,7 @@ export const crmItems: CrmItem[] = [
   },
   {
     id: 'c3',
+    city: 'רמת השרון',
     kind: 'property',
     title: 'דירת גן 4 חדרים',
     area: 'רמת השרון',
@@ -427,6 +267,7 @@ export const crmItems: CrmItem[] = [
   },
   {
     id: 'c4',
+    city: 'גבעתיים',
     kind: 'property',
     title: 'דירת 4 חדרים חדשה עם מרפסת שמש',
     area: 'גבעתיים',
@@ -442,6 +283,7 @@ export const crmItems: CrmItem[] = [
   },
   {
     id: 'c5',
+    city: 'תל אביב',
     kind: 'property',
     title: 'דירה מול הים 3.5 חדרים',
     area: 'תל אביב - קו ראשון לים',
@@ -457,6 +299,7 @@ export const crmItems: CrmItem[] = [
   },
   {
     id: 'c6',
+    city: 'תל אביב',
     kind: 'property',
     title: 'דופלקס גג 5 חדרים',
     area: 'תל אביב - לב העיר',
@@ -472,6 +315,8 @@ export const crmItems: CrmItem[] = [
   },
   {
     id: 'c7',
+    city: 'תל אביב',
+    search: { cities: ['תל אביב'], roomsMin: 3, roomsMax: 3, budget: 3200000, wants: ['חניה בטאבו', 'מעלית חובה', 'פינוי מיידי'] },
     kind: 'client',
     title: 'זוג צעיר מחפש 3 חדרים',
     area: 'תל אביב - יפו',
@@ -479,11 +324,13 @@ export const crmItems: CrmItem[] = [
     price: 3200000,
     status: 'new',
     client: 'רון ומיכל ק.',
-    note: 'אישור עקרוני למשכנתה ביד. גמישים על קומה, לא על מעלית.',
+    note: 'קונה חם. אישור עקרוני למשכנתה ביד. גמישים על קומה, לא על מעלית.',
     updated: 'פנייה מהבוקר',
   },
   {
     id: 'c8',
+    city: 'רמת השרון',
+    search: { cities: ['רמת השרון', 'הרצליה'], roomsMin: 5, roomsMax: 7, budget: 8500000, wants: ['בית פרטי', 'גינה', 'קרוב לבית ספר'] },
     kind: 'client',
     title: 'משפחה מחפשת בית פרטי',
     area: 'רמת השרון והרצליה',
@@ -496,6 +343,8 @@ export const crmItems: CrmItem[] = [
   },
   {
     id: 'c9',
+    city: 'תל אביב',
+    search: { cities: ['תל אביב', 'רמת גן'], roomsMin: 2, roomsMax: 3, budget: 2600000, wants: ['נכס מושכר', 'קרוב לרכבת הקלה'] },
     kind: 'client',
     title: 'משקיע מחפש דירה להשכרה',
     area: 'תל אביב והסביבה',
@@ -508,6 +357,8 @@ export const crmItems: CrmItem[] = [
   },
   {
     id: 'c10',
+    city: 'תל אביב',
+    search: { cities: ['תל אביב'], roomsMin: 3, roomsMax: 3, budget: 6000000, wants: ['נוף לים', 'קומה גבוהה', 'מרפסת'] },
     kind: 'client',
     title: 'תושבת חוץ מחפשת דירת נופש',
     area: 'תל אביב - קו ראשון לים',
@@ -517,73 +368,6 @@ export const crmItems: CrmItem[] = [
     client: 'סופי ל.',
     note: 'מגיעה לארץ בחודש הבא. רוצה לראות 3 עד 4 נכסים ביום אחד.',
     updated: 'פנייה מאתמול',
-  },
-]
-
-// ------------------------------------------------------------ shared board
-
-export const sharedBoard: BoardCard[] = [
-  {
-    id: 's1',
-    kind: 'property',
-    title: 'דירת אבן 4 חדרים בבניין לשימור',
-    area: 'ירושלים - רחביה',
-    rooms: '4',
-    price: 6900000,
-    note: 'תקרות גבוהות, חלונות קשת, מרפסת לגינה פנימית. מתאים גם לתושבי חוץ.',
-    split: 'חלוקת עמלה שווה',
-    brokerId: 'b3',
-    time: 'לפני שעתיים',
-    image: img('prop-03'),
-  },
-  {
-    id: 's2',
-    kind: 'client',
-    title: 'משקיע מחפש 2 דירות קטנות',
-    area: 'באר שבע - ליד האוניברסיטה',
-    rooms: '2-3',
-    price: 1400000,
-    note: 'קונה במזומן, מחליט מהר. מעדיף דירות מושכרות.',
-    split: 'חלוקת עמלה שווה',
-    brokerId: 'b9',
-    time: 'לפני 4 שעות',
-  },
-  {
-    id: 's3',
-    kind: 'property',
-    title: 'דירת 5 חדרים במגדל חדש',
-    area: 'רמת גן - מתחם הבורסה',
-    rooms: '5',
-    price: 5350000,
-    note: 'קומה גבוהה, מטבח מעוצב, שתי חניות ומחסן. כניסה מיידית.',
-    split: 'חלוקת עמלה שווה',
-    brokerId: 'b8',
-    time: 'אתמול',
-    image: img('prop-06'),
-  },
-  {
-    id: 's4',
-    kind: 'client',
-    title: 'משפחה עם 3 ילדים מחפשת דירת גן',
-    area: 'מודיעין והסביבה',
-    rooms: '5',
-    price: 3900000,
-    note: 'חשוב להם קרבה לבית ספר וגינה של 60 מ"ר לפחות.',
-    split: 'חלוקת עמלה שווה',
-    brokerId: 'b10',
-    time: 'אתמול',
-  },
-  {
-    id: 's5',
-    kind: 'client',
-    title: 'זוג מחו"ל מחפש דירה עם נוף לים',
-    area: 'נתניה - עיר ימים',
-    rooms: '4',
-    price: 4700000,
-    note: 'מגיעים לביקור בסוף החודש. רוצים מרפסת גדולה וקומה גבוהה.',
-    split: 'חלוקת עמלה שווה',
-    brokerId: 'b7',
-    time: 'לפני יומיים',
   },
 ]
 
@@ -754,3 +538,364 @@ export const formatPriceShort = (n: number) => {
   }
   return `${Math.round(n / 1000)} א' ₪`
 }
+
+// --------------------------------------------------------------- community
+// הודעות הקהילה, לפי נושא (הנושאים עצמם מוגדרים ב-src/config/topics.ts).
+
+export const cities = [
+  'תל אביב',
+  'רמת גן',
+  'גבעתיים',
+  'הרצליה',
+  'רמת השרון',
+  'רעננה',
+  'נתניה',
+  'ירושלים',
+  'מודיעין',
+  'חיפה',
+  'ראשון לציון',
+  'באר שבע',
+]
+
+export type Comment = { authorId: string; body: string; time: string; replies?: Comment[] }
+
+export type CommunityItem = {
+  id: string
+  topicId: TopicId
+  authorId: string
+  city: string
+  time: string
+  title?: string
+  body: string
+  likes: number
+  comments: Comment[]
+  image?: string
+  /** topic "נכסים לשיתוף פעולה" */
+  property?: { area: string; rooms: string; price: number; split: string; showPrice?: boolean }
+  /** topic "מחפש לקונה": a saved search, never a client name */
+  search?: SearchSpec
+  /** topic "הפניות בין מתווכים" */
+  referral?: { side: 'buyer' | 'seller'; toCity: string; terms: string }
+  /** CRM item this message was created from */
+  sourceId?: string
+  fresh?: boolean
+}
+
+export type Notice = {
+  id: string
+  kind: 'comment' | 'match' | 'interest'
+  title: string
+  text: string
+  time: string
+  read: boolean
+  topicId: TopicId
+  itemId: string
+}
+
+export const communityItems: CommunityItem[] = [
+  {
+    id: 'k1',
+    topicId: 'seeking',
+    authorId: 'b8',
+    city: 'גבעתיים',
+    time: 'לפני 12 דקות',
+    title: 'משפחה מחפשת 4 חדרים',
+    body: 'קונים רציניים עם הון עצמי מוכן. חשוב להם בניין חדש יחסית ומרפסת שמש.',
+    likes: 4,
+    comments: [],
+    search: { cities: ['גבעתיים', 'רמת גן'], roomsMin: 4, roomsMax: 4, budget: 3800000, wants: ['מעלית', 'חניה', 'מרפסת שמש'] },
+  },
+  {
+    id: 'k2',
+    topicId: 'posts',
+    authorId: 'b7',
+    city: 'נתניה',
+    time: 'לפני שעה',
+    body: 'ניסיתי החודש לצלם סיור וידאו קצר לכל נכס חדש במקום רק תמונות. ההבדל בכמות הפניות מורגש מאוד. מי שרוצה, אשמח לשתף את מבנה הסרטון שעובד לי.',
+    likes: 34,
+    comments: [
+      {
+        authorId: 'b6',
+        time: 'לפני 50 דקות',
+        body: 'אשמח מאוד. אצלי הסרטונים יוצאים ארוכים מדי.',
+        replies: [{ authorId: 'b7', time: 'לפני 44 דקות', body: 'הסוד הוא דקה אחת, לא יותר. מעלה מחר דוגמה.' }],
+      },
+      { authorId: 'b10', time: 'לפני 41 דקות', body: 'גם אני. במיוחד מעניין אותי איך את פותחת את הסרטון.' },
+    ],
+  },
+  {
+    id: 'k3',
+    topicId: 'coop',
+    authorId: 'b3',
+    city: 'ירושלים',
+    time: 'לפני שעתיים',
+    title: 'דירת אבן 4 חדרים בבניין לשימור',
+    body: 'תקרות גבוהות, חלונות קשת, מרפסת לגינה פנימית. מתאים גם לתושבי חוץ.',
+    likes: 11,
+    comments: [{ authorId: 'b10', time: 'לפני שעה', body: 'יש לי זוג שמחפש בדיוק באזור. מתקשרת אלייך.' }],
+    image: img('prop-03'),
+    property: { area: 'ירושלים - רחביה', rooms: '4', price: 6900000, split: 'חלוקת עמלה שווה' },
+  },
+  {
+    id: 'k4',
+    topicId: 'knowledge',
+    authorId: 'b8',
+    city: 'רמת גן',
+    time: 'לפני שעתיים',
+    body: 'טיפ של ותיק על גיוס בלעדיות: לפני כל פגישה אני מכין דף אחד עם שלוש עסקאות דומות שנסגרו באזור ועם תוכנית שיווק ברורה. בעלי נכסים רוצים לראות תהליך, לא הבטחות.',
+    likes: 52,
+    comments: [
+      { authorId: 'b4', time: 'לפני שעה', body: 'אימצתי. פשוט ועובד.' },
+      {
+        authorId: 'b9',
+        time: 'לפני שעה',
+        body: 'ומה עושים כשאין עסקאות דומות באזור?',
+        replies: [{ authorId: 'b8', time: 'לפני 50 דקות', body: 'מרחיבים רדיוס ומסבירים למה. שקיפות תמיד מנצחת.' }],
+      },
+    ],
+  },
+  {
+    id: 'k5',
+    topicId: 'referrals',
+    authorId: 'b4',
+    city: 'חיפה',
+    time: 'לפני 3 שעות',
+    title: 'זוג שעובר מחיפה למרכז',
+    body: 'לקוחות שלי שמוכרים בכרמל ועוברים לתל אביב בגלל העבודה. מחפשים 4 חדרים, תקציב מסודר. מחפש מתווך מקומי שילווה אותם שם.',
+    likes: 6,
+    comments: [],
+    referral: { side: 'buyer', toCity: 'תל אביב', terms: REFERRAL_TERMS },
+  },
+  {
+    id: 'k6',
+    topicId: 'seeking',
+    authorId: 'b2',
+    city: 'הרצליה',
+    time: 'לפני 4 שעות',
+    title: 'לקוח מחפש בית פרטי עם בריכה',
+    body: 'לקוח רציני, מחליט מהר. פתוח גם לנכס שעוד לא יצא לשוק.',
+    likes: 18,
+    comments: [{ authorId: 'b5', time: 'לפני 3 שעות', body: 'יש לי משהו שיכול להתאים ברחוב שקט. שולחת לך פרטים.' }],
+    search: { cities: ['הרצליה'], roomsMin: 6, roomsMax: 8, budget: 16000000, wants: ['מגרש של חצי דונם', 'בריכה'] },
+  },
+  {
+    id: 'k7',
+    topicId: 'wins',
+    authorId: 'b6',
+    city: 'ראשון לציון',
+    time: 'לפני 5 שעות',
+    body: 'מסרנו היום מפתח לזוג צעיר בדירה הראשונה שלהם. ארבעה חודשים של חיפושים, שתי עסקאות שנפלו, ובסוף הדירה הנכונה. בשביל הרגעים האלה אני בתחום.',
+    likes: 47,
+    comments: [
+      { authorId: 'b10', time: 'לפני 4 שעות', body: 'איזה כיף. מזל טוב להם ולך.' },
+      { authorId: 'b1', time: 'לפני 4 שעות', body: 'מגיע לך. עבודה יפה.' },
+    ],
+    image: img('win-01'),
+  },
+  {
+    id: 'k8',
+    topicId: 'knowledge',
+    authorId: 'b2',
+    city: 'הרצליה',
+    time: 'לפני 6 שעות',
+    body: 'שאלה על משא ומתן: מוכר שלא מוכן לזוז מהמחיר כבר שלושה חודשים, ואין הצעות. איך אתם מנהלים את השיחה הזאת בלי לאבד את הבלעדיות?',
+    likes: 15,
+    comments: [
+      { authorId: 'b3', time: 'לפני 5 שעות', body: 'אני מביאה לפגישה את כל הפידבקים מהסיורים, כתובים. המספרים מדברים במקומי.' },
+      { authorId: 'b8', time: 'לפני 5 שעות', body: 'קובעים מראש נקודת בדיקה: אם אין הצעה עד תאריך מסוים, מעדכנים מחיר.' },
+    ],
+  },
+  {
+    id: 'k9',
+    topicId: 'coop',
+    authorId: 'b8',
+    city: 'רמת גן',
+    time: 'אתמול',
+    title: 'דירת 5 חדרים במגדל חדש',
+    body: 'קומה גבוהה, מטבח מעוצב, שתי חניות ומחסן. כניסה מיידית.',
+    likes: 9,
+    comments: [],
+    image: img('prop-06'),
+    property: { area: 'רמת גן - מתחם הבורסה', rooms: '5', price: 5350000, split: 'חלוקת עמלה שווה' },
+  },
+  {
+    id: 'k10',
+    topicId: 'referrals',
+    authorId: 'b3',
+    city: 'ירושלים',
+    time: 'אתמול',
+    title: 'מוכרת עם דירה בנתניה',
+    body: 'לקוחה ותיקה שלי ירשה דירת 4 חדרים בנתניה ורוצה למכור. אני לא מכירה את השוק שם, מחפשת מתווך מקומי שייקח את זה.',
+    likes: 5,
+    comments: [{ authorId: 'b7', time: 'אתמול', body: 'אני בנתניה, אשמח. שולחת לך הודעה.' }],
+    referral: { side: 'seller', toCity: 'נתניה', terms: REFERRAL_TERMS },
+  },
+  {
+    id: 'k11',
+    topicId: 'seeking',
+    authorId: 'b10',
+    city: 'מודיעין',
+    time: 'אתמול',
+    title: 'משפחה עם 3 ילדים מחפשת דירת גן',
+    body: 'חשוב להם קרבה לבית ספר וגינה של 60 מ"ר לפחות.',
+    likes: 3,
+    comments: [],
+    search: { cities: ['מודיעין'], roomsMin: 5, roomsMax: 5, budget: 3900000, wants: ['דירת גן', 'קרוב לבית ספר'] },
+  },
+  {
+    id: 'k12',
+    topicId: 'posts',
+    authorId: 'b4',
+    city: 'חיפה',
+    time: 'אתמול',
+    body: 'מרגיש בשבועות האחרונים יותר תנועה של משפחות צעירות שבודקות את הכרמל. מעניין אם גם אצלכם באזורים אחרים יש שינוי בסוג הפניות.',
+    likes: 21,
+    comments: [
+      { authorId: 'b9', time: 'אתמול', body: 'אצלנו בדרום יש יותר פניות של משקיעים מהמרכז.' },
+      { authorId: 'b5', time: 'אתמול', body: 'ברעננה בעיקר משפרי דיור, פחות קונים ראשונים.' },
+    ],
+  },
+  {
+    id: 'k13',
+    topicId: 'knowledge',
+    authorId: 'b5',
+    city: 'רעננה',
+    time: 'לפני יומיים',
+    body: 'הרגל קטן ששינה לי את הפולואפ למוכרים: אחרי כל סיור אני שולחת סיכום של שלוש שורות. מה הקונה אהב, מה פחות, ומה הצעד הבא. זה חוסך המון אי הבנות.',
+    likes: 40,
+    comments: [{ authorId: 'b2', time: 'לפני יומיים', body: 'מעולה. מתחיל מהיום.' }],
+  },
+  {
+    id: 'k14',
+    topicId: 'wins',
+    authorId: 'b1',
+    city: 'תל אביב',
+    time: 'לפני 3 ימים',
+    body: 'סגרנו השבוע עסקה משותפת עם יונתן על דופלקס גג בלב העיר. הלקוח שלו, הנכס שלי, חלוקה שווה ואפס דרמות. ככה שיתוף פעולה אמור להיראות.',
+    likes: 31,
+    comments: [
+      { authorId: 'b2', time: 'לפני 3 ימים', body: 'תענוג לעבוד איתך. לעסקה הבאה.' },
+      { authorId: 'b3', time: 'לפני 3 ימים', body: 'מזל טוב לשניכם.' },
+    ],
+    image: img('prop-07'),
+  },
+  {
+    id: 'k15',
+    topicId: 'seeking',
+    authorId: 'b7',
+    city: 'נתניה',
+    time: 'לפני 3 ימים',
+    title: 'זוג מחו"ל מחפש דירה עם נוף לים',
+    body: 'מגיעים לביקור בסוף החודש. רוצים לראות כמה שיותר ביום אחד.',
+    likes: 7,
+    comments: [],
+    search: { cities: ['נתניה'], roomsMin: 4, roomsMax: 4, budget: 4700000, wants: ['נוף לים', 'קומה גבוהה', 'מרפסת גדולה'] },
+  },
+  {
+    id: 'k16',
+    topicId: 'posts',
+    authorId: 'b9',
+    city: 'באר שבע',
+    time: 'לפני 4 ימים',
+    body: 'העליתי השבוע דף עסקי אישי דרך הבונה שכאן. לקח לי פחות מרבע שעה, ושני לקוחות כבר אמרו שזה נראה כמו של משרד גדול. ממליץ למי שעוד לא ניסה.',
+    likes: 12,
+    comments: [{ authorId: 'b7', time: 'לפני 4 ימים', body: 'ראיתי, נראה מצוין. באיזו תבנית בחרת?' }],
+  },
+]
+
+export const notices: Notice[] = [
+  {
+    id: 'n1',
+    kind: 'comment',
+    title: 'יונתן שגב הגיב לפוסט שלך',
+    text: 'תענוג לעבוד איתך. לעסקה הבאה.',
+    time: 'לפני 3 ימים',
+    read: false,
+    topicId: 'wins',
+    itemId: 'k14',
+  },
+  {
+    id: 'n2',
+    kind: 'comment',
+    title: 'תמר אלון הגיבה לפוסט שלך',
+    text: 'מזל טוב לשניכם.',
+    time: 'לפני 3 ימים',
+    read: true,
+    topicId: 'wins',
+    itemId: 'k14',
+  },
+]
+
+/**
+ * הדמיה לדמו בלבד: כמה שניות אחרי שמפרסמים בקשת "מחפש לקונה" מה-CRM,
+ * "מתווך אחר" מפרסם נכס שמתאים לה, כדי להראות את התראת ההתאמה.
+ */
+export const simulatedListings: Record<string, CommunityItem> = {
+  c7: {
+    id: 'sim-c7',
+    topicId: 'coop',
+    authorId: 'b8',
+    city: 'תל אביב',
+    time: 'עכשיו',
+    title: 'דירת 3 חדרים משופצת עם מעלית',
+    body: 'בניין משופץ, מעלית וחניה רשומה בטאבו. פנויה, כניסה מיידית.',
+    likes: 0,
+    comments: [],
+    image: img('prop-09'),
+    property: { area: 'תל אביב - יפו', rooms: '3', price: 3050000, split: 'חלוקת עמלה שווה' },
+  },
+}
+
+/** Does a property fit a saved search? Used for the "נמצאה התאמה" alerts. */
+export const fitsSearch = (s: SearchSpec, p: { city: string; rooms: string; price: number }) => {
+  const rooms = parseFloat(p.rooms)
+  return s.cities.includes(p.city) && rooms >= s.roomsMin && rooms <= s.roomsMax && p.price <= s.budget
+}
+
+export const roomsLabel = (s: SearchSpec) =>
+  s.roomsMin === s.roomsMax ? `${s.roomsMin} חדרים` : `${s.roomsMin} עד ${s.roomsMax} חדרים`
+
+// -------------------------------------------------------------- onboarding
+// טקסטים לדוגמה בלבד. הנוסח הסופי ייכתב על ידי המייסדים.
+
+export const whyCommunity = [
+  {
+    title: 'למה הקהילה קיימת',
+    text: 'בקבוצות וואטסאפ הודעות נבלעות תוך דקות. כאן כל בקשה נשמרת בנושא שלה, ומי שיכול לעזור רואה אותה.',
+  },
+  {
+    title: 'איך משתמשים בה',
+    text: 'מעלים נכסים לשיתוף פעולה, מפנים לקוחות למתווך בעיר אחרת, שומרים חיפוש לקונה ושואלים את מי שכבר היה שם.',
+  },
+  {
+    title: 'החזון',
+    text: 'לחבר בין מתווכים, ליצור שיתופי פעולה, להגביר עסקאות והיכרויות. ו-100% מהעמלה נשארת אצל המתווך.',
+  },
+]
+
+export const aboutSections = [
+  {
+    id: 'who',
+    label: 'מי אנחנו',
+    title: 'מתווכים שבנו בית למתווכים.',
+    text: 'אנחנו מכירים את העבודה מבפנים: את הטלפונים, את הסיורים ואת העסקאות שכמעט נסגרו. בנינו את המקום שהיינו רוצים שיהיה לנו.',
+  },
+  {
+    id: 'what',
+    label: 'מה אנחנו עושים',
+    title: 'קהילה אחת, וכל הכלים שמתווך עצמאי צריך.',
+    text: 'מקום אחד לשיתופי פעולה, להפניות, לחיפוש עבור קונים ולהתייעצות. לצד זה ניהול לקוחות פשוט ודף עסקי אישי. בלי שהפלטפורמה לוקחת עמלה.',
+  },
+  {
+    id: 'from',
+    label: 'מאיפה באנו',
+    title: 'מקבוצות וואטסאפ שבהן הכול נבלע.',
+    text: 'בקשה לקונה חם נעלמת תוך דקות מתחת לעשרות פרסומים, ואין מעקב. הבנו שחסר מקום מסודר שבו בקשה נשמרת ולא שוקעת.',
+  },
+  {
+    id: 'to',
+    label: 'לאן אנחנו הולכים',
+    title: 'קהילה שמחברת בין מתווכים בכל הארץ.',
+    text: 'יותר שיתופי פעולה, יותר עסקאות ויותר היכרויות בין מתווכים. מתחילים בקהילה חינמית, וממשיכים לבנות לפי מה שהמתווכים מבקשים.',
+  },
+]

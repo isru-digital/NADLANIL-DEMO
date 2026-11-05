@@ -77,7 +77,12 @@
 }
 .kan-list {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px;
+}
+.kan-col {
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr);
 }
 .kan-card {
   border-radius: var(--r-md);
@@ -117,9 +122,10 @@
 }
 .kan-top {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 6px;
 }
 .kan-updated {
   font-size: 12px;
@@ -190,6 +196,9 @@
 }
 .kan-publish {
   flex: 1;
+  min-width: 0;
+  padding-inline: 8px;
+  font-size: 13.5px;
   color: var(--gold-soft);
   border: 1px solid var(--line-gold);
   background: rgba(201, 162, 75, 0.08);
