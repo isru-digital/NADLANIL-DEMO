@@ -2,7 +2,8 @@ import { useEffect, useRef } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Check, X } from 'lucide-react'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { ArrowRight, Check, X } from 'lucide-react'
 import { PLATFORM_NAME, asset } from '../config'
 import { useStore } from '../store'
 
@@ -64,6 +65,35 @@ export function Photo({
       )}
       {children}
     </div>
+  )
+}
+
+/**
+ * Back to the page the visitor was on before. When there is no history inside
+ * the site (the page was opened directly), it goes to `fallback` instead.
+ */
+export function BackButton({
+  fallback = '/app',
+  label = 'חזרה',
+  className = '',
+}: {
+  fallback?: string
+  label?: string
+  className?: string
+}) {
+  const navigate = useNavigate()
+  const location = useLocation()
+  const hasHistory = location.key !== 'default'
+  return (
+    <button
+      type="button"
+      className={`back-btn ${className}`}
+      aria-label="חזרה לדף הקודם"
+      onClick={() => (hasHistory ? navigate(-1) : navigate(fallback))}
+    >
+      <ArrowRight />
+      <span>{label}</span>
+    </button>
   )
 }
 

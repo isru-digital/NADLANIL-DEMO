@@ -519,6 +519,56 @@ ul {
   transition: transform 900ms var(--ease);
 }
 
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 40px;
+  padding: 0 14px 0 16px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.05);
+  font-family: var(--font-display);
+  font-size: 14.5px;
+  font-weight: 500;
+  color: var(--text-dim);
+  white-space: nowrap;
+  transition:
+    color var(--t) var(--ease),
+    border-color var(--t) var(--ease),
+    background-color var(--t) var(--ease),
+    transform var(--t-fast) var(--ease);
+}
+.back-btn svg {
+  width: 17px;
+  height: 17px;
+  flex: none;
+  transition: transform var(--t) var(--ease);
+}
+.back-btn:hover {
+  color: var(--gold-soft);
+  border-color: var(--line-gold);
+  background: rgba(201, 162, 75, 0.08);
+}
+.back-btn:hover svg {
+  transform: translateX(3px);
+}
+.back-btn:active {
+  transform: scale(0.96);
+}
+.back-btn.is-icon {
+  width: 40px;
+  padding: 0;
+  justify-content: center;
+}
+.back-btn.is-icon span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
 .divider {
   height: 1px;
   border: 0;

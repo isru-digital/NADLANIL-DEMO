@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import { ArrowLeft } from 'lucide-react'
 import { PLATFORM_NAME } from '../config'
 import { aboutSections } from '../data/demo'
-import { DemoTag, EASE, Logo, Reveal } from '../components/ui'
+import { BackButton, DemoTag, EASE, Logo, Reveal } from '../components/ui'
 import '../styles/home.css'
 import '../styles/join.css'
 
@@ -21,9 +21,12 @@ export default function About() {
       </a>
       <header className="home-nav">
         <div className="container home-nav-in">
-          <Link to="/" aria-label={PLATFORM_NAME}>
-            <Logo size={32} withName />
-          </Link>
+          <div className="join-top-start">
+            <BackButton fallback="/" className="is-icon" />
+            <Link to="/" aria-label={PLATFORM_NAME}>
+              <Logo size={32} withName />
+            </Link>
+          </div>
           <nav className="home-nav-links" aria-label="ניווט">
             <Link to="/">דף הבית</Link>
             <Link to="/about" aria-current="page">

@@ -13,7 +13,7 @@ const links = await page.evaluate(() => [...document.querySelectorAll('.side-lin
 for (const label of [...links, links[0], links[3], links[1]]) {
   await page.evaluate((label) => [...document.querySelectorAll('.side-link')].find((a) => a.textContent.trim() === label).click(), label)
   await wait(1100)
-  const r = await page.evaluate(() => { const w = document.querySelector('.main > div'); return { path: location.pathname.replace('/brokers-community-demo', ''), opacity: getComputedStyle(w).opacity, h1: document.querySelector('.main h1')?.textContent, wrappers: document.querySelectorAll('.main > div').length } })
+  const r = await page.evaluate(() => { const w = document.querySelector('.main > div:last-child'); return { path: location.pathname.replace('/brokers-community-demo', ''), opacity: getComputedStyle(w).opacity, h1: document.querySelector('.main h1')?.textContent, wrappers: document.querySelectorAll('.main > div:not(.main-back)').length } })
   console.log(label.padEnd(24), JSON.stringify(r))
 }
 console.log(errors.length ? 'ERRORS ' + errors.join(' | ') : 'no console errors')

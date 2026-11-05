@@ -5,7 +5,7 @@ import { Pencil } from 'lucide-react'
 import { templates } from '../data/demo'
 import type { TemplateId } from '../data/demo'
 import { useStore } from '../store'
-import { DemoTag, EASE } from '../components/ui'
+import { BackButton, DemoTag, EASE } from '../components/ui'
 import LandingTemplate from '../templates/LandingTemplate'
 import '../styles/public.css'
 
@@ -37,6 +37,7 @@ export default function PublicPage() {
       </motion.div>
 
       <div className="public-bar" role="region" aria-label="סרגל הדמו">
+        <BackButton fallback="/app/builder" className="is-icon public-back" />
         <DemoTag />
         <div className="public-switch" role="group" aria-label="החלפת תבנית">
           {templates.map((t) => (

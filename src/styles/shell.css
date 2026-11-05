@@ -179,6 +179,20 @@
   margin-inline: auto;
 }
 
+.main-back {
+  display: flex;
+  margin-bottom: 14px;
+}
+.main:has(.fbx-page) .main-back {
+  max-width: 1320px;
+}
+.topbar-start {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
 .page-head {
   display: flex;
   align-items: flex-end;
@@ -259,6 +273,9 @@
   }
   .main {
     padding: 22px 16px calc(96px + env(safe-area-inset-bottom));
+  }
+  .main-back {
+    display: none;
   }
   .bottom-nav {
     position: fixed;

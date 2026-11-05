@@ -36,7 +36,17 @@ export default function LandingTemplate({
   const hasContact = data.showForm || data.showWhatsapp || data.showPhone
 
   return (
-    <div className="lp" data-template={t}>
+    <div
+      className="lp"
+      data-template={t}
+      onClick={(e) => {
+        // in-page links scroll without adding browser history, so "back" always leaves the page
+        const link = (e.target as HTMLElement).closest('a[href^="#"]')
+        if (!link) return
+        e.preventDefault()
+        e.currentTarget.querySelector(link.getAttribute('href')!)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }}
+    >
       <div className="lp-in">
         <header className="lp-nav">
           <span className="lp-brand">

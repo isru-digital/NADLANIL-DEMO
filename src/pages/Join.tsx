@@ -7,7 +7,7 @@ import { CURRENT_BROKER_ID, PLATFORM_NAME, asset } from '../config'
 import { brokerById, cities, whyCommunity } from '../data/demo'
 import type { CrmItem } from '../data/demo'
 import { useStore } from '../store'
-import { DemoTag, EASE, Logo } from '../components/ui'
+import { BackButton, DemoTag, EASE, Logo } from '../components/ui'
 import '../styles/join.css'
 
 const steps = ['הפרטים שלך', 'על הקהילה', 'הערים שלך', 'הנכס הראשון', 'הדף העסקי שלך']
@@ -87,9 +87,12 @@ export default function Join() {
   return (
     <div className="join grain">
       <header className="join-top">
-        <Link to="/" aria-label="חזרה לדף הבית">
-          <Logo size={28} withName />
-        </Link>
+        <div className="join-top-start">
+          <BackButton fallback="/" className="is-icon" />
+          <Link to="/" aria-label="דף הבית">
+            <Logo size={28} withName />
+          </Link>
+        </div>
         <div className="join-top-end">
           <DemoTag />
           <Link to="/app" className="join-skip">

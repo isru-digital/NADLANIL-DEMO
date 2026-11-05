@@ -15,7 +15,7 @@ import {
 import { CURRENT_BROKER_ID } from '../config'
 import { brokerById } from '../data/demo'
 import { useStore } from '../store'
-import { Avatar, DemoTag, EASE, Logo, Modal } from '../components/ui'
+import { Avatar, BackButton, DemoTag, EASE, Logo, Modal } from '../components/ui'
 import MatchAlert from '../components/MatchAlert'
 import '../styles/shell.css'
 
@@ -108,13 +108,19 @@ export default function AppShell() {
       </aside>
 
       <header className="topbar">
-        <Link to="/" className="topbar-brand" aria-label="חזרה לדף הבית">
-          <Logo size={26} withName />
-        </Link>
+        <div className="topbar-start">
+          <BackButton fallback="/" className="is-icon" />
+          <Link to="/" className="topbar-brand" aria-label="דף הבית">
+            <Logo size={26} withName />
+          </Link>
+        </div>
         <DemoTag />
       </header>
 
       <main className="main" id="main" tabIndex={-1}>
+        <div className="main-back">
+          <BackButton fallback="/" />
+        </div>
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={location.pathname}

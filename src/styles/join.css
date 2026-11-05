@@ -17,6 +17,12 @@
   gap: 16px;
   padding: calc(18px + env(safe-area-inset-top)) var(--gutter) 18px;
 }
+.join-top-start {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
 .join-top-end {
   display: flex;
   align-items: center;

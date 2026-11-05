@@ -25,6 +25,11 @@
 [dir='rtl'] .public-bar {
   transform: translateX(50%);
 }
+.public-back {
+  border-color: transparent;
+  background: rgba(255, 255, 255, 0.09);
+  color: var(--cream);
+}
 .public-bar .demo-tag {
   background: transparent;
   border: 0;
