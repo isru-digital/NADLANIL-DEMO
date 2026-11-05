@@ -37,7 +37,9 @@ export default function Builder() {
   const navigate = useNavigate()
   const [step, setStep] = useState(0)
   const [dir, setDir] = useState(1)
-  const [device, setDevice] = useState<'desktop' | 'mobile'>('desktop')
+  const [device, setDevice] = useState<'desktop' | 'mobile'>(() =>
+    window.matchMedia('(max-width: 700px)').matches ? 'mobile' : 'desktop',
+  )
   const [tone, setTone] = useState(0)
   const [typing, setTyping] = useState(false)
   const [publishOpen, setPublishOpen] = useState(false)
