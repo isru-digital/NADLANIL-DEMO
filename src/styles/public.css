@@ -1,0 +1,92 @@
+/* Floating demo bar shown on the client-facing pages (/b/demo, /f/demo) */
+.public {
+  min-height: 100dvh;
+  padding-bottom: 0;
+}
+.public-bar {
+  position: fixed;
+  inset-block-end: calc(16px + env(safe-area-inset-bottom));
+  inset-inline-start: 50%;
+  transform: translateX(50%);
+  z-index: var(--z-nav);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100vw - 24px);
+  padding: 6px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--line-strong);
+  background: rgba(10, 15, 32, 0.86);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 20px 50px -18px rgba(0, 0, 0, 0.8);
+  color: var(--cream);
+}
+[dir='rtl'] .public-bar {
+  transform: translateX(50%);
+}
+.public-bar .demo-tag {
+  background: transparent;
+  border: 0;
+  padding-inline: 10px 6px;
+}
+.public-switch {
+  display: flex;
+  padding: 3px;
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, 0.07);
+}
+.public-switch button {
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: var(--r-pill);
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-dim);
+  white-space: nowrap;
+  transition:
+    color var(--t) var(--ease),
+    background-color var(--t) var(--ease);
+}
+.public-switch button[aria-pressed='true'] {
+  background: var(--gold);
+  color: var(--on-accent);
+  font-weight: 600;
+}
+.public-edit {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: var(--r-pill);
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--cream);
+  white-space: nowrap;
+  transition: background-color var(--t) var(--ease);
+}
+.public-edit:hover {
+  background: rgba(255, 255, 255, 0.09);
+}
+.public-edit svg {
+  width: 15px;
+  height: 15px;
+  color: var(--gold);
+}
+@media (max-width: 560px) {
+  .public-bar:has(.public-switch) .demo-tag {
+    display: none;
+  }
+  .public-switch button {
+    padding: 0 12px;
+  }
+  .public-edit:not(.public-edit-always) span {
+    display: none;
+  }
+  .public-edit {
+    padding: 0 14px;
+  }
+}
