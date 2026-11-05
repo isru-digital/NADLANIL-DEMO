@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
+import { Link, NavLink, useLocation, useOutlet } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
   FolderOpen,
@@ -26,6 +26,16 @@ const nav = [
   { to: '/app/builder', label: 'בונה דף נחיתה', short: 'דף נחיתה', icon: LayoutTemplate },
   { to: '/app/folder', label: 'פולדר דיגיטלי', short: 'פולדר', icon: FolderOpen },
 ]
+
+/**
+ * Keeps rendering the route it was mounted with. Without this the exiting page
+ * would already show the next route, and its exit animation would never finish.
+ */
+function FrozenOutlet() {
+  const outlet = useOutlet()
+  const [frozen] = useState(outlet)
+  return frozen
+}
 
 export default function AppShell() {
   const location = useLocation()
@@ -112,7 +122,7 @@ export default function AppShell() {
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.28, ease: EASE }}
           >
-            <Outlet />
+            <FrozenOutlet />
           </motion.div>
         </AnimatePresence>
       </main>

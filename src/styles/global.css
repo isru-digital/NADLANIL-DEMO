@@ -484,6 +484,8 @@ ul {
 
 .avatar {
   position: relative;
+  display: inline-block;
+  vertical-align: middle;
   flex: none;
   width: var(--size, 44px);
   height: var(--size, 44px);
@@ -576,6 +578,9 @@ ul {
   border: 1px solid var(--line-strong);
   background: linear-gradient(180deg, #1a2346, #101731);
   box-shadow: 0 50px 120px -30px rgba(0, 0, 0, 0.9);
+}
+.modal:focus {
+  outline: none;
 }
 .modal-wide {
   width: min(880px, 100%);
