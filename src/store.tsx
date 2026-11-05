@@ -18,7 +18,8 @@ export type MatchAlert = {
 }
 
 type State = {
-  liked: Record<string, boolean>
+  /** post id -> the reaction I gave it (see config/reactions.ts) */
+  liked: Record<string, string>
   items: CommunityItem[]
   crm: CrmItem[]
   /** CRM item id -> the community topic it was published to */
@@ -34,7 +35,7 @@ type State = {
   pagePublished: boolean
 }
 
-const STORAGE_KEY = 'brokers-demo-state-v4'
+const STORAGE_KEY = 'brokers-demo-state-v5'
 
 const initial = (): State => ({
   liked: {},
@@ -62,7 +63,8 @@ const load = (): State => {
 }
 
 type Store = State & {
-  toggleLike: (itemId: string) => void
+  /** set my reaction on a post; the same reaction again (or null) removes it */
+  react: (itemId: string, reaction: string | null) => void
   addItem: (item: CommunityItem, sourceId?: string) => void
   addComment: (itemId: string, comment: Comment, parentIndex?: number) => void
   clearFresh: () => void
@@ -108,8 +110,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const actions = useMemo(
     () => ({
-      toggleLike: (itemId: string) =>
-        setState((s) => ({ ...s, liked: { ...s.liked, [itemId]: !s.liked[itemId] } })),
+      react: (itemId: string, reaction: string | null) =>
+        setState((s) => {
+          const liked = { ...s.liked }
+          if (!reaction || liked[itemId] === reaction) delete liked[itemId]
+          else liked[itemId] = reaction
+          return { ...s, liked }
+        }),
       addItem: (item: CommunityItem, sourceId?: string) =>
         setState((s) => ({
           ...s,
