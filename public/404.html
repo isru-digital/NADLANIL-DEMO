@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="robots" content="noindex" />
+    <title>טוען...</title>
+    <script>
+      // Static hosts have no SPA rewrite: remember the deep link and bounce to the app root.
+      var base = '/' + location.pathname.split('/')[1] + '/';
+      sessionStorage.setItem('spa-path', location.pathname + location.search + location.hash);
+      location.replace(base);
+    </script>
+  </head>
+  <body></body>
+</html>
