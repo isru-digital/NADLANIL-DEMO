@@ -63,7 +63,7 @@ const features = [
   {
     to: '/app/crm',
     icon: KanbanSquare,
-    title: 'CRM פשוט',
+    title: 'CRM למתווך',
     text: 'לקוחות ונכסים על לוח אחד, מהפנייה הראשונה ועד הסגירה.',
   },
   {
@@ -173,7 +173,7 @@ export default function Home() {
               <motion.span {...rise(3)}>הקהילה של כולנו.</motion.span>
             </h1>
             <motion.p className="hero-sub" {...rise(4)}>
-              {PLATFORM_NAME} היא הבית המקצועי של מתווכים עצמאיים: קהילה פעילה, שיתופי פעולה, CRM פשוט ודף נחיתה
+              {PLATFORM_NAME} היא הבית המקצועי של מתווכים עצמאיים: קהילה פעילה, שיתופי פעולה, CRM למתווך ודף נחיתה
               אישי. בחינם, ובלי שהפלטפורמה לוקחת עמלה.
             </motion.p>
             <motion.div className="hero-cta" {...rise(5)}>
