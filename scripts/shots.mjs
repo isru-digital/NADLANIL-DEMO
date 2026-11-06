@@ -4,7 +4,7 @@ import fs from 'node:fs'
 const [outDir, ...targets] = process.argv.slice(2)
 fs.mkdirSync(outDir, { recursive: true })
 const exe = ['C:/Program Files/Google/Chrome/Application/chrome.exe', 'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe', 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'].find((p) => fs.existsSync(p))
-const base = process.env.BASE ?? 'http://localhost:5230/brokers-community-demo'
+const base = process.env.BASE ?? 'http://localhost:5230/NADLANIL-DEMO'
 const browser = await puppeteer.launch({ executablePath: exe, headless: 'new', args: ['--hide-scrollbars'] })
 for (const t of targets) {
   const [name, path, ...flags] = t.split('|')

@@ -7,7 +7,7 @@ const out = process.argv[2] ?? '_shots'
 const mobile = process.argv.includes('mobile')
 fs.mkdirSync(out, { recursive: true })
 const exe = ['C:/Program Files/Google/Chrome/Application/chrome.exe', 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'].find((p) => fs.existsSync(p))
-const base = process.env.BASE ?? 'http://localhost:5230/brokers-community-demo'
+const base = process.env.BASE ?? 'http://localhost:5230/NADLANIL-DEMO'
 const browser = await puppeteer.launch({ executablePath: exe, headless: 'new', args: ['--hide-scrollbars'] })
 const page = await browser.newPage()
 const errors = []

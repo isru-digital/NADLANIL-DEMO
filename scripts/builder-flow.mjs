@@ -7,7 +7,7 @@ const errors = []
 page.on('pageerror', (e) => errors.push(String(e)))
 page.on('console', (m) => m.type() === 'error' && errors.push(m.text().slice(0, 300)))
 await page.setViewport({ width: 1440, height: 900 })
-const base = process.env.BASE ?? 'http://localhost:5230/brokers-community-demo'
+const base = process.env.BASE ?? 'http://localhost:5230/NADLANIL-DEMO'
 const wait = (ms) => new Promise((r) => setTimeout(r, ms))
 const shot = (n) => page.screenshot({ path: `${out}/${n}.png` })
 const clickText = async (sel, text) => {
