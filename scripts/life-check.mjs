@@ -49,7 +49,7 @@ for (const [name, vp] of [
   check(`${name}: background loop is playing`, b.videoShown && b.videoReady >= 2 && b.videoTime !== a.videoTime, `${a.videoTime.toFixed(2)}s -> ${b.videoTime.toFixed(2)}s`)
   check(`${name}: birds are moving`, Math.abs(b.birdX - a.birdX) > 5, `${Math.round(a.birdX)} -> ${Math.round(b.birdX)}`)
   check(`${name}: cars are moving`, Math.abs(b.carY - a.carY) > 3, `${Math.round(a.carY)} -> ${Math.round(b.carY)}`)
-  check(`${name}: some windows are lit, not all`, b.lit > 0 && b.lit < b.windows, `${b.lit} of ${b.windows}`)
+  check(`${name}: no window lights are drawn`, b.windows === 0)
 
   // the drawing must sit exactly on the picture
   const align = await page.evaluate(() => {
@@ -71,7 +71,7 @@ for (const [name, vp] of [
   // debug view: full-strength picture, everything on, no interface, to judge placement by eye
   await page.addStyleTag({
     content:
-      '.hero-veil,.hero::after{display:none!important}.hero-bg img,.hero-live{opacity:1!important}.hero-in,.home-nav,.hero-scroll{visibility:hidden!important}.lw{opacity:1!important}.life-windows,.life-birds,.life-cars{opacity:1!important}',
+      '.hero-veil,.hero::after{display:none!important}.hero-bg img,.hero-live{opacity:1!important}.hero-in,.home-nav,.hero-scroll{visibility:hidden!important}.life-birds,.life-cars{opacity:1!important}',
   })
   await wait(400)
   await page.screenshot({ path: `${out}/life-${name}-debug.png` })

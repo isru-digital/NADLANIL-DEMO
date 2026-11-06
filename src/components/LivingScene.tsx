@@ -4,30 +4,6 @@ import { useEffect, useRef } from 'react'
 // coordinate space, so it sits exactly on the buildings at any screen size.
 const W = 1344
 const H = 752
-const px = (xPct: number, yPct: number) => [(xPct / 100) * W, (yPct / 100) * H] as const
-
-/** Windows that switch on and off: [x%, y%, width%, height%, cycle seconds, start offset seconds]. */
-const windows: [number, number, number, number, number, number][] = [
-  // the tall tower: right column
-  [86.7, 21.2, 1.5, 2.6, 19, -2],
-  [86.7, 38.3, 1.5, 2.4, 27, -15],
-  [86.7, 47.8, 1.5, 2.4, 23, -9],
-  [86.7, 14.6, 1.5, 2.6, 31, -22],
-  // the tall tower: middle column
-  [84.2, 31.6, 1.3, 2.4, 21, -6],
-  [84.2, 51.6, 1.3, 2.3, 29, -19],
-  [84.2, 10.8, 1.3, 2.5, 25, -12],
-  // the tall tower: balconies
-  [79.5, 31.7, 1.5, 2.0, 33, -4],
-  [80.4, 21.3, 1.4, 2.0, 26, -17],
-  // the towers on the horizon
-  [69.3, 27.0, 0.7, 1.1, 17, -8],
-  [70.6, 33.0, 0.7, 1.1, 24, -1],
-  [56.2, 27.2, 0.7, 1.1, 22, -13],
-  [56.9, 33.4, 0.7, 1.1, 18, -5],
-  [53.6, 31.2, 0.6, 1.0, 28, -20],
-  [63.6, 30.4, 0.7, 1.1, 20, -10],
-]
 
 /** A bird inside a flock: [dx, dy, scale, wing-beat seconds]. */
 const flockA: [number, number, number, number][] = [
@@ -84,8 +60,8 @@ function Flock({ birds, path, dur, begin }: { birds: typeof flockA; path: string
 }
 
 /**
- * Small signs of life drawn over the skyline: windows switching on, birds
- * crossing the sky, car lights on the roads. Quiet on purpose: it should be
+ * Small signs of life drawn over the skyline: birds crossing the sky and
+ * car lights on the roads. Quiet on purpose: it should be
  * felt more than noticed. Pauses when the hero is off screen.
  */
 export default function LivingScene() {
@@ -112,30 +88,7 @@ export default function LivingScene() {
             <feMergeNode in="SourceGraphic" />
           </feMerge>
         </filter>
-        <linearGradient id="life-window" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#ffe7ad" />
-          <stop offset="1" stopColor="#ffc35c" />
-        </linearGradient>
       </defs>
-
-      <g className="life-windows" filter="url(#life-glow)" fill="url(#life-window)">
-        {windows.map(([x, y, w, h, dur, begin], i) => {
-          const [cx, cy] = px(x, y)
-          const [cw, ch] = px(w, h)
-          return (
-            <rect key={i} className="lw" x={cx} y={cy} width={cw} height={ch} rx="0.8" opacity="0">
-              <animate
-                attributeName="opacity"
-                values="0;0;1;1;0;0"
-                keyTimes="0;0.06;0.085;0.62;0.66;1"
-                dur={`${dur}s`}
-                begin={`${begin}s`}
-                repeatCount="indefinite"
-              />
-            </rect>
-          )
-        })}
-      </g>
 
       <g className="life-birds" fill="none" strokeLinecap="round" strokeLinejoin="round">
         <Flock birds={flockA} path="M 1420,138 C 1080,96 620,150 -80,78" dur={44} begin={-9} />
