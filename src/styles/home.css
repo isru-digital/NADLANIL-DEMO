@@ -434,6 +434,10 @@
   gap: clamp(24px, 5vw, 72px);
   align-items: center;
 }
+/* on phones the label sits above the big number (see the 980px block) */
+.principle-label {
+  display: none;
+}
 .principle-num > span {
   display: block;
   font-family: var(--font-display);
@@ -442,6 +446,8 @@
   line-height: 0.86;
   white-space: nowrap;
   letter-spacing: -0.06em;
+  /* the tight tracking would clip the last glyph against the box edge */
+  padding-inline-start: 0.07em;
   background: linear-gradient(170deg, #f6e6b8 0%, var(--gold) 38%, #6f5519 100%);
   -webkit-background-clip: text;
   background-clip: text;
@@ -703,6 +709,24 @@
   }
   .principle-top {
     grid-template-columns: 1fr;
+    gap: 22px;
+  }
+  .principle-label {
+    display: flex;
+    margin-bottom: 18px;
+    font-size: 19px;
+    font-weight: 700;
+    gap: 12px;
+  }
+  .principle-label::before {
+    width: 44px;
+    height: 2px;
+  }
+  .principle-label-wide {
+    display: none;
+  }
+  .principle-copy h2 {
+    margin-top: 0;
   }
   .principle-grid,
   .steps {

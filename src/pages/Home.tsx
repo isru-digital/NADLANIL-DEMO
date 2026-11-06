@@ -257,12 +257,13 @@ export default function Home() {
         <div className="container">
           <div className="principle-top">
             <Reveal className="principle-num">
+              <strong className="eyebrow principle-label">העיקרון שלנו</strong>
               <span className="num">
                 <CountUp to={100} />%
               </span>
             </Reveal>
             <Reveal delay={0.12} className="principle-copy">
-              <span className="eyebrow">העיקרון שלנו</span>
+              <span className="eyebrow principle-label-wide">העיקרון שלנו</span>
               <h2>מהעמלה נשארת אצל המתווך.</h2>
               <p>
                 אתה מביא את הנכסים, את הלקוחות ואת העבודה הקשה. לכן כל העמלה שלך. הפלטפורמה לא לוקחת אחוזים מעסקאות
