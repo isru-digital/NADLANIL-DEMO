@@ -583,7 +583,14 @@
   inset-inline-start: 0;
   width: 64px;
   height: 1px;
-  background: var(--gold);
+  --sig-base: linear-gradient(var(--gold), var(--gold));
+}
+/* the three steps signal one after the other */
+.steps .step:nth-child(2)::before {
+  animation-delay: 0.3s;
+}
+.steps .step:nth-child(3)::before {
+  animation-delay: 0.6s;
 }
 .step-num {
   font-family: var(--font-display);
