@@ -1,0 +1,64 @@
+/* ==========================================================================
+   Phones and touch devices: drop the effects that cost the most to draw.
+   Blurred glass, blend modes and filters are recomputed on every frame when
+   something moves behind them, which is what makes a phone stutter.
+   This file is imported last; !important keeps it ahead of page styles that
+   load later.
+   ========================================================================== */
+@media (max-width: 980px), (hover: none) and (pointer: coarse) {
+  *,
+  *::before,
+  *::after {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+
+  /* surfaces that relied on the blur get a more solid background instead */
+  .topbar {
+    background: rgba(10, 15, 32, 0.97) !important;
+  }
+  .bottom-nav {
+    background: rgba(10, 15, 32, 0.98) !important;
+  }
+  .home-nav {
+    background: linear-gradient(180deg, rgba(6, 9, 20, 0.95), rgba(6, 9, 20, 0.7) 62%, rgba(6, 9, 20, 0)) !important;
+  }
+  .home-nav::after {
+    display: none !important;
+  }
+  .modal-scrim {
+    background: rgba(4, 6, 14, 0.86) !important;
+  }
+  .story-scrim {
+    background: rgba(4, 6, 14, 0.97) !important;
+  }
+  .float-bob {
+    background: linear-gradient(180deg, rgba(30, 39, 74, 0.97), rgba(14, 20, 42, 0.97)) !important;
+  }
+  .public-bar,
+  .toast,
+  .demo-tag {
+    background: rgba(12, 17, 38, 0.97) !important;
+  }
+
+  /* film grain is a full-screen blend layer */
+  .grain::after {
+    display: none !important;
+  }
+  /* the wing beat is the one hero animation that cannot run off the main thread:
+     on phones the birds glide instead */
+  .life-bird {
+    animation: none !important;
+  }
+  /* a fixed page background repaints on every scroll step */
+  .shell {
+    background-attachment: scroll !important;
+  }
+}
+
+/* older browsers without container units cannot place the skyline drawing: hide it */
+@supports not (width: 1cqw) {
+  .hero-life {
+    display: none !important;
+  }
+}

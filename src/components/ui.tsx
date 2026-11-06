@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'framer-motion'
@@ -28,11 +28,13 @@ export function BrandLockup({ size = 'md', slogan = true }: { size?: 'md' | 'lg'
   return (
     <div className={`brand-lockup${size === 'lg' ? ' is-lg' : ''}`}>
       <div className="brand-lockup-name">
+        <i className="brand-rule is-start" aria-hidden />
         <i className="brand-diamond" aria-hidden />
         <span>
           <BrandName />
         </span>
         <i className="brand-diamond" aria-hidden />
+        <i className="brand-rule is-end" aria-hidden />
       </div>
       {slogan && (
         <div className="brand-lockup-tag">
@@ -147,12 +149,15 @@ export function DemoTag({ fixed = false }: { fixed?: boolean }) {
   return <span className={`demo-tag${fixed ? ' demo-tag-fixed' : ''}`}>נתוני דמו</span>
 }
 
-/** Scroll reveal: one easing family and rhythm for the whole product. */
+/**
+ * Scroll reveal: one easing family and rhythm for the whole product.
+ * A plain CSS transition (opacity + transform) switched on when the element
+ * nears the screen, so scrolling stays smooth on phones.
+ */
 export function Reveal({
   children,
   delay = 0,
-  y = 22,
-  className,
+  className = '',
   as = 'div',
 }: {
   children: ReactNode
@@ -161,14 +166,30 @@ export function Reveal({
   className?: string
   as?: 'div' | 'li' | 'section' | 'article'
 }) {
-  const Comp = motion[as]
+  const ref = useRef<HTMLElement>(null)
+  const [shown, setShown] = useState(() => typeof IntersectionObserver === 'undefined')
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el || shown) return
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return
+        setShown(true)
+        io.disconnect()
+      },
+      { rootMargin: '0px 0px -60px 0px' },
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [shown])
+
+  const Comp = as as 'div'
   return (
     <Comp
-      className={className}
-      initial={{ opacity: 0, y }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '0px 0px -60px 0px' }}
-      transition={{ duration: 0.7, delay, ease: EASE }}
+      ref={ref as React.Ref<HTMLDivElement>}
+      className={`reveal${shown ? ' is-in' : ''} ${className}`}
+      style={delay ? { transitionDelay: `${delay}s` } : undefined}
     >
       {children}
     </Comp>

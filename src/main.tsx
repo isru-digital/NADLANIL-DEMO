@@ -6,6 +6,7 @@ import { MotionConfig } from 'framer-motion'
 import App from './App'
 import { StoreProvider } from './store'
 import { PLATFORM_NAME } from './config'
+import './styles/lite.css'
 
 document.title = `${PLATFORM_NAME} - קהילה חינמית למתווכים עצמאיים`
 

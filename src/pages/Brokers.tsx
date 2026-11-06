@@ -8,6 +8,7 @@ import type { Broker } from '../data/demo'
 import { useStore } from '../store'
 import { EASE, Modal, PageHead } from '../components/ui'
 import '../styles/brokers.css'
+import '../styles/community.css'
 
 export default function Brokers() {
   const { toast } = useStore()

@@ -1,17 +1,4 @@
 /* App shell: sidebar on wide screens, top bar + bottom nav on phones */
-.logo {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-}
-.logo-name {
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 17px;
-  letter-spacing: 0;
-  color: var(--text);
-  white-space: nowrap;
-}
 
 .shell {
   display: grid;
@@ -202,31 +189,6 @@
   min-width: 0;
 }
 
-.page-head {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 20px;
-  flex-wrap: wrap;
-  margin-bottom: clamp(22px, 3vw, 36px);
-}
-.page-head h1 {
-  margin-top: 10px;
-  font-size: clamp(30px, 3.4vw, 44px);
-  font-weight: 800;
-  letter-spacing: -0.02em;
-}
-.page-head p {
-  margin-top: 8px;
-  max-width: 60ch;
-  color: var(--text-dim);
-  font-size: 17px;
-}
-.page-head-actions {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
 
 .more-sheet {
   display: grid;

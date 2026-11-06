@@ -818,6 +818,11 @@
   display: grid;
   gap: 14px;
 }
+/* posts that are off screen are not laid out or painted until they come near */
+.ci-wrap:not(:has(.is-fresh)) {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 460px;
+}
 .fb.ci {
   transition:
     border-color var(--t-slow) var(--ease),

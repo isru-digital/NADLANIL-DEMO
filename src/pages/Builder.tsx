@@ -20,6 +20,8 @@ import { useStore } from '../store'
 import { EASE, Modal, PageHead } from '../components/ui'
 import LandingTemplate from '../templates/LandingTemplate'
 import '../styles/builder.css'
+import '../styles/community.css'
+import '../styles/crm.css'
 
 const steps = [
   { id: 'details', label: 'פרטים', anchor: 'lp-hero' },

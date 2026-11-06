@@ -9,6 +9,7 @@ import type { CrmItem } from '../data/demo'
 import { useStore } from '../store'
 import { BackButton, DemoTag, EASE, Logo } from '../components/ui'
 import '../styles/join.css'
+import '../styles/topics.css'
 
 const steps = ['הפרטים שלך', 'על הקהילה', 'הערים שלך', 'הנכס הראשון', 'הדף העסקי שלך']
 const whyIcons = [Lightbulb, Compass, HeartHandshake]

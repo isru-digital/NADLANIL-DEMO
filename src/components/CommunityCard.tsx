@@ -34,6 +34,7 @@ import { useStore } from '../store'
 import { Avatar, EASE, Photo } from './ui'
 import '../styles/community.css'
 import '../styles/feed.css'
+import '../styles/topics.css'
 
 /**
  * One community post, Facebook-style. The same component renders the feed and the

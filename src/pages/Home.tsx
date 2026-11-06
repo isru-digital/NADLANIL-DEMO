@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import type { MouseEvent } from 'react'
+import type { MouseEvent, RefObject } from 'react'
 import { Link } from 'react-router-dom'
 import { animate, motion, useInView, useMotionValue, useScroll, useSpring, useTransform } from 'framer-motion'
+import type { MotionValue } from 'framer-motion'
 import {
   ArrowLeft,
   Check,
@@ -84,6 +85,32 @@ function LivingSkyline() {
   )
 }
 
+/** The picture, the dark veil and the living layer behind the hero. */
+function HeroBackdrop({ life, lite = false, y }: { life: boolean; lite?: boolean; y?: MotionValue<string> }) {
+  const style = y ? { y } : undefined
+  return (
+    <>
+      <motion.div className="hero-bg" style={style} aria-hidden>
+        <img src={asset('img/skyline.webp')} alt="" />
+        {!lite && <LivingSkyline />}
+      </motion.div>
+      <div className="hero-veil" aria-hidden />
+      {life && (
+        <motion.div className="hero-life" style={style} aria-hidden>
+          <LivingScene lite={lite} />
+        </motion.div>
+      )}
+    </>
+  )
+}
+
+/** Desktop only: the backdrop drifts a little as the hero scrolls away. */
+function ParallaxBackdrop({ heroRef, life }: { heroRef: RefObject<HTMLElement>; life: boolean }) {
+  const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] })
+  const y = useTransform(scrollYProgress, [0, 1], ['0%', '18%'])
+  return <HeroBackdrop life={life} y={y} />
+}
+
 const features = [
   {
     to: '/app/community',
@@ -154,8 +181,8 @@ const steps = [
 export default function Home() {
   const heroRef = useRef<HTMLElement>(null)
   const [motionOk] = useState(() => !window.matchMedia('(prefers-reduced-motion: reduce)').matches)
-  const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] })
-  const bgY = useTransform(scrollYProgress, [0, 1], ['0%', '18%'])
+  // phones and touch screens get a lighter hero: no video, no parallax, birds only
+  const [lite] = useState(() => window.matchMedia('(max-width: 980px), (hover: none) and (pointer: coarse)').matches)
   const mx = useMotionValue(0)
   const my = useMotionValue(0)
   const sx = useSpring(mx, { stiffness: 60, damping: 18 })
@@ -200,17 +227,8 @@ export default function Home() {
       </header>
 
       {/* ------------------------------------------------------------ hero */}
-      <section className="hero grain" ref={heroRef} onMouseMove={onMove}>
-        <motion.div className="hero-bg" style={{ y: bgY }} aria-hidden>
-          <img src={asset('img/skyline.webp')} alt="" />
-          <LivingSkyline />
-        </motion.div>
-        <div className="hero-veil" aria-hidden />
-        {motionOk && (
-          <motion.div className="hero-life" style={{ y: bgY }} aria-hidden>
-            <LivingScene />
-          </motion.div>
-        )}
+      <section className="hero grain" ref={heroRef} onMouseMove={lite ? undefined : onMove}>
+        {lite ? <HeroBackdrop life={motionOk} lite /> : <ParallaxBackdrop heroRef={heroRef} life={motionOk} />}
 
         <div className="container hero-in" id="content">
           <div className="hero-copy">

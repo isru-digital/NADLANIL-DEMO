@@ -126,7 +126,7 @@
   pointer-events: none;
   container-type: size;
 }
-.hero-life svg {
+.life-scene {
   --scene-w: max(100cqw, calc(100cqh * 1.7872));
   --scene-h: max(100cqh, calc(100cqw / 1.7872));
   position: absolute;
@@ -134,27 +134,93 @@
   height: var(--scene-h);
   left: calc((100cqw - var(--scene-w)) * 0.6);
   top: calc((100cqh - var(--scene-h)) * 0.5);
-  overflow: visible;
 }
-.life-birds {
-  stroke: #e9e2cf;
-  stroke-width: 1.3px;
-  opacity: 0.45;
+/* a mover is the size of the picture, so translate(%) is a position on the picture */
+.life-mover {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
 }
-.life-birds path {
-  vector-effect: non-scaling-stroke;
+.life-fly {
+  animation-name: life-fly;
 }
-.life-flock {
-  transform-box: fill-box;
-  transform-origin: center;
+.life-drive {
+  animation-name: life-drive;
 }
-@media (max-width: 760px) {
-  .life-flock {
-    transform: scale(0.6);
+@keyframes life-fly {
+  0% {
+    transform: translate(var(--x0), var(--y0));
+  }
+  50% {
+    transform: translate(var(--x1), var(--y1));
+  }
+  100% {
+    transform: translate(var(--x2), var(--y2));
   }
 }
-.life-cars {
-  opacity: 0.75;
+@keyframes life-drive {
+  0% {
+    transform: translate(var(--x0), var(--y0));
+    opacity: 0;
+  }
+  12%,
+  86% {
+    opacity: 1;
+  }
+  50% {
+    transform: translate(var(--x1), var(--y1));
+  }
+  100% {
+    transform: translate(var(--x2), var(--y2));
+    opacity: 0;
+  }
+}
+.life-flock {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+.life-bird {
+  position: absolute;
+  display: block;
+  transform-origin: 50% 60%;
+  will-change: transform;
+  animation: life-flap 0.42s ease-in-out infinite alternate;
+}
+.life-bird svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  fill: none;
+  stroke: #e9e2cf;
+  /* in drawing units; a non-scaling stroke would force a repaint on every flap frame */
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.45;
+}
+@keyframes life-flap {
+  from {
+    transform: scaleY(1);
+  }
+  to {
+    transform: scaleY(-0.5);
+  }
+}
+.life-car {
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 6px 1px currentColor;
+  opacity: 0.7;
+}
+.life-scene.is-paused * {
+  animation-play-state: paused;
 }
 .hero-veil {
   position: absolute;
@@ -643,13 +709,18 @@
   inset-inline-start: 0;
   width: 64px;
   height: 1px;
-  --sig-base: linear-gradient(var(--gold), var(--gold));
+  background: var(--gold);
+}
+.step::after {
+  inset-block-start: -1px;
+  width: 20px;
+  --sig-travel: -220%;
 }
 /* the three steps signal one after the other */
-.steps .step:nth-child(2)::before {
+.steps .step:nth-child(2)::after {
   animation-delay: 0.3s;
 }
-.steps .step:nth-child(3)::before {
+.steps .step:nth-child(3)::after {
   animation-delay: 0.6s;
 }
 .step-num {
@@ -775,6 +846,12 @@
   .principle-label::before {
     width: 44px;
     height: 2px;
+  }
+  .principle-label::after {
+    inset-block-start: calc(50% - 1px);
+    width: 16px;
+    height: 2px;
+    --sig-travel: -175%;
   }
   .principle-label-wide {
     display: none;

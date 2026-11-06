@@ -1,4 +1,5 @@
-// Confirms the "signal" light really moves along the gold accent rules, and captures frames.
+// Confirms the "signal" light really runs along the gold accent rules, and captures frames.
+// The light is each rule's ::after, moved with transform only.
 import puppeteer from 'puppeteer-core'
 import fs from 'node:fs'
 
@@ -12,32 +13,32 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms))
 const results = []
 
 const targets = [
-  ['/', '.hero-copy .brand-lockup-name', '::before', 'lockup right rule'],
-  ['/', '.hero-copy .brand-lockup-name', '::after', 'lockup left rule'],
-  ['/', '.principle .eyebrow', '::before', 'eyebrow rule'],
-  ['/', '.steps .step', '::before', 'step rule'],
-  ['/app/crm', '.page-head .eyebrow', '::before', 'app eyebrow rule'],
-  ['/f/demo', '.folder-for', '::before', 'folder cover rule'],
+  ['/', '.hero-copy .brand-rule.is-start', 'lockup right rule'],
+  ['/', '.hero-copy .brand-rule.is-end', 'lockup left rule'],
+  ['/', '.principle-copy .eyebrow', 'eyebrow rule'],
+  ['/', '.steps .step', 'step rule'],
+  ['/app/crm', '.page-head .eyebrow', 'app eyebrow rule'],
+  ['/f/demo', '.folder-for', 'folder cover rule'],
 ]
 let current = ''
-for (const [path, sel, pseudo, name] of targets) {
+for (const [path, sel, name] of targets) {
   if (path !== current) {
-    await page.goto(base + path, { waitUntil: 'networkidle0' })
-    await wait(1500)
+    await page.goto(base + path, { waitUntil: 'load' })
+    await wait(1800)
     current = path
   }
   const samples = []
-  for (let i = 0; i < 6; i++) {
-    samples.push(await page.evaluate((sel, pseudo) => getComputedStyle(document.querySelector(sel), pseudo).backgroundPosition.split(',')[0].trim(), sel, pseudo))
-    await wait(170)
+  for (let i = 0; i < 7; i++) {
+    samples.push(await page.evaluate((sel) => getComputedStyle(document.querySelector(sel), '::after').transform, sel))
+    await wait(160)
   }
   const distinct = new Set(samples).size
-  results.push(`${distinct >= 3 ? 'PASS' : 'FAIL'}  ${name} moves  [${samples[0]} ... ${samples[3]}]`)
+  results.push(`${distinct >= 3 ? 'PASS' : 'FAIL'}  ${name} signals  [${distinct} positions seen]`)
 }
 
 // frames of the hero lockup, to look at
-await page.goto(base + '/', { waitUntil: 'networkidle0' })
-await wait(1600)
+await page.goto(base + '/', { waitUntil: 'load' })
+await wait(1800)
 const box = await page.evaluate(() => {
   const r = document.querySelector('.hero-copy .brand-lockup').getBoundingClientRect()
   return { x: r.x - 16, y: r.y - 12, width: r.width + 32, height: r.height + 24 }

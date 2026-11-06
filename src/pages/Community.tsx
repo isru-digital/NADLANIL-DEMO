@@ -312,11 +312,11 @@ export default function Community() {
           )}
 
           <div className="ci-list">
-            <AnimatePresence mode="popLayout" initial={false}>
+            <AnimatePresence initial={false}>
               {visible.map((it) => (
                 <motion.div
                   key={it.id}
-                  layout
+                  className="ci-wrap"
                   initial={{ opacity: 0, y: 26, scale: 0.96 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.97 }}
