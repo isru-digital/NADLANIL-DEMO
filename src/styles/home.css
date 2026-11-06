@@ -102,6 +102,63 @@
   object-position: 60% 50%;
   opacity: 0.55;
 }
+.hero-live {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 60% 50%;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 1400ms var(--ease);
+}
+.hero-live.is-ready {
+  opacity: 0.55;
+}
+/* Signs of life over the skyline. The box below reproduces the picture's
+   "cover" placement (60% 50%), so the drawing lines up with the buildings. */
+.hero-life {
+  position: absolute;
+  inset: -6% 0 -6%;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  container-type: size;
+}
+.hero-life svg {
+  --scene-w: max(100cqw, calc(100cqh * 1.7872));
+  --scene-h: max(100cqh, calc(100cqw / 1.7872));
+  position: absolute;
+  width: var(--scene-w);
+  height: var(--scene-h);
+  left: calc((100cqw - var(--scene-w)) * 0.6);
+  top: calc((100cqh - var(--scene-h)) * 0.5);
+  overflow: visible;
+}
+.life-windows {
+  opacity: 0.36;
+}
+.life-birds {
+  stroke: #e9e2cf;
+  stroke-width: 1.3px;
+  opacity: 0.45;
+}
+.life-birds path {
+  vector-effect: non-scaling-stroke;
+}
+.life-flock {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+@media (max-width: 760px) {
+  .life-flock {
+    transform: scale(0.6);
+  }
+}
+.life-cars {
+  opacity: 0.75;
+}
 .hero-veil {
   position: absolute;
   inset: 0;

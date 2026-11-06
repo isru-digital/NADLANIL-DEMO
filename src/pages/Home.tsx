@@ -18,6 +18,7 @@ import {
 import { PLATFORM_NAME, asset } from '../config'
 import { brokers, formatPriceShort } from '../data/demo'
 import { Avatar, BrandLockup, DemoTag, EASE, Logo, Reveal } from '../components/ui'
+import LivingScene from '../components/LivingScene'
 import '../styles/builder.css'
 import '../styles/home.css'
 
@@ -37,6 +38,50 @@ function CountUp({ to }: { to: number }) {
     return () => controls.stop()
   }, [inView, to])
   return <span ref={ref}>{value}</span>
+}
+
+/**
+ * The skyline behind the hero, alive: a short silent loop of the same picture
+ * (cars on the road, birds, windows lighting up). It fades in over the still
+ * image once it can play, pauses when the hero is off screen, and is skipped
+ * entirely for visitors who asked for reduced motion.
+ */
+function LivingSkyline() {
+  const ref = useRef<HTMLVideoElement>(null)
+  const [ready, setReady] = useState(false)
+  const [enabled] = useState(() => !window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+
+  useEffect(() => {
+    const video = ref.current
+    if (!video) return
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) video.play().catch(() => {})
+        else video.pause()
+      },
+      { threshold: 0.05 },
+    )
+    io.observe(video)
+    return () => io.disconnect()
+  }, [enabled])
+
+  if (!enabled) return null
+  return (
+    <video
+      ref={ref}
+      className={`hero-live${ready ? ' is-ready' : ''}`}
+      src={asset('media/skyline-live.mp4')}
+      poster={asset('img/skyline.webp')}
+      muted
+      loop
+      autoPlay
+      playsInline
+      preload="auto"
+      disablePictureInPicture
+      tabIndex={-1}
+      onPlaying={() => setReady(true)}
+    />
+  )
 }
 
 const features = [
@@ -108,6 +153,7 @@ const steps = [
 
 export default function Home() {
   const heroRef = useRef<HTMLElement>(null)
+  const [motionOk] = useState(() => !window.matchMedia('(prefers-reduced-motion: reduce)').matches)
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] })
   const bgY = useTransform(scrollYProgress, [0, 1], ['0%', '18%'])
   const mx = useMotionValue(0)
@@ -157,8 +203,14 @@ export default function Home() {
       <section className="hero grain" ref={heroRef} onMouseMove={onMove}>
         <motion.div className="hero-bg" style={{ y: bgY }} aria-hidden>
           <img src={asset('img/skyline.webp')} alt="" />
+          <LivingSkyline />
         </motion.div>
         <div className="hero-veil" aria-hidden />
+        {motionOk && (
+          <motion.div className="hero-life" style={{ y: bgY }} aria-hidden>
+            <LivingScene />
+          </motion.div>
+        )}
 
         <div className="container hero-in" id="content">
           <div className="hero-copy">
