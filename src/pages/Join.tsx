@@ -3,7 +3,7 @@ import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ArrowLeft, ArrowRight, Building2, Check, Compass, HeartHandshake, Home, LayoutTemplate, Lightbulb, User } from 'lucide-react'
-import { CURRENT_BROKER_ID, PLATFORM_NAME, asset } from '../config'
+import { CURRENT_BROKER_ID, PLATFORM_NAME, PLATFORM_TAGLINE, asset } from '../config'
 import { brokerById, cities, whyCommunity } from '../data/demo'
 import type { CrmItem } from '../data/demo'
 import { useStore } from '../store'
@@ -409,7 +409,7 @@ export default function Join() {
 
       <footer className="join-foot">
         <span>
-          {PLATFORM_NAME} · קהילה חינמית למתווכים עצמאיים · 100% מהעמלה נשארת אצל המתווך
+          {PLATFORM_NAME} · {PLATFORM_TAGLINE.join(' · ')}
         </span>
       </footer>
     </div>

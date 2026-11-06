@@ -4,17 +4,63 @@ import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { ArrowRight, Check, X } from 'lucide-react'
-import { PLATFORM_NAME, asset } from '../config'
+import { PLATFORM_NAME, PLATFORM_TAGLINE, asset } from '../config'
 import { useStore } from '../store'
 
 export const EASE = [0.22, 1, 0.36, 1] as const
+
+/** The platform name, with a trailing Latin suffix (for example "IL") picked out in gold. */
+export function BrandName() {
+  const m = PLATFORM_NAME.match(/^(.*\S)\s+([A-Za-z]{2,4})$/)
+  if (!m) return <>{PLATFORM_NAME}</>
+  return (
+    <>
+      {m[1]} <span className="brand-il">{m[2]}</span>
+    </>
+  )
+}
+
+/**
+ * The name set between two thin gold rules and diamonds, with the slogan under it.
+ * The ornaments are drawn in CSS, not typed as characters.
+ */
+export function BrandLockup({ size = 'md', slogan = true }: { size?: 'md' | 'lg'; slogan?: boolean }) {
+  return (
+    <div className={`brand-lockup${size === 'lg' ? ' is-lg' : ''}`}>
+      <div className="brand-lockup-name">
+        <i className="brand-diamond" aria-hidden />
+        <span>
+          <BrandName />
+        </span>
+        <i className="brand-diamond" aria-hidden />
+      </div>
+      {slogan && (
+        <div className="brand-lockup-tag">
+          {PLATFORM_TAGLINE.map((part, i) => {
+            const [num, ...rest] = part.split(' ')
+            return (
+              <span key={part}>
+                {i > 0 && <i aria-hidden />}
+                <b className="num">{num}</b> {rest.join(' ')}
+              </span>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
 
 /** The supplied logo mark. Always the real file, never a substitute icon. */
 export function Logo({ size = 36, withName = false }: { size?: number; withName?: boolean }) {
   return (
     <span className="logo">
       <img src={asset('logo.png')} alt="" width={Math.round(size * 1.54)} height={size} style={{ height: size, width: 'auto' }} />
-      {withName && <span className="logo-name">{PLATFORM_NAME}</span>}
+      {withName && (
+        <span className="logo-name">
+          <BrandName />
+        </span>
+      )}
     </span>
   )
 }

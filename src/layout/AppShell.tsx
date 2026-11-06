@@ -12,7 +12,7 @@ import {
   RotateCcw,
   Users,
 } from 'lucide-react'
-import { CURRENT_BROKER_ID } from '../config'
+import { CURRENT_BROKER_ID, PLATFORM_TAGLINE } from '../config'
 import { brokerById } from '../data/demo'
 import { useStore } from '../store'
 import { Avatar, BackButton, DemoTag, EASE, Logo, Modal } from '../components/ui'
@@ -87,8 +87,15 @@ export default function AppShell() {
 
         <div className="sidebar-foot">
           <div className="side-principle">
-            <strong className="gold-text num">100%</strong>
-            <span>מהעמלה נשארת אצלך. הפלטפורמה לא לוקחת עמלה.</span>
+            {PLATFORM_TAGLINE.map((part) => {
+              const [num, ...rest] = part.split(' ')
+              return (
+                <div key={part}>
+                  <strong className="gold-text num">{num}</strong>
+                  <span>{rest.join(' ')}</span>
+                </div>
+              )
+            })}
           </div>
           <div className="side-user">
             <Avatar src={me.avatar} name={me.name} size={40} ring />

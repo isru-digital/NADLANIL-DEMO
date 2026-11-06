@@ -17,7 +17,7 @@ import {
 } from 'lucide-react'
 import { PLATFORM_NAME, asset } from '../config'
 import { brokers, formatPriceShort } from '../data/demo'
-import { Avatar, DemoTag, EASE, Logo, Reveal } from '../components/ui'
+import { Avatar, BrandLockup, DemoTag, EASE, Logo, Reveal } from '../components/ui'
 import '../styles/builder.css'
 import '../styles/home.css'
 
@@ -162,9 +162,9 @@ export default function Home() {
 
         <div className="container hero-in" id="content">
           <div className="hero-copy">
-            <motion.span className="eyebrow" {...rise(0)}>
-              קהילה חינמית למתווכים עצמאיים
-            </motion.span>
+            <motion.div className="hero-brand" {...rise(0)}>
+              <BrandLockup />
+            </motion.div>
             <h1>
               <motion.span {...rise(1)}>הנכסים שלך.</motion.span>
               <motion.span {...rise(2)} className="gold-text">
@@ -354,12 +354,12 @@ export default function Home() {
         <div className="container">
           <Reveal className="final-card grain">
             <Logo size={54} />
+            <BrandLockup size="lg" />
             <h2>
               מקום אחד למתווכים
               <br />
               שעובדים בשביל עצמם.
             </h2>
-            <p>קהילה חינמית. 100% מהעמלה אצלך.</p>
             <Link to="/join" className="btn btn-gold btn-lg">
               הצטרפות חינם
               <ArrowLeft />

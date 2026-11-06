@@ -117,8 +117,11 @@
   gap: clamp(30px, 5vw, 80px);
   align-items: center;
 }
+.hero-brand {
+  display: flex;
+}
 .hero-copy h1 {
-  margin-top: 22px;
+  margin-top: 26px;
   font-size: clamp(2.9rem, 5.3vw, 5.3rem);
   font-weight: 800;
   line-height: 1.02;
@@ -614,7 +617,7 @@
     linear-gradient(180deg, var(--navy-800), var(--navy-900));
 }
 .final-card h2 {
-  margin-top: 10px;
+  margin-top: 16px;
   font-size: clamp(2.1rem, 5vw, 4.2rem);
   font-weight: 800;
   letter-spacing: -0.03em;

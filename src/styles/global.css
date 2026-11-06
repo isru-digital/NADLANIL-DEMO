@@ -519,6 +519,94 @@ ul {
   transition: transform 900ms var(--ease);
 }
 
+.brand-il {
+  background: linear-gradient(100deg, #f1dca6 0%, var(--gold) 55%, #a8842f 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  unicode-bidi: isolate;
+}
+.brand-lockup {
+  --bl-size: 21px;
+  --bl-rule: 46px;
+  display: inline-grid;
+  justify-items: center;
+  gap: 9px;
+}
+.brand-lockup-name {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--font-display);
+  font-size: var(--bl-size);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+.brand-lockup-name::before,
+.brand-lockup-name::after {
+  content: '';
+  width: var(--bl-rule);
+  height: 1px;
+}
+.brand-lockup-name::before {
+  background: linear-gradient(to left, var(--gold), transparent);
+}
+.brand-lockup-name::after {
+  background: linear-gradient(to right, var(--gold), transparent);
+}
+.brand-diamond {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  background: var(--gold);
+  transform: rotate(45deg);
+  box-shadow: 0 0 0 3px rgba(201, 162, 75, 0.18);
+}
+.brand-lockup-tag {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 14px;
+  font-family: var(--font-display);
+  font-size: 14.5px;
+  font-weight: 500;
+  color: var(--text-dim);
+}
+.brand-lockup-tag span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.brand-lockup-tag b {
+  font-weight: 800;
+  color: var(--gold-soft);
+}
+.brand-lockup-tag i {
+  width: 1px;
+  height: 14px;
+  margin-inline-end: 8px;
+  background: var(--line-gold);
+}
+.brand-lockup.is-lg {
+  --bl-size: clamp(30px, 5.2vw, 54px);
+  --bl-rule: clamp(34px, 8vw, 120px);
+  gap: 14px;
+}
+.brand-lockup.is-lg .brand-lockup-name {
+  gap: clamp(10px, 1.6vw, 20px);
+  letter-spacing: -0.03em;
+}
+.brand-lockup.is-lg .brand-diamond {
+  width: 9px;
+  height: 9px;
+}
+.brand-lockup.is-lg .brand-lockup-tag {
+  font-size: clamp(15px, 1.6vw, 19px);
+}
+
 .back-btn {
   display: inline-flex;
   align-items: center;

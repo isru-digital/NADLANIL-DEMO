@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import { ArrowLeft } from 'lucide-react'
 import { PLATFORM_NAME } from '../config'
 import { aboutSections } from '../data/demo'
-import { BackButton, DemoTag, EASE, Logo, Reveal } from '../components/ui'
+import { BackButton, BrandLockup, DemoTag, EASE, Logo, Reveal } from '../components/ui'
 import '../styles/home.css'
 import '../styles/join.css'
 
@@ -91,8 +91,8 @@ export default function About() {
         <div className="container">
           <Reveal className="final-card grain">
             <Logo size={54} />
+            <BrandLockup size="lg" />
             <h2>רוצים להיות חלק מזה?</h2>
-            <p>קהילה חינמית. 100% מהעמלה אצלך.</p>
             <Link to="/join" className="btn btn-gold btn-lg">
               הצטרפות חינם
               <ArrowLeft />
