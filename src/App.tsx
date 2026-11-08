@@ -1,3 +1,4 @@
+import type { ReactElement } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import AppShell from './layout/AppShell'
 import { Toaster } from './components/ui'
@@ -11,12 +12,13 @@ import FolderPage from './pages/FolderPage'
 import PublicPage from './pages/PublicPage'
 import FolderPublic from './pages/FolderPublic'
 import Join from './pages/Join'
+import VersionSwitch from './components/VersionSwitch'
 
-export default function App() {
+export default function App({ home }: { home?: ReactElement }) {
   return (
     <>
       <Routes>
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={home ?? <Home />} />
         <Route path="/app" element={<AppShell />}>
           <Route index element={<Dashboard />} />
           <Route path="community" element={<Community />} />
@@ -31,6 +33,7 @@ export default function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <Toaster />
+      <VersionSwitch />
     </>
   )
 }

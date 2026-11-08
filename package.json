@@ -5,7 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite --port 5230 --strictPort",
+    "dev:green": "vite --mode green --port 5240 --strictPort",
     "build": "tsc --noEmit && vite build",
+    "build:green": "vite build --mode green",
+    "build:all": "npm run build && npm run build:green",
     "preview": "vite preview --port 5231"
   },
   "dependencies": {

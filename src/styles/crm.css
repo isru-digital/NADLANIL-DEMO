@@ -20,14 +20,14 @@
   padding: 10px;
   border-radius: var(--r-lg);
   border: 1px solid var(--line);
-  background: rgba(6, 9, 20, 0.36);
+  background: rgb(var(--k1) / 0.36);
   transition:
     border-color var(--t) var(--ease),
     background-color var(--t) var(--ease);
 }
 .kan-col.is-over {
   border-color: var(--gold);
-  background: rgba(201, 162, 75, 0.08);
+  background: rgb(var(--g) / 0.08);
 }
 .kan-head {
   display: flex;
@@ -47,7 +47,7 @@
   height: 24px;
   padding: 0 7px;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.07);
+  background: rgb(var(--w) / 0.07);
   font-family: var(--font-display);
   font-size: 13px;
   font-weight: 600;
@@ -70,7 +70,7 @@
 }
 .dot-negotiation {
   background: var(--gold);
-  box-shadow: 0 0 0 4px rgba(201, 162, 75, 0.2);
+  box-shadow: 0 0 0 4px rgb(var(--g) / 0.2);
 }
 .dot-closed {
   background: var(--success);
@@ -201,7 +201,7 @@
   font-size: 13.5px;
   color: var(--gold-soft);
   border: 1px solid var(--line-gold);
-  background: rgba(201, 162, 75, 0.08);
+  background: rgb(var(--g) / 0.08);
 }
 .kan-publish:hover {
   color: var(--on-accent);
@@ -250,7 +250,7 @@
   padding: 4px 14px;
   border-radius: var(--r-md);
   border: 1px solid var(--line);
-  background: rgba(6, 9, 20, 0.35);
+  background: rgb(var(--k1) / 0.35);
 }
 .publish legend {
   display: inline-flex;
@@ -309,7 +309,7 @@
   width: 46px;
   height: 28px;
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.12);
+  background: rgb(var(--w) / 0.12);
   transition: background-color var(--t) var(--ease);
 }
 .switch i {
@@ -397,7 +397,7 @@
   height: 46px;
   margin-bottom: 8px;
   border-radius: 50%;
-  border: 3px solid rgba(201, 162, 75, 0.2);
+  border: 3px solid rgb(var(--g) / 0.2);
   border-top-color: var(--gold);
   animation: spin 0.8s linear infinite;
 }
@@ -431,11 +431,11 @@
   height: 92px;
   border-radius: 50%;
   color: var(--on-accent);
-  background: linear-gradient(160deg, #ecd391, var(--gold) 55%, #a8842f);
+  background: linear-gradient(160deg, var(--gold-hi5), var(--gold) 55%, var(--gold-lo2));
   box-shadow:
-    0 0 0 10px rgba(201, 162, 75, 0.14),
-    0 0 0 22px rgba(201, 162, 75, 0.06),
-    0 24px 60px -16px rgba(201, 162, 75, 0.7);
+    0 0 0 10px rgb(var(--g) / 0.14),
+    0 0 0 22px rgb(var(--g) / 0.06),
+    0 24px 60px -16px rgb(var(--g) / 0.7);
 }
 .success-ring svg {
   width: 52px;

@@ -36,7 +36,7 @@ const rise = (i: number) => ({
  * Counts from one number to another when it scrolls into view. The final number is
  * what is rendered first, so nothing wrong is ever shown if the count never starts.
  */
-function CountUp({ from = 0, to }: { from?: number; to: number }) {
+export function CountUp({ from = 0, to }: { from?: number; to: number }) {
   const ref = useRef<HTMLSpanElement>(null)
   const inView = useInView(ref, { once: true, margin: '0px 0px -120px 0px' })
   const [value, setValue] = useState(to)
@@ -124,7 +124,7 @@ function ParallaxBackdrop({ heroRef, life }: { heroRef: RefObject<HTMLElement>; 
 
 type Feature = { to?: string; icon: LucideIcon; title: string; text: string; wide?: boolean; visual?: 'faces' | 'templates' }
 
-const features: Feature[] = [
+export const features: Feature[] = [
   { to: '/app/community', icon: Users, title: 'קהילה ענקית למתווכים', text: 'מתווכים מכל הארץ, במקום אחד.', wide: true, visual: 'faces' },
   { to: '/app/community?topic=coop', icon: Handshake, title: 'שת"פ בכל הארץ', text: 'נכס, הפניה או חיפוש לקונה, עם כל מתווך בכל עיר.' },
   { icon: Scale, title: 'מחירים מוזלים', text: 'שמאים, עורכי דין ועוד, בעלות נמוכה לחברי הקהילה.' },
@@ -133,14 +133,14 @@ const features: Feature[] = [
   { to: '/app/folder', icon: FolderOpen, title: 'פולדר דיגיטלי', text: 'תיק נכסים ממותג ללקוח, בקישור אחד.' },
 ]
 
-const behind: { icon: LucideIcon; title: string; text: string }[] = [
+export const behind: { icon: LucideIcon; title: string; text: string }[] = [
   { icon: Building2, title: 'משרד תיווך ארצי', text: 'פריסה בכל הארץ.' },
   { icon: Briefcase, title: 'אנשי מקצוע מהתחום', text: 'עובדים מאחורי הקלעים ומכירים את העבודה מבפנים.' },
   { icon: ShieldCheck, title: 'ניהול ופיקוח', text: 'יש מי שאחראי: צוות שמלווה את הקהילה ושומר על רמה.' },
 ]
 
 /** The "today" side of the before / after: a WhatsApp-style group where the request gets buried. */
-const chat: { who: string; text: string; mine?: boolean }[] = [
+export const chat: { who: string; text: string; mine?: boolean }[] = [
   { who: 'אלון', text: 'דירת 4 חדרים בגבעתיים, 3.69, שת"פ' },
   { who: 'נועה', text: 'וילה בהרצליה פיתוח, פרטים בפרטי' },
   { who: 'אני', text: 'דרוש: 5 חדרים עם מחסן, חניה בטאבו ונוף לים. לקונה חם!', mine: true },
@@ -149,7 +149,7 @@ const chat: { who: string; text: string; mine?: boolean }[] = [
   { who: 'יונתן', text: 'מישהו מכיר שמאי בחיפה?' },
 ]
 
-function SectionHead({ eyebrow, children }: { eyebrow: string; children: ReactNode }) {
+export function SectionHead({ eyebrow, children }: { eyebrow: string; children: ReactNode }) {
   return (
     <Reveal className="section-head">
       <span className="eyebrow">{eyebrow}</span>

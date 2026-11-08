@@ -5,7 +5,7 @@
   grid-template-columns: 276px minmax(0, 1fr);
   min-height: 100dvh;
   background:
-    radial-gradient(900px 520px at 100% -10%, rgba(201, 162, 75, 0.09), transparent 60%),
+    radial-gradient(900px 520px at 100% -10%, rgb(var(--g) / 0.09), transparent 60%),
     radial-gradient(900px 700px at 0% 110%, rgba(39, 50, 90, 0.55), transparent 60%),
     var(--bg);
   background-attachment: fixed;
@@ -60,7 +60,7 @@
 }
 .side-link:hover {
   color: var(--text);
-  background: rgba(255, 255, 255, 0.04);
+  background: rgb(var(--w) / 0.04);
 }
 .side-link.active {
   color: var(--gold-soft);
@@ -69,7 +69,7 @@
   position: absolute;
   inset: 0;
   border-radius: var(--r-md);
-  background: linear-gradient(to left, rgba(201, 162, 75, 0.16), rgba(201, 162, 75, 0.04));
+  background: linear-gradient(to left, rgb(var(--g) / 0.16), rgb(var(--g) / 0.04));
   border: 1px solid var(--line-gold);
 }
 .side-active::before {
@@ -95,8 +95,8 @@
   border-radius: var(--r-md);
   border: 1px solid var(--line-gold);
   background:
-    radial-gradient(140% 120% at 100% 0%, rgba(201, 162, 75, 0.16), transparent 60%),
-    rgba(255, 255, 255, 0.02);
+    radial-gradient(140% 120% at 100% 0%, rgb(var(--g) / 0.16), transparent 60%),
+    rgb(var(--w) / 0.02);
 }
 .side-principle > div {
   display: grid;
@@ -235,7 +235,7 @@
     min-height: 58px;
     padding: env(safe-area-inset-top) 16px 0;
     border-bottom: 1px solid var(--line);
-    background: rgba(10, 15, 32, 0.82);
+    background: rgb(var(--k2) / 0.82);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
   }
@@ -257,7 +257,7 @@
     grid-template-columns: repeat(5, 1fr);
     padding: 6px 6px calc(6px + env(safe-area-inset-bottom));
     border-top: 1px solid var(--line);
-    background: rgba(10, 15, 32, 0.9);
+    background: rgb(var(--k2) / 0.9);
     backdrop-filter: blur(18px);
     -webkit-backdrop-filter: blur(18px);
   }

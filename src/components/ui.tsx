@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { ArrowRight, Check, X } from 'lucide-react'
-import { PLATFORM_NAME, PLATFORM_TAGLINE, asset } from '../config'
+import { LOGO_FILE, PLATFORM_NAME, PLATFORM_TAGLINE, asset } from '../config'
 import { useStore } from '../store'
 
 export const EASE = [0.22, 1, 0.36, 1] as const
@@ -57,7 +57,7 @@ export function BrandLockup({ size = 'md', slogan = true }: { size?: 'md' | 'lg'
 export function Logo({ size = 36, withName = false }: { size?: number; withName?: boolean }) {
   return (
     <span className="logo">
-      <img src={asset('logo.png')} alt="" width={Math.round(size * 1.54)} height={size} style={{ height: size, width: 'auto' }} />
+      <img src={asset(LOGO_FILE)} alt="" width={Math.round(size * 1.54)} height={size} style={{ height: size, width: 'auto' }} />
       {withName && (
         <span className="logo-name">
           <BrandName />

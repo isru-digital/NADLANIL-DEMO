@@ -4,3 +4,5 @@ dist
 *.log
 _shots
 screenshots
+_visual
+_shots_*

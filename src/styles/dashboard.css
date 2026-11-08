@@ -21,7 +21,7 @@
   width: 130px;
   height: 130px;
   border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(201, 162, 75, 0.16), transparent);
+  background: radial-gradient(closest-side, rgb(var(--g) / 0.16), transparent);
   pointer-events: none;
 }
 .stat-icon {
@@ -32,7 +32,7 @@
   margin-bottom: 14px;
   border-radius: 11px;
   border: 1px solid var(--line-gold);
-  background: rgba(201, 162, 75, 0.1);
+  background: rgb(var(--g) / 0.1);
   color: var(--gold-soft);
 }
 .stat-icon svg {
@@ -117,7 +117,7 @@
   height: 40px;
   border-radius: 50%;
   border: 1px solid var(--line-gold);
-  background: rgba(201, 162, 75, 0.08);
+  background: rgb(var(--g) / 0.08);
   font-family: var(--font-display);
   font-weight: 700;
   color: var(--gold-soft);
@@ -214,7 +214,7 @@
   transition: background-color var(--t) var(--ease);
 }
 .reminder:hover {
-  background: rgba(255, 255, 255, 0.04);
+  background: rgb(var(--w) / 0.04);
 }
 .check {
   flex: none;
@@ -271,7 +271,7 @@
   padding: 16px;
   border-radius: var(--r-md);
   border: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.025);
+  background: rgb(var(--w) / 0.025);
   font-family: var(--font-display);
   font-size: 15px;
   font-weight: 500;
@@ -290,7 +290,7 @@
 .shortcut:hover {
   transform: translateY(-2px);
   border-color: var(--line-gold);
-  background: rgba(201, 162, 75, 0.07);
+  background: rgb(var(--g) / 0.07);
 }
 .shortcut:active {
   transform: scale(0.97);
@@ -312,7 +312,7 @@
   display: block;
   height: 8px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgb(var(--w) / 0.06);
   overflow: hidden;
 }
 .pipeline b {

@@ -15,10 +15,10 @@
 
   /* surfaces that relied on the blur get a more solid background instead */
   .topbar {
-    background: rgba(10, 15, 32, 0.97) !important;
+    background: rgb(var(--k2) / 0.97) !important;
   }
   .bottom-nav {
-    background: rgba(10, 15, 32, 0.98) !important;
+    background: rgb(var(--k2) / 0.98) !important;
   }
   .home-nav {
     background: linear-gradient(180deg, rgba(6, 9, 20, 0.95), rgba(6, 9, 20, 0.7) 62%, rgba(6, 9, 20, 0)) !important;

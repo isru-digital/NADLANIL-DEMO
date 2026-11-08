@@ -9,5 +9,8 @@ export const PLATFORM_TAGLINE = ['100% גב קהילתי', '0% גזירות בע
 /** Resolve a file in /public against the deployed base path. */
 export const asset = (path: string) => `${import.meta.env.BASE_URL}${path.replace(/^\//, '')}`
 
+/** The logo mark file for this build's look (gold on navy, or green). */
+export const LOGO_FILE = __THEME__ === 'green' ? 'logo-green.png' : 'logo.png'
+
 /** The demo's signed-in broker (see data/demo.ts). */
 export const CURRENT_BROKER_ID = 'b1'

@@ -8,14 +8,14 @@
   padding: 0 16px;
   border-radius: var(--r-md);
   border: 1px solid var(--line-strong);
-  background: rgba(6, 9, 20, 0.5);
+  background: rgb(var(--k1) / 0.5);
   transition:
     border-color var(--t) var(--ease),
     box-shadow var(--t) var(--ease);
 }
 .search:focus-within {
   border-color: var(--gold);
-  box-shadow: 0 0 0 4px rgba(201, 162, 75, 0.16);
+  box-shadow: 0 0 0 4px rgb(var(--g) / 0.16);
 }
 .search svg {
   width: 18px;
@@ -88,7 +88,7 @@
 .broker-card {
   border-radius: var(--r-lg);
   border: 1px solid var(--line);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.025));
+  background: linear-gradient(180deg, rgb(var(--w) / 0.06), rgb(var(--w) / 0.025));
   overflow: hidden;
   transition:
     border-color var(--t) var(--ease),
@@ -130,7 +130,7 @@
   z-index: 1;
   padding: 4px 10px;
   border-radius: var(--r-pill);
-  background: rgba(10, 15, 32, 0.66);
+  background: rgb(var(--k2) / 0.66);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border: 1px solid var(--line-strong);

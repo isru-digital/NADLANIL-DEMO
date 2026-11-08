@@ -67,7 +67,7 @@
   transition: color var(--t) var(--ease);
 }
 .step-dot.is-done span {
-  background: rgba(201, 162, 75, 0.16);
+  background: rgb(var(--g) / 0.16);
   border-color: var(--gold);
   color: var(--gold-soft);
 }
@@ -75,7 +75,7 @@
   background: var(--gold);
   border-color: var(--gold);
   color: var(--on-accent);
-  box-shadow: 0 0 0 5px rgba(201, 162, 75, 0.18);
+  box-shadow: 0 0 0 5px rgb(var(--g) / 0.18);
 }
 .step-dot.is-current em {
   color: var(--gold-soft);
@@ -144,7 +144,7 @@
   border-radius: var(--r-md);
   border: 1px solid var(--line-gold);
   background:
-    radial-gradient(120% 140% at 100% 0%, rgba(201, 162, 75, 0.16), transparent 60%),
+    radial-gradient(120% 140% at 100% 0%, rgb(var(--g) / 0.16), transparent 60%),
     rgba(6, 9, 20, 0.4);
 }
 .ai-tones {
@@ -163,7 +163,7 @@
 .ai-btn-go {
   position: relative;
   color: var(--on-accent);
-  background: linear-gradient(110deg, #f0dba3 0%, var(--gold) 40%, #b88f38 70%, #f0dba3 100%);
+  background: linear-gradient(110deg, var(--gold-hi4) 0%, var(--gold) 40%, var(--gold-lo1) 70%, var(--gold-hi4) 100%);
   background-size: 220% 100%;
   box-shadow: var(--glow-gold);
   animation: ai-sheen 4.5s ease-in-out infinite;
@@ -190,7 +190,7 @@
 }
 .bio-wrap.is-typing .textarea {
   border-color: var(--gold);
-  box-shadow: 0 0 0 4px rgba(201, 162, 75, 0.16);
+  box-shadow: 0 0 0 4px rgb(var(--g) / 0.16);
 }
 .bio-status {
   position: absolute;
@@ -234,7 +234,7 @@
   padding: 14px;
   border-radius: var(--r-md);
   border: 1px solid var(--line);
-  background: rgba(6, 9, 20, 0.35);
+  background: rgb(var(--k1) / 0.35);
   text-align: start;
   transition:
     border-color var(--t) var(--ease),
@@ -252,7 +252,7 @@
 .pick.is-on,
 .tpl.is-on {
   border-color: var(--gold);
-  background: rgba(201, 162, 75, 0.08);
+  background: rgb(var(--g) / 0.08);
 }
 .pick-check {
   flex: none;
@@ -332,7 +332,7 @@
   padding: 2px 14px;
   border-radius: var(--r-md);
   border: 1px solid var(--line);
-  background: rgba(6, 9, 20, 0.35);
+  background: rgb(var(--k1) / 0.35);
 }
 .toggle-list .switch-row div span {
   white-space: normal;
@@ -375,7 +375,7 @@
   inset-block-end: 20px;
   font-family: 'Heebo', sans-serif;
   font-weight: 800;
-  color: #e6cd92;
+  color: var(--gold-soft);
 }
 .tpl-night i {
   inset-inline-start: 9px;
@@ -383,13 +383,13 @@
   width: 26px;
   height: 6px;
   border-radius: 3px;
-  background: #c9a24b;
+  background: var(--gold);
 }
 .tpl-night u {
   inset-inline: 0;
   inset-block-end: 0;
   height: 1px;
-  background: rgba(201, 162, 75, 0.5);
+  background: rgb(var(--g) / 0.5);
 }
 .tpl-gallery {
   background: #f6f1e7;
@@ -407,7 +407,7 @@
   height: 46px;
   border-radius: 15px 15px 0 0;
   background: linear-gradient(160deg, #27325a, #141b34);
-  box-shadow: 0 0 0 2px #f6f1e7, 0 0 0 3px #9c7a2c;
+  box-shadow: 0 0 0 2px #f6f1e7, 0 0 0 3px var(--gold-lo3);
 }
 .tpl-gallery u {
   inset-inline: 9px;
@@ -430,7 +430,7 @@
   inset-inline: 9px;
   inset-block-end: 8px;
   height: 22px;
-  background: linear-gradient(120deg, #27325a, #c9a24b);
+  background: linear-gradient(120deg, #27325a, var(--gold));
 }
 .tpl-line u {
   inset-inline: 0;
@@ -481,14 +481,14 @@
   padding: 3px;
   border-radius: var(--r-md);
   border: 1px solid var(--line);
-  background: rgba(6, 9, 20, 0.5);
+  background: rgb(var(--k1) / 0.5);
 }
 .device-toggle .icon-btn {
   width: 40px;
   height: 40px;
 }
 .device-toggle .icon-btn.is-on {
-  background: rgba(201, 162, 75, 0.16);
+  background: rgb(var(--g) / 0.16);
   color: var(--gold-soft);
 }
 .browser {
@@ -527,12 +527,12 @@
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.14);
+  background: rgb(var(--w) / 0.14);
 }
 .browser-url {
   padding: 3px 34px;
   border-radius: var(--r-pill);
-  background: rgba(255, 255, 255, 0.06);
+  background: rgb(var(--w) / 0.06);
   font-family: var(--font-display);
   font-size: 12.5px;
   color: var(--text-faint);
@@ -564,7 +564,7 @@
   padding: 0 16px;
   border-radius: var(--r-md);
   border: 1px dashed var(--line-gold);
-  background: rgba(6, 9, 20, 0.5);
+  background: rgb(var(--k1) / 0.5);
   font-family: var(--font-display);
   font-size: 14.5px;
   color: var(--gold-soft);
@@ -576,7 +576,7 @@
   white-space: nowrap;
 }
 .link-box:hover {
-  background: rgba(201, 162, 75, 0.1);
+  background: rgb(var(--g) / 0.1);
 }
 .link-box svg {
   width: 16px;

@@ -14,6 +14,29 @@
   --gold-deep: #9c7a2c;
   --cream: #f5f0e6;
 
+  /* theme channels: overlays on dark use white, the accent glow uses the gold */
+  --w: 255 255 255;
+  --g: 201 162 75;
+  --k1: 6 9 20;
+  --k2: 10 15 32;
+
+  /* gold ramp (the accent): lightest to darkest */
+  --gold-hi1: #fff6d8;
+  --gold-hi2: #f6e6b8;
+  --gold-hi3: #f1dca6;
+  --gold-hi4: #f0dba3;
+  --gold-hi5: #ecd391;
+  --gold-hi6: #dcb961;
+  --gold-lo1: #b88f38;
+  --gold-lo2: #a8842f;
+  --gold-lo3: #9c7a2c;
+  --gold-lo4: #6f5519;
+
+  /* flat panels */
+  --panel: #131a36;
+  --panel-raised: #1b2449;
+  --panel-raised2: #232d58;
+
   /* semantic */
   --bg: var(--navy-900);
   --surface: rgba(255, 255, 255, 0.04);
@@ -70,7 +93,7 @@
 html {
   -webkit-text-size-adjust: 100%;
   scroll-behavior: smooth;
-  scrollbar-color: rgba(201, 162, 75, 0.35) transparent;
+  scrollbar-color: rgb(var(--g) / 0.35) transparent;
   scrollbar-width: thin;
 }
 
@@ -88,7 +111,7 @@ body {
 }
 
 ::selection {
-  background: rgba(201, 162, 75, 0.85);
+  background: rgb(var(--g) / 0.85);
   color: var(--navy-900);
 }
 
@@ -97,13 +120,13 @@ body {
   height: 10px;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(201, 162, 75, 0.28);
+  background: rgb(var(--g) / 0.28);
   border-radius: 10px;
   border: 3px solid transparent;
   background-clip: content-box;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(201, 162, 75, 0.5);
+  background: rgb(var(--g) / 0.5);
   background-clip: content-box;
   border: 3px solid transparent;
 }
@@ -208,7 +231,7 @@ ul {
   content: '';
   width: 28px;
   height: 1px;
-  background: linear-gradient(to left, var(--gold), rgba(201, 162, 75, 0.25));
+  background: linear-gradient(to left, var(--gold), rgb(var(--g) / 0.25));
 }
 
 .btn {
@@ -258,9 +281,9 @@ ul {
 }
 .btn-gold {
   color: var(--on-accent);
-  background: linear-gradient(180deg, #dcb961 0%, var(--gold) 55%, #b88f38 100%);
+  background: linear-gradient(180deg, var(--gold-hi6) 0%, var(--gold) 55%, var(--gold-lo1) 100%);
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.45) inset,
+    0 1px 0 rgb(var(--w) / 0.45) inset,
     var(--glow-gold);
   overflow: hidden;
 }
@@ -269,15 +292,15 @@ ul {
   position: absolute;
   inset: 0;
   z-index: -1;
-  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.5) 50%, transparent 65%);
+  background: linear-gradient(105deg, transparent 35%, rgb(var(--w) / 0.5) 50%, transparent 65%);
   transform: translateX(120%);
   transition: transform 700ms var(--ease);
 }
 .btn-gold:hover {
   transform: translateY(-2px);
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.5) inset,
-    0 16px 46px -12px rgba(201, 162, 75, 0.6);
+    0 1px 0 rgb(var(--w) / 0.5) inset,
+    0 16px 46px -12px rgb(var(--g) / 0.6);
 }
 .btn-gold:hover::after {
   transform: translateX(-120%);
@@ -288,11 +311,11 @@ ul {
 .btn-ghost {
   color: var(--text);
   border: 1px solid var(--line-strong);
-  background: rgba(255, 255, 255, 0.03);
+  background: rgb(var(--w) / 0.03);
 }
 .btn-ghost:hover {
   border-color: var(--line-gold);
-  background: rgba(201, 162, 75, 0.08);
+  background: rgb(var(--g) / 0.08);
   color: var(--gold-soft);
 }
 .btn-quiet {
@@ -340,7 +363,7 @@ ul {
   position: relative;
   border-radius: var(--r-lg);
   border: 1px solid var(--line);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.025));
+  background: linear-gradient(180deg, rgb(var(--w) / 0.06), rgb(var(--w) / 0.025));
   box-shadow: var(--shadow-1);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
@@ -368,7 +391,7 @@ ul {
   padding: 0 10px;
   border-radius: var(--r-pill);
   border: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.04);
+  background: rgb(var(--w) / 0.04);
   font-family: var(--font-display);
   font-size: 12.5px;
   font-weight: 500;
@@ -382,7 +405,7 @@ ul {
 .tag-gold {
   color: var(--gold-soft);
   border-color: var(--line-gold);
-  background: rgba(201, 162, 75, 0.1);
+  background: rgb(var(--g) / 0.1);
 }
 .tag-blue {
   color: var(--info);
@@ -403,7 +426,7 @@ ul {
   padding: 0 16px;
   border-radius: var(--r-pill);
   border: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.03);
+  background: rgb(var(--w) / 0.03);
   font-family: var(--font-display);
   font-size: 14.5px;
   font-weight: 500;
@@ -453,7 +476,7 @@ ul {
   padding: 11px 14px;
   border-radius: var(--r-md);
   border: 1px solid var(--line-strong);
-  background: rgba(6, 9, 20, 0.5);
+  background: rgb(var(--k1) / 0.5);
   color: var(--text);
   font-size: 16px;
   transition:
@@ -472,14 +495,14 @@ ul {
 }
 .input:hover,
 .textarea:hover {
-  border-color: rgba(255, 255, 255, 0.24);
+  border-color: rgb(var(--w) / 0.24);
 }
 .input:focus,
 .textarea:focus {
   outline: none;
   border-color: var(--gold);
-  box-shadow: 0 0 0 4px rgba(201, 162, 75, 0.16);
-  background: rgba(6, 9, 20, 0.7);
+  box-shadow: 0 0 0 4px rgb(var(--g) / 0.16);
+  background: rgb(var(--k1) / 0.7);
 }
 
 .avatar {
@@ -509,7 +532,7 @@ ul {
   position: relative;
   overflow: hidden;
   background:
-    radial-gradient(120% 90% at 20% 0%, rgba(201, 162, 75, 0.25), transparent 60%),
+    radial-gradient(120% 90% at 20% 0%, rgb(var(--g) / 0.25), transparent 60%),
     linear-gradient(160deg, var(--navy-600), var(--navy-850));
 }
 .photo img {
@@ -520,7 +543,7 @@ ul {
 }
 
 .brand-il {
-  background: linear-gradient(100deg, #f1dca6 0%, var(--gold) 55%, #a8842f 100%);
+  background: linear-gradient(100deg, var(--gold-hi3) 0%, var(--gold) 55%, var(--gold-lo2) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -564,7 +587,7 @@ ul {
   height: 7px;
   background: var(--gold);
   transform: rotate(45deg);
-  box-shadow: 0 0 0 3px rgba(201, 162, 75, 0.18);
+  box-shadow: 0 0 0 3px rgb(var(--g) / 0.18);
 }
 .brand-lockup-tag {
   display: flex;
@@ -626,7 +649,7 @@ ul {
   right: 0;
   width: 12px;
   height: 1px;
-  background: linear-gradient(90deg, transparent, #fff6d8 50%, transparent);
+  background: linear-gradient(90deg, transparent, var(--gold-hi1) 50%, transparent);
   opacity: 0;
   pointer-events: none;
   will-change: transform, opacity;
@@ -687,7 +710,7 @@ ul {
   padding: 0 14px 0 16px;
   border-radius: var(--r-pill);
   border: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.05);
+  background: rgb(var(--w) / 0.05);
   font-family: var(--font-display);
   font-size: 14.5px;
   font-weight: 500;
@@ -708,7 +731,7 @@ ul {
 .back-btn:hover {
   color: var(--gold-soft);
   border-color: var(--line-gold);
-  background: rgba(201, 162, 75, 0.08);
+  background: rgb(var(--g) / 0.08);
 }
 .back-btn:hover svg {
   transform: translateX(3px);
@@ -744,7 +767,7 @@ ul {
   padding: 0 11px;
   border-radius: var(--r-pill);
   border: 1px dashed var(--line-gold);
-  background: rgba(10, 15, 32, 0.72);
+  background: rgb(var(--k2) / 0.72);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   font-family: var(--font-display);
@@ -759,7 +782,7 @@ ul {
   height: 6px;
   border-radius: 50%;
   background: var(--gold);
-  box-shadow: 0 0 0 3px rgba(201, 162, 75, 0.22);
+  box-shadow: 0 0 0 3px rgb(var(--g) / 0.22);
 }
 .demo-tag-fixed {
   position: fixed;
@@ -883,7 +906,7 @@ ul {
 
 /* --------------------------------------------------------------- utilities */
 .gold-text {
-  background: linear-gradient(100deg, #f1dca6 0%, var(--gold) 45%, #a8842f 100%);
+  background: linear-gradient(100deg, var(--gold-hi3) 0%, var(--gold) 45%, var(--gold-lo2) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
