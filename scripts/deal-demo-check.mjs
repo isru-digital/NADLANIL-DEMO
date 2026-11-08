@@ -1,16 +1,17 @@
 // Checks the "חדר עסקה משותף" demo pop-up in both looks, on desktop and phone: it opens from the sidebar (desktop),
 // from the "עוד" sheet (phone) and from the home panel; the match plays and wakes the button; the button moves
 // to the deal room; it fits the screen; Escape closes it; no console errors. Saves screenshots of the key moments.
-// Usage: node scripts/deal-demo-check.mjs [outDir]
+// Usage: node scripts/deal-demo-check.mjs [outDir] [look]   (look: navy | green | both)
 import puppeteer from 'puppeteer-core'
 import fs from 'node:fs'
 
 const out = process.argv[2] ?? '_shots'
 fs.mkdirSync(out, { recursive: true })
+const only = process.argv[3] ?? 'both'
 const looks = [
   ['navy', process.env.BASE_NAVY ?? 'http://localhost:5230/NADLANIL-DEMO'],
   ['green', process.env.BASE_GREEN ?? 'http://localhost:5240/NADLANIL-DEMO/green'],
-]
+].filter(([l]) => only === 'both' || only === l)
 const browser = await puppeteer.launch({ executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: 'new', args: ['--hide-scrollbars'] })
 const wait = (ms) => new Promise((r) => setTimeout(r, ms))
 const results = []
@@ -52,11 +53,13 @@ for (const [look, base] of looks) {
     if (phone) {
       await page.evaluate(() => [...document.querySelectorAll('.bottom-link')].find((b) => b.textContent.includes('עוד'))?.click())
       await wait(700)
-      await page.evaluate(() => [...document.querySelectorAll('.more-link')].find((b) => b.textContent.includes('חדר עסקה'))?.click())
+      await page.evaluate(() => [...document.querySelectorAll('.more-link')].find((b) => b.textContent.includes('מעבדת בטא'))?.click())
+      await wait(900)
+      await page.evaluate(() => document.querySelectorAll('.bl-tile')[1]?.click())
     } else {
       const chip = await page.evaluate(() => !!document.querySelector('.side-lab .beta-chip'))
       check(`${tag}: beta lab entry with a beta chip in the sidebar`, chip)
-      await page.evaluate(() => document.querySelector('.side-lab-link')?.click())
+      await page.evaluate(() => [...document.querySelectorAll('.side-lab-link')].find((b) => b.textContent.includes('חדר עסקה'))?.click())
     }
     await wait(1200)
     let s = await dialog(page)

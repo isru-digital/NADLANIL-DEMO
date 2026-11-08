@@ -299,6 +299,9 @@
   border-top: 1px solid var(--line);
 }
 .side-lab-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   padding-inline: 14px;
   font-family: var(--font-display);
   font-size: 12.5px;
@@ -329,4 +332,11 @@
   width: 11px;
   height: 11px;
   stroke-width: 2.4;
+}
+.side-lab-title .beta-chip {
+  margin-inline-start: 0;
+}
+.side-lab-link.is-all {
+  min-height: 40px;
+  color: var(--gold-soft);
 }

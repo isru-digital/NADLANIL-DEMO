@@ -130,3 +130,6 @@ export default function NetworkMap({ lite = false }: { lite?: boolean }) {
     </div>
   )
 }
+
+// the same map drawing, reused by the beta lab's demand radar
+export { W as MAP_W, H as MAP_H, clip as MAP_CLIP, px as mapX, py as mapY }

@@ -6,6 +6,7 @@ import { ArrowLeft, Check, Link2, Lock, MapPin, RotateCcw, Sparkles, X } from 'l
 import { asset } from '../config'
 import { brokers, formatPriceShort } from '../data/demo'
 import { Avatar, EASE } from './ui'
+import { lockScroll } from '../lib/scrollLock'
 import '../styles/deal-demo.css'
 
 /**
@@ -248,12 +249,11 @@ export default function DealRoomDemo({ open, onClose }: { open: boolean; onClose
     if (!open) return
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
     document.addEventListener('keydown', onKey)
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
+    const unlock = lockScroll()
     panel.current?.focus()
     return () => {
       document.removeEventListener('keydown', onKey)
-      document.body.style.overflow = prev
+      unlock()
     }
   }, [open, onClose])
 

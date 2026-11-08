@@ -3,10 +3,10 @@ import { Link, NavLink, useLocation, useOutlet } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
   FolderOpen,
-  Handshake,
   Home,
   KanbanSquare,
   LayoutDashboard,
+  LayoutGrid,
   LayoutTemplate,
   Lock,
   Menu,
@@ -19,7 +19,8 @@ import { brokerById } from '../data/demo'
 import { useStore } from '../store'
 import { Avatar, BackButton, DemoTag, EASE, Logo, Modal } from '../components/ui'
 import MatchAlert from '../components/MatchAlert'
-import DealRoomDemo from '../components/DealRoomDemo'
+import BetaLab, { labItems } from '../components/BetaLab'
+import type { LabView } from '../components/BetaLab'
 import '../styles/shell.css'
 
 const nav = [
@@ -46,7 +47,7 @@ export default function AppShell() {
   const { reset, toast } = useStore()
   const me = brokerById(CURRENT_BROKER_ID)
   const [moreOpen, setMoreOpen] = useState(false)
-  const [betaOpen, setBetaOpen] = useState(false)
+  const [lab, setLab] = useState<LabView>(null)
 
   useEffect(() => {
     setMoreOpen(false)
@@ -90,14 +91,24 @@ export default function AppShell() {
         </nav>
 
         <div className="side-lab">
-          <span className="side-lab-title">מעבדת בטא</span>
-          <button className="side-link side-lab-link" onClick={() => setBetaOpen(true)} aria-haspopup="dialog">
-            <Handshake />
-            <span>חדר עסקה משותף</span>
+          <span className="side-lab-title">
+            מעבדת בטא
             <em className="beta-chip">
               <Lock />
               בטא
             </em>
+          </span>
+          {labItems
+            .filter((x) => x.id === 'voice' || x.id === 'room')
+            .map((x) => (
+              <button key={x.id} className="side-link side-lab-link" onClick={() => setLab(x.id)} aria-haspopup="dialog">
+                <x.icon />
+                <span>{x.title}</span>
+              </button>
+            ))}
+          <button className="side-link side-lab-link is-all" onClick={() => setLab('hub')} aria-haspopup="dialog">
+            <LayoutGrid />
+            <span>כל הכלים ({labItems.length})</span>
           </button>
         </div>
 
@@ -175,7 +186,7 @@ export default function AppShell() {
       </nav>
 
       <MatchAlert />
-      <DealRoomDemo open={betaOpen} onClose={() => setBetaOpen(false)} />
+      <BetaLab view={lab} setView={setLab} />
 
       <Modal open={moreOpen} onClose={() => setMoreOpen(false)} title="עוד כלים">
         <div className="modal-body more-sheet">
@@ -189,11 +200,11 @@ export default function AppShell() {
             className="more-link"
             onClick={() => {
               setMoreOpen(false)
-              setBetaOpen(true)
+              setLab('hub')
             }}
           >
-            <Handshake />
-            <span>חדר עסקה משותף</span>
+            <LayoutGrid />
+            <span>מעבדת בטא</span>
             <em className="beta-chip">
               <Lock />
               בטא
