@@ -1,21 +1,24 @@
-import { useEffect, useRef, useState } from 'react'
-import type { MouseEvent, RefObject } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import type { MouseEvent, ReactNode, RefObject } from 'react'
 import { Link } from 'react-router-dom'
 import { animate, motion, useInView, useMotionValue, useScroll, useSpring, useTransform } from 'framer-motion'
 import type { MotionValue } from 'framer-motion'
 import {
   ArrowLeft,
-  Check,
+  Briefcase,
+  Building2,
   FolderOpen,
   Handshake,
   Heart,
   KanbanSquare,
-  KeyRound,
   LayoutTemplate,
-  MessagesSquare,
-  Percent,
+  Radar,
+  Scale,
+  ShieldCheck,
+  Sparkles,
   Users,
 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { PLATFORM_NAME, asset } from '../config'
 import { brokers, formatPriceShort } from '../data/demo'
 import { Avatar, BrandLockup, DemoTag, EASE, Logo, Reveal } from '../components/ui'
@@ -29,23 +32,27 @@ const rise = (i: number) => ({
   transition: { duration: 0.9, delay: 0.15 + i * 0.09, ease: EASE },
 })
 
-function CountUp({ to }: { to: number }) {
+/**
+ * Counts from one number to another when it scrolls into view. The final number is
+ * what is rendered first, so nothing wrong is ever shown if the count never starts.
+ */
+function CountUp({ from = 0, to }: { from?: number; to: number }) {
   const ref = useRef<HTMLSpanElement>(null)
   const inView = useInView(ref, { once: true, margin: '0px 0px -120px 0px' })
-  const [value, setValue] = useState(0)
-  useEffect(() => {
-    if (!inView) return
-    const controls = animate(0, to, { duration: 1.8, ease: EASE, onUpdate: (v) => setValue(Math.round(v)) })
+  const [value, setValue] = useState(to)
+  useLayoutEffect(() => {
+    if (!inView || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    setValue(from)
+    const controls = animate(from, to, { duration: 1.8, ease: EASE, onUpdate: (v) => setValue(Math.round(v)) })
     return () => controls.stop()
-  }, [inView, to])
+  }, [inView, from, to])
   return <span ref={ref}>{value}</span>
 }
 
 /**
- * The skyline behind the hero, alive: a short silent loop of the same picture
- * (cars on the road, birds, windows lighting up). It fades in over the still
- * image once it can play, pauses when the hero is off screen, and is skipped
- * entirely for visitors who asked for reduced motion.
+ * The skyline behind the hero, alive: a short silent loop of the same picture.
+ * It fades in over the still image once it can play, pauses when the hero is off
+ * screen, and is skipped entirely for visitors who asked for reduced motion.
  */
 function LivingSkyline() {
   const ref = useRef<HTMLVideoElement>(null)
@@ -111,72 +118,45 @@ function ParallaxBackdrop({ heroRef, life }: { heroRef: RefObject<HTMLElement>; 
   return <HeroBackdrop life={life} y={y} />
 }
 
-const features = [
-  {
-    to: '/app/community',
-    icon: MessagesSquare,
-    title: 'קהילה ופיד מקצועי',
-    text: 'שאלות, טיפים מהשטח והתייעצויות עם מתווכים שמבינים בדיוק מה עובר עליך.',
-    wide: true,
-    visual: 'faces',
-  },
-  {
-    to: '/app/community?topic=coop',
-    icon: Handshake,
-    title: 'שיתופי פעולה והפניות',
-    text: 'נכס לשיתוף פעולה, הפניה למתווך בעיר אחרת או חיפוש לקונה. כל בקשה נשמרת בנושא שלה.',
-  },
-  {
-    to: '/app/brokers',
-    icon: Users,
-    title: 'אינדקס מתווכים',
-    text: 'מי עובד באיזה אזור ובמה הוא מתמחה. סינון מהיר ופנייה ישירה.',
-  },
-  {
-    to: '/app/crm',
-    icon: KanbanSquare,
-    title: 'CRM למתווך',
-    text: 'לקוחות ונכסים על לוח אחד, מהפנייה הראשונה ועד הסגירה.',
-  },
-  {
-    to: '/app/builder',
-    icon: LayoutTemplate,
-    title: 'דף נחיתה אישי',
-    text: 'שלוש תבניות יוקרה, תצוגה חיה וביו שנכתב בעזרת AI. מוכן תוך דקות.',
-    wide: true,
-    visual: 'templates',
-  },
-  {
-    to: '/app/folder',
-    icon: FolderOpen,
-    title: 'פולדר דיגיטלי',
-    text: 'תיק נכסים ממותג שנשלח ללקוח בקישור אחד.',
-  },
+// ------------------------------------------------------------------ content
+// Short on purpose: a headline and one line per card. The page is meant to be
+// looked at, not read.
+
+type Feature = { to?: string; icon: LucideIcon; title: string; text: string; wide?: boolean; visual?: 'faces' | 'templates' }
+
+const features: Feature[] = [
+  { to: '/app/community', icon: Users, title: 'קהילה ענקית למתווכים', text: 'מתווכים מכל הארץ, במקום אחד.', wide: true, visual: 'faces' },
+  { to: '/app/community?topic=coop', icon: Handshake, title: 'שת"פ בכל הארץ', text: 'נכס, הפניה או חיפוש לקונה, עם כל מתווך בכל עיר.' },
+  { icon: Scale, title: 'מחירים מוזלים', text: 'שמאים, עורכי דין ועוד, בעלות נמוכה לחברי הקהילה.' },
+  { to: '/app/crm', icon: KanbanSquare, title: 'CRM למתווך', text: 'לקוחות ונכסים על לוח אחד.' },
+  { to: '/app/builder', icon: LayoutTemplate, title: 'דף נחיתה אישי', text: 'שלוש תבניות. מוכן תוך דקות.', wide: true, visual: 'templates' },
+  { to: '/app/folder', icon: FolderOpen, title: 'פולדר דיגיטלי', text: 'תיק נכסים ממותג ללקוח, בקישור אחד.' },
 ]
 
-const principles = [
-  {
-    icon: Percent,
-    title: 'בלי עמלה לפלטפורמה',
-    text: 'סגרת עסקה? כל העמלה שלך. הפלטפורמה לא לוקחת אחוזים.',
-  },
-  {
-    icon: KeyRound,
-    title: 'הנכסים נשארים שלך',
-    text: 'את המלאי שלך מנהל רק אתה. משתפים עם הקהילה רק את מה שבוחרים לשתף.',
-  },
-  {
-    icon: Users,
-    title: 'קהילה חינמית',
-    text: 'ההצטרפות לקהילה בחינם. עצמאים שעוזרים לעצמאים.',
-  },
+const behind: { icon: LucideIcon; title: string; text: string }[] = [
+  { icon: Building2, title: 'משרד תיווך ארצי', text: 'פריסה בכל הארץ.' },
+  { icon: Briefcase, title: 'אנשי מקצוע מהתחום', text: 'עובדים מאחורי הקלעים ומכירים את העבודה מבפנים.' },
+  { icon: ShieldCheck, title: 'ניהול ופיקוח', text: 'יש מי שאחראי: צוות שמלווה את הקהילה ושומר על רמה.' },
 ]
 
-const steps = [
-  { title: 'מצטרפים בחינם', text: 'פותחים פרופיל, בוחרים אזורי פעילות והתמחויות ונכנסים לקהילה.' },
-  { title: 'מנהלים הכול במקום אחד', text: 'לקוחות, נכסים, תזכורות, דף נחיתה אישי ופולדר ללקוח.' },
-  { title: 'משתפים פעולה', text: 'פותחים נכס לשיתוף פעולה או שומרים חיפוש לקונה, והמערכת מתריעה כשיש התאמה.' },
+/** The "today" side of the before / after: a WhatsApp-style group where the request gets buried. */
+const chat: { who: string; text: string; mine?: boolean }[] = [
+  { who: 'אלון', text: 'דירת 4 חדרים בגבעתיים, 3.69, שת"פ' },
+  { who: 'נועה', text: 'וילה בהרצליה פיתוח, פרטים בפרטי' },
+  { who: 'אני', text: 'דרוש: 5 חדרים עם מחסן, חניה בטאבו ונוף לים. לקונה חם!', mine: true },
+  { who: 'איתי', text: 'להשכרה 3 חדרים ברמת גן' },
+  { who: 'שירה', text: 'פנטהאוז חדש בצפון הישן, שת"פ' },
+  { who: 'יונתן', text: 'מישהו מכיר שמאי בחיפה?' },
 ]
+
+function SectionHead({ eyebrow, children }: { eyebrow: string; children: ReactNode }) {
+  return (
+    <Reveal className="section-head">
+      <span className="eyebrow">{eyebrow}</span>
+      <h2>{children}</h2>
+    </Reveal>
+  )
+}
 
 export default function Home() {
   const heroRef = useRef<HTMLElement>(null)
@@ -210,10 +190,10 @@ export default function Home() {
             <Logo size={32} withName />
           </Link>
           <nav className="home-nav-links" aria-label="ניווט">
+            <a href="#commission">העמלה</a>
+            <a href="#shift">ההבדל</a>
             <a href="#features">מה בפנים</a>
-            <a href="#principle">העיקרון</a>
-            <a href="#how">איך זה עובד</a>
-            <Link to="/about">אודות</Link>
+            <a href="#behind">מאחורי הקלעים</a>
           </nav>
           <div className="home-nav-cta">
             <Link to="/app" className="home-login">
@@ -236,36 +216,27 @@ export default function Home() {
               <BrandLockup />
             </motion.div>
             <h1>
-              <motion.span {...rise(1)}>הנכסים שלך.</motion.span>
+              <motion.span {...rise(1)}>הדבר הבא</motion.span>
               <motion.span {...rise(2)} className="gold-text">
-                העמלה שלך.
+                בעולם המתווכים.
               </motion.span>
-              <motion.span {...rise(3)}>הקהילה של כולנו.</motion.span>
             </h1>
-            <motion.p className="hero-sub" {...rise(4)}>
-              {PLATFORM_NAME} היא הבית המקצועי של מתווכים עצמאיים: קהילה פעילה, שיתופי פעולה, CRM למתווך ודף נחיתה
-              אישי. בחינם, ובלי שהפלטפורמה לוקחת עמלה.
+            <motion.p className="hero-sub" {...rise(3)}>
+              קהילה ארצית של מתווכים ומערכת פשוטה שעובדת בשבילם. <span className="nb">0% עמלה למערכת,</span>{' '}
+              <span className="nb">100% עמלה למתווך.</span>
             </motion.p>
-            <motion.div className="hero-cta" {...rise(5)}>
+            <motion.div className="hero-cta" {...rise(4)}>
               <Link to="/join" className="btn btn-gold btn-lg">
-                הצטרפות חינם
+                אני בפנים
                 <ArrowLeft />
               </Link>
               <a href="#features" className="btn btn-ghost btn-lg">
                 הצצה למערכת
               </a>
             </motion.div>
-            <motion.ul className="hero-ticks" {...rise(6)}>
-              <li>
-                <Check /> 100% מהעמלה למתווך
-              </li>
-              <li>
-                <Check /> הנכסים נשארים אצלך
-              </li>
-              <li>
-                <Check /> קהילה חינמית
-              </li>
-            </motion.ul>
+            <motion.p className="hero-note" {...rise(5)}>
+              כמה פרטים ואתם בקהילה.
+            </motion.p>
           </div>
 
           {/* floating glass collage of real product pieces */}
@@ -322,35 +293,86 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ------------------------------------------------------- principle */}
-      <section className="principle" id="principle">
+      {/* ------------------------------------------- 0% / 100%, the strongest thing */}
+      <section className="duo" id="commission">
         <div className="container">
-          <div className="principle-top">
-            <Reveal className="principle-num">
-              <strong className="eyebrow principle-label">העיקרון שלנו</strong>
-              <span className="num">
+          <Reveal className="duo-grid">
+            <div className="duo-item is-zero">
+              <span className="duo-num num">
+                <CountUp from={100} to={0} />%
+              </span>
+              <strong>עמלה למערכת</strong>
+            </div>
+            <i className="duo-rule" aria-hidden />
+            <div className="duo-item is-full">
+              <span className="duo-num num">
                 <CountUp to={100} />%
               </span>
+              <strong>עמלה למתווך</strong>
+            </div>
+          </Reveal>
+          <Reveal delay={0.1}>
+            <p className="duo-line">הנכסים והלקוחות נשארים שלכם, וכל העמלה איתם.</p>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ------------------------------------------------- today vs here */}
+      <section className="shift" id="shift">
+        <div className="container">
+          <SectionHead eyebrow="היום מול כאן">ככה נראית מהפכה בעולם המתווכים.</SectionHead>
+          <div className="shift-grid">
+            <Reveal className="shift-panel is-before">
+              <span className="shift-tag">היום</span>
+              <div className="chat" aria-hidden>
+                <div className="chat-head">
+                  <i>
+                    <Users />
+                  </i>
+                  <span>
+                    קבוצת מתווכים
+                    <small>עשרות הודעות חדשות</small>
+                  </span>
+                </div>
+                {chat.map((m) => (
+                  <div key={m.text} className={`bubble${m.mine ? ' is-mine' : ''}`}>
+                    <b>{m.who}</b>
+                    {m.text}
+                    {m.mine && <span className="bubble-meta">בלי תגובה</span>}
+                  </div>
+                ))}
+              </div>
+              <p className="shift-cap">הבקשה נבלעת תוך דקות.</p>
             </Reveal>
-            <Reveal delay={0.12} className="principle-copy">
-              <span className="eyebrow principle-label-wide">העיקרון שלנו</span>
-              <h2>מהעמלה נשארת אצל המתווך.</h2>
-              <p>
-                אתה מביא את הנכסים, את הלקוחות ואת העבודה הקשה. לכן כל העמלה שלך. הפלטפורמה לא לוקחת אחוזים מעסקאות
-                ולא מתערבת בנכסים שלך.
-              </p>
-            </Reveal>
-          </div>
-          <div className="principle-grid">
-            {principles.map((p, i) => (
-              <Reveal key={p.title} delay={i * 0.08} className="card card-pad principle-card">
-                <span className="icon-badge">
-                  <p.icon />
+
+            <Reveal delay={0.1} className="shift-panel is-after">
+              <span className="shift-tag is-gold">כאן</span>
+              <div className="saved" aria-hidden>
+                <span className="saved-kicker">
+                  <i>
+                    <Radar />
+                  </i>
+                  בקשת חיפוש שמורה
                 </span>
-                <h3>{p.title}</h3>
-                <p>{p.text}</p>
-              </Reveal>
-            ))}
+                <h3>5 חדרים בתל אביב, עד {formatPriceShort(9500000)}</h3>
+                <ul className="saved-chips">
+                  <li>מחסן</li>
+                  <li>חניה בטאבו</li>
+                  <li>נוף לים</li>
+                </ul>
+                <div className="saved-alert">
+                  <span className="saved-spark">
+                    <Sparkles />
+                  </span>
+                  <div>
+                    <b>נמצאה התאמה</b>
+                    <span>פנטהאוז 5 חדרים עם נוף לים</span>
+                  </div>
+                  <img src={asset('img/prop-01.webp')} alt="" loading="lazy" />
+                </div>
+              </div>
+              <p className="shift-cap">הבקשה נשמרת עד שמגיע נכס מתאים.</p>
+            </Reveal>
           </div>
         </div>
       </section>
@@ -358,23 +380,21 @@ export default function Home() {
       {/* -------------------------------------------------------- features */}
       <section className="features" id="features">
         <div className="container">
-          <Reveal className="section-head">
-            <span className="eyebrow">מה בפנים</span>
-            <h2>כל מה שמתווך עצמאי צריך. במקום אחד.</h2>
-            <p>לחיצה על כל כרטיס פותחת את המסך עצמו בדמו.</p>
-          </Reveal>
+          <SectionHead eyebrow="מה בפנים">מערכת שבנויה למתווכים. פשוטה ונוחה.</SectionHead>
           <div className="bento">
-            {features.map((f, i) => (
-              <Reveal key={f.title} delay={(i % 3) * 0.07} className={f.wide ? 'bento-wide' : ''}>
-                <Link to={f.to} className="card bento-card">
+            {features.map((f, i) => {
+              const body = (
+                <>
                   <span className="icon-badge">
                     <f.icon />
                   </span>
                   <h3>{f.title}</h3>
                   <p>{f.text}</p>
-                  <span className="bento-go">
-                    לצפייה במסך <ArrowLeft />
-                  </span>
+                  {f.to && (
+                    <span className="bento-go">
+                      לצפייה במסך <ArrowLeft />
+                    </span>
+                  )}
                   {f.visual === 'faces' && (
                     <span className="bento-visual bento-faces" aria-hidden>
                       {brokers.slice(0, 6).map((b) => (
@@ -394,29 +414,39 @@ export default function Home() {
                     </span>
                   )}
                   <span className="bento-glow" aria-hidden />
-                </Link>
-              </Reveal>
-            ))}
+                </>
+              )
+              return (
+                <Reveal key={f.title} delay={(i % 3) * 0.07} className={f.wide ? 'bento-wide' : ''}>
+                  {f.to ? (
+                    <Link to={f.to} className="card bento-card">
+                      {body}
+                    </Link>
+                  ) : (
+                    <div className="card bento-card is-static">{body}</div>
+                  )}
+                </Reveal>
+              )
+            })}
           </div>
         </div>
       </section>
 
-      {/* ------------------------------------------------------------- how */}
-      <section className="how" id="how">
-        <div className="container how-in">
-          <Reveal className="section-head">
-            <span className="eyebrow">איך זה עובד</span>
-            <h2>שלושה צעדים, ואתה בפנים.</h2>
-          </Reveal>
-          <ol className="steps">
-            {steps.map((s, i) => (
-              <Reveal as="li" key={s.title} delay={i * 0.1} className="step">
-                <span className="step-num num">0{i + 1}</span>
-                <h3>{s.title}</h3>
-                <p>{s.text}</p>
+      {/* ------------------------------------------------------ behind the scenes */}
+      <section className="behind" id="behind">
+        <div className="container">
+          <SectionHead eyebrow="מאחורי הקלעים">יש מי שעומד מאחורי זה.</SectionHead>
+          <div className="behind-grid">
+            {behind.map((b, i) => (
+              <Reveal key={b.title} delay={i * 0.08} className="card card-pad behind-card">
+                <span className="icon-badge">
+                  <b.icon />
+                </span>
+                <h3>{b.title}</h3>
+                <p>{b.text}</p>
               </Reveal>
             ))}
-          </ol>
+          </div>
         </div>
       </section>
 
@@ -426,15 +456,12 @@ export default function Home() {
           <Reveal className="final-card grain">
             <Logo size={54} />
             <BrandLockup size="lg" />
-            <h2>
-              מקום אחד למתווכים
-              <br />
-              שעובדים בשביל עצמם.
-            </h2>
+            <h2>בואו להיות חלק מזה.</h2>
             <Link to="/join" className="btn btn-gold btn-lg">
-              הצטרפות חינם
+              אני בפנים
               <ArrowLeft />
             </Link>
+            <p className="final-note">המערכת חינמית, חוץ מאזורים נבחרים בתשלום.</p>
           </Reveal>
         </div>
       </section>
@@ -443,10 +470,10 @@ export default function Home() {
         <div className="container home-foot-in">
           <div className="foot-brand">
             <Logo size={30} withName />
-            <p>קהילה חינמית למתווכים עצמאיים.</p>
+            <p>הדבר הבא בעולם המתווכים.</p>
           </div>
           <nav className="foot-links" aria-label="קישורים">
-            <Link to="/about">אודות</Link>
+            <Link to="/join">הצטרפות</Link>
             <Link to="/app">אזור החבר</Link>
             <Link to="/app/community">קהילה</Link>
             <Link to="/app/brokers">אינדקס מתווכים</Link>

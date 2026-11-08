@@ -8,7 +8,7 @@ import { StoreProvider } from './store'
 import { PLATFORM_NAME } from './config'
 import './styles/lite.css'
 
-document.title = `${PLATFORM_NAME} - קהילה חינמית למתווכים עצמאיים`
+document.title = `${PLATFORM_NAME} - הדבר הבא בעולם המתווכים`
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

@@ -51,7 +51,7 @@ export const topics: Topic[] = [
     tone: 'violet',
     fromCrm: ['client', 'property'],
     compose: false,
-    cta: 'אני מטפל באזור הזה',
+    cta: 'אני באזור הזה',
   },
   {
     id: 'seeking',

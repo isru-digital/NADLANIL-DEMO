@@ -15,8 +15,7 @@ const results = []
 const targets = [
   ['/', '.hero-copy .brand-rule.is-start', 'lockup right rule'],
   ['/', '.hero-copy .brand-rule.is-end', 'lockup left rule'],
-  ['/', '.principle-copy .eyebrow', 'eyebrow rule'],
-  ['/', '.steps .step', 'step rule'],
+  ['/', '.shift .eyebrow', 'eyebrow rule'],
   ['/app/crm', '.page-head .eyebrow', 'app eyebrow rule'],
   ['/f/demo', '.folder-for', 'folder cover rule'],
 ]

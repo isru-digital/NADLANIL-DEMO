@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import { ArrowLeft, ArrowRight, Building2, Check, Compass, HeartHandshake, Home, LayoutTemplate, Lightbulb, User } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Building2, Check, Handshake, Home, LayoutTemplate, Radar, ShieldCheck, User } from 'lucide-react'
 import { CURRENT_BROKER_ID, PLATFORM_NAME, PLATFORM_TAGLINE, asset } from '../config'
 import { brokerById, cities, whyCommunity } from '../data/demo'
 import type { CrmItem } from '../data/demo'
@@ -12,7 +12,7 @@ import '../styles/join.css'
 import '../styles/topics.css'
 
 const steps = ['הפרטים שלך', 'על הקהילה', 'הערים שלך', 'הנכס הראשון', 'הדף העסקי שלך']
-const whyIcons = [Lightbulb, Compass, HeartHandshake]
+const whyIcons = [Radar, Handshake, ShieldCheck]
 
 type Office = 'office' | 'solo'
 
@@ -129,7 +129,7 @@ export default function Join() {
               <form onSubmit={submitDetails} noValidate>
                 <span className="eyebrow">ברוכים הבאים</span>
                 <h1>נעים להכיר.</h1>
-                <p className="join-lead">שלושה פרטים, כדי שנוכל להכיר ולשמור על קשר. ההצטרפות לקהילה בחינם.</p>
+                <p className="join-lead">שלושה פרטים, וזהו. ההצטרפות בחינם.</p>
 
                 <label className="field">
                   <span>

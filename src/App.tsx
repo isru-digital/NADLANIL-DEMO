@@ -11,7 +11,6 @@ import FolderPage from './pages/FolderPage'
 import PublicPage from './pages/PublicPage'
 import FolderPublic from './pages/FolderPublic'
 import Join from './pages/Join'
-import About from './pages/About'
 
 export default function App() {
   return (
@@ -27,7 +26,6 @@ export default function App() {
           <Route path="folder" element={<FolderPage />} />
         </Route>
         <Route path="/join" element={<Join />} />
-        <Route path="/about" element={<About />} />
         <Route path="/b/demo" element={<PublicPage />} />
         <Route path="/f/demo" element={<FolderPublic />} />
         <Route path="*" element={<Navigate to="/" replace />} />

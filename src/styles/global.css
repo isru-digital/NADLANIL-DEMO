@@ -619,7 +619,6 @@ ul {
 }
 .eyebrow::after,
 .folder-for::after,
-.step::after,
 .brand-rule::after {
   content: '';
   position: absolute;

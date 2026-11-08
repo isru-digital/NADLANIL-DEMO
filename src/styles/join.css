@@ -1,4 +1,4 @@
-/* Onboarding (/join) and About (/about) */
+/* Onboarding (/join) */
 .join {
   position: relative;
   min-height: 100dvh;
@@ -363,93 +363,13 @@ select.input {
   text-align: center;
 }
 
-/* ------------------------------------------------------------------ about */
-.about {
-  background: var(--navy-950);
-  min-height: 100dvh;
-}
-.about-hero {
-  position: relative;
-  padding: clamp(130px, 20vh, 220px) 0 clamp(60px, 10vh, 120px);
-  isolation: isolate;
-  overflow: hidden;
-}
-.about-hero::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background:
-    radial-gradient(60% 70% at 80% 0%, rgba(201, 162, 75, 0.18), transparent 70%),
-    linear-gradient(180deg, var(--navy-800), var(--navy-950));
-}
-.about-hero h1 {
-  margin-top: 20px;
-  max-width: 14em;
-  font-size: clamp(2.6rem, 7vw, 6rem);
-  font-weight: 800;
-  line-height: 1.02;
-  letter-spacing: -0.035em;
-}
-.about-hero p {
-  margin-top: 24px;
-  max-width: 34em;
-  font-size: clamp(18px, 1.7vw, 22px);
-  color: var(--text-dim);
-}
-.about-draft {
-  display: inline-flex;
-  margin-top: 26px;
-}
-.about-list {
-  padding-bottom: clamp(60px, 10vh, 120px);
-}
-.about-row {
-  display: grid;
-  grid-template-columns: minmax(0, 0.42fr) minmax(0, 1fr);
-  gap: clamp(20px, 5vw, 80px);
-  padding-block: clamp(36px, 6vh, 72px);
-  border-top: 1px solid var(--line-strong);
-}
-.about-row-label {
-  display: grid;
-  gap: 10px;
-  align-content: start;
-}
-.about-row-label span {
-  font-family: var(--font-display);
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--gold);
-}
-.about-row-label strong {
-  font-family: var(--font-display);
-  font-size: clamp(20px, 2vw, 26px);
-  font-weight: 600;
-  color: var(--text-dim);
-}
-.about-row h2 {
-  font-size: clamp(1.8rem, 3.8vw, 3.2rem);
-  font-weight: 800;
-  line-height: 1.08;
-  letter-spacing: -0.03em;
-}
-.about-row p {
-  margin-top: 18px;
-  max-width: 34em;
-  font-size: clamp(17px, 1.5vw, 20px);
-  line-height: 1.75;
-  color: var(--text-dim);
-}
-
 @media (max-width: 760px) {
   .join-steps li:not(.is-current) {
     display: none;
   }
   .why-grid,
   .first-prop,
-  .page-ready,
-  .about-row {
+  .page-ready {
     grid-template-columns: 1fr;
   }
   .join-cities {

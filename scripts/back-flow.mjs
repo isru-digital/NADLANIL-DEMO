@@ -94,16 +94,10 @@ check('opened the client folder', (await path()) === '/f/demo')
 await clickSel(back)
 check('back from the client folder returns to the folder screen', (await path()) === '/app/folder', await path())
 
-// 5. about and onboarding, reached from the home page
+// 5. onboarding, reached from the home page
 await page.goto(base + '/', { waitUntil: 'networkidle0' })
 await wait(1000)
-await page.evaluate(() => [...document.querySelectorAll('a')].find((a) => a.getAttribute('href')?.endsWith('/about')).click())
-await wait(1100)
-check('opened the about page', (await path()) === '/about')
-await page.screenshot({ path: `${out}/b-03-about${sfx}.png` })
-await clickSel(back)
-check('back from about returns to the home page', (await path()) === '/', await path())
-await clickText('a', 'הצטרפות חינם')
+await clickText('a', 'אני בפנים')
 check('opened onboarding', (await path()) === '/join')
 await page.screenshot({ path: `${out}/b-04-join${sfx}.png` })
 await clickSel(back)
@@ -114,7 +108,7 @@ for (const [start, expected] of [
   ['/app/crm', '/'],
   ['/b/demo', '/app/builder'],
   ['/f/demo', '/app/folder'],
-  ['/about', '/'],
+  ['/join', '/'],
 ]) {
   const fresh = await browser.newPage()
   await fresh.setViewport(mobile ? { width: 375, height: 812, deviceScaleFactor: 2, isMobile: true, hasTouch: true } : { width: 1440, height: 900 })
