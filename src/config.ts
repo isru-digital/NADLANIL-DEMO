@@ -1,7 +1,7 @@
 // The platform name. This is the ONLY place it is defined: change it here and
 // it changes everywhere. Never hardcode a name elsewhere.
-// "המתווך IL" is a working name for now (decided 06.11.2026), not final.
-export const PLATFORM_NAME = 'המתווך IL'
+// "NadlanUP" is the name (decided 08.11.2026, replacing the working name "המתווך IL").
+export const PLATFORM_NAME = 'NadlanUP'
 
 /** The two-part slogan shown under the name. Each part starts with its number. */
 export const PLATFORM_TAGLINE = ['100% גב קהילתי', '0% גזירות בעמלה']
