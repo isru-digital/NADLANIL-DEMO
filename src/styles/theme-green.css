@@ -245,3 +245,11 @@ html[data-theme='green'] :is(.folder, .lp) {
   --r-lg: 20px;
   --r-xl: 28px;
 }
+
+/* the opening panels: a deep green veil over the photos instead of navy */
+html[data-theme='green'] .op-shade {
+  background: linear-gradient(180deg, rgba(3, 38, 27, 0.6) 0%, rgba(3, 38, 27, 0.5) 100%);
+}
+html[data-theme='green'] .op-panel.is-open .op-shade {
+  background: linear-gradient(180deg, rgba(3, 38, 27, 0.78) 0%, rgba(3, 38, 27, 0.3) 46%, rgba(3, 38, 27, 0.6) 100%);
+}

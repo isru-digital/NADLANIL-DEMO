@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowLeft, CheckCircle2, Heart, Sparkles, Users } from 'lucide-react'
+import { ArrowLeft, Heart } from 'lucide-react'
 import { PLATFORM_NAME, PLATFORM_TAGLINE, asset } from '../config'
 import { brokers, formatPriceShort } from '../data/demo'
 import { Avatar, DemoTag, EASE, Logo, Reveal } from '../components/ui'
 import NetworkMap from '../components/NetworkMap'
-import { CountUp, SectionHead, behind, chat, features } from './Home'
+import OpenPanels from '../components/OpenPanels'
+import { CountUp, SectionHead, behind, features } from './Home'
 import '../styles/builder.css'
 import '../styles/home.css'
 import '../styles/home-green.css'
@@ -41,7 +42,7 @@ export default function HomeGreen() {
           </Link>
           <nav className="hg-nav-links" aria-label="ניווט">
             <a href="#commission">העמלה</a>
-            <a href="#shift">ההבדל</a>
+            <a href="#shift">מה משתנה</a>
             <a href="#features">מה בפנים</a>
             <a href="#behind">מאחורי הקלעים</a>
           </nav>
@@ -183,63 +184,13 @@ export default function HomeGreen() {
         </div>
       </section>
 
-      {/* ------------------------------------------------- today vs here */}
+      {/* ------------------------------------------------- what changes: three panels */}
       <section className="shift" id="shift">
         <div className="container">
-          <SectionHead eyebrow="לפני ואחרי">ככה נראית מהפכה בעולם המתווכים.</SectionHead>
-          <div className="shift-grid">
-            <Reveal className="shift-panel is-before">
-              <span className="shift-tag">היום</span>
-              <div className="chat" aria-hidden>
-                <div className="chat-head">
-                  <i>
-                    <Users />
-                  </i>
-                  <span>
-                    קבוצת מתווכים
-                    <small>עשרות הודעות חדשות</small>
-                  </span>
-                </div>
-                {chat.map((m) => (
-                  <div key={m.text} className={`bubble${m.mine ? ' is-mine' : ''}`}>
-                    <b>{m.who}</b>
-                    {m.text}
-                    {m.mine && <span className="bubble-meta">בלי תגובה</span>}
-                  </div>
-                ))}
-              </div>
-              <p className="shift-cap">הבקשה נבלעת תוך דקות.</p>
-            </Reveal>
-
-            <Reveal delay={0.1} className="shift-panel is-after">
-              <span className="shift-tag is-gold">כאן</span>
-              <div className="saved" aria-hidden>
-                <span className="saved-kicker">
-                  <i>
-                    <CheckCircle2 />
-                  </i>
-                  בקשת חיפוש שמורה
-                </span>
-                <h3>5 חדרים בתל אביב, עד {formatPriceShort(9500000)}</h3>
-                <ul className="saved-chips">
-                  <li>מחסן</li>
-                  <li>חניה בטאבו</li>
-                  <li>נוף לים</li>
-                </ul>
-                <div className="saved-alert">
-                  <span className="saved-spark">
-                    <Sparkles />
-                  </span>
-                  <div>
-                    <b>נמצאה התאמה</b>
-                    <span>פנטהאוז 5 חדרים עם נוף לים</span>
-                  </div>
-                  <img src={asset('img/prop-01.webp')} alt="" loading="lazy" />
-                </div>
-              </div>
-              <p className="shift-cap">הבקשה נשמרת עד שמגיע נכס מתאים.</p>
-            </Reveal>
-          </div>
+          <SectionHead eyebrow="מה משתנה">ככה נראית מהפכה בעולם המתווכים.</SectionHead>
+          <Reveal>
+            <OpenPanels />
+          </Reveal>
         </div>
       </section>
 

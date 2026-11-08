@@ -92,6 +92,6 @@ for (const [label, vp, phone] of [
   await page.close()
 }
 
-await browser.close()
+await browser.close().catch(() => {})
 console.log(results.join('\n'))
 console.log(results.some((r) => r.startsWith('FAIL')) ? '\nSOME CHECKS FAILED' : '\nALL CHECKS PASSED')
