@@ -320,7 +320,7 @@ export default function Home() {
       {/* ------------------------------------------------- today vs here */}
       <section className="shift" id="shift">
         <div className="container">
-          <SectionHead eyebrow="היום מול כאן">ככה נראית מהפכה בעולם המתווכים.</SectionHead>
+          <SectionHead eyebrow="לפני ואחרי">ככה נראית מהפכה בעולם המתווכים.</SectionHead>
           <div className="shift-grid">
             <Reveal className="shift-panel is-before">
               <span className="shift-tag">היום</span>
