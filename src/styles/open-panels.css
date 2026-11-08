@@ -375,3 +375,32 @@
     transition: none;
   }
 }
+
+/* the button that opens the demo from a panel */
+.op-demo {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  min-height: 44px;
+  padding: 0 20px;
+  border-radius: 99px;
+  background: #fff;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  color: #0b2a1f;
+  box-shadow: 0 14px 30px -14px rgba(0, 0, 0, 0.6);
+  transition: transform var(--t-fast) var(--ease);
+}
+.op-demo:hover {
+  transform: translateY(-2px);
+}
+.op-demo svg {
+  width: 17px;
+  height: 17px;
+}
+html:not([data-theme='green']) .op-demo {
+  color: #141b34;
+}

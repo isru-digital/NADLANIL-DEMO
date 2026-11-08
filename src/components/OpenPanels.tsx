@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
-import { Link2, Sparkles } from 'lucide-react'
+import { ArrowLeft, Link2, Sparkles } from 'lucide-react'
 import { asset } from '../config'
 import { brokers, formatPriceShort } from '../data/demo'
 import { Avatar } from './ui'
+import DealRoomDemo from './DealRoomDemo'
 import '../styles/open-panels.css'
 
 /**
@@ -22,6 +23,7 @@ type Panel = {
   image: string
   position: string
   beta?: boolean
+  demo?: boolean
   mock: ReactNode
 }
 
@@ -62,6 +64,7 @@ const panels: Panel[] = [
     image: 'img/skyline.webp',
     position: '55% 50%',
     beta: true,
+    demo: true,
     mock: (
       <div className="op-card">
         <div className="op-pair">
@@ -112,6 +115,7 @@ const panels: Panel[] = [
 
 export default function OpenPanels() {
   const [open, setOpen] = useState(0)
+  const [demoOpen, setDemoOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
   const touched = useRef(false)
 
@@ -181,11 +185,18 @@ export default function OpenPanels() {
               {p.beta && <span className="op-beta">גרסת בטא</span>}
               <h3>{p.title}</h3>
               <p>{p.text}</p>
+              {p.demo && (
+                <button type="button" className="op-demo" onClick={() => setDemoOpen(true)} aria-haspopup="dialog">
+                  לצפייה בדמו
+                  <ArrowLeft />
+                </button>
+              )}
               <div className="op-mock">{p.mock}</div>
             </div>
           </article>
         )
       })}
+      <DealRoomDemo open={demoOpen} onClose={() => setDemoOpen(false)} />
     </div>
   )
 }

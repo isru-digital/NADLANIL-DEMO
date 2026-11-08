@@ -3,10 +3,12 @@ import { Link, NavLink, useLocation, useOutlet } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
   FolderOpen,
+  Handshake,
   Home,
   KanbanSquare,
   LayoutDashboard,
   LayoutTemplate,
+  Lock,
   Menu,
   MessagesSquare,
   RotateCcw,
@@ -17,6 +19,7 @@ import { brokerById } from '../data/demo'
 import { useStore } from '../store'
 import { Avatar, BackButton, DemoTag, EASE, Logo, Modal } from '../components/ui'
 import MatchAlert from '../components/MatchAlert'
+import DealRoomDemo from '../components/DealRoomDemo'
 import '../styles/shell.css'
 
 const nav = [
@@ -43,6 +46,7 @@ export default function AppShell() {
   const { reset, toast } = useStore()
   const me = brokerById(CURRENT_BROKER_ID)
   const [moreOpen, setMoreOpen] = useState(false)
+  const [betaOpen, setBetaOpen] = useState(false)
 
   useEffect(() => {
     setMoreOpen(false)
@@ -84,6 +88,18 @@ export default function AppShell() {
             </NavLink>
           ))}
         </nav>
+
+        <div className="side-lab">
+          <span className="side-lab-title">מעבדת בטא</span>
+          <button className="side-link side-lab-link" onClick={() => setBetaOpen(true)} aria-haspopup="dialog">
+            <Handshake />
+            <span>חדר עסקה משותף</span>
+            <em className="beta-chip">
+              <Lock />
+              בטא
+            </em>
+          </button>
+        </div>
 
         <div className="sidebar-foot">
           <div className="side-principle">
@@ -159,6 +175,7 @@ export default function AppShell() {
       </nav>
 
       <MatchAlert />
+      <DealRoomDemo open={betaOpen} onClose={() => setBetaOpen(false)} />
 
       <Modal open={moreOpen} onClose={() => setMoreOpen(false)} title="עוד כלים">
         <div className="modal-body more-sheet">
@@ -168,6 +185,20 @@ export default function AppShell() {
               <span>{item.label}</span>
             </Link>
           ))}
+          <button
+            className="more-link"
+            onClick={() => {
+              setMoreOpen(false)
+              setBetaOpen(true)
+            }}
+          >
+            <Handshake />
+            <span>חדר עסקה משותף</span>
+            <em className="beta-chip">
+              <Lock />
+              בטא
+            </em>
+          </button>
           <Link to="/" className="more-link">
             <Home />
             <span>דף הבית</span>

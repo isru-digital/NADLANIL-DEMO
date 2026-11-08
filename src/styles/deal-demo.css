@@ -1,0 +1,989 @@
+/* "חדר עסקה משותף" (beta): the look-only demo pop-up. A dark cinematic stage in both looks; the accent follows the page's theme. */
+.dr-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(3, 6, 14, 0.8);
+}
+html[data-theme='green'] .dr-scrim {
+  background: rgba(2, 24, 17, 0.84);
+}
+
+.dr {
+  --dr-1: #0e1838;
+  --dr-2: #060a19;
+  --dr-spark: var(--gold-hi3);
+  /* the stage is dark whatever the page is: light text, dark rings */
+  --text: #ffffff;
+  --text-dim: rgb(255 255 255 / 0.78);
+  --text-faint: rgb(255 255 255 / 0.56);
+  --navy-900: #070b18;
+  position: relative;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  width: min(1060px, 100%);
+  max-height: min(94dvh, 780px);
+  overflow: hidden;
+  border-radius: var(--r-xl);
+  border: 1px solid rgb(255 255 255 / 0.16);
+  background: linear-gradient(165deg, var(--dr-1), var(--dr-2) 70%);
+  color: #fff;
+  box-shadow: 0 60px 140px -40px rgba(0, 0, 0, 0.85);
+  isolation: isolate;
+}
+html[data-theme='green'] .dr {
+  --dr-1: #09402f;
+  --dr-2: #031711;
+}
+.dr:focus {
+  outline: none;
+}
+.dr-aura {
+  position: absolute;
+  z-index: -1;
+  inset-block-start: -320px;
+  inset-inline-end: -220px;
+  width: 760px;
+  height: 760px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(var(--g) / 0.3), transparent);
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------------------ header */
+.dr-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 26px 10px;
+}
+.dr-title {
+  display: grid;
+  gap: 8px;
+}
+.dr-title h2 {
+  font-size: clamp(22px, 2.6vw, 28px);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+.dr-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.dr-badges b,
+.dr-badges em {
+  padding: 3px 11px;
+  border-radius: 99px;
+  font-family: var(--font-display);
+  font-size: 12.5px;
+  font-style: normal;
+  font-weight: 700;
+}
+.dr-badges b {
+  background: linear-gradient(160deg, var(--gold-hi5), var(--gold) 60%, var(--gold-lo2));
+  color: var(--on-accent);
+}
+.dr-badges em {
+  border: 1px solid rgb(255 255 255 / 0.35);
+  color: rgb(255 255 255 / 0.9);
+}
+.dr-pills {
+  display: flex;
+  gap: 6px;
+  margin-inline: auto;
+  padding: 4px;
+  border-radius: 99px;
+  border: 1px solid rgb(255 255 255 / 0.16);
+  background: rgb(255 255 255 / 0.05);
+  list-style: none;
+}
+.dr-pills button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 16px 0 14px;
+  border-radius: 99px;
+  font-family: var(--font-display);
+  font-size: 14.5px;
+  font-weight: 600;
+  color: rgb(255 255 255 / 0.75);
+  transition:
+    background-color var(--t) var(--ease),
+    color var(--t) var(--ease);
+}
+.dr-pills button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.dr-pills i {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid currentColor;
+  font-size: 12px;
+  font-style: normal;
+}
+.dr-pills button.is-on {
+  background: #fff;
+  color: #06231a;
+}
+html:not([data-theme='green']) .dr-pills button.is-on {
+  color: #141b34;
+}
+.dr-x {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid rgb(255 255 255 / 0.22);
+  background: rgb(255 255 255 / 0.06);
+  color: #fff;
+  transition: background-color var(--t) var(--ease);
+}
+.dr-x:hover {
+  background: rgb(255 255 255 / 0.16);
+}
+.dr-x svg {
+  width: 19px;
+  height: 19px;
+}
+
+.dr-body {
+  min-height: 0;
+  overflow: auto;
+  padding: 8px 26px 6px;
+}
+
+/* ------------------------------------------------------------------ shared pieces */
+.dr-card,
+.dr-panel,
+.dr-chat {
+  position: relative;
+  border-radius: 24px;
+  border: 1px solid rgb(255 255 255 / 0.15);
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.11), rgb(255 255 255 / 0.04));
+  transition:
+    border-color 600ms var(--ease),
+    box-shadow 600ms var(--ease);
+}
+.dr-kicker {
+  font-family: var(--font-display);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--gold-hi3);
+}
+.dr-who {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.dr-who div {
+  display: grid;
+  line-height: 1.25;
+}
+.dr-who b {
+  font-family: var(--font-display);
+  font-size: 15px;
+}
+.dr-who small {
+  font-size: 12.5px;
+  color: var(--text-dim);
+}
+.dr-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.dr-chips li {
+  padding: 4px 12px;
+  border-radius: 99px;
+  border: 1px solid rgb(255 255 255 / 0.2);
+  background: rgb(255 255 255 / 0.07);
+  font-family: var(--font-display);
+  font-size: 13.5px;
+  font-weight: 500;
+}
+.dr-ok,
+.dr-approve span {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px 4px 10px;
+  border-radius: 99px;
+  background: rgb(var(--g) / 0.2);
+  border: 1px solid rgb(var(--g) / 0.55);
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gold-hi2);
+}
+.dr-ok svg,
+.dr-approve svg {
+  width: 14px;
+  height: 14px;
+  stroke-width: 3;
+}
+
+/* ------------------------------------------------------------------ scene 1: the match */
+.dr-stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 210px minmax(0, 1fr);
+  gap: 18px;
+  align-items: center;
+  padding-block: 8px 14px;
+}
+.dr-card {
+  display: grid;
+  gap: 11px;
+  align-content: start;
+  padding: 20px;
+  min-height: 300px;
+}
+.dr-card h3 {
+  font-size: clamp(19px, 2vw, 23px);
+  font-weight: 800;
+  line-height: 1.25;
+  color: #fff;
+}
+.dr-card p {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14.5px;
+  color: var(--text-dim);
+}
+.dr-card p svg {
+  width: 15px;
+  height: 15px;
+}
+.dr-req {
+  animation: dr-from-start 900ms var(--ease) both;
+}
+.dr-prop {
+  animation: dr-from-end 900ms var(--ease) both;
+}
+.dr-photo {
+  position: relative;
+  aspect-ratio: 16 / 8.5;
+  overflow: hidden;
+  border-radius: 16px;
+}
+.dr-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.dr-photo b {
+  position: absolute;
+  inset-block-end: 10px;
+  inset-inline-start: 10px;
+  padding: 4px 12px;
+  border-radius: 99px;
+  background: rgba(0, 0, 0, 0.6);
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 800;
+  color: #fff;
+}
+.dr-ok-a {
+  animation: dr-pop 600ms var(--ease) 2.1s both;
+}
+.dr-ok-b {
+  animation: dr-pop 600ms var(--ease) 2.6s both;
+}
+
+.dr-core {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+}
+.dr-ring {
+  --s: 176px;
+  position: relative;
+  width: var(--s);
+  height: var(--s);
+}
+.dr-ring svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+.dr-ring circle {
+  fill: none;
+  stroke-width: 7;
+}
+.dr-ring-bg {
+  stroke: rgb(255 255 255 / 0.16);
+}
+.dr-ring-fg {
+  stroke: var(--gold-hi4);
+  stroke-linecap: round;
+  stroke-dasharray: 327;
+  stroke-dashoffset: 13;
+  animation: dr-ring 1700ms var(--ease) 0.6s both;
+}
+.dr-ring-glow {
+  position: absolute;
+  inset: -34px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(var(--g) / 0.55), transparent);
+  opacity: 0;
+}
+.dr-pct {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  text-align: center;
+}
+.dr-pct strong {
+  font-family: var(--font-display);
+  font-size: calc(var(--s) * 0.27);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: #fff;
+}
+.dr-pct u {
+  margin-inline-start: 2px;
+  font-size: 0.55em;
+  text-decoration: none;
+  color: var(--gold-hi3);
+}
+.dr-pct > span {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+.dr-burst {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.dr-burst i {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 9px;
+  height: 9px;
+  margin: -4.5px 0 0 -4.5px;
+  border-radius: 50%;
+  background: var(--dr-spark);
+  box-shadow: 0 0 10px 2px rgb(var(--g) / 0.8);
+  opacity: 0;
+}
+.dr-verdict {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 34px;
+  width: 100%;
+}
+.dr-verdict span {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  font-family: var(--font-display);
+  transition:
+    opacity 400ms var(--ease),
+    transform 500ms var(--ease);
+}
+.dr-checking {
+  font-size: 14.5px;
+  color: var(--text-dim);
+  animation: dr-blink 1.4s ease-in-out infinite;
+}
+.dr-matched {
+  font-size: 26px;
+  font-weight: 900;
+  color: var(--gold-hi2);
+  text-shadow: 0 0 24px rgb(var(--g) / 0.9);
+  opacity: 0;
+  transform: scale(0.6);
+}
+.dr-matched svg {
+  width: 24px;
+  height: 24px;
+}
+.dr-demo-note {
+  font-size: 12px;
+  color: var(--text-faint);
+}
+.dr-stage.is-matched .dr-checking {
+  opacity: 0;
+  animation: none;
+}
+.dr-stage.is-matched .dr-matched {
+  opacity: 1;
+  transform: none;
+}
+.dr-stage.is-matched .dr-ring-glow {
+  animation: dr-glow 1500ms ease-out both;
+}
+.dr-stage.is-matched .dr-burst i {
+  animation: dr-spark 1000ms var(--ease) both;
+  animation-delay: calc(var(--n) * 16ms);
+}
+.dr-stage.is-matched .dr-card {
+  border-color: rgb(var(--g) / 0.7);
+  box-shadow:
+    0 0 0 1px rgb(var(--g) / 0.35),
+    0 36px 70px -34px rgb(var(--g) / 0.75);
+}
+
+/* ------------------------------------------------------------------ scene 2: the deal room */
+.dr-room {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  gap: 18px;
+  padding-block: 8px 14px;
+}
+.dr-panel {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+  padding: 20px;
+}
+.dr-room-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.dr-pair {
+  display: inline-flex;
+}
+.dr-pair .avatar + .avatar {
+  margin-inline-start: -14px;
+}
+.dr-room-head h3 {
+  margin-top: 4px;
+  font-size: 24px;
+  font-weight: 800;
+  color: #fff;
+}
+.dr-room-head p {
+  font-size: 14.5px;
+  color: var(--text-dim);
+}
+.dr-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-display);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--gold-hi3);
+}
+.dr-open i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--gold-hi3);
+  box-shadow: 0 0 0 4px rgb(var(--g) / 0.3);
+  animation: dr-blink 1.6s ease-in-out infinite;
+}
+
+.dr-split-box {
+  display: grid;
+  gap: 11px;
+  padding: 14px 16px 16px;
+  border-radius: 18px;
+  border: 1px solid rgb(255 255 255 / 0.13);
+  background: rgb(255 255 255 / 0.05);
+}
+.dr-split-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+.dr-split-top span {
+  font-family: var(--font-display);
+  font-size: 15.5px;
+  font-weight: 700;
+}
+.dr-split-top small {
+  font-size: 12.5px;
+  color: var(--text-faint);
+}
+.dr-split {
+  display: flex;
+  gap: 4px;
+  height: 40px;
+}
+.dr-split i {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  border-radius: 99px;
+  transform-origin: right center;
+  animation: dr-grow 1000ms var(--ease) 0.5s both;
+}
+.dr-split b {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 800;
+}
+.dr-seg-a {
+  width: 75%;
+  background: linear-gradient(100deg, var(--gold-hi5), var(--gold) 70%);
+}
+.dr-seg-a b {
+  color: var(--on-accent);
+}
+.dr-seg-b {
+  width: 25%;
+  background: rgb(255 255 255 / 0.2);
+  animation-delay: 0.75s !important;
+}
+.dr-approve {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.dr-approve span {
+  animation: dr-pop 600ms var(--ease) var(--d) both;
+}
+
+.dr-steps-list {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dr-steps-list li {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 36px;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 500;
+  animation: dr-fade 600ms var(--ease) var(--d) both;
+}
+.dr-steps-list i {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1.5px solid rgb(255 255 255 / 0.35);
+  background: var(--dr-2);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 700;
+  color: rgb(255 255 255 / 0.7);
+}
+.dr-steps-list li + li::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: 12px;
+  inset-block-start: -18px;
+  width: 2px;
+  height: 36px;
+  background: rgb(255 255 255 / 0.16);
+}
+.dr-steps-list li.is-done::before,
+.dr-steps-list li.is-now::before {
+  background: var(--gold);
+}
+.dr-steps-list li.is-done i {
+  border-color: var(--gold);
+  background: var(--gold);
+  color: var(--on-accent);
+}
+.dr-steps-list li.is-done svg {
+  width: 14px;
+  height: 14px;
+  stroke-width: 3;
+}
+.dr-steps-list li.is-now {
+  font-weight: 700;
+  color: var(--gold-hi2);
+}
+.dr-steps-list li.is-now i {
+  border-color: var(--gold-hi4);
+  color: var(--gold-hi2);
+  box-shadow: 0 0 0 5px rgb(var(--g) / 0.28);
+}
+.dr-steps-list li.is-next {
+  color: var(--text-dim);
+}
+
+.dr-chat {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 12px;
+  padding: 18px;
+  min-height: 360px;
+}
+.dr-chat-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgb(255 255 255 / 0.12);
+  font-family: var(--font-display);
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+.dr-chat-head svg {
+  width: 15px;
+  height: 15px;
+  color: var(--gold-hi3);
+}
+.dr-bubbles {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.dr-bubble {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  max-width: 92%;
+}
+.dr-bubble .dr-msg {
+  padding: 10px 14px;
+  border-radius: 5px 18px 18px 18px;
+  background: rgb(255 255 255 / 0.12);
+  font-size: 15px;
+  line-height: 1.45;
+}
+.dr-bubble.is-mine {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+}
+.dr-bubble.is-mine .dr-msg {
+  border-radius: 18px 5px 18px 18px;
+  background: linear-gradient(160deg, var(--gold-hi5), var(--gold) 70%);
+  color: var(--on-accent);
+  font-weight: 600;
+}
+.dr-typing {
+  display: inline-flex;
+  gap: 5px;
+  align-self: flex-start;
+  padding: 11px 14px;
+  border-radius: 18px;
+  background: rgb(255 255 255 / 0.1);
+}
+.dr-typing i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.8);
+  animation: dr-blink 1.2s ease-in-out infinite;
+}
+.dr-typing i:nth-child(2) {
+  animation-delay: 0.18s;
+}
+.dr-typing i:nth-child(3) {
+  animation-delay: 0.36s;
+}
+.dr-input {
+  padding: 12px 16px;
+  border-radius: 99px;
+  border: 1px dashed rgb(255 255 255 / 0.28);
+  font-size: 14px;
+  color: var(--text-faint);
+}
+
+/* ------------------------------------------------------------------ footer */
+.dr-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 26px 8px;
+}
+.dr-foot p {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 15px;
+  color: var(--text-dim);
+}
+.dr-foot p svg {
+  width: 17px;
+  height: 17px;
+  color: var(--gold-hi3);
+}
+.dr-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.dr-ghost {
+  min-height: 48px;
+  min-width: 48px;
+  padding: 0 14px;
+  border-radius: 99px;
+  border: 1px solid rgb(255 255 255 / 0.3);
+  background: rgb(255 255 255 / 0.06);
+  color: #fff;
+}
+.dr-ghost:hover {
+  background: rgb(255 255 255 / 0.16);
+}
+.dr-ghost-text {
+  padding-inline: 20px;
+  font-size: 15px;
+}
+.dr-go {
+  transition:
+    opacity 400ms var(--ease),
+    transform var(--t-fast) var(--ease),
+    box-shadow var(--t) var(--ease);
+}
+.dr-go:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.dr-go.is-ready {
+  animation: dr-pop 600ms var(--ease) both;
+}
+.dr-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 4px 26px 16px;
+  font-size: 12.5px;
+  color: var(--text-faint);
+}
+.dr-note svg {
+  width: 13px;
+  height: 13px;
+}
+
+/* ------------------------------------------------------------------ motion */
+@keyframes dr-from-start {
+  from {
+    opacity: 0;
+    transform: translateX(70px);
+  }
+}
+@keyframes dr-from-end {
+  from {
+    opacity: 0;
+    transform: translateX(-70px);
+  }
+}
+@keyframes dr-from-top {
+  from {
+    opacity: 0;
+    transform: translateY(-34px);
+  }
+}
+@keyframes dr-from-bottom {
+  from {
+    opacity: 0;
+    transform: translateY(34px);
+  }
+}
+@keyframes dr-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+}
+@keyframes dr-fade {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+}
+@keyframes dr-grow {
+  from {
+    transform: scaleX(0);
+  }
+}
+@keyframes dr-ring {
+  from {
+    stroke-dashoffset: 327;
+  }
+}
+@keyframes dr-glow {
+  0% {
+    opacity: 0.95;
+    transform: scale(0.55);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.5);
+  }
+}
+@keyframes dr-spark {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) scale(0.7);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--x), var(--y)) scale(0.15);
+  }
+}
+@keyframes dr-blink {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* ------------------------------------------------------------------ phones: a full-screen sheet */
+@media (max-width: 860px) {
+  .dr-stage {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .dr-req {
+    animation-name: dr-from-top;
+  }
+  .dr-prop {
+    animation-name: dr-from-bottom;
+  }
+  .dr-core {
+    grid-template-columns: auto 1fr;
+    justify-items: start;
+    align-items: center;
+    column-gap: 18px;
+    row-gap: 2px;
+    padding-inline: 6px;
+  }
+  .dr-ring {
+    --s: 104px;
+    grid-row: 1 / span 2;
+  }
+  .dr-verdict {
+    justify-items: start;
+    width: auto;
+    min-width: 150px;
+  }
+  .dr-verdict span {
+    inset-inline-start: 0;
+  }
+  .dr-matched {
+    font-size: 22px;
+  }
+  .dr-burst {
+    transform: scale(0.65);
+  }
+  .dr-card {
+    min-height: 0;
+    padding: 16px;
+  }
+  .dr-photo {
+    aspect-ratio: 16 / 5.6;
+  }
+  .dr-card {
+    gap: 8px;
+  }
+  .dr-card h3 {
+    font-size: 18px;
+  }
+  .dr-stage {
+    gap: 8px;
+    padding-block: 2px 8px;
+  }
+  .dr-room {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .dr-chat {
+    min-height: 0;
+  }
+}
+@media (max-width: 760px) {
+  .dr-scrim {
+    padding: 0;
+    align-items: stretch;
+  }
+  .dr {
+    width: 100%;
+    height: 100dvh;
+    max-height: none;
+    border-radius: 0;
+    border-inline: 0;
+  }
+  .dr-head {
+    flex-wrap: wrap;
+    padding: calc(16px + env(safe-area-inset-top)) 16px 8px;
+    gap: 10px;
+  }
+  .dr-title {
+    flex: 1;
+  }
+  .dr-pills {
+    order: 3;
+    width: 100%;
+    margin: 0;
+  }
+  .dr-pills li {
+    flex: 1;
+  }
+  .dr-pills button {
+    width: 100%;
+    justify-content: center;
+    padding-inline: 8px;
+  }
+  .dr-body {
+    padding: 4px 16px;
+  }
+  .dr-foot {
+    padding: 10px 16px 6px;
+  }
+  .dr-foot p {
+    display: none;
+  }
+  .dr-actions {
+    width: 100%;
+  }
+  .dr-go {
+    flex: 1;
+  }
+  .dr-ghost-text {
+    flex: none;
+  }
+  .dr-note {
+    padding: 2px 16px calc(12px + env(safe-area-inset-bottom));
+  }
+  .dr-split-top {
+    flex-direction: column;
+    gap: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dr *,
+  .dr *::before {
+    animation: none !important;
+    transition: none !important;
+  }
+}
