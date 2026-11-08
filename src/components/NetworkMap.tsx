@@ -24,7 +24,7 @@ const cities: City[] = [
   { id: 'haifa', name: 'חיפה', lon: 34.99, lat: 32.79, label: true, side: 'r' },
   { id: 'nat', name: 'נתניה', lon: 34.85, lat: 32.33 },
   { id: 'tlv', name: 'תל אביב', lon: 34.78, lat: 32.08, label: true, side: 'r' },
-  { id: 'jer', name: 'ירושלים', lon: 35.21, lat: 31.77, label: true, side: 'l' },
+  { id: 'jer', name: 'ירושלים', lon: 35.21, lat: 31.77, label: true, side: 'r' },
   { id: 'ash', name: 'אשדוד', lon: 34.65, lat: 31.8 },
   { id: 'bs', name: 'באר שבע', lon: 34.79, lat: 31.25, label: true, side: 'r' },
   { id: 'mr', name: 'מצפה רמון', lon: 34.8, lat: 30.61 },
