@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { ArrowLeft, BadgeCheck, Sparkles } from 'lucide-react'
 import { Reveal } from '../components/ui'
+import { OFFICE_MIN_MONTHS, OFFICE_PRICE } from '../config/office'
 import { areaOptions, sampleProfile } from './agentData'
 import ProfilePreview from './ProfilePreview'
 import '../styles/agent.css'
@@ -23,7 +24,7 @@ export default function AgentTeaser() {
           <ol className="agt-steps">
             <li>
               <b className="num">1</b>
-              <span>משלמים ונכנסים לאזור</span>
+              <span>מצטרפים למשרד ומשלמים</span>
             </li>
             <li>
               <b className="num">2</b>
@@ -35,14 +36,14 @@ export default function AgentTeaser() {
             </li>
           </ol>
           <div className="agt-cta">
-            <Link to="/app/agent?start=1" className="btn btn-white btn-lg">
-              להתחיל לענות <ArrowLeft />
+            <Link to="/join/office" className="btn btn-white btn-lg">
+              להצטרפות למשרד, {OFFICE_PRICE} ₪ לחודש <ArrowLeft />
             </Link>
             <Link to="/agent/demo" className="btn btn-outline-white btn-lg">
               לראות דף לדוגמה
             </Link>
           </div>
-          <small className="agt-note">האזור נפתח אחרי תשלום. בדמו אפשר להתחיל ישר.</small>
+          <small className="agt-note">האזור נפתח אחרי ההצטרפות למשרד: {OFFICE_PRICE} ₪ לחודש, מינימום {OFFICE_MIN_MONTHS} חודשים.</small>
         </Reveal>
 
         <Reveal delay={0.1} className="agt-visual">

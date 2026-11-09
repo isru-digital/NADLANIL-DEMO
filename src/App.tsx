@@ -14,7 +14,7 @@ import FolderPublic from './pages/FolderPublic'
 import Join from './pages/Join'
 import VersionSwitch from './components/VersionSwitch'
 
-export default function App({ home, routes, appRoutes }: { home?: ReactElement; routes?: ReactNode; appRoutes?: ReactNode }) {
+export default function App({ home, join, routes, appRoutes }: { home?: ReactElement; join?: ReactElement; routes?: ReactNode; appRoutes?: ReactNode }) {
   return (
     <>
       <Routes>
@@ -28,7 +28,7 @@ export default function App({ home, routes, appRoutes }: { home?: ReactElement; 
           <Route path="folder" element={<FolderPage />} />
           {appRoutes}
         </Route>
-        <Route path="/join" element={<Join />} />
+        <Route path="/join" element={join ?? <Join />} />
         <Route path="/b/demo" element={<PublicPage />} />
         <Route path="/f/demo" element={<FolderPublic />} />
         {routes}

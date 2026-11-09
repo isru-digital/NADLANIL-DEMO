@@ -45,6 +45,7 @@ export default function HomeGreen() {
             <a href="#commission">העמלה</a>
             <a href="#shift">מה משתנה</a>
             <a href="#agent">הסוכן שלנו</a>
+            <Link to="/join/office">מחירים</Link>
             <a href="#features">מה בפנים</a>
             <a href="#behind">מאחורי הקלעים</a>
           </nav>

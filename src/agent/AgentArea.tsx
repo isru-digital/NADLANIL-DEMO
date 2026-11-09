@@ -1,10 +1,8 @@
-import { useEffect, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
-import { AnimatePresence, motion } from 'framer-motion'
-import { ArrowLeft, BadgeCheck, Check, Copy, ExternalLink, FileCheck, Globe, LoaderCircle, Lock, Pencil, RotateCcw, Search, Sparkles, WandSparkles } from 'lucide-react'
-import { Modal, EASE } from '../components/ui'
+import { Link } from 'react-router-dom'
+import { ArrowLeft, BadgeCheck, Check, Copy, ExternalLink, FileCheck, Globe, Lock, Pencil, RotateCcw, Search, Sparkles, WandSparkles } from 'lucide-react'
 import { useStore } from '../store'
 import { PLATFORM_NAME } from '../config'
+import { OFFICE_MIN_MONTHS, OFFICE_NAME, OFFICE_PRICE, shekel } from '../config/office'
 import { areaLabel, firstName, sampleProfile, slugOf } from './agentData'
 import { useAgent } from './useAgent'
 import AgentWizard from './AgentWizard'
@@ -13,15 +11,7 @@ import '../styles/agent.css'
 
 /** The "הסוכן שלנו" area: closed until the broker pays, then a questionnaire, then the dashboard of the finished page. */
 export default function AgentArea() {
-  const { stage, patch } = useAgent()
-  // "?start=1" (from the home page) goes straight to the questionnaire; in the demo that skips the simulated payment
-  const [params, setParams] = useSearchParams()
-  useEffect(() => {
-    if (!params.has('start')) return
-    if (stage === 'locked') patch({ stage: 'onboarding', step: 0 })
-    setParams({}, { replace: true })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  const { stage } = useAgent()
   return (
     <div className="ag">
       {stage === 'locked' && <Gate />}
@@ -34,132 +24,74 @@ export default function AgentArea() {
 /* ---------------------------------------------------------------- before paying */
 
 function Gate() {
-  const { patch } = useAgent()
-  const [pay, setPay] = useState<'closed' | 'open' | 'busy' | 'done'>('closed')
-
-  useEffect(() => {
-    if (pay !== 'busy') return
-    const t = window.setTimeout(() => setPay('done'), 1500)
-    return () => window.clearTimeout(t)
-  }, [pay])
-
-  const start = () => {
-    patch({ stage: 'onboarding', step: 0, paidAt: new Date().toISOString() })
-    setPay('closed')
-  }
-
   return (
-    <>
-      <section className="ag-gate">
-        <div className="ag-gate-copy">
-          <span className="ag-tag">
-            <BadgeCheck /> אזור חדש
-          </span>
-          <h1>הסוכן שלנו</h1>
-          <p className="ag-lead">דף אישי ויפה בשמך, שנבנה כדי שיחפשו אותך בגוגל ויגיעו אליך.</p>
-          <ul className="ag-points">
-            <li>
-              <span>
-                <Sparkles />
-              </span>
-              <div>
-                <b>דף מרשים, לא תבנית</b>
-                <small>תמונה, סיפור, מפה ופרטי קשר, בעיצוב שמרגיש כמו משרד גדול.</small>
-              </div>
-            </li>
-            <li>
-              <span>
-                <WandSparkles />
-              </span>
-              <div>
-                <b>15 שאלות קלילות</b>
-                <small>עונים בכיף, ואנחנו כותבים את הדף. בלי למלא טפסים ארוכים.</small>
-              </div>
-            </li>
-            <li>
-              <span>
-                <Search />
-              </span>
-              <div>
-                <b>נבנה להימצא בגוגל</b>
-                <small>כותרת, תיאור ונתונים מובנים לפי השם שלך, כדי שמי שמחפש אותך ימצא אותך.</small>
-              </div>
-            </li>
-          </ul>
-          <div className="ag-gate-cta">
-            <button className="btn btn-gold btn-lg" onClick={() => setPay('open')}>
-              להצטרפות לסוכן שלנו <ArrowLeft />
-            </button>
-            <Link to="/agent/demo" className="btn btn-ghost btn-lg">
-              לראות דף לדוגמה
-            </Link>
-          </div>
-          <p className="ag-note">
-            <Lock /> האזור נפתח אחרי תשלום. בדמו אין תשלום אמיתי.
-          </p>
+    <section className="ag-gate">
+      <div className="ag-gate-copy">
+        <span className="ag-tag">
+          <BadgeCheck /> לחברי {OFFICE_NAME}
+        </span>
+        <h1>הסוכן שלנו</h1>
+        <p className="ag-lead">דף אישי ויפה בשמך, שנבנה כדי שיחפשו אותך בגוגל ויגיעו אליך.</p>
+        <ul className="ag-points">
+          <li>
+            <span>
+              <Sparkles />
+            </span>
+            <div>
+              <b>דף מרשים, לא תבנית</b>
+              <small>תמונה, סיפור, מפה ופרטי קשר, בעיצוב שמרגיש כמו משרד גדול.</small>
+            </div>
+          </li>
+          <li>
+            <span>
+              <WandSparkles />
+            </span>
+            <div>
+              <b>15 שאלות קלילות</b>
+              <small>עונים בכיף, ואנחנו כותבים את הדף. בלי למלא טפסים ארוכים.</small>
+            </div>
+          </li>
+          <li>
+            <span>
+              <Search />
+            </span>
+            <div>
+              <b>נבנה להימצא בגוגל</b>
+              <small>כותרת, תיאור ונתונים מובנים לפי השם שלך, כדי שמי שמחפש אותך ימצא אותך.</small>
+            </div>
+          </li>
+        </ul>
+        <div className="ag-gate-cta">
+          <Link to="/join/office" className="btn btn-gold btn-lg">
+            להצטרפות למשרד, {OFFICE_PRICE} ₪ לחודש <ArrowLeft />
+          </Link>
+          <Link to="/agent/demo" className="btn btn-ghost btn-lg">
+            לראות דף לדוגמה
+          </Link>
         </div>
+        <p className="ag-note">
+          <Lock /> האזור נפתח רק אחרי ההצטרפות למשרד: {OFFICE_PRICE} ₪ לחודש, מינימום {OFFICE_MIN_MONTHS} חודשים. בדמו אין תשלום אמיתי.
+        </p>
+      </div>
 
-        <div className="ag-gate-visual" aria-hidden>
-          <div className="ag-float">
-            <ProfilePreview profile={sampleProfile} />
-          </div>
-          <div className="ag-serp is-float">
-            <small>{PLATFORM_NAME} › agent › maya-landau</small>
-            <b>מאיה לנדאו, מתווכת נדל"ן בתל אביב והמרכז</b>
-            <span>מלווה לקוחות בתל אביב והמרכז כבר 11 שנים. יוקרה, דירות מגורים ותושבי חוץ.</span>
-          </div>
+      <div className="ag-gate-visual" aria-hidden>
+        <div className="ag-float">
+          <ProfilePreview profile={sampleProfile} />
         </div>
-      </section>
-
-      <Modal open={pay !== 'closed'} onClose={() => pay !== 'busy' && setPay('closed')} title="הצטרפות לסוכן שלנו" subtitle="דמו: אין תשלום אמיתי ולא מבקשים פרטי אשראי.">
-        <div className="modal-body ag-pay">
-          <AnimatePresence mode="wait" initial={false}>
-            {pay === 'done' ? (
-              <motion.div key="done" className="ag-pay-done" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.35, ease: EASE }}>
-                <span className="ag-pay-check">
-                  <Check />
-                </span>
-                <h3>התשלום התקבל</h3>
-                <p>האזור נפתח. עכשיו עונים על כמה שאלות, ואנחנו בונים את הדף.</p>
-                <button className="btn btn-gold btn-lg" onClick={start}>
-                  מתחילים <ArrowLeft />
-                </button>
-              </motion.div>
-            ) : (
-              <motion.div key="form" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <ul className="ag-pay-list">
-                  <li>
-                    <Check /> דף אישי בשם שלך
-                  </li>
-                  <li>
-                    <Check /> שאלון של 15 שאלות קלילות
-                  </li>
-                  <li>
-                    <Check /> הכנה לחיפוש בגוגל
-                  </li>
-                </ul>
-                <button className="btn btn-gold btn-lg ag-pay-go" disabled={pay === 'busy'} onClick={() => setPay('busy')}>
-                  {pay === 'busy' ? (
-                    <>
-                      <LoaderCircle className="ag-spin" /> מעבדים את התשלום
-                    </>
-                  ) : (
-                    'סימולציית תשלום'
-                  )}
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
+        <div className="ag-serp is-float">
+          <small>{PLATFORM_NAME} › agent › maya-landau</small>
+          <b>מאיה לנדאו, מתווכת נדל"ן בתל אביב והמרכז</b>
+          <span>מלווה לקוחות בתל אביב והמרכז כבר 11 שנים. יוקרה, דירות מגורים ותושבי חוץ.</span>
         </div>
-      </Modal>
-    </>
+      </div>
+    </section>
   )
 }
 
 /* ---------------------------------------------------------------- the finished page */
 
 function Dashboard() {
-  const { profile: p, patch, reset } = useAgent()
+  const { profile: p, patch, reset, paidAt } = useAgent()
   const { toast } = useStore()
   const slug = slugOf(p.name)
   const base = typeof window !== 'undefined' ? `${window.location.origin}${import.meta.env.BASE_URL}` : ''
@@ -239,6 +171,37 @@ function Dashboard() {
               <span>{`${firstName(p.name)} מלווה לקוחות${where}${p.years ? ` כבר ${p.years} שנים` : ''}. ${p.specialties.slice(0, 3).join(', ')}.`}</span>
             </div>
             <p className="ag-note">תצוגה לדוגמה. בגוגל האמיתי מופיע מה שהמנוע בוחר, והדף נבנה כדי לעזור לו.</p>
+          </section>
+
+          <section className="ag-panel">
+            <h2>המנוי שלכם</h2>
+            <dl className="ag-member">
+              <div>
+                <dt>מסלול</dt>
+                <dd>{OFFICE_NAME}</dd>
+              </div>
+              <div>
+                <dt>מחיר</dt>
+                <dd className="num">{OFFICE_PRICE} ₪ לחודש</dd>
+              </div>
+              <div>
+                <dt>הצטרפות</dt>
+                <dd>{paidAt ? new Date(paidAt).toLocaleDateString('he-IL', { timeZone: 'Asia/Jerusalem' }) : 'בדמו'}</dd>
+              </div>
+              <div>
+                <dt>התחייבות מינימלית עד</dt>
+                <dd>
+                  {paidAt
+                    ? (() => {
+                        const d = new Date(paidAt)
+                        d.setMonth(d.getMonth() + OFFICE_MIN_MONTHS)
+                        return d.toLocaleDateString('he-IL', { timeZone: 'Asia/Jerusalem' })
+                      })()
+                    : `${OFFICE_MIN_MONTHS} חודשים`}
+                </dd>
+              </div>
+            </dl>
+            <p className="ag-note">{shekel(OFFICE_PRICE * OFFICE_MIN_MONTHS)} התחייבות מינימלית. בדמו אין חיוב אמיתי.</p>
           </section>
 
           <section className="ag-panel">

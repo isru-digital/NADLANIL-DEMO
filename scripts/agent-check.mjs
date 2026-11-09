@@ -52,18 +52,26 @@ for (const [label, vp, phone] of [
     await click(page, '.side-link', 'הסוכן שלנו')
   }
   await wait(1200)
-  check(`${tag}: closed until paying (the gate)`, await page.evaluate(() => !!document.querySelector('.ag-gate') && document.body.textContent.includes('נפתח אחרי תשלום')))
+  check(`${tag}: closed until paying (the gate)`, await page.evaluate(() => !!document.querySelector('.ag-gate') && document.body.textContent.includes('נפתח רק אחרי ההצטרפות למשרד') && document.body.textContent.includes('689')))
   await page.screenshot({ path: `${out}/agent-${label}-1-gate.png` })
 
-  // simulated payment
+  // the area is closed: its button leads to the office page, where the payment is
   await click(page, '.ag-gate-cta .btn', 'להצטרפות')
-  await wait(800)
-  await page.screenshot({ path: `${out}/agent-${label}-2-pay.png` })
-  check(`${tag}: payment is a simulation with no card fields`, await page.evaluate(() => !!document.querySelector('.ag-pay') && document.querySelectorAll('.ag-pay input').length === 0 && document.body.textContent.includes('אין תשלום אמיתי')))
-  await click(page, '.ag-pay-go', '')
-  await wait(2300)
-  check(`${tag}: payment completes`, await page.evaluate(() => !!document.querySelector('.ag-pay-done')))
-  await click(page, '.ag-pay-done .btn', 'מתחילים')
+  await wait(1600)
+  check(`${tag}: the gate leads to the office pricing page`, await page.evaluate(() => location.pathname.endsWith('/join/office') && !!document.querySelector('.jo-hero')))
+  await page.screenshot({ path: `${out}/agent-${label}-2-office.png` })
+  await click(page, '.jo-hero .btn-white', 'להצטרפות')
+  await wait(900)
+  await page.screenshot({ path: `${out}/agent-${label}-2b-pay.png` })
+  check(`${tag}: payment is a simulation with no card fields`, await page.evaluate(() => !!document.querySelector('.jo-pay') && document.querySelectorAll('.jo-pay input[type=text], .jo-pay input[type=tel], .jo-pay input[type=number]').length === 0 && document.body.textContent.includes('אין תשלום אמיתי')))
+  check(`${tag}: the payment shows 689 a month and a 3 month minimum`, await page.evaluate(() => { const t = document.querySelector('.jo-sum')?.textContent ?? ''; return t.includes('689') && t.includes('3 חודשים') && t.includes('2,067') }))
+  check(`${tag}: paying needs the terms to be approved`, await page.evaluate(() => document.querySelector('.jo-go')?.disabled === true))
+  await page.evaluate(() => document.querySelector('.jo-agree input')?.click())
+  await wait(300)
+  await click(page, '.jo-go', '')
+  await wait(2400)
+  check(`${tag}: payment completes`, await page.evaluate(() => !!document.querySelector('.jo-done')))
+  await click(page, '.jo-done .btn', 'מתחילים')
   await wait(1000)
   let st = await page.evaluate(() => ({
     wiz: !!document.querySelector('.ag-wiz'),
@@ -224,10 +232,10 @@ for (const [label, vp] of [
   await page.evaluate(() => document.getElementById('agent')?.scrollIntoView())
   await wait(1800)
   await page.screenshot({ path: `${out}/agent-home-${label}.png` })
-  await click(page, '#agent .agt-cta a', 'להתחיל לענות')
+  await click(page, '#agent .agt-cta a', 'להצטרפות למשרד')
   await wait(1800)
-  const w = await page.evaluate(() => ({ path: location.pathname + location.search, wiz: !!document.querySelector('.ag-wiz'), label: document.querySelector('.ag-prog')?.getAttribute('aria-label'), title: document.querySelector('.ag-step h2')?.textContent }))
-  check(`home ${label}: "להתחיל לענות" opens the questionnaire at question 1`, w.wiz && w.label === 'שאלה 1 מתוך 15' && !w.path.includes('start'), JSON.stringify(w))
+  const w = await page.evaluate(() => ({ path: location.pathname, office: !!document.querySelector('.jo-hero'), wiz: !!document.querySelector('.ag-wiz') }))
+  check(`home ${label}: the button leads to the office page and not around the payment`, w.office && w.path.endsWith('/join/office') && !w.wiz, JSON.stringify(w))
   await page.close()
 }
 
