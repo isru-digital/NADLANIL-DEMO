@@ -151,7 +151,24 @@ for (const [label, vp, phone] of [
   check(`${tag}: the page lives at the broker's name in the address`, st.path.includes('/agent/מאיה-לנדאו'), st.path)
   check(`${tag}: the page shows the name, a photo and its sections`, st.h1 === 'מאיה לנדאו' && st.img && st.sections >= 6, `${st.h1}, ${st.sections} sections`)
   check(`${tag}: title and description are set for search`, st.title.includes('מאיה לנדאו') && st.title.includes('מתווכת') && st.desc.includes('מאיה'), `${st.title}`)
-  check(`${tag}: structured data (RealEstateAgent) is on the page`, st.ld['@type'] === 'RealEstateAgent' && st.ld.name === 'מאיה לנדאו' && Array.isArray(st.ld.areaServed) && st.ld.areaServed.length > 0)
+  const graph = st.ld['@graph'] ?? []
+  const agent = graph.find((x) => x['@type'] === 'RealEstateAgent')
+  check(`${tag}: structured data has the agent, the breadcrumb and the questions`, agent?.name === 'מאיה לנדאו' && agent.areaServed?.length > 0 && graph.some((x) => x['@type'] === 'BreadcrumbList') && graph.find((x) => x['@type'] === 'FAQPage')?.mainEntity?.length === 4, graph.map((x) => x['@type']).join(','))
+  const extra = await page.evaluate(() => ({
+    crumbs: [...document.querySelectorAll('.agp-crumbs li')].map((l) => l.textContent.trim()),
+    stats: [...document.querySelectorAll('.agp-stats dt')].map((d) => d.textContent.trim()),
+    vcard: !!document.querySelector('.agp-contact-links button'),
+    bar: (() => { const b = document.querySelector('.agp-actions'); return b ? getComputedStyle(b).display : 'none' })(),
+    chip: document.querySelector('.agp-chip.is-a')?.textContent.trim(),
+  }))
+  check(`${tag}: a visible breadcrumb ends with the broker's name`, extra.crumbs.length === 3 && extra.crumbs[2] === 'מאיה לנדאו', extra.crumbs.join(' | '))
+  check(`${tag}: the counters end on the real numbers`, extra.stats.join(',') === '11+,3,3', extra.stats.join(','))
+  check(`${tag}: the first chip says the licence is approved`, extra.chip.includes('רישיון מתווך מאושר'), extra.chip)
+  check(`${tag}: save-contact button exists`, extra.vcard)
+  check(`${tag}: the quick contact bar ${phone ? 'shows on the phone' : 'is hidden on desktop'}`, phone ? extra.bar === 'grid' : extra.bar === 'none', extra.bar)
+  await page.evaluate(() => document.getElementById('areas')?.scrollIntoView())
+  await wait(900)
+  check(`${tag}: the nav follows the section in view`, await page.evaluate(() => document.querySelector('.agp-nav nav a.is-on')?.getAttribute('href') === '#areas'))
   check(`${tag}: no sideways overflow on the page`, st.overflowX <= 1, `${st.overflowX}px`)
   await page.screenshot({ path: `${out}/agent-${label}-9-page-top.png` })
   // let the reveal-on-scroll sections show before the full-page picture

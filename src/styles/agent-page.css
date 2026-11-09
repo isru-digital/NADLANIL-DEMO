@@ -61,9 +61,13 @@
   color: var(--ink-dim);
   transition: background-color var(--t) var(--ease), color var(--t) var(--ease);
 }
-.agp-nav nav a:hover {
+.agp-nav nav a:hover,
+.agp-nav nav a.is-on {
   background: var(--mint);
   color: var(--em-deep);
+}
+.agp-nav nav a.is-on {
+  font-weight: 700;
 }
 .agp-wa-pill {
   display: inline-flex;
@@ -81,6 +85,35 @@
 .agp-wa-pill svg {
   width: 18px;
   height: 18px;
+}
+
+/* ------------------------------------------------------------------ breadcrumb */
+.agp-crumbs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+  margin: 0 0 26px;
+  padding: 0;
+  list-style: none;
+  font-family: var(--font-display);
+  font-size: 14px;
+  color: var(--ink-faint);
+}
+.agp-crumbs li + li::before {
+  content: '«';
+  margin-inline-end: 6px;
+  color: var(--em);
+}
+.agp-crumbs a {
+  color: var(--em-deep);
+}
+.agp-crumbs a:hover {
+  text-decoration: underline;
+}
+.agp-crumbs b {
+  color: var(--ink);
 }
 
 /* ------------------------------------------------------------------ hero */
@@ -232,6 +265,16 @@
   height: 100%;
   object-fit: cover;
   object-position: 50% 12%;
+  /* whatever the photo's own backdrop, its edges melt into the green arch behind it */
+  -webkit-mask-image: radial-gradient(125% 92% at 50% 40%, #000 56%, rgba(0, 0, 0, 0.55) 78%, transparent 100%);
+  mask-image: radial-gradient(125% 92% at 50% 40%, #000 56%, rgba(0, 0, 0, 0.55) 78%, transparent 100%);
+}
+.agp-arch::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(4, 59, 43, 0) 62%, rgba(4, 59, 43, 0.55));
+  pointer-events: none;
 }
 .agp-arch > span {
   display: grid;
@@ -424,7 +467,7 @@
 
 .agp-spec {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 16px;
 }
 .agp-spec-card {
@@ -753,7 +796,8 @@
   justify-items: start;
   margin-top: 8px;
 }
-.agp-contact-links a {
+.agp-contact-links a,
+.agp-contact-links button {
   display: inline-flex;
   align-items: center;
   gap: 10px;
@@ -765,6 +809,9 @@
   font-size: 17px;
   font-weight: 600;
   color: #fff;
+}
+.agp-contact-links button {
+  cursor: pointer;
 }
 .agp-contact-links svg {
   width: 20px;
@@ -859,6 +906,55 @@
   justify-items: center;
   gap: 14px;
   text-align: center;
+}
+
+/* the quick contact bar that stays at the bottom on a phone */
+.agp-actions {
+  display: none;
+}
+@media (max-width: 760px) {
+  .agp-actions {
+    position: fixed;
+    inset-inline: 0;
+    inset-block-end: 0;
+    z-index: 45;
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 10px;
+    padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+    background: rgb(255 255 255 / 0.97);
+    border-top: 1px solid var(--line);
+    box-shadow: 0 -16px 40px -24px rgba(4, 59, 43, 0.5);
+  }
+  .agp-actions a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 52px;
+    border-radius: 99px;
+    border: 1.5px solid rgb(10 70 48 / 0.22);
+    background: #fff;
+    font-family: var(--font-display);
+    font-size: 16.5px;
+    font-weight: 700;
+    color: var(--ink);
+  }
+  .agp-actions a.is-wa {
+    border-color: transparent;
+    background: linear-gradient(160deg, #22c07a, var(--em-deep));
+    color: #fff;
+  }
+  .agp-actions svg {
+    width: 19px;
+    height: 19px;
+  }
+  .agp-bar {
+    inset-block-end: calc(84px + env(safe-area-inset-bottom));
+  }
+  .agp-foot {
+    padding-bottom: calc(150px + env(safe-area-inset-bottom));
+  }
 }
 
 @media (max-width: 980px) {

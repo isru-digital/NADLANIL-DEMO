@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import { Briefcase, Building2, ChevronDown, Gem, Globe, Heart, Home, KeyRound, Languages, Mail, MapPin, MessageCircle, Phone, Quote, ShieldCheck, Sun, TrendingUp } from 'lucide-react'
+import { animate, motion, useInView } from 'framer-motion'
+import { Briefcase, Building2, ChevronDown, Download, Gem, Globe, Heart, Home, KeyRound, Languages, Mail, MapPin, MessageCircle, Phone, Quote, ShieldCheck, Sun, TrendingUp } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { PLATFORM_NAME, asset } from '../config'
 import { formatPriceShort } from '../data/demo'
@@ -24,7 +24,17 @@ const sampleProps = [
 
 const phoneDigits = (s: string) => s.replace(/\D/g, '').replace(/^0/, '972')
 
-/** Titles, description and structured data, so a search engine can understand who the page is about. */
+const faqOf = (p: AgentProfile) => {
+  const t = p.gender === 'f' ? 'ת' : ''
+  return [
+    { q: 'באילו אזורים אפשר לעבוד איתי?', a: p.areas.length ? `אני עובד${t} ב${joinList(p.areas.map(areaLabel))}.` : 'בכל הארץ, לפי הצורך.' },
+    { q: 'באילו שפות אפשר לדבר איתי?', a: `${joinList(p.languages)}.` },
+    { q: 'איך מתחילים?', a: `שולחים הודעה בוואטסאפ או ממלאים את הטופס, ואני חוזר${t} אליכם. שיחת ההיכרות לא מחייבת.` },
+    { q: 'מה עושים אחרי שיחת ההיכרות?', a: `מגדירים יחד מה מחפשים, ואני מחפש${t} ומסנן${t} בשבילכם, עד שנמצא הנכס הנכון.` },
+  ]
+}
+
+/** Titles, description and structured data (the agent, the breadcrumb and the questions), so a search engine can understand the page. */
 function useSeo(p: AgentProfile | null, slug: string) {
   useEffect(() => {
     if (!p) return
@@ -41,24 +51,41 @@ function useSeo(p: AgentProfile | null, slug: string) {
       document.head.appendChild(meta)
     }
     meta.content = description
+    const url = window.location.href
     const ld = document.createElement('script')
     ld.type = 'application/ld+json'
     ld.id = 'agent-ld'
     ld.textContent = JSON.stringify({
       '@context': 'https://schema.org',
-      '@type': 'RealEstateAgent',
-      name: p.name,
-      jobTitle: role,
-      description,
-      telephone: p.phone,
-      email: p.email || undefined,
-      image: p.photo.startsWith('data:') ? undefined : p.photo,
-      areaServed: p.areas.map(areaLabel),
-      knowsLanguage: p.languages,
-      knowsAbout: p.specialties,
-      url: window.location.href,
-      identifier: p.licenseNo || undefined,
-      memberOf: { '@type': 'Organization', name: PLATFORM_NAME },
+      '@graph': [
+        {
+          '@type': 'RealEstateAgent',
+          name: p.name,
+          jobTitle: role,
+          description,
+          telephone: p.phone,
+          email: p.email || undefined,
+          image: p.photo.startsWith('data:') ? undefined : p.photo,
+          areaServed: p.areas.map(areaLabel),
+          knowsLanguage: p.languages,
+          knowsAbout: p.specialties,
+          url,
+          identifier: p.licenseNo || undefined,
+          memberOf: { '@type': 'Organization', name: PLATFORM_NAME },
+        },
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'עמוד הבית' },
+            { '@type': 'ListItem', position: 2, name: `הסוכנים של ${PLATFORM_NAME}` },
+            { '@type': 'ListItem', position: 3, name: p.name, item: url },
+          ],
+        },
+        {
+          '@type': 'FAQPage',
+          mainEntity: faqOf(p).map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+        },
+      ],
     })
     document.head.appendChild(ld)
     window.scrollTo({ top: 0 })
@@ -68,6 +95,34 @@ function useSeo(p: AgentProfile | null, slug: string) {
       ld.remove()
     }
   }, [p, slug])
+}
+
+/** A number that counts up when it comes into view (the final number is what renders first). */
+function Stat({ to, suffix = '' }: { to: number; suffix?: string }) {
+  const ref = useRef<HTMLSpanElement>(null)
+  const inView = useInView(ref, { once: true })
+  useEffect(() => {
+    const el = ref.current
+    if (!el || !inView || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const c = animate(0, to, { duration: 1.6, ease: [0.22, 1, 0.36, 1], onUpdate: (v) => (el.textContent = `${Math.round(v)}${suffix}`) })
+    return () => c.stop()
+  }, [inView, to, suffix])
+  return <span ref={ref}>{`${to}${suffix}`}</span>
+}
+
+/** Saves the broker as a contact on the visitor's phone. */
+function saveContact(p: AgentProfile, role: string) {
+  const card = ['BEGIN:VCARD', 'VERSION:3.0', `FN:${p.name}`, `TITLE:${role}`, `TEL;TYPE=CELL:${p.phone}`, p.email ? `EMAIL:${p.email}` : '', `ORG:${p.office || PLATFORM_NAME}`, 'END:VCARD']
+    .filter(Boolean)
+    .join('\r\n')
+  const url = URL.createObjectURL(new Blob([card], { type: 'text/vcard;charset=utf-8' }))
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `${p.name}.vcf`
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
 export default function AgentPage() {
@@ -104,12 +159,19 @@ function Page({ p }: { p: AgentProfile }) {
   const styleTitle = styleOptions.find((s) => s.id === p.style)?.title
   const specs = p.specialties.map((id) => specialtyOptions.find((o) => o.id === id)).filter(Boolean) as (typeof specialtyOptions)[number][]
 
-  const faq = [
-    { q: 'באילו אזורים אפשר לעבוד איתי?', a: p.areas.length ? `אני עובד${p.gender === 'f' ? 'ת' : ''} ב${joinList(p.areas.map(areaLabel))}.` : 'בכל הארץ, לפי הצורך.' },
-    { q: 'באילו שפות אפשר לדבר איתי?', a: `${joinList(p.languages)}.` },
-    { q: 'איך מתחילים?', a: 'שולחים הודעה בוואטסאפ או ממלאים את הטופס, ואני חוזר אליכם. שיחת ההיכרות לא מחייבת.'.replace('חוזר', p.gender === 'f' ? 'חוזרת' : 'חוזר') },
-    { q: 'מה עושים אחרי שיחת ההיכרות?', a: 'מגדירים יחד מה מחפשים, ואני מחפש${s} ומסנן${s} בשבילכם, עד שנמצא הנכס הנכון.'.replace(/\$\{s\}/g, p.gender === 'f' ? 'ת' : '') },
-  ]
+  const faq = faqOf(p)
+  const [active, setActive] = useState('')
+
+  useEffect(() => {
+    const ids = ['about', 'spec', 'areas', 'props', 'faq']
+    const els = ids.map((id) => document.getElementById(id)).filter(Boolean) as HTMLElement[]
+    const io = new IntersectionObserver(
+      (entries) => entries.forEach((e) => e.isIntersecting && setActive(e.target.id)),
+      { rootMargin: '-45% 0px -50% 0px' },
+    )
+    els.forEach((el) => io.observe(el))
+    return () => io.disconnect()
+  }, [])
 
   const send = (e: FormEvent) => {
     e.preventDefault()
@@ -124,11 +186,11 @@ function Page({ p }: { p: AgentProfile }) {
             <span>{name}</span>
           </a>
           <nav aria-label="ניווט בדף">
-            <a href="#about">קצת עליי</a>
-            <a href="#spec">התמחויות</a>
-            <a href="#areas">אזורים</a>
-            <a href="#props">נכסים</a>
-            <a href="#faq">שאלות</a>
+            <a href="#about" className={active === 'about' ? 'is-on' : ''}>קצת עליי</a>
+            <a href="#spec" className={active === 'spec' ? 'is-on' : ''}>התמחויות</a>
+            <a href="#areas" className={active === 'areas' ? 'is-on' : ''}>אזורים</a>
+            <a href="#props" className={active === 'props' ? 'is-on' : ''}>נכסים</a>
+            <a href="#faq" className={active === 'faq' ? 'is-on' : ''}>שאלות</a>
           </nav>
           <a href={wa} target="_blank" rel="noreferrer" className="agp-wa-pill">
             <MessageCircle /> וואטסאפ
@@ -139,6 +201,17 @@ function Page({ p }: { p: AgentProfile }) {
       {/* ------------------------------------------------------------ hero */}
       <section className="agp-hero" id="top">
         <i className="agp-blob" aria-hidden />
+        <div className="agp-wrap">
+          <ol className="agp-crumbs" aria-label="נתיב">
+            <li>
+              <Link to="/">עמוד הבית</Link>
+            </li>
+            <li>הסוכנים של {PLATFORM_NAME}</li>
+            <li aria-current="page">
+              <b>{name}</b>
+            </li>
+          </ol>
+        </div>
         <div className="agp-wrap agp-hero-in">
           <div className="agp-hero-copy">
             <motion.span className="agp-eyebrow" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: EASE }}>
@@ -171,15 +244,21 @@ function Page({ p }: { p: AgentProfile }) {
             </motion.div>
             <motion.dl className="agp-stats" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1, delay: 0.55 }}>
               <div>
-                <dt className="num">{p.years}+</dt>
+                <dt className="num">
+                  <Stat to={p.years} suffix="+" />
+                </dt>
                 <dd>שנות ניסיון</dd>
               </div>
               <div>
-                <dt className="num">{p.areas.length || 1}</dt>
+                <dt className="num">
+                  <Stat to={p.areas.length || 1} />
+                </dt>
                 <dd>אזורי עבודה</dd>
               </div>
               <div>
-                <dt className="num">{p.languages.length}</dt>
+                <dt className="num">
+                  <Stat to={p.languages.length} />
+                </dt>
                 <dd>שפות</dd>
               </div>
             </motion.dl>
@@ -191,8 +270,16 @@ function Page({ p }: { p: AgentProfile }) {
             </div>
             <i className="agp-ring" aria-hidden />
             <div className="agp-chip is-a">
-              <b className="num">{p.years}+</b>
-              <span>שנות ניסיון</span>
+              {p.licenseNo ? (
+                <>
+                  <ShieldCheck /> רישיון מתווך מאושר
+                </>
+              ) : (
+                <>
+                  <b className="num">{p.years}+</b>
+                  <span>שנות ניסיון</span>
+                </>
+              )}
             </div>
             <div className="agp-chip is-b">
               <Languages /> {joinList(p.languages.slice(0, 3))}
@@ -401,6 +488,9 @@ function Page({ p }: { p: AgentProfile }) {
               <a href={`tel:${p.phone}`}>
                 <Phone /> {p.phone}
               </a>
+              <button type="button" onClick={() => saveContact(p, role)}>
+                <Download /> שמירת איש קשר
+              </button>
               {p.email && (
                 <a href={`mailto:${p.email}`}>
                   <Mail /> {p.email}
@@ -439,6 +529,15 @@ function Page({ p }: { p: AgentProfile }) {
           <small>אב טיפוס להדגמה. הנכסים והנתונים בדף מומצאים.</small>
         </div>
       </footer>
+
+      <div className="agp-actions" role="group" aria-label="יצירת קשר מהירה">
+        <a href={wa} target="_blank" rel="noreferrer" className="is-wa">
+          <MessageCircle /> וואטסאפ
+        </a>
+        <a href={`tel:${p.phone}`}>
+          <Phone /> התקשרו
+        </a>
+      </div>
 
       <div className="agp-bar" role="region" aria-label="סרגל הדמו">
         <BackButton fallback="/app/agent" className="is-icon public-back" />
