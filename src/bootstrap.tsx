@@ -8,7 +8,7 @@ import { StoreProvider } from './store'
 import { PLATFORM_NAME } from './config'
 
 /** Mounts the demo. Each look has its own entry file and passes its own home page. */
-export function start(home?: ReactElement, extra?: { join?: ReactElement; routes?: ReactNode; appRoutes?: ReactNode }) {
+export function start(home?: ReactElement, extra?: { join?: ReactElement; routes?: ReactNode; appRoutes?: ReactNode; overlay?: ReactNode }) {
   document.title = `${PLATFORM_NAME} - הדבר הבא בעולם המתווכים`
 
   ReactDOM.createRoot(document.getElementById('root')!).render(
@@ -16,7 +16,7 @@ export function start(home?: ReactElement, extra?: { join?: ReactElement; routes
       <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, '')}>
         <MotionConfig reducedMotion="user">
           <StoreProvider>
-            <App home={home} join={extra?.join} routes={extra?.routes} appRoutes={extra?.appRoutes} />
+            <App home={home} join={extra?.join} routes={extra?.routes} appRoutes={extra?.appRoutes} overlay={extra?.overlay} />
           </StoreProvider>
         </MotionConfig>
       </BrowserRouter>

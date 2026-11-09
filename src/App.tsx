@@ -14,7 +14,7 @@ import FolderPublic from './pages/FolderPublic'
 import Join from './pages/Join'
 import VersionSwitch from './components/VersionSwitch'
 
-export default function App({ home, join, routes, appRoutes }: { home?: ReactElement; join?: ReactElement; routes?: ReactNode; appRoutes?: ReactNode }) {
+export default function App({ home, join, routes, appRoutes, overlay }: { home?: ReactElement; join?: ReactElement; routes?: ReactNode; appRoutes?: ReactNode; overlay?: ReactNode }) {
   return (
     <>
       <Routes>
@@ -36,6 +36,7 @@ export default function App({ home, join, routes, appRoutes }: { home?: ReactEle
       </Routes>
       <Toaster />
       <VersionSwitch />
+      {overlay}
     </>
   )
 }

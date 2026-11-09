@@ -1,0 +1,44 @@
+/* The "start again" tab that hangs from the top edge of every demo screen (green demo only) */
+.dreset {
+  position: fixed;
+  inset-block-start: 0;
+  inset-inline: 0;
+  margin-inline: auto;
+  z-index: 90;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  height: 22px;
+  padding: 0 14px;
+  border-radius: 0 0 12px 12px;
+  border: 1px solid var(--line-strong);
+  border-top: 0;
+  background: rgb(10 42 31 / 0.92);
+  font-family: var(--font-display);
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1;
+  color: #fff;
+  box-shadow: 0 8px 20px -10px rgba(4, 38, 27, 0.7);
+  transition:
+    height var(--t) var(--ease),
+    background-color var(--t) var(--ease);
+}
+.dreset svg {
+  width: 12px;
+  height: 12px;
+}
+.dreset:hover,
+.dreset:focus-visible {
+  height: 28px;
+  background: #07643f;
+}
+.dreset-body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.dreset-body .btn {
+  flex: 1 1 140px;
+}
