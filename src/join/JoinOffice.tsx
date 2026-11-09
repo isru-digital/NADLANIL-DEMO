@@ -58,14 +58,24 @@ export default function JoinOffice() {
   const { stage, patch } = useAgent()
   const joined = stage !== 'locked'
 
-  // the calculator
+  // the calculator: what the broker pays today (commissions, as before, and any fixed fee), what it would cost here,
+  // and the difference over the same period
   const [deals, setDeals] = useState(6)
   const [fee, setFee] = useState(30000)
   const [pct, setPct] = useState(20)
-  const today = deals * fee * (pct / 100)
-  const diff = today - OFFICE_YEAR
+  const [fixed, setFixed] = useState(0)
+  const [months, setMonths] = useState(12)
+  const yearToday = deals * fee * (pct / 100) + fixed * 12
+  const today = (yearToday * months) / 12
+  const ours = OFFICE_PRICE * months
+  const diff = today - ours
   const covers = Math.floor(fee / OFFICE_PRICE)
+  const period = months === 12 ? 'בשנה האחרונה' : `ב-${months} חודשים`
+  const perDealToday = deals ? yearToday / deals : 0
+  const perDealOurs = deals ? OFFICE_YEAR / deals : 0
+  const top = Math.max(today, ours, 1)
   const gToday = useGlide(today)
+  const gOurs = useGlide(ours)
   const gDiff = useGlide(Math.abs(diff))
 
   // the payment (a simulation: no card details are asked for)
@@ -150,68 +160,127 @@ export default function JoinOffice() {
         <div className="jo-in">
           <Reveal className="jo-head">
             <span className="jo-tag">בואו נחשב</span>
-            <h2>כמה זה באמת עולה לכם?</h2>
-            <p>מזינים את המספרים שלכם ורואים את ההבדל.</p>
+            <h2>כמה כסף יצא לכם בשנה האחרונה?</h2>
+            <p>קודם מה שאתם משלמים היום למשרד שלכם, ואחר כך מה זה היה עולה אצלנו.</p>
           </Reveal>
-          <Reveal className="jo-calc">
-            <div className="jo-inputs">
-              <label>
-                <span>
-                  כמה עסקאות אתם סוגרים בשנה? <b className="num">{deals}</b>
-                </span>
-                <input type="range" min={1} max={30} value={deals} onChange={(e) => setDeals(Number(e.target.value))} />
-              </label>
-              <label>
-                <span>
-                  עמלה ממוצעת לעסקה <b className="num">{shekel(fee)}</b>
-                </span>
-                <input type="range" min={5000} max={100000} step={1000} value={fee} onChange={(e) => setFee(Number(e.target.value))} />
-              </label>
-              <label>
-                <span>
-                  כמה אחוזים מהעמלה לוקחים ממכם היום? <b className="num">{pct}%</b>
-                </span>
-                <input type="range" min={0} max={50} value={pct} onChange={(e) => setPct(Number(e.target.value))} />
-                <small>אם אתם עצמאים, בחרו 0.</small>
-              </label>
-            </div>
 
-            <div className="jo-result">
-              <div className="jo-vs">
-                <div>
-                  <small>היום אתם משלמים</small>
-                  <b className="num">{shekel(gToday)}</b>
-                  <em>בשנה</em>
-                </div>
-                <div className="is-us">
-                  <small>במשרד {PLATFORM_NAME}</small>
-                  <b className="num">{shekel(OFFICE_YEAR)}</b>
-                  <em>
-                    בשנה ({OFFICE_PRICE} × 12)
-                  </em>
-                </div>
+          <div className="jo-calcs">
+            <Reveal className="jo-ccard jo-today">
+              <span className="jo-step">1</span>
+              <h3>במשרד שלכם היום</h3>
+              <div className="jo-inputs">
+                <label>
+                  <span>
+                    כמה עסקאות סגרתם בשנה? <b className="num">{deals}</b>
+                  </span>
+                  <input data-k="deals" type="range" min={1} max={30} value={deals} onChange={(e) => setDeals(Number(e.target.value))} />
+                </label>
+                <label>
+                  <span>
+                    עמלה ממוצעת לעסקה <b className="num">{shekel(fee)}</b>
+                  </span>
+                  <input data-k="fee" type="range" min={5000} max={100000} step={1000} value={fee} onChange={(e) => setFee(Number(e.target.value))} />
+                </label>
+                <label>
+                  <span>
+                    כמה אחוזים מהעמלה לוקחים ממכם? <b className="num">{pct}%</b>
+                  </span>
+                  <input data-k="pct" type="range" min={0} max={50} value={pct} onChange={(e) => setPct(Number(e.target.value))} />
+                  <small>אם אתם עצמאים, בחרו 0.</small>
+                </label>
+                <label>
+                  <span>
+                    תשלום קבוע למשרד בחודש, אם יש <b className="num">{shekel(fixed)}</b>
+                  </span>
+                  <input data-k="fixed" type="range" min={0} max={5000} step={100} value={fixed} onChange={(e) => setFixed(Number(e.target.value))} />
+                </label>
               </div>
-              <div className={`jo-verdict${diff > 0 ? ' is-save' : ''}`}>
-                {diff > 0 ? (
-                  <>
-                    <Sparkles />
-                    <div>
-                      <small>נשארים אצלכם בכל שנה</small>
-                      <b className="num">{shekel(gDiff)}</b>
-                    </div>
-                  </>
-                ) : (
-                  <div>
-                    <small>המנוי עולה {shekel(OFFICE_YEAR)} בשנה</small>
-                    <b>ומה שמקבלים בתמורה: מותג משרד, דף בגוגל וצוות מאחורי הקלעים</b>
-                  </div>
+              <div className="jo-total">
+                <small>היום אתם משלמים {period}</small>
+                <b className="num jo-big">{shekel(gToday)}</b>
+                <em>{fixed > 0 ? 'עמלות ותשלום קבוע' : 'עמלות'}</em>
+              </div>
+            </Reveal>
+
+            <Reveal delay={0.1} className="jo-ccard jo-ours">
+              <span className="jo-step">2</span>
+              <h3>דרך {PLATFORM_NAME}</h3>
+              <div className="jo-inputs">
+                <label>
+                  <span>
+                    כמה חודשים? <b className="num">{months}</b>
+                  </span>
+                  <input data-k="months" type="range" min={OFFICE_MIN_MONTHS} max={12} value={months} onChange={(e) => setMonths(Number(e.target.value))} />
+                  <small>מינימום {OFFICE_MIN_MONTHS} חודשים.</small>
+                </label>
+              </div>
+              <ul className="jo-facts">
+                <li>
+                  <Check />
+                  <span>{OFFICE_PRICE} ₪ לחודש, מחיר קבוע</span>
+                </li>
+                <li>
+                  <Check />
+                  <span>0% מהעמלה, היא כולה אצלכם</span>
+                </li>
+                {deals > 0 && (
+                  <li>
+                    <Check />
+                    <span>
+                      עלות לעסקה: <b className="num">{shekel(perDealOurs)}</b> במקום <b className="num">{shekel(perDealToday)}</b>
+                    </span>
+                  </li>
                 )}
+              </ul>
+              <div className="jo-total">
+                <small>אצלנו זה היה עולה {months === 12 ? 'בשנה' : `ב-${months} חודשים`}</small>
+                <b className="num jo-big">{shekel(gOurs)}</b>
+                <em>
+                  {OFFICE_PRICE} × {months}
+                </em>
               </div>
-              <p className="jo-cover">
-                עסקה אחת בעמלה של <b className="num">{shekel(fee)}</b> מכסה <b className="num">{covers}</b> חודשי מנוי.
-              </p>
-              <small className="jo-note">חישוב לפי המספרים שהזנתם. כל משרד עובד אחרת, כדאי לבדוק מה משלמים היום.</small>
+            </Reveal>
+          </div>
+
+          <Reveal className={`jo-diff${diff > 0 ? ' is-save' : ''}`}>
+            <span className="jo-step">3</span>
+            <h3>ההבדל</h3>
+            <div className="jo-bars" aria-hidden>
+              <div>
+                <small>במשרד שלכם</small>
+                <i>
+                  <u style={{ width: `${(today / top) * 100}%` }} />
+                </i>
+                <b className="num">{shekel(today)}</b>
+              </div>
+              <div className="is-us">
+                <small>{PLATFORM_NAME}</small>
+                <i>
+                  <u style={{ width: `${(ours / top) * 100}%` }} />
+                </i>
+                <b className="num">{shekel(ours)}</b>
+              </div>
             </div>
+            {diff > 0 ? (
+              <div className="jo-verdict">
+                <Sparkles />
+                <div>
+                  <small>היו נשארים אצלכם {months === 12 ? 'בשנה האחרונה' : `ב-${months} חודשים`}</small>
+                  <b className="num">{shekel(gDiff)}</b>
+                </div>
+              </div>
+            ) : (
+              <div className="jo-verdict is-plain">
+                <div>
+                  <small>המנוי עולה {shekel(ours)}</small>
+                  <b>ומה שמקבלים בתמורה: מותג משרד, דף בגוגל וצוות מאחורי הקלעים</b>
+                </div>
+              </div>
+            )}
+            <p className="jo-cover">
+              עסקה אחת בעמלה של <b className="num">{shekel(fee)}</b> מכסה <b className="num">{covers}</b> חודשי מנוי.
+            </p>
+            <small className="jo-note">חישוב לפי המספרים שהזנתם. כל משרד עובד אחרת, כדאי לבדוק מה משלמים היום.</small>
           </Reveal>
         </div>
       </section>

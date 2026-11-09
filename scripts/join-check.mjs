@@ -23,17 +23,28 @@ const click = (page, sel, text) =>
     sel,
     text,
   )
-const setRange = (page, index, value) =>
+const setRange = (page, key, value) =>
   page.evaluate(
-    (i, v) => {
-      const el = document.querySelectorAll('.jo-inputs input[type=range]')[i]
+    (k, v) => {
+      const el = document.querySelector(`.jo-calcs input[data-k="${k}"]`)
       const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set
       setter.call(el, String(v))
       el.dispatchEvent(new Event('input', { bubbles: true }))
     },
-    index,
+    key,
     value,
   )
+const read = (page) =>
+  page.evaluate(() => ({
+    today: document.querySelector('.jo-today .jo-big')?.textContent,
+    todayLabel: document.querySelector('.jo-today .jo-total small')?.textContent,
+    ours: document.querySelector('.jo-ours .jo-big')?.textContent,
+    verdict: document.querySelector('.jo-diff .jo-verdict')?.textContent ?? '',
+    save: !!document.querySelector('.jo-diff.is-save'),
+    cover: document.querySelector('.jo-cover')?.textContent ?? '',
+    facts: document.querySelector('.jo-facts')?.textContent ?? '',
+    bars: [...document.querySelectorAll('.jo-bars u')].map((u) => Math.round(parseFloat(u.style.width))),
+  }))
 
 for (const [label, vp, phone] of [
   ['desktop', { width: 1440, height: 900 }, false],
@@ -100,28 +111,37 @@ for (const [label, vp, phone] of [
   check(`${tag}: the bottom join bar ${phone ? 'shows on the phone' : 'is hidden on desktop'}`, phone ? st.sticky === 'flex' : st.sticky === 'none', st.sticky)
   await page.screenshot({ path: `${out}/join-${label}-2-office-top.png` })
 
-  // the calculator: 6 deals x 30,000 x 20% = 36,000 today against 8,268 a year here
+  // the calculator: what is paid today (commissions, as before), what it costs here, and the difference
   await page.evaluate(() => document.getElementById('calc')?.scrollIntoView())
   await wait(1700)
-  let calc = await page.evaluate(() => ({
-    today: document.querySelector('.jo-vs > div:first-child b')?.textContent,
-    us: document.querySelector('.jo-vs .is-us b')?.textContent,
-    verdict: document.querySelector('.jo-verdict')?.textContent,
-    save: !!document.querySelector('.jo-verdict.is-save'),
-    cover: document.querySelector('.jo-cover')?.textContent,
-  }))
-  check(`${tag}: calculator maths: 36,000 today against 8,268 a year here, 27,732 stays with the broker`, calc.today === '₪36,000' && calc.us === '₪8,268' && calc.save && calc.verdict.includes('₪27,732'), JSON.stringify(calc))
-  check(`${tag}: one deal covers 43 months of the fee`, calc.cover.includes('43') && calc.cover.includes('₪30,000'), calc.cover)
+  let c = await read(page)
+  check(`${tag}: today's office: 6 deals x 30,000 x 20% = 36,000 for the last year`, c.today === '₪36,000' && c.todayLabel.includes('בשנה האחרונה'), JSON.stringify([c.today, c.todayLabel]))
+  check(`${tag}: ours: 689 x 12 = 8,268, and the difference is 27,732`, c.ours === '₪8,268' && c.save && c.verdict.includes('₪27,732'), JSON.stringify([c.ours, c.verdict]))
+  check(`${tag}: the cost per deal is shown for both (1,378 here, 6,000 today)`, c.facts.includes('₪1,378') && c.facts.includes('₪6,000'), c.facts)
+  check(`${tag}: the bars show the difference (today full, ours about a quarter)`, c.bars[0] === 100 && c.bars[1] >= 20 && c.bars[1] <= 26, c.bars.join(','))
+  check(`${tag}: one deal covers 43 months of the fee`, c.cover.includes('43') && c.cover.includes('₪30,000'), c.cover)
   await page.screenshot({ path: `${out}/join-${label}-3-calc.png` })
-  await setRange(page, 2, 0)
+
+  await setRange(page, 'pct', 0)
   await wait(1200)
-  calc = await page.evaluate(() => ({ today: document.querySelector('.jo-vs > div:first-child b')?.textContent, save: !!document.querySelector('.jo-verdict.is-save'), verdict: document.querySelector('.jo-verdict')?.textContent }))
-  check(`${tag}: for an independent broker (0%) it is honest: the fee, and what it buys`, calc.today === '₪0' && !calc.save && calc.verdict.includes('₪8,268') && calc.verdict.includes('מותג משרד'), JSON.stringify(calc))
-  await setRange(page, 0, 12)
-  await setRange(page, 2, 30)
+  c = await read(page)
+  check(`${tag}: an independent broker (0%) gets an honest answer: the fee, and what it buys`, c.today === '₪0' && !c.save && c.verdict.includes('₪8,268') && c.verdict.includes('מותג משרד'), JSON.stringify([c.today, c.verdict]))
+  await setRange(page, 'fixed', 2000)
   await wait(1200)
-  calc = await page.evaluate(() => document.querySelector('.jo-vs > div:first-child b')?.textContent)
-  check(`${tag}: changing the numbers updates it (12 deals, 30%: 108,000)`, calc === '₪108,000', calc)
+  c = await read(page)
+  check(`${tag}: a fixed monthly fee counts (2,000 x 12 = 24,000 today, 15,732 stays)`, c.today === '₪24,000' && c.save && c.verdict.includes('₪15,732'), JSON.stringify([c.today, c.verdict]))
+  await setRange(page, 'fixed', 0)
+  await setRange(page, 'pct', 20)
+  await setRange(page, 'months', 3)
+  await wait(1300)
+  c = await read(page)
+  check(`${tag}: the minimum of 3 months: ours 2,067 against 9,000, 6,933 stays`, c.ours === '₪2,067' && c.today === '₪9,000' && c.verdict.includes('₪6,933') && c.todayLabel.includes('ב-3 חודשים'), JSON.stringify([c.ours, c.today, c.verdict]))
+  await setRange(page, 'months', 12)
+  await setRange(page, 'deals', 12)
+  await setRange(page, 'pct', 30)
+  await wait(1300)
+  c = await read(page)
+  check(`${tag}: changing the numbers updates it (12 deals, 30%: 108,000)`, c.today === '₪108,000', c.today)
 
   await page.evaluate(() => document.querySelector('.jo-table')?.scrollIntoView())
   await wait(900)
