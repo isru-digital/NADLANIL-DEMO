@@ -110,6 +110,15 @@ export const styleOptions = [
 
 export const areaLabel = (id: string) => areaOptions.find((a) => a.id === id)?.label ?? id
 
+/** "In" an area, the Hebrew way: the preposition replaces the article ("השרון ונתניה" becomes "בשרון ונתניה"). */
+export const inArea = (id: string) => {
+  const l = areaLabel(id)
+  return l.startsWith('ה') ? `ב${l.slice(1)}` : `ב${l}`
+}
+
+/** "In" each item of a list: "ביוקרה, בדירות מגורים ובהשקעות". */
+export const joinIn = (items: string[]) => joinList(items.map((i) => `ב${i}`))
+
 export const firstName = (name: string) => name.trim().split(/\s+/)[0] || ''
 
 /** The address of the broker's page: the name, in the URL. */
@@ -128,25 +137,32 @@ export function joinList(items: string[]) {
 
 const g = (p: Pick<AgentProfile, 'gender'>, m: string, f: string) => (p.gender === 'f' ? f : m)
 
-/** The "about" text of the page, written from the answers. Gendered Hebrew follows the choice made in the first question. */
+/**
+ * The "about me" text of the page, written from the answers in the FIRST person (it is the broker speaking on the broker's
+ * own page). Gendered Hebrew follows the choice made in the first question.
+ */
 export function composeAbout(p: AgentProfile): string[] {
-  const fn = firstName(p.name) || 'הסוכן'
   const out: string[] = []
-  const where = p.areas.length ? ` ב${joinList(p.areas.map(areaLabel))}` : ''
-  out.push(`${fn} מלווה לקוחות${where}${p.years ? ` כבר ${p.years} שנים` : ''}.`)
+  const where = p.areas.length ? ` ${joinList(p.areas.map(inArea))}` : ''
+  out.push(`אני מלווה לקוחות${where}${p.years ? ` כבר ${p.years} שנים` : ''}.`)
   const style = styleOptions.find((s) => s.id === p.style)
   if (style) {
     const lines: Record<string, string> = {
-      warm: `${g(p, 'הגישה שלו', 'הגישה שלה')} אישית וחמה: בלי לחץ, בלי קיצורי דרך, ועם שיחה אמיתית על מה שחשוב ללקוח.`,
-      sharp: `${g(p, 'הגישה שלו', 'הגישה שלה')} מקצועית וחדה: מספרים, נתונים ומשא ומתן נקי עד לסגירה.`,
-      discreet: `${g(p, 'הוא עובד', 'היא עובדת')} בדיסקרטיות מלאה, ללקוחות שמעדיפים שהעסקה תישאר בינם לבין ${g(p, 'המתווך', 'המתווכת')}.`,
-      fast: `${g(p, 'הוא זמין', 'היא זמינה')} ומהיר${g(p, '', 'ה')}: כל טלפון נענה, ואין עסקה שנתקעת בגלל חוסר מענה.`,
+      warm: 'הגישה שלי אישית וחמה: בלי לחץ, בלי קיצורי דרך, ועם שיחה אמיתית על מה שחשוב ללקוח.',
+      sharp: 'הגישה שלי מקצועית וחדה: מספרים, נתונים ומשא ומתן נקי עד לסגירה.',
+      discreet: `אני ${g(p, 'עובד', 'עובדת')} בדיסקרטיות מלאה, ללקוחות שמעדיפים שהעסקה תישאר ביני לבינם.`,
+      fast: `אני ${g(p, 'זמין ומהיר', 'זמינה ומהירה')}: כל טלפון נענה, ואין עסקה שנתקעת בגלל חוסר מענה.`,
     }
     out.push(lines[style.id])
   }
-  const spec = p.specialties.length ? `מתמחה ב${joinList(p.specialties)}` : ''
-  const cl = p.clients.length ? `${g(p, 'עובד', 'עובדת')} עם ${joinList(p.clients)}` : ''
-  if (spec || cl) out.push(`${[spec, cl].filter(Boolean).join(', ')}.`)
+  const works = g(p, 'עובד', 'עובדת')
+  if (p.specialties.length && p.clients.length) {
+    out.push(`אני מתמחה ${joinIn(p.specialties)}, ו${works} עם ${joinList(p.clients)}.`)
+  } else if (p.specialties.length) {
+    out.push(`אני מתמחה ${joinIn(p.specialties)}.`)
+  } else if (p.clients.length) {
+    out.push(`אני ${works} עם ${joinList(p.clients)}.`)
+  }
   if (p.proudDeal.trim()) out.push(p.proudDeal.trim())
   if (p.offHours.trim()) out.push(`מחוץ לעבודה: ${p.offHours.trim()}.`)
   return out

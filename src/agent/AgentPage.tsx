@@ -8,7 +8,7 @@ import { PLATFORM_NAME, asset } from '../config'
 import { formatPriceShort } from '../data/demo'
 import { useStore } from '../store'
 import { BackButton, DemoTag, EASE, Logo, Reveal } from '../components/ui'
-import { areaLabel, composeAbout, firstName, joinList, sampleProfile, slugOf, specialtyOptions, styleOptions } from './agentData'
+import { areaLabel, composeAbout, firstName, inArea, joinList, sampleProfile, slugOf, specialtyOptions, styleOptions } from './agentData'
 import type { AgentProfile } from './agentData'
 import { useAgent } from './useAgent'
 import AreasMap from './AreasMap'
@@ -27,7 +27,7 @@ const phoneDigits = (s: string) => s.replace(/\D/g, '').replace(/^0/, '972')
 const faqOf = (p: AgentProfile) => {
   const t = p.gender === 'f' ? 'ת' : ''
   return [
-    { q: 'באילו אזורים אפשר לעבוד איתי?', a: p.areas.length ? `אני עובד${t} ב${joinList(p.areas.map(areaLabel))}.` : 'בכל הארץ, לפי הצורך.' },
+    { q: 'באילו אזורים אפשר לעבוד איתי?', a: p.areas.length ? `אני עובד${t} ${joinList(p.areas.map(inArea))}.` : 'בכל הארץ, לפי הצורך.' },
     { q: 'באילו שפות אפשר לדבר איתי?', a: `${joinList(p.languages)}.` },
     { q: 'איך מתחילים?', a: `שולחים הודעה בוואטסאפ או ממלאים את הטופס, ואני חוזר${t} אליכם. שיחת ההיכרות לא מחייבת.` },
     { q: 'מה עושים אחרי שיחת ההיכרות?', a: `מגדירים יחד מה מחפשים, ואני מחפש${t} ומסנן${t} בשבילכם, עד שנמצא הנכס הנכון.` },
@@ -39,7 +39,7 @@ function useSeo(p: AgentProfile | null, slug: string) {
   useEffect(() => {
     if (!p) return
     const role = p.gender === 'f' ? 'מתווכת נדל"ן' : 'מתווך נדל"ן'
-    const where = p.areas.length ? ` ב${areaLabel(p.areas[0])}` : ''
+    const where = p.areas.length ? ` ${inArea(p.areas[0])}` : ''
     const prevTitle = document.title
     document.title = `${p.name}, ${role}${where}`
     const description = `${firstName(p.name)} מלווה לקוחות${where}${p.years ? ` כבר ${p.years} שנים` : ''}. ${p.specialties.slice(0, 3).join(', ')}.`
@@ -152,7 +152,7 @@ function Page({ p }: { p: AgentProfile }) {
   const name = p.name.trim()
   const fn = firstName(name)
   const role = p.gender === 'f' ? 'מתווכת נדל"ן' : 'מתווך נדל"ן'
-  const first = p.areas[0] ? areaLabel(p.areas[0]) : ''
+  const first = p.areas[0] ? inArea(p.areas[0]) : ''
   const about = composeAbout(p)
   const words = p.threeWords.filter(Boolean)
   const wa = `https://wa.me/${phoneDigits(p.whatsapp || p.phone)}`
@@ -216,7 +216,7 @@ function Page({ p }: { p: AgentProfile }) {
           <div className="agp-hero-copy">
             <motion.span className="agp-eyebrow" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: EASE }}>
               {role}
-              {first && ` ב${first}`}
+              {first && ` ${first}`}
             </motion.span>
             <motion.h1 initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.9, delay: 0.1, ease: EASE }}>
               {name}

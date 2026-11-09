@@ -1,5 +1,5 @@
 import { ShieldCheck } from 'lucide-react'
-import { areaLabel } from './agentData'
+import { inArea } from './agentData'
 import type { AgentProfile } from './agentData'
 import AreasMap from './AreasMap'
 
@@ -7,7 +7,7 @@ import AreasMap from './AreasMap'
 export default function ProfilePreview({ profile: p }: { profile: AgentProfile }) {
   const name = p.name.trim()
   const role = p.gender === 'f' ? 'מתווכת נדל"ן' : 'מתווך נדל"ן'
-  const where = p.areas.length ? ` ב${areaLabel(p.areas[0])}${p.areas.length > 1 ? ` ועוד ${p.areas.length - 1}` : ''}` : ''
+  const where = p.areas.length ? ` ${inArea(p.areas[0])}${p.areas.length > 1 ? ` ועוד ${p.areas.length - 1}` : ''}` : ''
   return (
     <div className="agp-mini">
       <div className="agp-mini-photo">

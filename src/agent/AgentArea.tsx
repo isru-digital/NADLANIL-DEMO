@@ -3,7 +3,7 @@ import { ArrowLeft, BadgeCheck, Check, Copy, ExternalLink, FileCheck, Globe, Loc
 import { useStore } from '../store'
 import { PLATFORM_NAME } from '../config'
 import { OFFICE_MIN_MONTHS, OFFICE_NAME, OFFICE_PRICE, shekel } from '../config/office'
-import { areaLabel, firstName, sampleProfile, slugOf } from './agentData'
+import { firstName, inArea, sampleProfile, slugOf } from './agentData'
 import { useAgent } from './useAgent'
 import AgentWizard from './AgentWizard'
 import ProfilePreview from './ProfilePreview'
@@ -97,7 +97,7 @@ function Dashboard() {
   const base = typeof window !== 'undefined' ? `${window.location.origin}${import.meta.env.BASE_URL}` : ''
   const link = `${base}agent/${slug}`
   const role = p.gender === 'f' ? 'מתווכת נדל"ן' : 'מתווך נדל"ן'
-  const where = p.areas.length ? ` ב${areaLabel(p.areas[0])}` : ''
+  const where = p.areas.length ? ` ${inArea(p.areas[0])}` : ''
 
   const copy = async () => {
     try {
