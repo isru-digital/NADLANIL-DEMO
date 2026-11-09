@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ArrowLeft, BadgeCheck, Check, Copy, ExternalLink, FileCheck, Globe, LoaderCircle, Lock, Pencil, RotateCcw, Search, Sparkles, WandSparkles } from 'lucide-react'
 import { Modal, EASE } from '../components/ui'
@@ -13,7 +13,15 @@ import '../styles/agent.css'
 
 /** The "הסוכן שלנו" area: closed until the broker pays, then a questionnaire, then the dashboard of the finished page. */
 export default function AgentArea() {
-  const { stage } = useAgent()
+  const { stage, patch } = useAgent()
+  // "?start=1" (from the home page) goes straight to the questionnaire; in the demo that skips the simulated payment
+  const [params, setParams] = useSearchParams()
+  useEffect(() => {
+    if (!params.has('start')) return
+    if (stage === 'locked') patch({ stage: 'onboarding', step: 0 })
+    setParams({}, { replace: true })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   return (
     <div className="ag">
       {stage === 'locked' && <Gate />}

@@ -199,6 +199,38 @@ for (const [label, vp, phone] of [
   await page.close()
 }
 
+// the home page shows the questionnaire at the opening and links straight into it
+for (const [label, vp] of [
+  ['desktop', { width: 1440, height: 900 }],
+  ['phone', { width: 375, height: 812, isMobile: true, hasTouch: true }],
+]) {
+  const page = await browser.newPage()
+  await page.setViewport(vp)
+  await page.goto(green + '/', { waitUntil: 'load' })
+  await page.evaluate(() => localStorage.removeItem('nadlanup-agent-v1'))
+  await page.reload({ waitUntil: 'load' })
+  await wait(1500)
+  const h = await page.evaluate(() => ({
+    section: !!document.getElementById('agent'),
+    title: document.querySelector('#agent h2')?.textContent,
+    nav: [...document.querySelectorAll('.hg-nav-links a')].some((a) => a.getAttribute('href') === '#agent'),
+    sample: !!document.querySelector('#agent .agt-q'),
+    chips: document.querySelectorAll('#agent .agt-q li').length,
+    overflowX: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  }))
+  check(`home ${label}: the agent section with the questionnaire is on the opening page`, h.section && h.title === 'הסוכן שלנו' && h.sample && h.chips >= 4, JSON.stringify(h))
+  if (label === 'desktop') check('home desktop: the top menu links to it', h.nav)
+  check(`home ${label}: no sideways overflow`, h.overflowX <= 1, `${h.overflowX}px`)
+  await page.evaluate(() => document.getElementById('agent')?.scrollIntoView())
+  await wait(1800)
+  await page.screenshot({ path: `${out}/agent-home-${label}.png` })
+  await click(page, '#agent .agt-cta a', 'להתחיל לענות')
+  await wait(1800)
+  const w = await page.evaluate(() => ({ path: location.pathname + location.search, wiz: !!document.querySelector('.ag-wiz'), label: document.querySelector('.ag-prog')?.getAttribute('aria-label'), title: document.querySelector('.ag-step h2')?.textContent }))
+  check(`home ${label}: "להתחיל לענות" opens the questionnaire at question 1`, w.wiz && w.label === 'שאלה 1 מתוך 15' && !w.path.includes('start'), JSON.stringify(w))
+  await page.close()
+}
+
 // the navy look has none of it
 {
   const page = await browser.newPage()

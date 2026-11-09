@@ -7,6 +7,7 @@ import { brokers, formatPriceShort } from '../data/demo'
 import { Avatar, DemoTag, EASE, Logo, Reveal } from '../components/ui'
 import NetworkMap from '../components/NetworkMap'
 import OpenPanels from '../components/OpenPanels'
+import AgentTeaser from '../agent/AgentTeaser'
 import { CountUp, SectionHead, behind, features } from './Home'
 import '../styles/builder.css'
 import '../styles/home.css'
@@ -43,6 +44,7 @@ export default function HomeGreen() {
           <nav className="hg-nav-links" aria-label="ניווט">
             <a href="#commission">העמלה</a>
             <a href="#shift">מה משתנה</a>
+            <a href="#agent">הסוכן שלנו</a>
             <a href="#features">מה בפנים</a>
             <a href="#behind">מאחורי הקלעים</a>
           </nav>
@@ -194,6 +196,9 @@ export default function HomeGreen() {
         </div>
       </section>
 
+      {/* ------------------------------------------------- the agent area and its questionnaire */}
+      <AgentTeaser />
+
       {/* -------------------------------------------------------- features */}
       <section className="features" id="features">
         <div className="container">
@@ -292,6 +297,7 @@ export default function HomeGreen() {
           <nav className="foot-links" aria-label="קישורים">
             <Link to="/join">הצטרפות</Link>
             <Link to="/app">אזור החבר</Link>
+            <Link to="/app/agent">הסוכן שלנו</Link>
             <Link to="/app/community">קהילה</Link>
             <Link to="/app/brokers">אינדקס מתווכים</Link>
             <Link to="/b/demo">דף נחיתה לדוגמה</Link>
