@@ -7,7 +7,7 @@ import '../styles/version-switch.css'
  */
 export default function VersionSwitch() {
   const { pathname, search } = useLocation()
-  if (pathname.startsWith('/b/') || pathname.startsWith('/f/')) return null
+  if (pathname.startsWith('/b/') || pathname.startsWith('/f/') || pathname.includes('/agent')) return null
 
   const green = __THEME__ === 'green'
   const baseUrl = import.meta.env.BASE_URL

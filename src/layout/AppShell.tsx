@@ -15,6 +15,8 @@ import {
   Users,
 } from 'lucide-react'
 import { CURRENT_BROKER_ID, PLATFORM_TAGLINE } from '../config'
+import { extraNav, extraResets } from '../config/navExtras'
+import type { LucideIcon } from 'lucide-react'
 import { brokerById } from '../data/demo'
 import { useStore } from '../store'
 import { Avatar, BackButton, DemoTag, EASE, Logo, Modal } from '../components/ui'
@@ -23,7 +25,9 @@ import BetaLab, { labItems } from '../components/BetaLab'
 import type { LabView } from '../components/BetaLab'
 import '../styles/shell.css'
 
-const nav = [
+type NavItem = { to: string; label: string; short?: string; icon: LucideIcon; end?: boolean }
+
+const baseNav = [
   { to: '/app', label: 'דשבורד', icon: LayoutDashboard, end: true },
   { to: '/app/community', label: 'קהילה', icon: MessagesSquare },
   { to: '/app/brokers', label: 'אינדקס מתווכים', short: 'מתווכים', icon: Users },
@@ -43,6 +47,7 @@ function FrozenOutlet() {
 }
 
 export default function AppShell() {
+  const nav: NavItem[] = [...baseNav, ...extraNav]
   const location = useLocation()
   const { reset, toast } = useStore()
   const me = brokerById(CURRENT_BROKER_ID)
@@ -56,6 +61,7 @@ export default function AppShell() {
 
   const resetDemo = () => {
     reset()
+    extraResets.forEach((fn) => fn())
     toast('הדמו אופס לנתוני ההתחלה')
   }
 
@@ -176,7 +182,7 @@ export default function AppShell() {
           </NavLink>
         ))}
         <button
-          className={`bottom-link${/builder|folder/.test(location.pathname) ? ' active' : ''}`}
+          className={`bottom-link${/builder|folder|agent/.test(location.pathname) ? ' active' : ''}`}
           onClick={() => setMoreOpen(true)}
           aria-haspopup="dialog"
         >
