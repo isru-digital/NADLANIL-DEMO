@@ -42,3 +42,31 @@
 .dreset-body .btn {
   flex: 1 1 140px;
 }
+
+/* on a phone the top bar is crowded (the logo sits in the middle): the tab becomes a small icon in the gap beside it */
+@media (max-width: 760px) {
+  .dreset {
+    inset-inline: auto;
+    inset-inline-start: auto;
+    left: 96px;
+    margin-inline: 0;
+    height: 24px;
+    padding: 0 12px;
+  }
+  .dreset .dreset-t {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  .dreset svg {
+    width: 14px;
+    height: 14px;
+  }
+  .dreset:hover,
+  .dreset:focus-visible {
+    height: 30px;
+  }
+}

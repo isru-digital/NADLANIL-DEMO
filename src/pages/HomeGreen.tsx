@@ -70,9 +70,8 @@ export default function HomeGreen() {
         <div className="container hg-hero-in" id="content">
           <div className="hg-copy">
             <motion.div className="hg-brand" {...rise(0)}>
-              <span className="hg-pill">
-                <i aria-hidden />
-                {PLATFORM_NAME}
+              <span className="hg-pill is-logo">
+                <img src={asset('brand/nadlanup-ongreen.png')} alt={PLATFORM_NAME} />
               </span>
               <span className="hg-tags">
                 {PLATFORM_TAGLINE.map((part) => {
@@ -278,7 +277,7 @@ export default function HomeGreen() {
         <div className="container">
           <Reveal className="hg-final-card">
             <i className="hg-grid" aria-hidden />
-            <img className="hg-final-logo" src={asset('logo-white.png')} alt="" width={86} height={56} />
+            <img className="hg-final-logo" src={asset('brand/nadlanup-lockup-ongreen.png')} alt={PLATFORM_NAME} />
             <h2>בואו להיות חלק מזה.</h2>
             <Link to="/join" className="btn btn-white btn-lg">
               אני בפנים

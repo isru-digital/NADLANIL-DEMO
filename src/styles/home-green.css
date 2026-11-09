@@ -762,5 +762,13 @@
 
 .hg-final-logo {
   width: auto;
-  height: 56px;
+  height: clamp(84px, 11vw, 120px);
+}
+.hg-pill.is-logo {
+  padding: 9px 20px;
+}
+.hg-pill.is-logo img {
+  display: block;
+  width: auto;
+  height: 26px;
 }

@@ -521,10 +521,8 @@ function Page({ p }: { p: AgentProfile }) {
       <footer className="agp-foot">
         <div className="agp-wrap agp-foot-in">
           <span className="agp-foot-brand">
-            <Logo size={28} />
-            <span>
-              הדף נבנה ב<b>{PLATFORM_NAME}</b>
-            </span>
+            <span>הדף נבנה ב</span>
+            <Logo size={24} />
           </span>
           <small>אב טיפוס להדגמה. הנכסים והנתונים בדף מומצאים.</small>
         </div>

@@ -29,7 +29,7 @@ export default function DemoReset() {
     <>
       <button type="button" className="dreset" onClick={() => setOpen(true)} aria-haspopup="dialog">
         <RotateCcw />
-        התחלה מחדש
+        <span className="dreset-t">התחלה מחדש</span>
       </button>
       <Modal open={open} onClose={() => setOpen(false)} title="להתחיל את הדמו מחדש?" subtitle="הכול חוזר למצב ההתחלה: ההצטרפות, התשלום והדף שנבנה.">
         <div className="modal-body dreset-body">

@@ -21,7 +21,7 @@ export default function FolderView() {
       <header className="folder-cover">
         <img className="folder-cover-bg" src={asset(folder.properties[0].image)} alt="" />
         <div className="folder-cover-top">
-          <Logo size={30} withName />
+          <Logo size={30} withName tone="dark" />
           <span className="folder-kind">פולדר דיגיטלי</span>
         </div>
         <div className="folder-cover-main">

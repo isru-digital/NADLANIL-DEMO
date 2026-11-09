@@ -46,7 +46,7 @@ for (const [label, vp, phone] of [
   check(`${label}: map has nodes, arcs and clipped land`, info.nodes >= 10 && info.majors >= 5 && info.arcs >= 4 && info.clip, `${info.nodes} nodes, ${info.arcs} arcs`)
   check(`${label}: map is tall like the country (about 2.7 x)`, info.mapW > 0 && Math.abs(info.mapH / info.mapW - 2.74) < 0.1, `${info.mapW}x${info.mapH}`)
   check(`${label}: packets present`, info.packets >= (phone ? 4 : 8), `${info.packets}`)
-  check(`${label}: green logo file in the nav`, info.logo.includes('logo-green.png'), info.logo)
+  check(`${label}: NadlanUP wordmark in the nav`, info.logo.includes('nadlanup-light.png'), info.logo)
   check(`${label}: headline is there`, info.title.includes('הדבר הבא') && info.title.includes('בעולם המתווכים'))
   check(`${label}: no sideways overflow`, info.overflowX <= 1, `${info.overflowX}px`)
 
