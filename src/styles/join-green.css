@@ -1037,3 +1037,276 @@
     animation: none !important;
   }
 }
+
+/* the money paid to the office is shown in red */
+.jo-today {
+  border-color: rgb(217 45 32 / 0.35);
+  box-shadow: 0 30px 60px -34px rgb(217 45 32 / 0.45);
+}
+.jo-today .jo-total {
+  background: linear-gradient(160deg, rgb(217 45 32 / 0.08), rgb(217 45 32 / 0.02));
+  border-color: rgb(217 45 32 / 0.4);
+}
+.jo-today .jo-total small {
+  font-weight: 700;
+  color: #b42318;
+}
+.jo-today .jo-big {
+  color: #d92d20;
+}
+.jo-today .jo-total em {
+  color: #b42318;
+}
+.jo-bars .is-red u {
+  background: linear-gradient(to left, #ef5a4d, #d92d20);
+}
+.jo-bars .is-red b {
+  color: #d92d20;
+}
+.jo-bars .is-red small {
+  font-weight: 700;
+  color: #b42318;
+}
+.jo-same-deals {
+  font-size: 16px;
+  color: var(--text-dim);
+}
+.jo-same-deals b {
+  color: var(--text);
+}
+
+/* the same things, and more */
+.jo-same {
+  display: grid;
+  gap: 14px;
+  padding: 20px 22px;
+  border-radius: 22px;
+  background: rgb(var(--g) / 0.08);
+  border: 1px solid rgb(var(--g) / 0.3);
+}
+.jo-same h4 {
+  font-family: var(--font-display);
+  font-size: clamp(19px, 2vw, 24px);
+  font-weight: 800;
+  color: var(--text);
+}
+.jo-same-cols {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+.jo-same-cols b {
+  display: block;
+  margin-bottom: 8px;
+  font-family: var(--font-display);
+  font-size: 14px;
+  color: var(--gold-soft);
+}
+.jo-same-cols ul {
+  display: grid;
+  gap: 8px;
+}
+.jo-same-cols li {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  font-family: var(--font-display);
+  font-size: 15.5px;
+  line-height: 1.35;
+}
+.jo-same-cols svg {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  padding: 4px;
+  border-radius: 50%;
+  background: rgb(var(--g) / 0.22);
+  color: var(--gold-soft);
+  stroke-width: 3;
+}
+.jo-same-cols .is-more svg {
+  background: linear-gradient(160deg, var(--gold-hi6), var(--gold));
+  color: #fff;
+}
+.jo-same-cols .is-more li {
+  font-weight: 700;
+}
+
+/* the marathon: the money paid over the years */
+.jo-marathon {
+  display: grid;
+  gap: 14px;
+  margin-top: 18px;
+  padding: clamp(22px, 3vw, 36px);
+  border-radius: var(--r-xl);
+  border: 1px solid var(--line);
+  background: #fff;
+  box-shadow: var(--shadow-2);
+}
+.jo-kicker-red {
+  justify-self: start;
+  padding: 4px 14px;
+  border-radius: 99px;
+  background: rgb(217 45 32 / 0.1);
+  font-family: var(--font-display);
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #b42318;
+}
+.jo-marathon h3 {
+  font-size: clamp(28px, 3.6vw, 44px);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+}
+.jo-marathon-sub {
+  max-width: 40em;
+  font-size: 18px;
+  line-height: 1.55;
+  color: var(--text-dim);
+}
+.jo-years {
+  display: grid;
+  gap: 8px;
+  max-width: 460px;
+}
+.jo-years span {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 600;
+}
+.jo-years b {
+  color: var(--gold-soft);
+  font-size: 18px;
+}
+.jo-years input {
+  width: 100%;
+  height: 26px;
+  accent-color: var(--gold);
+}
+.jo-chart {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  direction: ltr;
+}
+.jo-grid-line {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+.jo-area {
+  fill: rgb(var(--g) / 0.16);
+  animation: jo-fade 1000ms var(--ease) 0.5s both;
+}
+.jo-line {
+  fill: none;
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+  animation: jo-draw 1300ms var(--ease) both;
+}
+.jo-line.is-red {
+  stroke: #d92d20;
+}
+.jo-line.is-green {
+  stroke: #0f9a63;
+  animation-delay: 0.2s;
+}
+.jo-dot.is-red {
+  fill: #d92d20;
+}
+.jo-dot.is-green {
+  fill: #0f9a63;
+}
+.jo-end {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+}
+.jo-end.is-red {
+  fill: #d92d20;
+}
+.jo-end.is-green {
+  fill: #0a7a4f;
+}
+.jo-tick {
+  font-family: var(--font-display);
+  font-size: 13px;
+  fill: var(--text-faint);
+}
+.jo-run {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.jo-run > div {
+  display: grid;
+  gap: 2px;
+  padding: 16px 18px;
+  border-radius: 20px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+.jo-run small {
+  font-size: 14px;
+  color: var(--text-dim);
+}
+.jo-run b {
+  font-family: var(--font-display);
+  font-size: clamp(24px, 3vw, 36px);
+  font-weight: 900;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+.jo-run .is-red {
+  border-color: rgb(217 45 32 / 0.35);
+  background: rgb(217 45 32 / 0.05);
+}
+.jo-run .is-red b {
+  color: #d92d20;
+}
+.jo-run .is-green b {
+  color: #0a7a4f;
+}
+.jo-run .is-stay {
+  border-color: rgb(var(--g) / 0.5);
+  background: linear-gradient(to left, rgb(var(--g) / 0.2), rgb(var(--g) / 0.06));
+}
+.jo-run .is-stay b {
+  font-size: clamp(30px, 4vw, 48px);
+  color: var(--gold-soft);
+}
+.jo-run-plain {
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--text-dim);
+}
+@keyframes jo-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+}
+@keyframes jo-fade {
+  from {
+    opacity: 0;
+  }
+}
+@media (max-width: 760px) {
+  .jo-same-cols,
+  .jo-run {
+    grid-template-columns: 1fr;
+  }
+  .jo-end {
+    font-size: 34px;
+  }
+  .jo-tick {
+    font-size: 24px;
+  }
+  .jo-line {
+    stroke-width: 6;
+  }
+}

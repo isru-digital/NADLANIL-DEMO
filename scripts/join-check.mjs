@@ -26,7 +26,7 @@ const click = (page, sel, text) =>
 const setRange = (page, key, value) =>
   page.evaluate(
     (k, v) => {
-      const el = document.querySelector(`.jo-calcs input[data-k="${k}"]`)
+      const el = document.querySelector(`#calc input[data-k="${k}"]`)
       const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set
       setter.call(el, String(v))
       el.dispatchEvent(new Event('input', { bubbles: true }))
@@ -44,6 +44,18 @@ const read = (page) =>
     cover: document.querySelector('.jo-cover')?.textContent ?? '',
     facts: document.querySelector('.jo-facts')?.textContent ?? '',
     bars: [...document.querySelectorAll('.jo-bars u')].map((u) => Math.round(parseFloat(u.style.width))),
+    redColor: getComputedStyle(document.querySelector('.jo-today .jo-big')).color,
+    redBar: getComputedStyle(document.querySelector('.jo-bars .is-red b')).color,
+    paidLabel: document.querySelector('.jo-bars .is-red small')?.textContent ?? '',
+    usLabel: document.querySelector('.jo-bars .is-us small')?.textContent ?? '',
+    same: document.querySelector('.jo-same')?.textContent ?? '',
+    marathonTitle: document.querySelector('.jo-marathon h3')?.textContent ?? '',
+    chart: !!document.querySelector('.jo-chart'),
+    lines: document.querySelectorAll('.jo-line').length,
+    runRed: document.querySelector('.jo-run .is-red b')?.textContent,
+    runGreen: document.querySelector('.jo-run .is-green b')?.textContent,
+    stay: document.querySelector('.jo-stay')?.textContent,
+    plain: document.querySelector('.jo-run-plain')?.textContent ?? '',
   }))
 
 for (const [label, vp, phone] of [
@@ -121,11 +133,25 @@ for (const [label, vp, phone] of [
   check(`${tag}: the bars show the difference (today full, ours about a quarter)`, c.bars[0] === 100 && c.bars[1] >= 20 && c.bars[1] <= 26, c.bars.join(','))
   check(`${tag}: one deal covers 43 months of the fee`, c.cover.includes('43') && c.cover.includes('₪30,000'), c.cover)
   await page.screenshot({ path: `${out}/join-${label}-3-calc.png` })
+  check(`${tag}: what was paid to the office is in red, and labelled as paid`, /rgb\(21[0-9], 4\d, 3\d\)/.test(c.redColor) && c.redColor === c.redBar && c.paidLabel.includes('שילמתם למשרד') && c.usLabel.includes('NadlanUP'), JSON.stringify([c.redColor, c.redBar, c.paidLabel, c.usLabel]))
+  check(`${tag}: "the same things, and even more" is there`, c.same.includes('אצלנו מקבלים את אותם דברים, ואפילו יותר') && c.same.includes('הסוכן שלנו') && c.same.includes('מותג של משרד תיווך ארצי') && c.same.includes('0% מהעמלה'), c.same.slice(0, 80))
+  await page.evaluate(() => document.querySelector('.jo-marathon')?.scrollIntoView())
+  await wait(2200)
+  c = await read(page)
+  check(`${tag}: the marathon: title, two lines, 5 years: 180,000 red, 41,340 green, 138,660 stays`, c.marathonTitle.includes('איתנו זה מרתון, לא ריצה קצרה') && c.chart && c.lines === 2 && c.runRed === '₪180,000' && c.runGreen === '₪41,340' && c.stay === '₪138,660', JSON.stringify([c.marathonTitle, c.lines, c.runRed, c.runGreen, c.stay]))
+  await page.screenshot({ path: `${out}/join-${label}-3b-marathon.png` })
+  await setRange(page, 'years', 10)
+  await wait(2200)
+  c = await read(page)
+  check(`${tag}: 10 years: 277,320 stays with the broker`, c.stay === '₪277,320' && c.runRed === '₪360,000', JSON.stringify([c.stay, c.runRed]))
+  await setRange(page, 'years', 5)
+  await wait(500)
 
   await setRange(page, 'pct', 0)
   await wait(1200)
   c = await read(page)
   check(`${tag}: an independent broker (0%) gets an honest answer: the fee, and what it buys`, c.today === '₪0' && !c.save && c.verdict.includes('₪8,268') && c.verdict.includes('מותג משרד'), JSON.stringify([c.today, c.verdict]))
+  check(`${tag}: with nothing paid today there is no chart, only an honest note`, !c.chart && c.plain.includes('השקעה'), c.plain.slice(0, 60))
   await setRange(page, 'fixed', 2000)
   await wait(1200)
   c = await read(page)

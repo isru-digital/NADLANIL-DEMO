@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { animate, motion } from 'framer-motion'
-import { ArrowLeft, BadgeCheck, Building2, Calculator, Check, Gem, LoaderCircle, Lock, ShieldCheck, Sparkles, Users, Wallet, X } from 'lucide-react'
+import { ArrowLeft, BadgeCheck, Building2, Calculator, Check, Gem, LoaderCircle, Lock, Plus, ShieldCheck, Sparkles, Users, Wallet, X } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { PLATFORM_NAME } from '../config'
 import { BackButton, DemoTag, EASE, Logo, Modal, Reveal } from '../components/ui'
@@ -53,22 +53,75 @@ const faq = [
   { q: 'צריך רישיון מתווך?', a: 'כן. מעלים אותו בשאלון, והצוות בודק אותו.' },
 ]
 
+const same = ['שם ומותג של משרד תיווך ארצי', 'צוות מקצועי מאחורי הקלעים', 'קהילת מתווכים ושת"פים בכל הארץ', 'CRM ופולדר דיגיטלי']
+const more = ['הסוכן שלנו: דף אישי שמופיע בגוגל', 'כלי בטא לפני כולם', '0% מהעמלה, מחיר קבוע', 'מחירים מוזלים אצל שמאים ועורכי דין']
+
+/** Money paid over the years: the office that takes a share climbs steeply, the fixed fee climbs slowly; the space between is what stays. */
+function MarathonChart({ perYearToday, perYearOurs, years }: { perYearToday: number; perYearOurs: number; years: number }) {
+  const W = 640
+  const H = 290
+  const padX = 34
+  const padTop = 40
+  const padBottom = 38
+  const maxY = Math.max(perYearToday * years, perYearOurs * years, 1)
+  // time runs from right to left, the way Hebrew reads
+  const x = (i: number) => W - padX - (i / years) * (W - 2 * padX)
+  const y = (v: number) => H - padBottom - (v / maxY) * (H - padTop - padBottom)
+  const pts = (per: number) => Array.from({ length: years + 1 }, (_, i) => [x(i), y(per * i)] as const)
+  const line = (a: (readonly [number, number])[]) => a.map(([px, py], i) => `${i ? 'L' : 'M'}${px.toFixed(1)} ${py.toFixed(1)}`).join(' ')
+  const red = pts(perYearToday)
+  const green = pts(perYearOurs)
+  const area = `${line(red)} ${[...green]
+    .reverse()
+    .map(([px, py]) => `L${px.toFixed(1)} ${py.toFixed(1)}`)
+    .join(' ')} Z`
+  const endRed = red[red.length - 1]
+  const endGreen = green[green.length - 1]
+  const ticks = years <= 6 ? 1 : 2
+  return (
+    <svg className="jo-chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`הוצאה מצטברת ל-${years} שנים: במשרד שלכם ${shekel(perYearToday * years)}, אצלנו ${shekel(perYearOurs * years)}`} key={`${years}-${Math.round(perYearToday)}`}>
+      {[0, 0.25, 0.5, 0.75, 1].map((t) => (
+        <line key={t} className="jo-grid-line" x1={padX} x2={W - padX} y1={y(maxY * t)} y2={y(maxY * t)} />
+      ))}
+      <path className="jo-area" d={area} />
+      <path className="jo-line is-red" d={line(red)} pathLength={1} />
+      <path className="jo-line is-green" d={line(green)} pathLength={1} />
+      <circle className="jo-dot is-red" cx={endRed[0]} cy={endRed[1]} r={6} />
+      <circle className="jo-dot is-green" cx={endGreen[0]} cy={endGreen[1]} r={6} />
+      <text className="jo-end is-red" x={endRed[0] + 10} y={endRed[1] - 10} textAnchor="start">
+        {shekel(perYearToday * years)}
+      </text>
+      <text className="jo-end is-green" x={endGreen[0] + 10} y={endGreen[1] + 38} textAnchor="start">
+        {shekel(perYearOurs * years)}
+      </text>
+      {Array.from({ length: years + 1 }, (_, i) => i)
+        .filter((i) => i % ticks === 0 || i === years)
+        .map((i) => (
+          <text key={i} className="jo-tick" x={x(i)} y={H - 12} textAnchor="middle">
+            {i === 0 ? 'היום' : `שנה ${i}`}
+          </text>
+        ))}
+    </svg>
+  )
+}
+
 export default function JoinOffice() {
   const navigate = useNavigate()
   const { stage, patch } = useAgent()
   const joined = stage !== 'locked'
 
-  // the calculator: what the broker pays today (commissions, as before, and any fixed fee), what it would cost here,
-  // and the difference over the same period
+  // the calculator: what the broker paid the office, what the same deals would cost here, and the difference; then the long run
   const [deals, setDeals] = useState(6)
   const [fee, setFee] = useState(30000)
   const [pct, setPct] = useState(20)
   const [fixed, setFixed] = useState(0)
   const [months, setMonths] = useState(12)
+  const [years, setYears] = useState(5)
   const yearToday = deals * fee * (pct / 100) + fixed * 12
   const today = (yearToday * months) / 12
   const ours = OFFICE_PRICE * months
   const diff = today - ours
+  const yearGap = yearToday - OFFICE_YEAR
   const covers = Math.floor(fee / OFFICE_PRICE)
   const period = months === 12 ? 'בשנה האחרונה' : `ב-${months} חודשים`
   const perDealToday = deals ? yearToday / deals : 0
@@ -77,6 +130,7 @@ export default function JoinOffice() {
   const gToday = useGlide(today)
   const gOurs = useGlide(ours)
   const gDiff = useGlide(Math.abs(diff))
+  const gStay = useGlide(Math.max(yearGap, 0) * years)
 
   // the payment (a simulation: no card details are asked for)
   const [pay, setPay] = useState<'closed' | 'open' | 'busy' | 'done'>('closed')
@@ -161,7 +215,7 @@ export default function JoinOffice() {
           <Reveal className="jo-head">
             <span className="jo-tag">בואו נחשב</span>
             <h2>כמה כסף יצא לכם בשנה האחרונה?</h2>
-            <p>קודם מה שאתם משלמים היום למשרד שלכם, ואחר כך מה זה היה עולה אצלנו.</p>
+            <p>קודם כמה שילמתם למשרד שלכם, ואחר כך כמה זה היה עולה עם אותן עסקאות ואותם סכומים אצלנו.</p>
           </Reveal>
 
           <div className="jo-calcs">
@@ -196,9 +250,9 @@ export default function JoinOffice() {
                 </label>
               </div>
               <div className="jo-total">
-                <small>היום אתם משלמים {period}</small>
+                <small>שילמתם למשרד {period}</small>
                 <b className="num jo-big">{shekel(gToday)}</b>
-                <em>{fixed > 0 ? 'עמלות ותשלום קבוע' : 'עמלות'}</em>
+                <em>{fixed > 0 ? 'עמלות ותשלום קבוע' : 'עמלות שנלקחו מכם'}</em>
               </div>
             </Reveal>
 
@@ -233,7 +287,7 @@ export default function JoinOffice() {
                 )}
               </ul>
               <div className="jo-total">
-                <small>אצלנו זה היה עולה {months === 12 ? 'בשנה' : `ב-${months} חודשים`}</small>
+                <small>אותן עסקאות, אצלנו זה היה עולה {months === 12 ? 'בשנה' : `ב-${months} חודשים`}</small>
                 <b className="num jo-big">{shekel(gOurs)}</b>
                 <em>
                   {OFFICE_PRICE} × {months}
@@ -245,16 +299,19 @@ export default function JoinOffice() {
           <Reveal className={`jo-diff${diff > 0 ? ' is-save' : ''}`}>
             <span className="jo-step">3</span>
             <h3>ההבדל</h3>
+            <p className="jo-same-deals">
+              אותן <b className="num">{deals}</b> עסקאות, אותה עמלה ממוצעת של <b className="num">{shekel(fee)}</b>.
+            </p>
             <div className="jo-bars" aria-hidden>
-              <div>
-                <small>במשרד שלכם</small>
+              <div className="is-red">
+                <small>שילמתם למשרד</small>
                 <i>
                   <u style={{ width: `${(today / top) * 100}%` }} />
                 </i>
                 <b className="num">{shekel(today)}</b>
               </div>
               <div className="is-us">
-                <small>{PLATFORM_NAME}</small>
+                <small>הייתם משלמים ב{PLATFORM_NAME}</small>
                 <i>
                   <u style={{ width: `${(ours / top) * 100}%` }} />
                 </i>
@@ -265,7 +322,7 @@ export default function JoinOffice() {
               <div className="jo-verdict">
                 <Sparkles />
                 <div>
-                  <small>היו נשארים אצלכם {months === 12 ? 'בשנה האחרונה' : `ב-${months} חודשים`}</small>
+                  <small>הכסף הגדול היה נשאר אצלכם {months === 12 ? 'בשנה האחרונה' : `ב-${months} חודשים`}</small>
                   <b className="num">{shekel(gDiff)}</b>
                 </div>
               </div>
@@ -280,7 +337,69 @@ export default function JoinOffice() {
             <p className="jo-cover">
               עסקה אחת בעמלה של <b className="num">{shekel(fee)}</b> מכסה <b className="num">{covers}</b> חודשי מנוי.
             </p>
+
+            <div className="jo-same">
+              <h4>אצלנו מקבלים את אותם דברים, ואפילו יותר</h4>
+              <div className="jo-same-cols">
+                <div>
+                  <b>אותו דבר שמשרד נותן</b>
+                  <ul>
+                    {same.map((t) => (
+                      <li key={t}>
+                        <Check /> {t}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="is-more">
+                  <b>ועוד, רק אצלנו</b>
+                  <ul>
+                    {more.map((t) => (
+                      <li key={t}>
+                        <Plus /> {t}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
             <small className="jo-note">חישוב לפי המספרים שהזנתם. כל משרד עובד אחרת, כדאי לבדוק מה משלמים היום.</small>
+          </Reveal>
+
+          <Reveal className="jo-marathon">
+            <span className="jo-kicker-red">מרתון, לא ריצה קצרה</span>
+            <h3>איתנו זה מרתון, לא ריצה קצרה</h3>
+            <p className="jo-marathon-sub">במשרד שלוקח אחוזים, כל שנה עולה לכם שוב אותו סכום. אצלנו המחיר קבוע, והפער רק גדל משנה לשנה.</p>
+            <label className="jo-years">
+              <span>
+                כמה שנים קדימה? <b className="num">{years}</b>
+              </span>
+              <input data-k="years" type="range" min={1} max={10} value={years} onChange={(e) => setYears(Number(e.target.value))} />
+            </label>
+            {yearGap > 0 ? (
+              <>
+                <MarathonChart perYearToday={yearToday} perYearOurs={OFFICE_YEAR} years={years} />
+                <div className="jo-run">
+                  <div className="is-red">
+                    <small>במשרד שלכם, אחרי {years} {years === 1 ? 'שנה' : 'שנים'}</small>
+                    <b className="num">{shekel(yearToday * years)}</b>
+                  </div>
+                  <div className="is-green">
+                    <small>אצלנו, אחרי {years} {years === 1 ? 'שנה' : 'שנים'}</small>
+                    <b className="num">{shekel(OFFICE_YEAR * years)}</b>
+                  </div>
+                  <div className="is-stay">
+                    <small>נשארים אצלכם</small>
+                    <b className="num jo-stay">{shekel(gStay)}</b>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <p className="jo-run-plain">
+                אם אתם לא משלמים היום למשרד, המנוי הוא השקעה לטווח ארוך: דף בגוגל, מותג משרד וצוות שעובד בשבילכם. עסקה אחת נוספת בשנה מכסה את המנוי כמה פעמים.
+              </p>
+            )}
+            <small className="jo-note">בהנחה שאותו מספר עסקאות ואותה עמלה בכל שנה.</small>
           </Reveal>
         </div>
       </section>
