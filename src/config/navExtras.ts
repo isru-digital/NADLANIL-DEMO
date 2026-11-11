@@ -38,6 +38,8 @@ export const labSlots: {
   hubSub?: string
   hubNote?: string
   peekNote?: string
+  /** a working button inside an open tool's card */
+  Action?: ComponentType<{ id: string }>
 } = {}
 export function registerLab(slots: typeof labSlots) {
   Object.assign(labSlots, slots)
@@ -50,4 +52,18 @@ export function registerLab(slots: typeof labSlots) {
 export const nameSlots: { Badge?: ComponentType<{ brokerId: string }>; MatchNote?: ComponentType } = {}
 export function registerNames(slots: typeof nameSlots) {
   Object.assign(nameSlots, slots)
+}
+
+/**
+ * Actions the green version makes work in the browser (stage D). A shared screen calls one if it is registered,
+ * and otherwise does what it always did (a note that the demo does not do this).
+ */
+export const actionSlots: {
+  newCard?: () => void
+  share?: (item: { id: string }) => void
+  /** what the folder says after its link is copied, also where the browser has no clipboard */
+  copied?: string
+} = {}
+export function registerActions(slots: typeof actionSlots) {
+  Object.assign(actionSlots, slots)
 }

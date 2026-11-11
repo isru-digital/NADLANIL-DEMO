@@ -357,3 +357,90 @@ html[data-theme='green'] .op[data-n='4'] .op-label {
   font-size: 13px;
   color: var(--text-dim);
 }
+
+/* The feed on a phone was pushed 100px sideways: posts that are off screen are skipped by the browser and stand in
+   with a remembered size, and that size was given for the width too (460px), which made the whole column 460px
+   wide. Only the height is remembered now, and the columns may never grow past the screen. */
+html[data-theme='green'] .ci-wrap:not(:has(.is-fresh)) {
+  contain-intrinsic-size: none auto 460px;
+}
+html[data-theme='green'] .comm-feed,
+html[data-theme='green'] .ci-list {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* ---------------------------------------------------------------- stage D: more air (green version)
+   The feed and the CRM board were dense. Wider gaps between things, more room inside the cards, and the small
+   print of the side panels is quieter, so the eye lands on the posts and on the cards first. */
+html[data-theme='green'] .fbx {
+  gap: 32px;
+}
+html[data-theme='green'] .comm-feed,
+html[data-theme='green'] .ci-list {
+  gap: 22px;
+}
+html[data-theme='green'] .fbx-end {
+  gap: 20px;
+}
+html[data-theme='green'] .side-card {
+  padding: 20px 18px;
+}
+html[data-theme='green'] .side-card .side-empty {
+  margin-top: 6px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--text-faint);
+}
+html[data-theme='green'] .side-head h2 {
+  font-size: 17px;
+}
+html[data-theme='green'] .fb-head {
+  padding: 18px 20px 14px;
+}
+html[data-theme='green'] .fb.ci {
+  border-radius: 20px;
+}
+/* the CRM board */
+/* (the cards keep their width: more padding inside them made the tags and the publish button wrap) */
+html[data-theme='green'] .kanban {
+  gap: 16px;
+}
+html[data-theme='green'] .kan-col {
+  gap: 16px;
+}
+html[data-theme='green'] .kan-list {
+  gap: 16px;
+}
+html[data-theme='green'] .kan-body {
+  gap: 12px;
+}
+html[data-theme='green'] .kan-actions .btn {
+  gap: 6px;
+  padding-inline: 10px;
+  font-size: 13.5px;
+}
+html[data-theme='green'] .kan-note {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  color: var(--text-faint);
+}
+html[data-theme='green'] .kan-head {
+  padding: 6px 6px 4px;
+}
+@media (max-width: 760px) {
+  html[data-theme='green'] .comm-feed,
+  html[data-theme='green'] .ci-list {
+    gap: 16px;
+  }
+  html[data-theme='green'] .fb-head {
+    padding: 16px 16px 12px;
+  }
+}
+/* a very narrow phone: the four quick buttons of the composer sit two by two */
+@media (max-width: 380px) {
+  html[data-theme='green'] .composer-quick {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

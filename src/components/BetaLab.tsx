@@ -225,6 +225,7 @@ function Peek({ item, onClose, onGo, onHub }: { item: LabItem; onClose: () => vo
   const next = labItems[(index + 1) % labItems.length]
   const Scene = item.scene
   const Badge = labSlots.Badge
+  const Action = labSlots.Action
   return (
     <>
       <header className="bl-head">
@@ -256,6 +257,7 @@ function Peek({ item, onClose, onGo, onHub }: { item: LabItem; onClose: () => vo
                 </li>
               ))}
             </ul>
+            {Action && <Action id={item.id} />}
           </div>
           <div className="bl-vis">{Scene && <Scene />}</div>
         </div>

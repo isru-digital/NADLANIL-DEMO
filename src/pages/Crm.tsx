@@ -23,6 +23,7 @@ import type { TopicId } from '../config/topics'
 import { brokerById, cities, crmStages, fitsSearch, formatPriceShort, roomsLabel, simulatedListings } from '../data/demo'
 import type { CommunityItem, CrmItem, CrmStatus } from '../data/demo'
 import { useStore } from '../store'
+import { actionSlots } from '../config/navExtras'
 import type { MatchAlert } from '../store'
 import { EASE, Modal, PageHead, Photo } from '../components/ui'
 import CommunityCard from '../components/CommunityCard'
@@ -182,7 +183,7 @@ export default function Crm() {
             </button>
           ))}
         </div>
-        <button className="btn btn-ghost" onClick={() => toast('בדמו לא ניתן להוסיף כרטיסים חדשים')}>
+        <button className="btn btn-ghost" data-act="new-card" onClick={() => (actionSlots.newCard ? actionSlots.newCard() : toast('בדמו לא ניתן להוסיף כרטיסים חדשים'))}>
           <Plus />
           כרטיס חדש
         </button>

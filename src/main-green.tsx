@@ -18,11 +18,14 @@ import TieredLab, { LabBadge, LabChip } from './components/TieredLab'
 import Upgrade from './pages/Upgrade'
 import { OfficeHub, OfficeScreen } from './office/OfficeArea'
 import NameBadge, { MatchFirst } from './office/NameBadge'
+import GreenActions, { LabAction } from './green/GreenActions'
+import { greenUi } from './green/ui'
+import type { CommunityItem } from './data/demo'
 import { FREE_IDS, PAID_IDS, walletActions } from './config/tiers'
 import About from './pages/About'
 import { memberActions } from './config/member'
 import { agentActions } from './agent/useAgent'
-import { registerLab, registerNames, registerNav, registerReset, registerShell } from './config/navExtras'
+import { registerActions, registerLab, registerNames, registerNav, registerReset, registerShell } from './config/navExtras'
 import './styles/lite.css'
 import './styles/theme-green.css'
 
@@ -42,6 +45,7 @@ registerShell({ bar: MemberBar, badge: MemberBadge, lab: TieredLab })
 registerLab({
   Chip: LabChip,
   Badge: LabBadge,
+  Action: LabAction,
   groups: [
     { title: 'חינם בקהילה', sub: 'פתוח לכל חבר, תמיד', ids: FREE_IDS },
     { title: 'כלים מתקדמים', sub: 'לחבר קהילה בקרדיטים, לחבר משרד כלול במכסה החודשית', ids: PAID_IDS },
@@ -49,6 +53,13 @@ registerLab({
   hubSub: 'כלים בגרסת בטא. חלק חינם בקהילה, והמתקדמים נפתחים בקרדיטים או כלולים במשרד.',
   hubNote: 'גרסת בטא עם נתוני דמו. אין חיוב אמיתי.',
   peekNote: 'גרסת בטא: הדגמה עם נתוני דמו בלבד.',
+})
+
+// what works in the browser in this version: a new CRM card, sharing a post, a folder link that always confirms
+registerActions({
+  newCard: () => greenUi.open({ kind: 'card' }),
+  share: (item) => greenUi.open({ kind: 'share', item: item as CommunityItem }),
+  copied: 'הקישור הועתק',
 })
 
 start(<HomeGreen />, {
@@ -71,7 +82,12 @@ start(<HomeGreen />, {
     </>
   ),
   // the "start again" tab is for the demo only: a real launch builds with VITE_DEMO_RESET=false
-  overlay: import.meta.env.VITE_DEMO_RESET === 'false' ? null : <DemoReset />,
+  overlay: (
+    <>
+      <GreenActions />
+      {import.meta.env.VITE_DEMO_RESET === 'false' ? null : <DemoReset />}
+    </>
+  ),
 })
 
 // the name always comes with its second line, in the tab too

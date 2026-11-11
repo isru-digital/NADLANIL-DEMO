@@ -6,6 +6,7 @@ import { useMember } from '../config/member'
 import { QUOTA, TOOLS, creditsText, isPaid, useWallet, walletActions } from '../config/tiers'
 import { PRICE_TBD } from '../config/office'
 import { Modal } from './ui'
+import { greenUi } from '../green/ui'
 import BetaLab, { labItems } from './BetaLab'
 import type { LabView } from './BetaLab'
 import '../styles/tiers.css'
@@ -49,6 +50,9 @@ export default function TieredLab({ view, setView }: { view: LabView; setView: (
     }
     setAsk({ id: tool, kind: walletActions.get().credits >= TOOLS[tool].cost ? 'pay' : 'empty' })
   }, [view, tool, allowed, isOffice, freePass])
+
+  // when the WhatsApp tool publishes, the lab steps aside so the new post is in sight
+  useEffect(() => greenUi.watch(() => setView(null)), [setView])
 
   const item = labItems.find((x) => x.id === ask?.id)
   const cost = ask ? TOOLS[ask.id].cost : 0

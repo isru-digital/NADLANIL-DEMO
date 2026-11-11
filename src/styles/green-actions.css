@@ -1,0 +1,196 @@
+/* The pop-ups of the actions that work in the browser (green version, stage D). */
+.ga {
+  display: grid;
+  gap: 16px;
+}
+.ga-fields {
+  display: grid;
+  gap: 14px;
+}
+.ga-row {
+  display: grid;
+  grid-template-columns: 1.3fr 0.7fr 1.2fr;
+  gap: 10px;
+}
+.ga .chip svg {
+  width: 15px;
+  height: 15px;
+}
+.ga .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+}
+.ga-go {
+  justify-content: center;
+}
+.ga-from-wa,
+.ga-lab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: 0 18px;
+  border-radius: 16px;
+  border: 1px dashed rgb(var(--g) / 0.55);
+  background: rgb(var(--g) / 0.07);
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--gold-soft);
+  cursor: pointer;
+  transition: background var(--t) var(--ease);
+}
+.ga-from-wa:hover {
+  background: rgb(var(--g) / 0.13);
+}
+.ga-from-wa svg,
+.ga-lab svg {
+  width: 17px;
+  height: 17px;
+}
+.ga-paste {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border-radius: 18px;
+  border: 1px dashed rgb(var(--g) / 0.55);
+  background: rgb(var(--g) / 0.05);
+}
+.ga-paste-row,
+.ga-samples {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 10px;
+}
+.ga-samples {
+  justify-content: flex-start;
+  margin-top: -6px;
+}
+.ga-samples span {
+  font-size: 13.5px;
+  color: var(--text-faint);
+}
+.ga-note,
+.ga-privacy {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--text-faint);
+}
+.ga-privacy {
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgb(var(--g) / 0.08);
+  color: var(--text-dim);
+}
+.ga-note svg,
+.ga-privacy svg {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  color: var(--gold-soft);
+}
+.ga-found {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #043b2b, #07643f 60%, #0fa46b);
+  color: #fff;
+}
+.ga-found > svg {
+  flex: none;
+  width: 24px;
+  height: 24px;
+}
+.ga-found div {
+  display: grid;
+}
+.ga-found b {
+  font-family: var(--font-display);
+  font-size: 17px;
+}
+.ga-found small {
+  font-size: 14px;
+  color: rgb(255 255 255 / 0.88);
+}
+.ga-actions {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+}
+.ga-actions .btn {
+  justify-content: center;
+}
+.ga-quote {
+  display: flex;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+.ga-quote > span {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgb(var(--g) / 0.14);
+  color: var(--gold-soft);
+}
+.ga-quote svg {
+  width: 18px;
+  height: 18px;
+}
+.ga-quote div {
+  display: grid;
+  min-width: 0;
+}
+.ga-quote b {
+  font-family: var(--font-display);
+  font-size: 14.5px;
+}
+.ga-quote p {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  font-size: 14.5px;
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+/* the working button inside the lab's card (the card is dark) */
+.ga-lab {
+  justify-self: start;
+  margin-top: 14px;
+  border: 0;
+  background: #fff;
+  color: #0a7a4f;
+  box-shadow: 0 16px 30px -18px rgba(0, 0, 0, 0.7);
+}
+.ga-lab:hover {
+  background: #eafff4;
+}
+
+@media (max-width: 560px) {
+  .ga-row {
+    grid-template-columns: 1fr 1fr;
+  }
+  .ga-row .field:first-child {
+    grid-column: 1 / -1;
+  }
+  .ga-actions {
+    grid-template-columns: 1fr;
+  }
+}

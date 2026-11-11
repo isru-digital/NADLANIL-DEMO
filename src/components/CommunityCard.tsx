@@ -31,7 +31,7 @@ import { REFERRAL_DISCLAIMER, topicById } from '../config/topics'
 import { brokerById, formatPrice, roomsLabel } from '../data/demo'
 import type { Comment, CommunityItem } from '../data/demo'
 import { useStore } from '../store'
-import { nameSlots } from '../config/navExtras'
+import { actionSlots, nameSlots } from '../config/navExtras'
 import { Avatar, EASE, Photo } from './ui'
 import '../styles/community.css'
 import '../styles/feed.css'
@@ -426,7 +426,7 @@ export default function CommunityCard({
               <MessageCircle />
               תגובה
             </button>
-            <button className="fb-action" onClick={() => toast('בדמו השיתוף אינו פעיל')}>
+            <button className="fb-action" data-act="share" onClick={() => (actionSlots.share ? actionSlots.share(item) : toast('בדמו השיתוף אינו פעיל'))}>
               <Share2 />
               שיתוף
             </button>

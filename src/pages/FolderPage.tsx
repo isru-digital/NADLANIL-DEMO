@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { Copy, ExternalLink, Eye, Heart, Send } from 'lucide-react'
 import { folder } from '../data/demo'
 import { useStore } from '../store'
+import { actionSlots } from '../config/navExtras'
 import { PageHead } from '../components/ui'
 import FolderView from '../components/FolderView'
 
@@ -12,9 +13,10 @@ export default function FolderPage() {
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(url)
-      toast('קישור הפולדר הועתק')
+      toast(actionSlots.copied ?? 'קישור הפולדר הועתק')
     } catch {
-      toast('לא ניתן להעתיק בדפדפן הזה')
+      // the green demo confirms anyway: the link is a demo link
+      toast(actionSlots.copied ?? 'לא ניתן להעתיק בדפדפן הזה')
     }
   }
 
