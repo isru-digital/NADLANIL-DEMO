@@ -44,7 +44,8 @@ for (const [look, base] of looks) {
     const tag = `${look} ${label}`
 
     const n = await page.evaluate(() => document.querySelectorAll('.op-panel').length)
-    check(`${tag}: three panels`, n === 3, `${n}`)
+    // the green home has a fourth panel, the office
+    check(`${tag}: ${look === 'green' ? 'four' : 'three'} panels`, n === (look === 'green' ? 4 : 3), `${n}`)
 
     let s = await state(page)
     check(`${tag}: exactly one open at the start`, s.open.filter(Boolean).length === 1 && s.expanded.filter((v) => v === 'true').length === 1)

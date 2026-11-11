@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
+import { Link } from 'react-router-dom'
 import { ArrowLeft, Link2, Sparkles } from 'lucide-react'
 import { asset } from '../config'
 import { brokers, formatPriceShort } from '../data/demo'
@@ -12,10 +13,11 @@ import '../styles/open-panels.css'
  * is wide and shows a title, a line of text and a small piece of the product; the others shrink to
  * thin strips with only their name. On a phone the strip turns into a vertical stack.
  *
- * Used on both home pages, so the two looks tell the same story.
+ * Used on both home pages, so the two looks tell the same story. The green home passes its own photos, its own
+ * words for a panel and one more panel (the office); the navy home passes nothing and is unchanged.
  */
 
-type Panel = {
+export type Panel = {
   id: string
   label: string
   title: string
@@ -24,10 +26,12 @@ type Panel = {
   position: string
   beta?: boolean
   demo?: boolean
+  /** a link shown under the text, instead of the demo button */
+  link?: { to: string; label: string }
   mock: ReactNode
 }
 
-const panels: Panel[] = [
+const base: Panel[] = [
   {
     id: 'request',
     label: 'קהילה',
@@ -113,7 +117,9 @@ const panels: Panel[] = [
   },
 ]
 
-export default function OpenPanels() {
+export default function OpenPanels({ change, extra }: { change?: Record<string, Partial<Panel>>; extra?: Panel[] } = {}) {
+  const panels = [...base.map((p) => ({ ...p, ...change?.[p.id] })), ...(extra ?? [])]
+  const count = panels.length
   const [open, setOpen] = useState(0)
   const [demoOpen, setDemoOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
@@ -135,7 +141,7 @@ export default function OpenPanels() {
     let timer = 0
     const tick = () => {
       if (touched.current) return stop()
-      setOpen((v) => (v + 1) % panels.length)
+      setOpen((v) => (v + 1) % count)
     }
     const start = () => {
       stop()
@@ -148,10 +154,10 @@ export default function OpenPanels() {
       io.disconnect()
       stop()
     }
-  }, [])
+  }, [count])
 
   return (
-    <div className="op" ref={rootRef}>
+    <div className="op" data-n={count} ref={rootRef}>
       {panels.map((p, i) => {
         const isOpen = i === open
         return (
@@ -190,6 +196,12 @@ export default function OpenPanels() {
                   לצפייה בדמו
                   <ArrowLeft />
                 </button>
+              )}
+              {p.link && (
+                <Link to={p.link.to} className="op-demo">
+                  {p.link.label}
+                  <ArrowLeft />
+                </Link>
               )}
               <div className="op-mock">{p.mock}</div>
             </div>

@@ -7,6 +7,7 @@ import { brokers, formatPriceShort } from '../data/demo'
 import { Avatar, DemoTag, EASE, Logo, Reveal } from '../components/ui'
 import NetworkMap from '../components/NetworkMap'
 import OpenPanels from '../components/OpenPanels'
+import { panelChange, panelOffice } from '../components/GreenPanels'
 import AgentTeaser from '../agent/AgentTeaser'
 import { CountUp, SectionHead, behind, features } from './Home'
 import '../styles/builder.css'
@@ -193,7 +194,7 @@ export default function HomeGreen() {
         <div className="container">
           <SectionHead eyebrow="מה משתנה">ככה נראית מהפכה בעולם המתווכים.</SectionHead>
           <Reveal>
-            <OpenPanels />
+            <OpenPanels change={panelChange} extra={[panelOffice]} />
           </Reveal>
         </div>
       </section>
@@ -281,7 +282,7 @@ export default function HomeGreen() {
             <i className="hg-grid" aria-hidden />
             <img className="hg-final-logo" src={asset('brand/nadlanup-lockup-ongreen.png')} alt={PLATFORM_NAME} />
             <span className="hg-final-sub">{PLATFORM_SUBNAME}</span>
-            <h2>בואו להיות חלק מזה.</h2>
+            <h2>בואו להיות חלק מזה</h2>
             <Link to="/join" className="btn btn-white btn-lg">
               אני בפנים
               <ArrowLeft />

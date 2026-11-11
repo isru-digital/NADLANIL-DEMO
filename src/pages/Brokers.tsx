@@ -6,6 +6,7 @@ import { CURRENT_BROKER_ID, asset } from '../config'
 import { brokers, regions, specialties } from '../data/demo'
 import type { Broker } from '../data/demo'
 import { useStore } from '../store'
+import { nameSlots } from '../config/navExtras'
 import { EASE, Modal, PageHead } from '../components/ui'
 import '../styles/brokers.css'
 import '../styles/community.css'
@@ -123,6 +124,7 @@ export default function Brokers() {
                 <span className="broker-over">
                   <strong>{b.name}</strong>
                   <span>{b.title}</span>
+                  {nameSlots.Badge && <nameSlots.Badge brokerId={b.id} />}
                 </span>
               </button>
               <div className="broker-info">

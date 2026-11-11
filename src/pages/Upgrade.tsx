@@ -16,7 +16,7 @@ import '../styles/upgrade.css'
  * all lead here. The office's fee is the one decided price; a credit has no price yet.
  */
 type Cell = boolean | string
-type Row = { what: string; note?: string; cells: [Cell, Cell, Cell] }
+type Row = { what: string; note?: string; cells: [Cell, Cell, Cell]; to?: string }
 
 const advanced = labItems.filter((x) => PAID_IDS.includes(x.id) && x.id !== 'urgent')
 
@@ -43,15 +43,15 @@ const groups: { title: string; sub: string; rows: Row[] }[] = [
     sub: 'מה שרק משרד יכול לתת',
     rows: [
       { what: '0% עמלה למשרד, 100% למתווך', cells: [false, false, true] },
-      { what: 'הסוכן שלנו', note: 'דף אישי ממותג שמופיע בגוגל', cells: [false, false, true] },
-      { what: 'מכונת הלידים של המשרד', note: 'קמפיינים ארציים, והלידים מחולקים לפי אזור', cells: [false, false, true] },
-      { what: 'דוח שבועי אוטומטי למוכר', cells: [false, false, true] },
-      { what: 'מצגת גיוס בלעדיות ב-AI', cells: [false, false, true] },
-      { what: 'תוכנית צמיחה ומנטור', cells: [false, false, true] },
-      { what: 'מנהלת עסקה, עד החתימה', cells: [false, false, true] },
-      { what: 'עוזר AI בדף הנחיתה', cells: [false, false, true] },
-      { what: 'הטבות חברים', cells: [false, false, 'בהקמה'] },
-      { what: 'תג מאומת "חבר משרד"', note: 'עדיפות בהתאמות ובבקשות בוערות', cells: [false, false, true] },
+      { what: 'הסוכן שלנו', note: 'דף אישי ממותג שמופיע בגוגל', cells: [false, false, true], to: '/app/agent' },
+      { what: 'מכונת הלידים של המשרד', note: 'קמפיינים ארציים, והלידים מחולקים לפי אזור', cells: [false, false, true], to: '/app/office/leads' },
+      { what: 'דוח שבועי אוטומטי למוכר', cells: [false, false, true], to: '/app/office/report' },
+      { what: 'מצגת גיוס בלעדיות ב-AI', cells: [false, false, true], to: '/app/office/pitch' },
+      { what: 'תוכנית צמיחה ומנטור', cells: [false, false, true], to: '/app/office/growth' },
+      { what: 'מנהלת עסקה, עד החתימה', cells: [false, false, true], to: '/app/office/deal' },
+      { what: 'עוזר AI בדף הנחיתה', cells: [false, false, true], to: '/app/office/assistant' },
+      { what: 'הטבות חברים', cells: [false, false, 'בהקמה'], to: '/app/office/benefits' },
+      { what: 'תג מאומת "חבר משרד"', note: 'עדיפות בהתאמות ובבקשות בוערות', cells: [false, false, true], to: '/app/office/badge' },
     ],
   },
 ]
@@ -127,7 +127,13 @@ export default function Upgrade() {
               {g.rows.map((r) => (
                 <div key={r.what} className="up-row" role="row">
                   <span className="up-what">
-                    {r.what}
+                    {r.to ? (
+                      <Link to={r.to} className="up-link">
+                        {r.what} <ArrowLeft />
+                      </Link>
+                    ) : (
+                      r.what
+                    )}
                     {r.note && <small>{r.note}</small>}
                   </span>
                   <span className="up-cell" data-t="הקהילה">

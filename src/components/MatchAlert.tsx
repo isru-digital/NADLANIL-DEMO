@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Sparkles, X } from 'lucide-react'
 import { brokerById } from '../data/demo'
 import { useStore } from '../store'
+import { nameSlots } from '../config/navExtras'
 import { Avatar, EASE } from './ui'
 import '../styles/topics.css'
 
@@ -48,6 +49,7 @@ export default function MatchAlert() {
             <Avatar src={brokerById(matchAlert.brokerId).avatar} name="" size={42} ring />
             <p>{matchAlert.text}</p>
           </div>
+          {nameSlots.MatchNote && <nameSlots.MatchNote />}
           <div className="match-foot">
             <small>{matchAlert.kind === 'incoming' ? 'הדמיה בדמו של פרסום ממתווך אחר' : 'נתוני דמו'}</small>
             <button

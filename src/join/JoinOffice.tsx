@@ -175,9 +175,9 @@ export default function JoinOffice() {
             {OFFICE_NAME}
           </motion.span>
           <motion.h1 initial={{ opacity: 0, y: 22 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.1, ease: EASE }}>
-            משרד תיווך ארצי.
+            משרד תיווך ארצי
             <br />
-            <span>0% עמלה למשרד.</span>
+            <span>עם 0% עמלה למשרד</span>
           </motion.h1>
           <motion.p className="jo-sub" initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.2, ease: EASE }}>
             100% מהעמלה נשארת אצלכם. המשרד נותן את השם, את הכלים ואת הצוות.

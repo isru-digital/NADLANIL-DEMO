@@ -344,3 +344,34 @@
     display: none;
   }
 }
+
+/* an office-only row leads to its screen */
+.up-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  color: inherit;
+}
+.up-link svg {
+  width: 15px;
+  height: 15px;
+  color: var(--gold-soft);
+  opacity: 0;
+  transform: translateX(4px);
+  transition: opacity var(--t) var(--ease), transform var(--t) var(--ease);
+}
+.up-link:hover {
+  color: var(--gold-soft);
+}
+.up-link:hover svg,
+.up-link:focus-visible svg {
+  opacity: 1;
+  transform: none;
+}
+@media (hover: none) {
+  .up-link svg {
+    opacity: 1;
+    transform: none;
+  }
+}

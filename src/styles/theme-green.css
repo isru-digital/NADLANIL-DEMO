@@ -246,12 +246,40 @@ html[data-theme='green'] :is(.folder, .lp) {
   --r-xl: 28px;
 }
 
-/* the opening panels: a deep green veil over the photos instead of navy */
+/* the opening panels: bright daylight photos. The green veil is only where the words are (the top), and it lets
+   the lower half of the photo stay light. */
 html[data-theme='green'] .op-shade {
-  background: linear-gradient(180deg, rgba(3, 38, 27, 0.6) 0%, rgba(3, 38, 27, 0.5) 100%);
+  background: linear-gradient(180deg, rgba(3, 46, 32, 0.62) 0%, rgba(3, 46, 32, 0.16) 34%, rgba(3, 46, 32, 0.06) 100%);
 }
 html[data-theme='green'] .op-panel.is-open .op-shade {
-  background: linear-gradient(180deg, rgba(3, 38, 27, 0.78) 0%, rgba(3, 38, 27, 0.3) 46%, rgba(3, 38, 27, 0.6) 100%);
+  background: linear-gradient(180deg, rgba(3, 46, 32, 0.86) 0%, rgba(3, 46, 32, 0.6) 30%, rgba(3, 46, 32, 0.12) 62%, rgba(3, 46, 32, 0.04) 100%);
+}
+html[data-theme='green'] .op-body h3,
+html[data-theme='green'] .op-body p,
+html[data-theme='green'] .op-label {
+  text-shadow: 0 1px 12px rgba(2, 30, 21, 0.55);
+}
+/* four panels: the open one keeps about the same share of the row as with three */
+html[data-theme='green'] .op[data-n='4'] .op-panel.is-open {
+  flex-grow: 7.6;
+}
+html[data-theme='green'] .op[data-n='4'] .op-label {
+  inset-inline-start: 16px;
+  gap: 8px;
+  font-size: 16px;
+}
+@media (max-width: 760px) {
+  html[data-theme='green'] .op[data-n='4'] {
+    height: 800px;
+  }
+  /* a closed strip on a phone: its name is at the side, so the veil is there */
+  html[data-theme='green'] .op-panel:not(.is-open) .op-shade {
+    background: linear-gradient(to left, rgba(3, 46, 32, 0.78) 0%, rgba(3, 46, 32, 0.4) 45%, rgba(3, 46, 32, 0.08) 100%);
+  }
+  /* on a phone the panels are stacked and the words sit over the whole open one */
+  html[data-theme='green'] .op-panel.is-open .op-shade {
+    background: linear-gradient(180deg, rgba(3, 46, 32, 0.86) 0%, rgba(3, 46, 32, 0.66) 45%, rgba(3, 46, 32, 0.3) 100%);
+  }
 }
 
 /* the second line of the name, under the wordmark */
@@ -291,4 +319,41 @@ html[data-theme='green'] .op-panel.is-open .op-shade {
   font-size: clamp(17px, 2vw, 22px);
   font-weight: 800;
   color: #d5ffe9;
+}
+
+/* the office panel's small card */
+.op-kicker svg {
+  width: 15px;
+  height: 15px;
+  vertical-align: -2px;
+}
+.op-office {
+  display: grid;
+  gap: 8px;
+}
+.op-office li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 9px;
+  align-items: center;
+}
+.op-office svg {
+  grid-row: 1 / span 2;
+  width: 22px;
+  height: 22px;
+  padding: 4px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0a7a4f, #12a36c);
+  color: #fff;
+  stroke-width: 3;
+}
+.op-office b {
+  font-family: var(--font-display);
+  font-size: 15px;
+  line-height: 1.2;
+}
+.op-office small {
+  grid-column: 2;
+  font-size: 13px;
+  color: var(--text-dim);
 }

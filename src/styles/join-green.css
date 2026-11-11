@@ -250,6 +250,9 @@
   color: #fff;
 }
 .jo-hero h1 span {
+  position: relative;
+  display: inline-block;
+  padding-bottom: 0.06em;
   background: linear-gradient(100deg, #ffffff, #9ff0c9);
   -webkit-background-clip: text;
   background-clip: text;
@@ -1348,4 +1351,32 @@
 .jc-compare svg {
   width: 17px;
   height: 17px;
+}
+
+/* the second line of a hero headline is underlined by a soft stroke (the same mark as on the home page), with no full stop */
+.jo-hero h1 span::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  height: 0.12em;
+  border-radius: 99px;
+  background: linear-gradient(to left, rgb(125 255 194 / 0.75), rgb(125 255 194 / 0));
+  transform-origin: right;
+  animation: jo-underline 900ms var(--ease) 700ms both;
+}
+@keyframes jo-underline {
+  from {
+    transform: scaleX(0);
+  }
+}
+@media (max-width: 520px) {
+  /* the second line stays on one line on a phone */
+  .jo-hero h1,
+  .ab-hero h1 {
+    font-size: 9.4vw;
+  }
+  .jo-hero h1 span {
+    white-space: nowrap;
+  }
 }

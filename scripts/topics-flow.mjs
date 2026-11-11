@@ -44,6 +44,8 @@ const overflow = () => page.evaluate(() => document.documentElement.scrollWidth 
 // ---------------------------------------------------------------- reset
 await page.goto(base + '/app/crm', { waitUntil: 'networkidle0' })
 await page.evaluate(() => localStorage.clear())
+// MEMBER=office (green version): the visitor is an office member, and a match says it reached them first
+if (process.env.MEMBER === 'office') await page.evaluate(() => localStorage.setItem('nadlanup-member-v1', 'office'))
 await page.reload({ waitUntil: 'networkidle0' })
 await wait(1500)
 if (mobile) await clickText('.stage-tabs .chip', 'חדש')
@@ -94,6 +96,8 @@ await clickText('.modal button', 'חזרה ל-CRM')
 await wait(6500)
 await shot('07-incoming-match-alert')
 check('incoming match alert pops up', (await text('.match-alert')).includes('זה יכול להתאים לך'), (await text('.match-alert p')).slice(0, 60))
+if (process.env.MEMBER === 'office') check('office member: the match says it reached them first', (await text('.match-first')).includes('ההתאמה הגיעה אליך ראשונה'))
+if (process.env.MEMBER === 'community') check('community member: no such line', (await text('.match-first')) === '')
 await clickText('.match-alert button', 'לצפייה בהתאמה')
 await wait(2000)
 await shot('08-coop-with-incoming')
@@ -152,11 +156,21 @@ await shot('14-notifications')
 check('notifications list includes the matches', (await text('.notice-list-lg')).includes('נמצאה התאמה'))
 check('no horizontal overflow in the community', (await overflow()) === 0)
 
+// SKIP_JOIN=1 stops here: the publish flow and the match alerts only (the green onboarding has its own check, join-check.mjs)
+if (process.env.SKIP_JOIN) {
+  for (const r of results) console.log(r)
+  console.log(`${results.filter((r) => r.startsWith('PASS')).length}/${results.length} checks passed (publish flow only)`)
+  await browser.close().catch(() => {})
+  process.exit(0)
+}
+
 // --------------------------------------------------------- 6. onboarding
-await page.goto(base + '/join', { waitUntil: 'networkidle0' })
+// the green version's /join is a choice of two ways; its onboarding is at /join/community (JOIN=/join/community)
+await page.goto(base + (process.env.JOIN ?? '/join'), { waitUntil: 'networkidle0' })
 await wait(1200)
 await page.evaluate(() => {
   const input = document.querySelector('input[type="email"]')
+  if (!input) return
   const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set
   set.call(input, 'not-an-email')
   input.dispatchEvent(new Event('input', { bubbles: true }))

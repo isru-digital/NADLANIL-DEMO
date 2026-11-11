@@ -31,6 +31,7 @@ import { REFERRAL_DISCLAIMER, topicById } from '../config/topics'
 import { brokerById, formatPrice, roomsLabel } from '../data/demo'
 import type { Comment, CommunityItem } from '../data/demo'
 import { useStore } from '../store'
+import { nameSlots } from '../config/navExtras'
 import { Avatar, EASE, Photo } from './ui'
 import '../styles/community.css'
 import '../styles/feed.css'
@@ -153,6 +154,7 @@ export default function CommunityCard({
         <div className="fb-who">
           <div className="fb-name">
             <strong>{author.name}</strong>
+            {nameSlots.Badge && <nameSlots.Badge brokerId={author.id} />}
             <ChevronLeft aria-hidden />
             {preview ? (
               <span className="fb-topic">
@@ -495,7 +497,10 @@ function CommentRow({ c, onReply, active, small }: { c: Comment; onReply?: () =>
       <Avatar src={a.avatar} name={a.name} size={small ? 28 : 34} />
       <div className="fb-comment-main">
         <div className="fb-bubble">
-          <strong>{a.name}</strong>
+          <strong>
+            {a.name}
+            {nameSlots.Badge && <nameSlots.Badge brokerId={a.id} />}
+          </strong>
           <p>{c.body}</p>
           {liked && (
             <span className="fb-bubble-like">

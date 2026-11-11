@@ -192,7 +192,7 @@ export default function AppShell() {
           </NavLink>
         ))}
         <button
-          className={`bottom-link${/builder|folder|agent/.test(location.pathname) ? ' active' : ''}`}
+          className={`bottom-link${/builder|folder|agent|office/.test(location.pathname) ? ' active' : ''}`}
           onClick={() => setMoreOpen(true)}
           aria-haspopup="dialog"
         >

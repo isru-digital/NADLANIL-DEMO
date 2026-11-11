@@ -42,3 +42,12 @@ export const labSlots: {
 export function registerLab(slots: typeof labSlots) {
   Object.assign(labSlots, slots)
 }
+
+/**
+ * Marks the green version puts next to a broker's name (the office member's verified mark), and a line it adds to
+ * a match pop-up. With nothing registered, names and matches look as they always did.
+ */
+export const nameSlots: { Badge?: ComponentType<{ brokerId: string }>; MatchNote?: ComponentType } = {}
+export function registerNames(slots: typeof nameSlots) {
+  Object.assign(nameSlots, slots)
+}

@@ -2,7 +2,7 @@
 import './config/cleanStart'
 import './styles/global.css'
 import { Route } from 'react-router-dom'
-import { BadgeCheck } from 'lucide-react'
+import { BadgeCheck, Building2 } from 'lucide-react'
 import { start } from './bootstrap'
 import { PLATFORM_NAME, PLATFORM_SUBNAME } from './config'
 import HomeGreen from './pages/HomeGreen'
@@ -16,18 +16,24 @@ import { MemberBadge } from './components/MemberSwitch'
 import MemberBar from './components/MemberBar'
 import TieredLab, { LabBadge, LabChip } from './components/TieredLab'
 import Upgrade from './pages/Upgrade'
+import { OfficeHub, OfficeScreen } from './office/OfficeArea'
+import NameBadge, { MatchFirst } from './office/NameBadge'
 import { FREE_IDS, PAID_IDS, walletActions } from './config/tiers'
 import About from './pages/About'
 import { memberActions } from './config/member'
 import { agentActions } from './agent/useAgent'
-import { registerLab, registerNav, registerReset, registerShell } from './config/navExtras'
+import { registerLab, registerNames, registerNav, registerReset, registerShell } from './config/navExtras'
 import './styles/lite.css'
 import './styles/theme-green.css'
 
 document.documentElement.dataset.theme = 'green'
 
 // "הסוכן שלנו" and joining the office exist only in the green look
+// what only the office gives: its own area, and "הסוכן שלנו" (part of the office)
+registerNav({ to: '/app/office', label: 'המשרד שלי', short: 'המשרד', icon: Building2 })
 registerNav({ to: '/app/agent', label: 'הסוכן שלנו', short: 'הסוכן', icon: BadgeCheck })
+// the office member's verified mark next to names, and first place in a match
+registerNames({ Badge: NameBadge, MatchNote: MatchFirst })
 registerReset(() => agentActions.reset())
 registerReset(() => memberActions.reset())
 registerReset(() => walletActions.reset())
@@ -48,7 +54,13 @@ registerLab({
 start(<HomeGreen />, {
   // joining is a choice: the free community (the existing onboarding) or the office
   join: <JoinChoice />,
-  appRoutes: <Route path="agent" element={<AgentArea />} />,
+  appRoutes: (
+    <>
+      <Route path="agent" element={<AgentArea />} />
+      <Route path="office" element={<OfficeHub />} />
+      <Route path="office/:id" element={<OfficeScreen />} />
+    </>
+  ),
   routes: (
     <>
       <Route path="/join/community" element={<Join />} />
