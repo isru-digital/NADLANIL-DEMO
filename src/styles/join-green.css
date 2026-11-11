@@ -1312,18 +1312,6 @@
 }
 
 /* stage A: no price on the page, only in the calculator's example */
-.jo-example {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-weight: 700;
-  color: var(--text-dim);
-}
-.jo-example svg {
-  flex: none;
-  width: 15px;
-  height: 15px;
-}
 .jo-commit {
   margin: 2px 0 4px;
   font-family: var(--font-display);

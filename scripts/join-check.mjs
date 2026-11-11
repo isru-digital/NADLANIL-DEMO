@@ -94,7 +94,7 @@ for (const [label, vp, phone] of [
     overflowX: document.documentElement.scrollWidth - document.documentElement.clientWidth,
   }))
   check(`${tag}: joining starts with a choice of two ways`, st.path.endsWith('/join') && st.cards === 2, JSON.stringify(st))
-  check(`${tag}: the community is free and the office shows 0% and "מחיר יקבע", with no amount`, st.free === 'חינם' && st.price === '0%' && st.min.includes('מחיר יקבע') && !st.min.includes('689'), `${st.free} / ${st.price} / ${st.min}`)
+  check(`${tag}: the community is free and the office shows 0% and 689 a month`, st.free === 'חינם' && st.price === '0%' && st.min.includes('689 ₪ לחודש'), `${st.free} / ${st.price} / ${st.min}`)
   check(`${tag}: the office says nothing is charged in the demo`, st.lock.includes('בדמו אין חיוב אמיתי'))
   check(`${tag}: no sideways overflow on the choice`, st.overflowX <= 1, `${st.overflowX}px`)
   await page.screenshot({ path: `${out}/join-${label}-1-choice.png` })
@@ -120,7 +120,7 @@ for (const [label, vp, phone] of [
     overflowX: document.documentElement.scrollWidth - document.documentElement.clientWidth,
     sticky: getComputedStyle(document.querySelector('.jo-sticky')).display,
   }))
-  check(`${tag}: the office page shows 0% to the office and a fee that is not decided yet`, st.path.endsWith('/join/office') && st.price === '0%' && st.min.includes('מחיר יקבע'), JSON.stringify(st))
+  check(`${tag}: the office page shows 0% to the office and the fee of 689 a month`, st.path.endsWith('/join/office') && st.price === '0%' && st.min.includes('689 ₪ לחודש'), JSON.stringify(st))
   check(`${tag}: it has six gains, a comparison table and questions`, st.gains === 6 && st.rows === 10 && st.faq === 5, `${st.gains} gains, ${st.rows} rows, ${st.faq} questions`)
   check(`${tag}: no sideways overflow on the office page`, st.overflowX <= 1, `${st.overflowX}px`)
   check(`${tag}: the bottom join bar ${phone ? 'shows on the phone' : 'is hidden on desktop'}`, phone ? st.sticky === 'flex' : st.sticky === 'none', st.sticky)

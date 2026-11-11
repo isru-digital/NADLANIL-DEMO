@@ -102,7 +102,7 @@ for (const [label, vp] of [
   check(`${tag}: yes takes the demo home, with the agent state back to the start`, /\/green\/?$/.test(after.path) && (after.agent === 'locked' || after.agent === undefined) && after.member === 'community', JSON.stringify(after))
   await page.goto(green + '/app/agent', { waitUntil: 'load' })
   await wait(1400)
-  check(`${tag}: the agent area is closed again, ready to be shown from the join`, await page.evaluate(() => !!document.querySelector('.ag-gate') && document.querySelector('.ag-gate').textContent.includes('כלול במשרד') && !document.body.textContent.includes('689')))
+  check(`${tag}: the agent area is closed again, ready to be shown from the join`, await page.evaluate(() => !!document.querySelector('.ag-gate') && document.querySelector('.ag-gate').textContent.includes('כלול במשרד')))
   await page.goto(green + '/agent/demo', { waitUntil: 'load' })
   await wait(1500)
   check(`${tag}: the sample page is still there for the demo`, await page.evaluate(() => document.querySelector('.agp-hero h1')?.textContent === 'מאיה לנדאו'))

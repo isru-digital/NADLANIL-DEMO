@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { animate, motion } from 'framer-motion'
-import { ArrowLeft, BadgeCheck, Building2, Calculator, Check, Gem, Info, LoaderCircle, Lock, Plus, ShieldCheck, Sparkles, Users, Wallet, X } from 'lucide-react'
+import { ArrowLeft, BadgeCheck, Building2, Calculator, Check, Gem, LoaderCircle, Lock, Plus, ShieldCheck, Sparkles, Users, Wallet, X } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { PLATFORM_NAME } from '../config'
 import { BackButton, DemoTag, EASE, Logo, Modal, Reveal } from '../components/ui'
 import { useAgent } from '../agent/useAgent'
 import { useMember } from '../config/member'
-import { COMMIT_TBD, OFFICE_MIN_MONTHS, OFFICE_NAME, OFFICE_PRICE, OFFICE_YEAR, PRICE_TBD, shekel } from '../config/office'
+import { COMMIT_TBD, OFFICE_FEE, OFFICE_MIN_MONTHS, OFFICE_NAME, OFFICE_PRICE, OFFICE_YEAR, shekel } from '../config/office'
 import '../styles/join-green.css'
 
 /** A number that glides to its new value, so the calculator feels alive. */
@@ -47,7 +47,7 @@ const rows: { what: string; community: boolean; office: boolean }[] = [
 ]
 
 const faq = [
-  { q: 'כמה זה עולה?', a: 'המחיר ותקופת ההתחייבות עוד לא נקבעו. מה שכבר ברור: המשרד לא לוקח אחוז מהעמלה, ו-100% נשארים אצלכם.' },
+  { q: 'כמה זה עולה?', a: `${OFFICE_FEE}, מחיר קבוע. המשרד לא לוקח אחוז מהעמלה, ו-100% נשארים אצלכם.` },
   { q: 'האם לוקחים אחוז מהעמלה?', a: 'לא. 0% עמלה למשרד, והעמלה כולה נשארת אצלכם.' },
   { q: 'מתי אפשר להתחיל?', a: 'מיד אחרי ההצטרפות נפתח האזור "הסוכן שלנו", שהוא חלק מהמשרד. עונים על 15 שאלות קלילות, ואנחנו בונים את הדף.' },
   { q: 'אפשר להתחיל בקהילה ולעבור למשרד אחר כך?', a: 'כן. מצטרפים לקהילה בחינם, ועוברים למשרד בכל שלב.' },
@@ -186,7 +186,7 @@ export default function JoinOffice() {
             <b className="num">0%</b>
             <span>
               <strong>עמלה למשרד</strong>
-              <small>דמי חבר: {PRICE_TBD}</small>
+              <small>דמי חבר: {OFFICE_FEE}</small>
             </span>
           </motion.div>
           <motion.div className="jo-actions" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.4, ease: EASE }}>
@@ -367,9 +367,6 @@ export default function JoinOffice() {
               </div>
             </div>
             <small className="jo-note">חישוב לפי המספרים שהזנתם. כל משרד עובד אחרת, כדאי לבדוק מה משלמים היום.</small>
-            <small className="jo-note jo-example">
-              <Info /> חישוב לדוגמה לפי דמי חבר של {OFFICE_PRICE} ₪ לחודש. המחיר הסופי יקבע.
-            </small>
           </Reveal>
 
           <Reveal className="jo-marathon">
@@ -447,7 +444,7 @@ export default function JoinOffice() {
             <div className="jo-row is-price">
               <span>מחיר</span>
               <b>חינם</b>
-              <b className="is-office">{PRICE_TBD}</b>
+              <b className="is-office num">{OFFICE_FEE}</b>
             </div>
             {rows.map((r) => (
               <div key={r.what} className="jo-row">
@@ -469,7 +466,7 @@ export default function JoinOffice() {
           </Reveal>
           <ol className="jo-steps">
             {[
-              ['מצטרפים למשרד', 'בדמו אין חיוב אמיתי. המחיר ותקופת ההתחייבות יקבעו.'],
+              ['מצטרפים למשרד', `${OFFICE_FEE}, ו-0% עמלה למשרד. בדמו אין חיוב אמיתי.`],
               ['עונים על 15 שאלות', 'קלילות, בכיף: תמונה, רישיון, אזורים והסיפור שלכם.'],
               ['הדף והמשרד שלכם מוכנים', 'דף אישי מרשים בשמכם, ומקום במשרד תיווך ארצי.'],
             ].map(([t, d], i) => (
@@ -511,13 +508,13 @@ export default function JoinOffice() {
         <i className="jo-grid" aria-hidden />
         <div className="jo-in jo-final-in">
           <h2>שווה לכם להצטרף</h2>
-          <p>0% עמלה למשרד, ו-100% מהעמלה נשארת אצלכם.</p>
+          <p>{OFFICE_FEE}, 0% עמלה למשרד, ו-100% מהעמלה נשארת אצלכם.</p>
           <button className="btn btn-white btn-lg" onClick={cta}>
             {joined ? 'לאזור הסוכן שלנו' : 'להצטרפות למשרד'}
             <ArrowLeft />
           </button>
           <small>
-            <Lock /> בדמו אין חיוב אמיתי. המחיר יקבע.
+            <Lock /> בדמו אין חיוב אמיתי.
           </small>
         </div>
       </section>
@@ -525,7 +522,7 @@ export default function JoinOffice() {
       <div className="jo-sticky">
         <div>
           <b className="num">0%</b>
-          <small>עמלה למשרד. {PRICE_TBD}</small>
+          <small>עמלה למשרד. {OFFICE_FEE}</small>
         </div>
         <button className="btn btn-gold btn-lg" onClick={cta}>
           {joined ? 'לאזור הסוכן' : 'להצטרפות'}
@@ -560,7 +557,7 @@ export default function JoinOffice() {
                 </div>
                 <div>
                   <dt>דמי חבר</dt>
-                  <dd>{PRICE_TBD}</dd>
+                  <dd className="num">{OFFICE_FEE}</dd>
                 </div>
                 <div className="is-total">
                   <dt>חיוב היום</dt>

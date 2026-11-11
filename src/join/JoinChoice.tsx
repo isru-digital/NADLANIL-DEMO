@@ -2,13 +2,13 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowLeft, BadgeCheck, Check, Lock, Users } from 'lucide-react'
 import { BackButton, DemoTag, EASE, Logo } from '../components/ui'
-import { OFFICE_NAME, PRICE_TBD } from '../config/office'
+import { OFFICE_FEE, OFFICE_NAME } from '../config/office'
 import '../styles/join-green.css'
 
 const community = ['קהילת מתווכים ארצית ופיד שת"פים', 'CRM למתווך ופולדר דיגיטלי', 'דף נחיתה אישי לפי תבנית', 'בקשות חיפוש והתאמות שמורות', 'מחירים מוזלים אצל שמאים ועורכי דין']
 const office = ['כל מה שבקהילה', 'הסוכן שלנו: דף אישי מרשים שמופיע בגוגל', 'שם ומותג של משרד תיווך ארצי', 'ליווי וניהול מקצועי של צוות המשרד', 'עדיפות לכלי הבטא החדשים']
 
-/** The first screen of joining (green version): the free community, or the office. No price is shown: it is not decided. */
+/** The first screen of joining (green version): the free community, or the office (0% of the commission, a fixed fee). */
 export default function JoinChoice() {
   return (
     <div className="jc">
@@ -38,7 +38,7 @@ export default function JoinChoice() {
             <h2>{OFFICE_NAME}</h2>
             <div className="jc-price">
               <b className="num">0%</b>
-              <small>עמלה למשרד. דמי חבר: {PRICE_TBD}</small>
+              <small>עמלה למשרד. דמי חבר: {OFFICE_FEE}</small>
             </div>
             <p className="jc-sub">כל מה שבקהילה, ועוד: משרד תיווך ארצי בשמך, דף אישי שמביא לקוחות מגוגל, ו-100% מהעמלה אצלך.</p>
             <ul>

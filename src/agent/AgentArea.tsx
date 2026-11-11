@@ -4,7 +4,7 @@ import { useStore } from '../store'
 import { PLATFORM_NAME } from '../config'
 import { useEffect } from 'react'
 import { useMember } from '../config/member'
-import { COMMIT_TBD, OFFICE_NAME, PRICE_TBD } from '../config/office'
+import { COMMIT_TBD, OFFICE_FEE, OFFICE_NAME } from '../config/office'
 import { firstName, inArea, sampleProfile, slugOf } from './agentData'
 import { useAgent } from './useAgent'
 import AgentWizard from './AgentWizard'
@@ -196,7 +196,7 @@ function Dashboard() {
               </div>
               <div>
                 <dt>דמי חבר</dt>
-                <dd>{PRICE_TBD}</dd>
+                <dd className="num">{OFFICE_FEE}</dd>
               </div>
               <div>
                 <dt>הצטרפות</dt>
