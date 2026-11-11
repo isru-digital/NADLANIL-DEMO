@@ -115,14 +115,14 @@ export default function HomeGreen() {
 
             <div className="hg-card hg-card-property" aria-hidden>
               <div className="hg-card-photo">
-                <img src={asset('img/prop-01.webp')} alt="" />
+                <img src={asset('img/hero-flat.webp')} alt="" />
                 <span>נכס לשיתוף פעולה</span>
               </div>
               <div className="hg-card-body">
-                <strong>פנטהאוז 5 חדרים עם נוף לים</strong>
-                <small>תל אביב, הצפון הישן</small>
+                <strong>דירת 4 חדרים עם מרפסת שמש</strong>
+                <small>פתח תקווה, כפר גנים</small>
                 <div className="hg-card-row">
-                  <b className="num">{formatPriceShort(9450000)}</b>
+                  <b className="num">{formatPriceShort(2650000)}</b>
                   <span className="hg-faces">
                     {brokers.slice(1, 4).map((b) => (
                       <Avatar key={b.id} src={b.avatar} name="" size={24} />
