@@ -1,0 +1,347 @@
+/* The three layers (green version): the top bar's wallet / quota chip, the marks on the lab's tools, and the
+   pop-ups of the demo charge. */
+
+/* ---------------------------------------------------------------- the top bar */
+.mb {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+.mb-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 44px;
+  padding: 0 16px 0 14px;
+  border-radius: 99px;
+  border: 1px solid var(--line);
+  background: #fff;
+  box-shadow: var(--shadow-1);
+  font-family: var(--font-display);
+  color: var(--text);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: transform var(--t) var(--ease), box-shadow var(--t) var(--ease), border-color var(--t) var(--ease);
+}
+.mb-chip:hover {
+  transform: translateY(-1px);
+  border-color: rgb(var(--g) / 0.5);
+  box-shadow: var(--shadow-2);
+}
+.mb-chip:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+.mb-chip svg {
+  width: 18px;
+  height: 18px;
+  color: #c98a0c;
+}
+.mb-chip b {
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+.mb-chip span {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+.mb-chip.is-wallet {
+  border-color: rgb(201 138 12 / 0.4);
+  background: linear-gradient(180deg, #fffaf0, #fff);
+}
+.mb-chip.is-quota {
+  border-color: rgb(var(--g) / 0.45);
+  background: linear-gradient(180deg, rgb(var(--g) / 0.1), #fff);
+}
+.mb-chip.is-quota b {
+  color: var(--gold-soft);
+}
+/* how much of the month's quota is used */
+.mb-ring {
+  --p: 0;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: conic-gradient(#0f9a63 calc(var(--p) * 360deg), rgb(var(--g) / 0.18) 0);
+  -webkit-mask: radial-gradient(circle, transparent 54%, #000 56%);
+  mask: radial-gradient(circle, transparent 54%, #000 56%);
+}
+.mb-ring.is-lg {
+  width: 74px;
+  height: 74px;
+  -webkit-mask: radial-gradient(circle, transparent 60%, #000 62%);
+  mask: radial-gradient(circle, transparent 60%, #000 62%);
+}
+
+/* ---------------------------------------------------------------- the wallet / quota sheet */
+.mb-sheet {
+  display: grid;
+  gap: 16px;
+}
+.mb-big {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 20px;
+  border-radius: 22px;
+  border: 1px solid rgb(var(--g) / 0.3);
+  background: linear-gradient(135deg, rgb(var(--g) / 0.12), rgb(var(--g) / 0.03));
+}
+.mb-big > div {
+  display: grid;
+}
+.mb-big b {
+  font-family: var(--font-display);
+  font-size: 44px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--text);
+}
+.mb-big small {
+  margin-top: 4px;
+  font-size: 14px;
+  color: var(--text-dim);
+}
+.mb-coin {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: linear-gradient(160deg, #ffe7a8, #f2b52e);
+  color: #7a4f00;
+  box-shadow: inset 0 -4px 0 rgb(0 0 0 / 0.08), 0 14px 26px -14px rgb(201 138 12 / 0.9);
+}
+.mb-coin svg {
+  width: 30px;
+  height: 30px;
+}
+.mb-list {
+  display: grid;
+  gap: 2px;
+}
+.mb-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 4px;
+  border-bottom: 1px solid var(--line);
+  font-family: var(--font-display);
+  font-size: 15px;
+}
+.mb-list li:last-child {
+  border-bottom: 0;
+}
+.mb-list svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  color: var(--gold-soft);
+}
+.mb-list span {
+  flex: 1;
+  min-width: 0;
+}
+.mb-list em {
+  flex: none;
+  padding: 2px 10px;
+  border-radius: 99px;
+  background: rgb(var(--g) / 0.1);
+  font-size: 12.5px;
+  font-style: normal;
+  font-weight: 800;
+  color: var(--gold-soft);
+}
+.mb-list li.is-on em {
+  background: linear-gradient(135deg, #0a7a4f, #12a36c);
+  color: #fff;
+}
+.mb-note {
+  font-size: 13.5px;
+  color: var(--text-faint);
+}
+.mb-cta {
+  justify-content: center;
+}
+
+/* ---------------------------------------------------------------- the demo charge */
+.tl-ask {
+  display: grid;
+  gap: 14px;
+}
+.tl-tool {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: 20px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+.tl-tool > span {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border-radius: 15px;
+  background: rgb(var(--g) / 0.14);
+  color: var(--gold-soft);
+}
+.tl-tool svg {
+  width: 24px;
+  height: 24px;
+}
+.tl-tool div {
+  display: grid;
+  min-width: 0;
+}
+.tl-tool b {
+  font-family: var(--font-display);
+  font-size: 17px;
+}
+.tl-tool small {
+  font-size: 13.5px;
+  color: var(--text-dim);
+}
+.tl-sum {
+  display: grid;
+  border-radius: 20px;
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+.tl-sum div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line);
+}
+.tl-sum div:last-child {
+  border-bottom: 0;
+}
+.tl-sum dt {
+  color: var(--text-dim);
+}
+.tl-sum dd {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-display);
+  font-weight: 800;
+}
+.tl-sum dd svg {
+  width: 15px;
+  height: 15px;
+  color: var(--text-faint);
+}
+.tl-lead {
+  font-size: 18px;
+  line-height: 1.5;
+}
+.tl-lead b {
+  color: var(--gold-soft);
+}
+.tl-ask[data-kind='empty'] .tl-lead b:last-child {
+  color: #d92d20;
+}
+.tl-hint {
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--text-dim);
+}
+.tl-go {
+  justify-content: center;
+}
+.tl-alt {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 99px;
+  font-family: var(--font-display);
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--gold-soft);
+  cursor: pointer;
+}
+.tl-alt:hover {
+  background: rgb(var(--g) / 0.08);
+}
+.tl-alt svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* ---------------------------------------------------------------- the marks on the lab's tools */
+/* the layer's mark is longer than the old "בטא", so it sits under the text instead of over the icon */
+.bl-tile .bl-chip.tl-chip {
+  position: static;
+  justify-self: start;
+  margin-top: 6px;
+  white-space: nowrap;
+}
+.bl-chip.tl-chip.is-credits {
+  border-color: rgb(255 214 120 / 0.7);
+  background: rgb(255 201 76 / 0.2);
+  color: #ffe2a0;
+}
+.bl-chip.tl-chip.is-office {
+  border-color: transparent;
+  background: #fff;
+  color: #0a7a4f;
+}
+.bl-chip.tl-chip.is-open {
+  border-color: rgb(255 255 255 / 0.5);
+  background: rgb(255 255 255 / 0.2);
+  color: #fff;
+}
+.bl-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  margin: 14px 0 2px;
+  font-family: var(--font-display);
+}
+.bl-group:first-child {
+  margin-top: 2px;
+}
+.bl-group b {
+  font-size: 17px;
+  font-weight: 800;
+  color: #fff;
+}
+.bl-group small {
+  font-size: 13.5px;
+  color: rgb(255 255 255 / 0.72);
+}
+
+@media (max-width: 980px) {
+  .topbar-bar .mb {
+    width: 100%;
+    gap: 8px;
+  }
+  .topbar-bar .mb .ms {
+    flex: 1;
+    min-width: 0;
+  }
+  .topbar-bar .ms-label {
+    display: none;
+  }
+  .mb-chip {
+    min-height: 48px;
+    padding: 0 12px 0 10px;
+  }
+  .mb-chip span {
+    display: none;
+  }
+}

@@ -5,6 +5,7 @@ import { Modal } from './ui'
 import { useStore } from '../store'
 import { agentActions } from '../agent/useAgent'
 import { memberActions } from '../config/member'
+import { walletActions } from '../config/tiers'
 import '../styles/demo-reset.css'
 
 /**
@@ -21,6 +22,7 @@ export default function DemoReset() {
     reset()
     agentActions.reset()
     memberActions.reset()
+    walletActions.reset()
     setOpen(false)
     navigate('/')
     window.scrollTo({ top: 0 })

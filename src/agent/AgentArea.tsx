@@ -79,6 +79,9 @@ function Gate() {
             לראות דף לדוגמה
           </Link>
         </div>
+        <Link to="/upgrade" className="ag-compare">
+          מה כלול במשרד? להשוואת המסלולים <ArrowLeft />
+        </Link>
         <p className="ag-note">
           <Lock /> האזור כלול במשרד ונפתח לחברי המשרד. בדמו אין חיוב אמיתי, ואפשר לעבור לתצוגת "חבר משרד" במתג שלמעלה.
         </p>

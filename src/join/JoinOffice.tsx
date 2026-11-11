@@ -31,7 +31,7 @@ const gains: { icon: LucideIcon; title: string; text: string }[] = [
   { icon: Building2, title: 'שם ומותג של משרד ארצי', text: 'מציגים את עצמכם כחלק ממשרד תיווך בפריסה ארצית.' },
   { icon: ShieldCheck, title: 'צוות מאחורי הקלעים', text: 'אנשי מקצוע מהתחום שמלווים, מנהלים ומפקחים.' },
   { icon: Wallet, title: '0% עמלה למשרד', text: 'המשרד לא לוקח אחוז מהעסקה. 100% מהעמלה נשארת אצלכם.' },
-  { icon: Gem, title: 'כלים חדשים לפני כולם', text: 'חדר עסקה משותף, בקשה בוערת, ארנק עמלות ועוד, בעדיפות.' },
+  { icon: Gem, title: 'כל הכלים המתקדמים כלולים', text: 'חדר עסקה משותף, רדאר ביקוש, ארנק עמלות ועוד, בלי קרדיטים, בתוך מכסה חודשית.' },
   { icon: Users, title: 'קהילה ארצית ושת"פים', text: 'מתווכים מכל הארץ, במקום אחד, וכל העבודה ביחד.' },
 ]
 
@@ -39,11 +39,11 @@ const rows: { what: string; community: boolean; office: boolean }[] = [
   { what: 'קהילת מתווכים ארצית ופיד שת"פים', community: true, office: true },
   { what: 'CRM למתווך ופולדר דיגיטלי', community: true, office: true },
   { what: 'דף נחיתה אישי לפי תבנית', community: true, office: true },
-  { what: 'שמאים ועורכי דין דרך המערכת', community: true, office: true },
+  { what: 'מוואטסאפ למערכת, מדד אמינות והתאמות', community: true, office: true },
   { what: 'הסוכן שלנו: דף אישי מרשים שמופיע בגוגל', community: false, office: true },
   { what: 'שם ומותג של משרד תיווך ארצי', community: false, office: true },
   { what: 'ליווי וניהול מקצועי של צוות המשרד', community: false, office: true },
-  { what: 'עדיפות לכלי הבטא החדשים', community: false, office: true },
+  { what: 'כל הכלים המתקדמים כלולים, במכסה חודשית', community: false, office: true },
 ]
 
 const faq = [
@@ -55,7 +55,7 @@ const faq = [
 ]
 
 const same = ['שם ומותג של משרד תיווך ארצי', 'צוות מקצועי מאחורי הקלעים', 'קהילת מתווכים ושת"פים בכל הארץ', 'CRM ופולדר דיגיטלי']
-const more = ['הסוכן שלנו: דף אישי שמופיע בגוגל', 'כלי בטא לפני כולם', '0% עמלה למשרד, 100% למתווך', 'הטבות חברים אצל שמאים ועורכי דין']
+const more = ['הסוכן שלנו: דף אישי שמופיע בגוגל', 'כל הכלים המתקדמים כלולים', '0% עמלה למשרד, 100% למתווך', 'צוות שמלווה עסקה עד החתימה']
 
 /** Money paid over the years: the office that takes a share climbs steeply, the fixed fee climbs slowly; the space between is what stays. */
 function MarathonChart({ perYearToday, perYearOurs, years }: { perYearToday: number; perYearOurs: number; years: number }) {
@@ -454,6 +454,9 @@ export default function JoinOffice() {
               </div>
             ))}
           </Reveal>
+          <Link to="/upgrade" className="jc-compare">
+            להשוואה המלאה: קהילה, קרדיטים ומשרד <ArrowLeft />
+          </Link>
         </div>
       </section>
 

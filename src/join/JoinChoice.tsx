@@ -3,13 +3,15 @@ import { motion } from 'framer-motion'
 import { ArrowLeft, BadgeCheck, Check, Lock, Users } from 'lucide-react'
 import { BackButton, DemoTag, EASE, Logo } from '../components/ui'
 import { OFFICE_FEE, OFFICE_NAME } from '../config/office'
+import { useMember } from '../config/member'
 import '../styles/join-green.css'
 
-const community = ['קהילת מתווכים ארצית ופיד שת"פים', 'CRM למתווך ופולדר דיגיטלי', 'דף נחיתה אישי לפי תבנית', 'בקשות חיפוש והתאמות שמורות', 'מחירים מוזלים אצל שמאים ועורכי דין']
-const office = ['כל מה שבקהילה', 'הסוכן שלנו: דף אישי מרשים שמופיע בגוגל', 'שם ומותג של משרד תיווך ארצי', 'ליווי וניהול מקצועי של צוות המשרד', 'עדיפות לכלי הבטא החדשים']
+const community = ['קהילת מתווכים ארצית ופיד שת"פים', 'CRM למתווך ופולדר דיגיטלי', 'דף נחיתה אישי לפי תבנית', 'מוואטסאפ למערכת, מדד אמינות והתאמות', 'כלים מתקדמים לפי שימוש, בקרדיטים']
+const office = ['כל מה שבקהילה', 'כל הכלים המתקדמים כלולים, במכסה חודשית', 'הסוכן שלנו: דף אישי מרשים שמופיע בגוגל', 'שם ומותג של משרד תיווך ארצי', 'ליווי וניהול מקצועי של צוות המשרד']
 
 /** The first screen of joining (green version): the free community, or the office (0% of the commission, a fixed fee). */
 export default function JoinChoice() {
+  const { isOffice } = useMember()
   return (
     <div className="jc">
       <header className="jc-top">
@@ -49,7 +51,7 @@ export default function JoinChoice() {
               ))}
             </ul>
             <Link to="/join/office" className="btn btn-white btn-lg jc-cta">
-              למה כדאי להצטרף למשרד
+              {isOffice ? 'אתם חברי משרד. לעמוד המשרד' : 'למה כדאי להצטרף למשרד'}
               <ArrowLeft />
             </Link>
             <small className="jc-lock">
@@ -78,8 +80,11 @@ export default function JoinChoice() {
               <ArrowLeft />
             </Link>
           </motion.article>
-
         </div>
+
+        <Link to="/upgrade" className="jc-compare">
+          להשוואה המלאה: קהילה, קרדיטים ומשרד <ArrowLeft />
+        </Link>
       </main>
     </div>
   )

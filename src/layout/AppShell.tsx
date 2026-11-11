@@ -55,6 +55,7 @@ export default function AppShell() {
   const [lab, setLab] = useState<LabView>(null)
   const Bar = shellSlots.bar
   const Badge = shellSlots.badge
+  const Lab = shellSlots.lab ?? BetaLab
 
   useEffect(() => {
     setMoreOpen(false)
@@ -201,7 +202,7 @@ export default function AppShell() {
       </nav>
 
       <MatchAlert />
-      <BetaLab view={lab} setView={setLab} />
+      <Lab view={lab} setView={setLab} />
 
       <Modal open={moreOpen} onClose={() => setMoreOpen(false)} title="עוד כלים">
         <div className="modal-body more-sheet">

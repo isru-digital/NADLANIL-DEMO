@@ -6,6 +6,7 @@ import { ArrowLeft, ArrowRight, BellRing, Check, Eye, Handshake, Link2, Lock, Me
 import type { LucideIcon } from 'lucide-react'
 import { EASE } from './ui'
 import { lockScroll } from '../lib/scrollLock'
+import { labSlots } from '../config/navExtras'
 import DealRoomDemo from './DealRoomDemo'
 import { FolderScene, MatchmakerScene, ProsScene, RadarScene, TrustScene, UrgentScene, VoiceScene, WalletScene, WhatsappScene } from './BetaScenes'
 import '../styles/beta-lab.css'
@@ -162,37 +163,57 @@ function Shell({ onClose, children, label }: { onClose: () => void; children: Re
 }
 
 function Hub({ onClose, onPick }: { onClose: () => void; onPick: (id: string) => void }) {
+  const Chip = labSlots.Chip
+  // one flat list, or (green version) the tools in groups by layer
+  const groups = labSlots.groups ?? [{ title: '', sub: '', ids: labItems.map((x) => x.id) }]
+  let n = 0
   return (
     <>
       <header className="bl-head">
         <div className="bl-title">
           <h2>מעבדת בטא</h2>
-          <p>כלים שנמצאים בפיתוח. אפשר להציץ, עוד אי אפשר להיכנס.</p>
+          <p>{labSlots.hubSub ?? 'כלים שנמצאים בפיתוח. אפשר להציץ, עוד אי אפשר להיכנס.'}</p>
         </div>
         <button className="bl-x" onClick={onClose} aria-label="סגירה">
           <X />
         </button>
       </header>
       <div className="bl-scroll">
-        <ul className="bl-grid">
-          {labItems.map((it, i) => (
-            <li key={it.id} style={{ '--i': i } as CSSProperties}>
-              <button className="bl-tile" onClick={() => onPick(it.id)}>
-                <span className="bl-icon">
-                  <it.icon />
-                </span>
-                <strong>{it.title}</strong>
-                <small>{it.tagline}</small>
-                <em className="bl-chip">
-                  <Lock /> בטא
-                </em>
-              </button>
-            </li>
-          ))}
-        </ul>
+        {groups.map((g) => (
+          <div key={g.title} className="bl-section">
+            {g.title && (
+              <h3 className="bl-group">
+                <b>{g.title}</b>
+                <small>{g.sub}</small>
+              </h3>
+            )}
+            <ul className="bl-grid">
+              {labItems
+                .filter((it) => g.ids.includes(it.id))
+                .map((it) => (
+                  <li key={it.id} style={{ '--i': n++ } as CSSProperties}>
+                    <button className="bl-tile" data-id={it.id} onClick={() => onPick(it.id)}>
+                      <span className="bl-icon">
+                        <it.icon />
+                      </span>
+                      <strong>{it.title}</strong>
+                      <small>{it.tagline}</small>
+                      {Chip ? (
+                        <Chip id={it.id} />
+                      ) : (
+                        <em className="bl-chip">
+                          <Lock /> בטא
+                        </em>
+                      )}
+                    </button>
+                  </li>
+                ))}
+            </ul>
+          </div>
+        ))}
       </div>
       <div className="bl-note">
-        <Lock /> גרסת בטא. הכרטיסים לצפייה בלבד, בלי כניסה ובלי נתונים אמיתיים.
+        <Lock /> {labSlots.hubNote ?? 'גרסת בטא. הכרטיסים לצפייה בלבד, בלי כניסה ובלי נתונים אמיתיים.'}
       </div>
     </>
   )
@@ -203,6 +224,7 @@ function Peek({ item, onClose, onGo, onHub }: { item: LabItem; onClose: () => vo
   const prev = labItems[(index - 1 + labItems.length) % labItems.length]
   const next = labItems[(index + 1) % labItems.length]
   const Scene = item.scene
+  const Badge = labSlots.Badge
   return (
     <>
       <header className="bl-head">
@@ -213,7 +235,7 @@ function Peek({ item, onClose, onGo, onHub }: { item: LabItem; onClose: () => vo
           <h2>{item.title}</h2>
           <span className="bl-badges">
             <b>גרסת בטא</b>
-            <em>הצצה, עוד לא פתוח</em>
+            {Badge ? <Badge id={item.id} /> : <em>הצצה, עוד לא פתוח</em>}
           </span>
         </div>
         <button className="bl-x" onClick={onClose} aria-label="סגירה">
@@ -258,7 +280,7 @@ function Peek({ item, onClose, onGo, onHub }: { item: LabItem; onClose: () => vo
         </button>
       </footer>
       <div className="bl-note">
-        <Lock /> גרסת בטא. עוד אי אפשר להיכנס, זו הצצה בלבד.
+        <Lock /> {labSlots.peekNote ?? 'גרסת בטא. עוד אי אפשר להיכנס, זו הצצה בלבד.'}
       </div>
     </>
   )

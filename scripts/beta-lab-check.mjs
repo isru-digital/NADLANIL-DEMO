@@ -62,6 +62,11 @@ for (const [look, base] of looks) {
     page.on('pageerror', (e) => errors.push(String(e)))
     await page.setViewport(vp)
     await page.goto(base + '/app', { waitUntil: 'load' })
+    // the green version puts the tools in layers: these checks are about the cards themselves, so every paid tool
+    // is already opened here (the layers have their own check, stage-b-check.mjs)
+    await page.evaluate(() => localStorage.setItem('nadlanup-wallet-v1', JSON.stringify({ credits: 12, opened: ['urgent', 'voice', 'pros', 'folder', 'radar', 'matchmaker', 'wallet', 'room'], urgentFreeUsed: true, quotaUsed: 3, openedOffice: [] })))
+    await page.evaluate(() => localStorage.removeItem('nadlanup-member-v1'))
+    await page.reload({ waitUntil: 'load' })
     await wait(1400)
 
     const openHub = async () => {
@@ -93,7 +98,7 @@ for (const [look, base] of looks) {
     // each tile opens its own card
     for (let i = 0; i < titles.length; i++) {
       if (i > 0) await openHub()
-      await page.evaluate((n) => document.querySelectorAll('.bl-tile')[n].click(), i)
+      await page.evaluate((title) => [...document.querySelectorAll('.bl-tile')].find((t) => t.querySelector('strong')?.textContent === title)?.click(), titles[i])
       await wait(i === 0 ? 1600 : 1400)
       s = await info(page)
       const shown = i === 1 ? s?.kind === 'dr' && s.title.includes('חדר עסקה') : s?.kind === 'bl' && s.title === titles[i]
@@ -112,7 +117,7 @@ for (const [look, base] of looks) {
 
     // next / previous / back to the hub from inside a card
     await openHub()
-    await page.evaluate(() => document.querySelectorAll('.bl-tile')[2].click())
+    await page.evaluate((title) => [...document.querySelectorAll('.bl-tile')].find((t) => t.querySelector('strong')?.textContent === title)?.click(), titles[2])
     await wait(1100)
     await page.evaluate(() => document.querySelectorAll('.bl-nav')[1].click())
     await wait(900)
@@ -128,7 +133,7 @@ for (const [look, base] of looks) {
       await page.keyboard.press('Escape')
       await wait(700)
       await openHub()
-      await page.evaluate(() => document.querySelectorAll('.bl-tile')[4].click())
+      await page.evaluate((title) => [...document.querySelectorAll('.bl-tile')].find((t) => t.querySelector('strong')?.textContent === title)?.click(), titles[4])
       await wait(900)
     }
     await page.evaluate(() => document.querySelector('.bl-hubbtn')?.click())

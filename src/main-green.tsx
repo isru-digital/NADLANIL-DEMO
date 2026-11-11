@@ -12,11 +12,15 @@ import AgentPage from './agent/AgentPage'
 import JoinChoice from './join/JoinChoice'
 import JoinOffice from './join/JoinOffice'
 import DemoReset from './components/DemoReset'
-import MemberSwitch, { MemberBadge } from './components/MemberSwitch'
+import { MemberBadge } from './components/MemberSwitch'
+import MemberBar from './components/MemberBar'
+import TieredLab, { LabBadge, LabChip } from './components/TieredLab'
+import Upgrade from './pages/Upgrade'
+import { FREE_IDS, PAID_IDS, walletActions } from './config/tiers'
 import About from './pages/About'
 import { memberActions } from './config/member'
 import { agentActions } from './agent/useAgent'
-import { registerNav, registerReset, registerShell } from './config/navExtras'
+import { registerLab, registerNav, registerReset, registerShell } from './config/navExtras'
 import './styles/lite.css'
 import './styles/theme-green.css'
 
@@ -26,8 +30,20 @@ document.documentElement.dataset.theme = 'green'
 registerNav({ to: '/app/agent', label: 'הסוכן שלנו', short: 'הסוכן', icon: BadgeCheck })
 registerReset(() => agentActions.reset())
 registerReset(() => memberActions.reset())
-// the demo's view switch (community member / office member) and the office member's mark
-registerShell({ bar: MemberSwitch, badge: MemberBadge })
+registerReset(() => walletActions.reset())
+// the top bar (the view switch with the wallet or the quota), the office member's mark, and the lab in three layers
+registerShell({ bar: MemberBar, badge: MemberBadge, lab: TieredLab })
+registerLab({
+  Chip: LabChip,
+  Badge: LabBadge,
+  groups: [
+    { title: 'חינם בקהילה', sub: 'פתוח לכל חבר, תמיד', ids: FREE_IDS },
+    { title: 'כלים מתקדמים', sub: 'לחבר קהילה בקרדיטים, לחבר משרד כלול במכסה החודשית', ids: PAID_IDS },
+  ],
+  hubSub: 'כלים בגרסת בטא. חלק חינם בקהילה, והמתקדמים נפתחים בקרדיטים או כלולים במשרד.',
+  hubNote: 'גרסת בטא עם נתוני דמו. אין חיוב אמיתי.',
+  peekNote: 'גרסת בטא: הדגמה עם נתוני דמו בלבד.',
+})
 
 start(<HomeGreen />, {
   // joining is a choice: the free community (the existing onboarding) or the office
@@ -39,6 +55,7 @@ start(<HomeGreen />, {
       <Route path="/join/office" element={<JoinOffice />} />
       <Route path="/agent/:slug" element={<AgentPage />} />
       <Route path="/about" element={<About />} />
+      <Route path="/upgrade" element={<Upgrade />} />
     </>
   ),
   // the "start again" tab is for the demo only: a real launch builds with VITE_DEMO_RESET=false

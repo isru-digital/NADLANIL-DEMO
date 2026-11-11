@@ -47,6 +47,11 @@ for (const [look, base] of looks) {
     page.on('pageerror', (e) => errors.push(String(e)))
     await page.setViewport(vp)
     await page.goto(base + '/app', { waitUntil: 'load' })
+    // the green version puts the tools in layers: these checks are about the cards themselves, so every paid tool
+    // is already opened here (the layers have their own check, stage-b-check.mjs)
+    await page.evaluate(() => localStorage.setItem('nadlanup-wallet-v1', JSON.stringify({ credits: 12, opened: ['urgent', 'voice', 'pros', 'folder', 'radar', 'matchmaker', 'wallet', 'room'], urgentFreeUsed: true, quotaUsed: 3, openedOffice: [] })))
+    await page.evaluate(() => localStorage.removeItem('nadlanup-member-v1'))
+    await page.reload({ waitUntil: 'load' })
     await wait(1500)
 
     // open: sidebar on desktop, the "עוד" sheet on a phone
@@ -55,7 +60,7 @@ for (const [look, base] of looks) {
       await wait(700)
       await page.evaluate(() => [...document.querySelectorAll('.more-link')].find((b) => b.textContent.includes('מעבדת בטא'))?.click())
       await wait(900)
-      await page.evaluate(() => document.querySelectorAll('.bl-tile')[1]?.click())
+      await page.evaluate(() => [...document.querySelectorAll('.bl-tile')].find((t) => t.textContent.includes('חדר עסקה'))?.click())
     } else {
       const chip = await page.evaluate(() => !!document.querySelector('.side-lab .beta-chip'))
       check(`${tag}: beta lab entry with a beta chip in the sidebar`, chip)

@@ -1324,3 +1324,28 @@
   align-items: center;
   gap: 12px;
 }
+
+/* the way to the full comparison of the three layers */
+.jc-compare {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: fit-content;
+  min-height: 44px;
+  margin: 22px auto 0;
+  padding: 0 18px;
+  border-radius: 99px;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--gold-soft);
+  transition: background var(--t) var(--ease);
+}
+.jc-compare:hover {
+  background: rgb(var(--g) / 0.1);
+}
+.jc-compare svg {
+  width: 17px;
+  height: 17px;
+}

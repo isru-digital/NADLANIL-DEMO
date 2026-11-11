@@ -17,8 +17,28 @@ export function registerReset(fn: () => void) {
   if (!extraResets.includes(fn)) extraResets.push(fn)
 }
 
-/** Pieces the green version adds to the app's frame: a bar at the top (the view switch) and a mark next to the user's name. */
-export const shellSlots: { bar?: ComponentType; badge?: ComponentType } = {}
-export function registerShell(slots: { bar?: ComponentType; badge?: ComponentType }) {
+/**
+ * Pieces the green version adds to the app's frame: a bar at the top (the view switch, the wallet or the quota),
+ * a mark next to the user's name, and its own wrapper around the beta lab (the three layers).
+ */
+type LabProps = { view: null | string; setView: (v: null | string) => void }
+export const shellSlots: { bar?: ComponentType; badge?: ComponentType; lab?: ComponentType<LabProps> } = {}
+export function registerShell(slots: typeof shellSlots) {
   Object.assign(shellSlots, slots)
+}
+
+/**
+ * What the green version changes inside the beta lab: the mark on each tool, the words at the top of an open tool,
+ * the tools in groups by layer, and the small print. With nothing registered the lab looks as it always did.
+ */
+export const labSlots: {
+  Chip?: ComponentType<{ id: string }>
+  Badge?: ComponentType<{ id: string }>
+  groups?: { title: string; sub: string; ids: string[] }[]
+  hubSub?: string
+  hubNote?: string
+  peekNote?: string
+} = {}
+export function registerLab(slots: typeof labSlots) {
+  Object.assign(labSlots, slots)
 }
