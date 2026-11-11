@@ -69,13 +69,16 @@ for (const [label, vp, phone] of [
   page.on('pageerror', (e) => errors.push(String(e)))
   await page.setViewport(vp)
   await page.goto(green + '/', { waitUntil: 'load' })
-  await page.evaluate(() => localStorage.removeItem('nadlanup-agent-v1'))
+  await page.evaluate(() => {
+    localStorage.removeItem('nadlanup-agent-v1')
+    localStorage.removeItem('nadlanup-member-v1')
+  })
 
   // the home page's join buttons lead to the choice
   await page.reload({ waitUntil: 'load' })
   await wait(1200)
   if (!phone) {
-    check(`${tag}: the home menu has a "מחירים" link to the office page`, await page.evaluate(() => [...document.querySelectorAll('.hg-nav-links a')].some((a) => a.textContent === 'מחירים' && a.getAttribute('href')?.endsWith('/join/office'))))
+    check(`${tag}: the home menu has a "המשרד" link to the office page`, await page.evaluate(() => [...document.querySelectorAll('.hg-nav-links a')].some((a) => a.textContent === 'המשרד' && a.getAttribute('href')?.endsWith('/join/office'))))
   }
   await click(page, '.hg-nav .btn-gold', 'הצטרפות')
   await wait(1500)
@@ -91,8 +94,8 @@ for (const [label, vp, phone] of [
     overflowX: document.documentElement.scrollWidth - document.documentElement.clientWidth,
   }))
   check(`${tag}: joining starts with a choice of two ways`, st.path.endsWith('/join') && st.cards === 2, JSON.stringify(st))
-  check(`${tag}: the community is free and the office is 689 a month, 3 months minimum`, st.free === 'חינם' && st.price === '₪689' && st.min.includes('3 חודשים'), `${st.free} / ${st.price} / ${st.min}`)
-  check(`${tag}: the office says it is joined only after payment`, st.lock.includes('אחרי תשלום'))
+  check(`${tag}: the community is free and the office shows 0% and "מחיר יקבע", with no amount`, st.free === 'חינם' && st.price === '0%' && st.min.includes('מחיר יקבע') && !st.min.includes('689'), `${st.free} / ${st.price} / ${st.min}`)
+  check(`${tag}: the office says nothing is charged in the demo`, st.lock.includes('בדמו אין חיוב אמיתי'))
   check(`${tag}: no sideways overflow on the choice`, st.overflowX <= 1, `${st.overflowX}px`)
   await page.screenshot({ path: `${out}/join-${label}-1-choice.png` })
 
@@ -117,7 +120,7 @@ for (const [label, vp, phone] of [
     overflowX: document.documentElement.scrollWidth - document.documentElement.clientWidth,
     sticky: getComputedStyle(document.querySelector('.jo-sticky')).display,
   }))
-  check(`${tag}: the office page has the price and the minimum`, st.path.endsWith('/join/office') && st.price === '₪689' && st.min.includes('3 חודשים'), JSON.stringify(st))
+  check(`${tag}: the office page shows 0% to the office and a fee that is not decided yet`, st.path.endsWith('/join/office') && st.price === '0%' && st.min.includes('מחיר יקבע'), JSON.stringify(st))
   check(`${tag}: it has six gains, a comparison table and questions`, st.gains === 6 && st.rows === 10 && st.faq === 5, `${st.gains} gains, ${st.rows} rows, ${st.faq} questions`)
   check(`${tag}: no sideways overflow on the office page`, st.overflowX <= 1, `${st.overflowX}px`)
   check(`${tag}: the bottom join bar ${phone ? 'shows on the phone' : 'is hidden on desktop'}`, phone ? st.sticky === 'flex' : st.sticky === 'none', st.sticky)
@@ -134,7 +137,7 @@ for (const [label, vp, phone] of [
   check(`${tag}: one deal covers 43 months of the fee`, c.cover.includes('43') && c.cover.includes('₪30,000'), c.cover)
   await page.screenshot({ path: `${out}/join-${label}-3-calc.png` })
   check(`${tag}: what was paid to the office is in red, and labelled as paid`, /rgb\(21[0-9], 4\d, 3\d\)/.test(c.redColor) && c.redColor === c.redBar && c.paidLabel.includes('שילמתם למשרד') && c.usLabel.includes('NadlanUP'), JSON.stringify([c.redColor, c.redBar, c.paidLabel, c.usLabel]))
-  check(`${tag}: "the same things, and even more" is there`, c.same.includes('אצלנו מקבלים את אותם דברים, ואפילו יותר') && c.same.includes('הסוכן שלנו') && c.same.includes('מותג של משרד תיווך ארצי') && c.same.includes('0% מהעמלה'), c.same.slice(0, 80))
+  check(`${tag}: "the same things, and even more" is there`, c.same.includes('אצלנו מקבלים את אותם דברים, ואפילו יותר') && c.same.includes('הסוכן שלנו') && c.same.includes('מותג של משרד תיווך ארצי') && c.same.includes('0% עמלה למשרד, 100% למתווך'), c.same.slice(0, 80))
   await page.evaluate(() => document.querySelector('.jo-marathon')?.scrollIntoView())
   await wait(2200)
   c = await read(page)
@@ -179,15 +182,15 @@ for (const [label, vp, phone] of [
   check(`${tag}: the table shows the community has the base and the office has all of it`, tableOk)
   await click(page, '.jo-faq li:nth-child(2) button', '')
   await wait(500)
-  check(`${tag}: the questions open and say there is no percentage of the commission`, await page.evaluate(() => document.querySelector('.jo-faq li.is-open')?.textContent.includes('לא. זה מחיר קבוע')))
+  check(`${tag}: the questions open and say there is no percentage of the commission`, await page.evaluate(() => document.querySelector('.jo-faq li.is-open')?.textContent.includes('לא. 0% עמלה למשרד')))
 
-  // the area is closed until payment, with no way around
+  // the area is closed to a community member, with no way around
   await page.goto(green + '/app/agent', { waitUntil: 'load' })
   await wait(1500)
-  check(`${tag}: the agent area is closed before paying`, await page.evaluate(() => !!document.querySelector('.ag-gate') && !document.querySelector('.ag-wiz')))
+  check(`${tag}: the agent area is closed to a community member`, await page.evaluate(() => !!document.querySelector('.ag-gate') && !document.querySelector('.ag-wiz')))
   await page.goto(green + '/app/agent?start=1', { waitUntil: 'load' })
   await wait(1500)
-  check(`${tag}: and there is no shortcut around the payment`, await page.evaluate(() => !!document.querySelector('.ag-gate') && !document.querySelector('.ag-wiz')))
+  check(`${tag}: and there is no shortcut in the address`, await page.evaluate(() => !!document.querySelector('.ag-gate') && !document.querySelector('.ag-wiz')))
   check(`${tag}: no console errors`, errors.length === 0, errors.slice(0, 2).join(' | '))
   await page.close()
 }

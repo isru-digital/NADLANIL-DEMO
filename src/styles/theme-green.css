@@ -253,3 +253,42 @@ html[data-theme='green'] .op-shade {
 html[data-theme='green'] .op-panel.is-open .op-shade {
   background: linear-gradient(180deg, rgba(3, 38, 27, 0.78) 0%, rgba(3, 38, 27, 0.3) 46%, rgba(3, 38, 27, 0.6) 100%);
 }
+
+/* the second line of the name, under the wordmark */
+.logo.is-wordmark {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 3px;
+}
+.logo.is-wordmark img {
+  align-self: center;
+}
+.logo-sub {
+  font-family: var(--font-display);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  text-align: center;
+  white-space: nowrap;
+  color: var(--gold-soft);
+}
+.logo.is-dark .logo-sub,
+.logo.is-green .logo-sub {
+  color: #b8f5d8;
+}
+.hg-pill-sub {
+  padding-inline-start: 12px;
+  border-inline-start: 1px solid rgb(255 255 255 / 0.35);
+  font-style: normal;
+  font-weight: 800;
+  white-space: nowrap;
+  color: #d5ffe9;
+}
+.hg-final-sub {
+  display: block;
+  margin-top: -6px;
+  font-family: var(--font-display);
+  font-size: clamp(17px, 2vw, 22px);
+  font-weight: 800;
+  color: #d5ffe9;
+}

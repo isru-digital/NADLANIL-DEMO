@@ -1,0 +1,131 @@
+/* The demo's view switch (community member / office member) and the office member's mark. Green version only. */
+.ms {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.ms-label {
+  font-family: var(--font-display);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+.ms-track {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 4px;
+  border-radius: 99px;
+  border: 1px solid var(--line);
+  background: #fff;
+  box-shadow: var(--shadow-1);
+}
+.ms-thumb {
+  position: absolute;
+  inset-block: 4px;
+  inset-inline-start: 4px;
+  width: calc(50% - 4px);
+  border-radius: 99px;
+  background: rgb(var(--g) / 0.14);
+  border: 1px solid rgb(var(--g) / 0.35);
+  transition: inset-inline-start 320ms var(--ease), background 320ms var(--ease), border-color 320ms var(--ease);
+}
+.ms[data-m='office'] .ms-thumb {
+  inset-inline-start: 50%;
+  background: linear-gradient(135deg, #0a7a4f, #12a36c);
+  border-color: transparent;
+}
+.ms-track button {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 16px;
+  border-radius: 99px;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-dim);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 240ms var(--ease);
+}
+.ms-track button svg {
+  width: 16px;
+  height: 16px;
+}
+.ms-track button[aria-pressed='true'] {
+  color: var(--gold-soft);
+}
+.ms[data-m='office'] .ms-track button[data-v='office'] {
+  color: #fff;
+}
+.ms-track button:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+.ms-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 9px 2px 8px;
+  border-radius: 99px;
+  background: linear-gradient(135deg, #0a7a4f, #12a36c);
+  font-family: var(--font-display);
+  font-size: 11.5px;
+  font-style: normal;
+  font-weight: 800;
+  color: #fff;
+  white-space: nowrap;
+}
+.ms-badge svg {
+  width: 13px;
+  height: 13px;
+}
+
+/* where the switch sits: on a wide screen at the top of the page, next to the back button */
+.main-back.has-bar {
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.topbar-bar {
+  display: none;
+}
+.side-user .ms-badge {
+  margin-top: 4px;
+}
+
+@media (max-width: 980px) {
+  /* on a phone it is a second row of the top bar */
+  .topbar.has-bar {
+    flex-wrap: wrap;
+    row-gap: 8px;
+    padding-bottom: 10px;
+  }
+  .topbar-bar {
+    display: flex;
+    flex: 1 0 100%;
+    justify-content: center;
+  }
+  .topbar-bar .ms {
+    width: 100%;
+  }
+  .topbar-bar .ms-track {
+    flex: 1;
+  }
+  .topbar-bar .ms-track button {
+    min-height: 40px;
+    padding: 0 8px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ms-thumb {
+    transition: none;
+  }
+}

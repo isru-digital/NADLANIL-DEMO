@@ -37,7 +37,10 @@ for (const [label, vp, phone] of [
   page.on('pageerror', (e) => errors.push(String(e)))
   await page.setViewport(vp)
   await page.goto(green + '/app', { waitUntil: 'load' })
-  await page.evaluate(() => localStorage.removeItem('nadlanup-agent-v1'))
+  await page.evaluate(() => {
+    localStorage.removeItem('nadlanup-agent-v1')
+    localStorage.removeItem('nadlanup-member-v1')
+  })
   await page.reload({ waitUntil: 'load' })
   await wait(1400)
 
@@ -52,10 +55,10 @@ for (const [label, vp, phone] of [
     await click(page, '.side-link', 'הסוכן שלנו')
   }
   await wait(1200)
-  check(`${tag}: closed until paying (the gate)`, await page.evaluate(() => !!document.querySelector('.ag-gate') && document.body.textContent.includes('נפתח רק אחרי ההצטרפות למשרד') && document.body.textContent.includes('689')))
+  check(`${tag}: closed to a community member (the gate, with no price)`, await page.evaluate(() => !!document.querySelector('.ag-gate') && document.querySelector('.ag-gate').textContent.includes('האזור כלול במשרד ונפתח לחברי המשרד') && !document.querySelector('.ag-gate').textContent.includes('689')))
   await page.screenshot({ path: `${out}/agent-${label}-1-gate.png` })
 
-  // the area is closed: its button leads to the office page, where the payment is
+  // the area is closed: its button leads to the office page, where the (simulated) joining is
   await click(page, '.ag-gate-cta .btn', 'להצטרפות')
   await wait(1600)
   check(`${tag}: the gate leads to the office pricing page`, await page.evaluate(() => location.pathname.endsWith('/join/office') && !!document.querySelector('.jo-hero')))
@@ -63,14 +66,14 @@ for (const [label, vp, phone] of [
   await click(page, '.jo-hero .btn-white', 'להצטרפות')
   await wait(900)
   await page.screenshot({ path: `${out}/agent-${label}-2b-pay.png` })
-  check(`${tag}: payment is a simulation with no card fields`, await page.evaluate(() => !!document.querySelector('.jo-pay') && document.querySelectorAll('.jo-pay input[type=text], .jo-pay input[type=tel], .jo-pay input[type=number]').length === 0 && document.body.textContent.includes('אין תשלום אמיתי')))
-  check(`${tag}: the payment shows 689 a month and a 3 month minimum`, await page.evaluate(() => { const t = document.querySelector('.jo-sum')?.textContent ?? ''; return t.includes('689') && t.includes('3 חודשים') && t.includes('2,067') }))
-  check(`${tag}: paying needs the terms to be approved`, await page.evaluate(() => document.querySelector('.jo-go')?.disabled === true))
+  check(`${tag}: joining is a simulation with no card fields`, await page.evaluate(() => !!document.querySelector('.jo-pay') && document.querySelectorAll('.jo-pay input[type=text], .jo-pay input[type=tel], .jo-pay input[type=number]').length === 0 && document.body.textContent.includes('בדמו אין חיוב אמיתי')))
+  check(`${tag}: the joining shows 0% to the office and no amount`, await page.evaluate(() => { const t = document.querySelector('.jo-sum')?.textContent ?? ''; return t.includes('0%') && t.includes('מחיר יקבע') && !t.includes('689') && !t.includes('2,067') }))
+  check(`${tag}: joining needs the terms to be approved`, await page.evaluate(() => document.querySelector('.jo-go')?.disabled === true))
   await page.evaluate(() => document.querySelector('.jo-agree input')?.click())
   await wait(300)
   await click(page, '.jo-go', '')
   await wait(2400)
-  check(`${tag}: payment completes`, await page.evaluate(() => !!document.querySelector('.jo-done')))
+  check(`${tag}: the joining completes`, await page.evaluate(() => !!document.querySelector('.jo-done')))
   await click(page, '.jo-done .btn', 'מתחילים')
   await wait(1000)
   let st = await page.evaluate(() => ({

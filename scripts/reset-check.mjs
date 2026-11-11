@@ -56,7 +56,11 @@ for (const [label, vp] of [
   check(`${tag}: and the agent area is closed again`, await page.evaluate(() => !!document.querySelector('.ag-gate') && !document.querySelector('.ag-dash')))
 
   // ... and it happens only once: new work done afterwards is kept
-  await page.evaluate((a) => localStorage.setItem('nadlanup-agent-v1', a), leftovers.agent)
+  await page.evaluate((a) => {
+    localStorage.setItem('nadlanup-agent-v1', a)
+    // the finished page belongs to an office member
+    localStorage.setItem('nadlanup-member-v1', 'office')
+  }, leftovers.agent)
   await page.reload({ waitUntil: 'load' })
   await wait(1400)
   check(`${tag}: the clean start is one time only (later work is kept)`, await page.evaluate(() => !!document.querySelector('.ag-dash')))
@@ -94,11 +98,11 @@ for (const [label, vp] of [
   await wait(600)
   await click(page, '.modal .btn', 'כן, מחדש')
   await wait(1500)
-  const after = await page.evaluate(() => ({ path: location.pathname, agent: (() => { try { return JSON.parse(localStorage.getItem('nadlanup-agent-v1') ?? '{}').stage } catch { return 'bad' } })() }))
-  check(`${tag}: yes takes the demo home, with the agent state back to the start`, /\/green\/?$/.test(after.path) && (after.agent === 'locked' || after.agent === undefined), JSON.stringify(after))
+  const after = await page.evaluate(() => ({ path: location.pathname, member: localStorage.getItem('nadlanup-member-v1'), agent: (() => { try { return JSON.parse(localStorage.getItem('nadlanup-agent-v1') ?? '{}').stage } catch { return 'bad' } })() }))
+  check(`${tag}: yes takes the demo home, with the agent state back to the start`, /\/green\/?$/.test(after.path) && (after.agent === 'locked' || after.agent === undefined) && after.member === 'community', JSON.stringify(after))
   await page.goto(green + '/app/agent', { waitUntil: 'load' })
   await wait(1400)
-  check(`${tag}: the agent area is closed again, ready to be shown from the join`, await page.evaluate(() => !!document.querySelector('.ag-gate') && document.body.textContent.includes('689')))
+  check(`${tag}: the agent area is closed again, ready to be shown from the join`, await page.evaluate(() => !!document.querySelector('.ag-gate') && document.querySelector('.ag-gate').textContent.includes('כלול במשרד') && !document.body.textContent.includes('689')))
   await page.goto(green + '/agent/demo', { waitUntil: 'load' })
   await wait(1500)
   check(`${tag}: the sample page is still there for the demo`, await page.evaluate(() => document.querySelector('.agp-hero h1')?.textContent === 'מאיה לנדאו'))

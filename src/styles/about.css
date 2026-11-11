@@ -1,0 +1,180 @@
+/* The about page (green version). It reuses the office page's sections (.jo-*) and adds only what is its own. */
+.ab-hero h1 {
+  font-size: clamp(40px, 6.4vw, 84px);
+}
+.ab-split {
+  display: inline-flex;
+  align-items: stretch;
+  gap: clamp(18px, 3vw, 34px);
+  padding: 18px clamp(22px, 3vw, 38px);
+  border-radius: 28px;
+  background: #fff;
+  color: var(--text);
+  box-shadow: 0 34px 60px -26px rgba(0, 0, 0, 0.55);
+}
+.ab-split div {
+  display: grid;
+  gap: 2px;
+  text-align: center;
+}
+.ab-split b {
+  font-family: var(--font-display);
+  font-size: clamp(44px, 5.4vw, 68px);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  background: linear-gradient(180deg, #2fd08c, #0a7a4f);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.ab-split span {
+  font-family: var(--font-display);
+  font-size: 15.5px;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+.ab-split i {
+  width: 1px;
+  background: var(--line);
+}
+
+.ab-text p {
+  max-width: 44em;
+  margin-inline: auto;
+  font-size: clamp(18px, 1.7vw, 21px);
+  line-height: 1.7;
+  color: var(--text-dim);
+  text-align: center;
+}
+.ab-text p + p {
+  margin-top: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.ab-layers .jo-gain em {
+  justify-self: start;
+  padding: 3px 12px;
+  border-radius: 99px;
+  background: rgb(var(--g) / 0.12);
+  font-family: var(--font-display);
+  font-size: 12.5px;
+  font-style: normal;
+  font-weight: 800;
+  color: var(--gold-soft);
+}
+.ab-layers .jo-gain.is-top {
+  border-color: rgb(var(--g) / 0.55);
+  background: linear-gradient(170deg, #fff, rgb(var(--g) / 0.1));
+  box-shadow: 0 30px 60px -34px rgb(var(--g) / 0.7);
+}
+
+.ab-road {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+.ab-road-card {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  padding: clamp(24px, 3vw, 38px);
+  border-radius: var(--r-xl);
+  border: 1px solid var(--line);
+  background: #fff;
+  box-shadow: var(--shadow-1);
+}
+.ab-road-card small {
+  font-family: var(--font-display);
+  font-size: 13.5px;
+  font-weight: 800;
+  color: var(--gold-soft);
+}
+.ab-road-card h3 {
+  font-size: clamp(24px, 2.6vw, 34px);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+.ab-road-card p {
+  font-size: 17.5px;
+  line-height: 1.65;
+  color: var(--text-dim);
+}
+.ab-road-card.is-next {
+  border-color: transparent;
+  background: linear-gradient(155deg, #043b2b, #07643f 58%, #0fa46b);
+  color: #fff;
+  box-shadow: 0 34px 60px -34px rgba(4, 59, 43, 0.8);
+}
+.ab-road-card.is-next small {
+  color: #9ff0c9;
+}
+.ab-road-card.is-next h3 {
+  color: #fff;
+}
+.ab-road-card.is-next p {
+  color: rgba(255, 255, 255, 0.86);
+}
+
+.ab-team {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  max-width: 820px;
+  margin-inline: auto;
+}
+.ab-person {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 26px 16px;
+  border-radius: 24px;
+  border: 1px dashed rgb(var(--g) / 0.45);
+  background: rgba(255, 255, 255, 0.7);
+  text-align: center;
+}
+.ab-person span {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  margin-bottom: 6px;
+  border-radius: 50%;
+  background: rgb(var(--g) / 0.12);
+  color: var(--gold-soft);
+}
+.ab-person svg {
+  width: 30px;
+  height: 30px;
+}
+.ab-person b {
+  font-family: var(--font-display);
+  font-size: 16px;
+}
+.ab-person small {
+  font-size: 13.5px;
+  color: var(--text-faint);
+}
+
+.ab-final-cta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+@media (max-width: 760px) {
+  .ab-road,
+  .ab-team {
+    grid-template-columns: 1fr;
+  }
+  .ab-split {
+    width: 100%;
+    justify-content: center;
+  }
+  .ab-text p {
+    text-align: start;
+  }
+}

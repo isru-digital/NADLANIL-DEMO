@@ -2,13 +2,13 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowLeft, BadgeCheck, Check, Lock, Users } from 'lucide-react'
 import { BackButton, DemoTag, EASE, Logo } from '../components/ui'
-import { OFFICE_MIN_MONTHS, OFFICE_NAME, OFFICE_PRICE, shekel } from '../config/office'
+import { OFFICE_NAME, PRICE_TBD } from '../config/office'
 import '../styles/join-green.css'
 
 const community = ['קהילת מתווכים ארצית ופיד שת"פים', 'CRM למתווך ופולדר דיגיטלי', 'דף נחיתה אישי לפי תבנית', 'בקשות חיפוש והתאמות שמורות', 'מחירים מוזלים אצל שמאים ועורכי דין']
 const office = ['כל מה שבקהילה', 'הסוכן שלנו: דף אישי מרשים שמופיע בגוגל', 'שם ומותג של משרד תיווך ארצי', 'ליווי וניהול מקצועי של צוות המשרד', 'עדיפות לכלי הבטא החדשים']
 
-/** The first screen of joining (green version): the free community, or the paid office. */
+/** The first screen of joining (green version): the free community, or the office. No price is shown: it is not decided. */
 export default function JoinChoice() {
   return (
     <div className="jc">
@@ -37,10 +37,10 @@ export default function JoinChoice() {
             </span>
             <h2>{OFFICE_NAME}</h2>
             <div className="jc-price">
-              <b className="num">{shekel(OFFICE_PRICE)}</b>
-              <small>לחודש, מינימום {OFFICE_MIN_MONTHS} חודשים</small>
+              <b className="num">0%</b>
+              <small>עמלה למשרד. דמי חבר: {PRICE_TBD}</small>
             </div>
-            <p className="jc-sub">כל מה שבקהילה, ועוד: משרד תיווך ארצי בשמך, ודף אישי שמביא לקוחות מגוגל.</p>
+            <p className="jc-sub">כל מה שבקהילה, ועוד: משרד תיווך ארצי בשמך, דף אישי שמביא לקוחות מגוגל, ו-100% מהעמלה אצלך.</p>
             <ul>
               {office.map((t) => (
                 <li key={t}>
@@ -53,7 +53,7 @@ export default function JoinChoice() {
               <ArrowLeft />
             </Link>
             <small className="jc-lock">
-              <Lock /> ההצטרפות למשרד מתבצעת אחרי תשלום.
+              <Lock /> בדמו אין חיוב אמיתי.
             </small>
           </motion.article>
           <motion.article className="jc-card" initial={{ opacity: 0, y: 26 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.2, ease: EASE }}>

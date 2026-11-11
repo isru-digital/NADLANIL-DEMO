@@ -3,6 +3,9 @@
 // "NadlanUP" is the name (decided 08.11.2026, replacing the working name "המתווך IL").
 export const PLATFORM_NAME = 'NadlanUP'
 
+/** The second line of the name, shown under or next to the logo wherever it appears (green version). */
+export const PLATFORM_SUBNAME = 'המתווכים החופשיים'
+
 /** The two-part slogan shown under the name. Each part starts with its number. */
 export const PLATFORM_TAGLINE = ['100% גב קהילתי', '0% גזירות בעמלה']
 

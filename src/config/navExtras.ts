@@ -1,3 +1,4 @@
+import type { ComponentType } from 'react'
 import type { LucideIcon } from 'lucide-react'
 
 /**
@@ -14,4 +15,10 @@ export function registerNav(item: ExtraNav) {
 }
 export function registerReset(fn: () => void) {
   if (!extraResets.includes(fn)) extraResets.push(fn)
+}
+
+/** Pieces the green version adds to the app's frame: a bar at the top (the view switch) and a mark next to the user's name. */
+export const shellSlots: { bar?: ComponentType; badge?: ComponentType } = {}
+export function registerShell(slots: { bar?: ComponentType; badge?: ComponentType }) {
+  Object.assign(shellSlots, slots)
 }

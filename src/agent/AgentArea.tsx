@@ -2,26 +2,36 @@ import { Link } from 'react-router-dom'
 import { ArrowLeft, BadgeCheck, Check, Copy, ExternalLink, FileCheck, Globe, Lock, Pencil, RotateCcw, Search, Sparkles, WandSparkles } from 'lucide-react'
 import { useStore } from '../store'
 import { PLATFORM_NAME } from '../config'
-import { OFFICE_MIN_MONTHS, OFFICE_NAME, OFFICE_PRICE, shekel } from '../config/office'
+import { useEffect } from 'react'
+import { useMember } from '../config/member'
+import { COMMIT_TBD, OFFICE_NAME, PRICE_TBD } from '../config/office'
 import { firstName, inArea, sampleProfile, slugOf } from './agentData'
 import { useAgent } from './useAgent'
 import AgentWizard from './AgentWizard'
 import ProfilePreview from './ProfilePreview'
 import '../styles/agent.css'
 
-/** The "הסוכן שלנו" area: closed until the broker pays, then a questionnaire, then the dashboard of the finished page. */
+/**
+ * The "הסוכן שלנו" area. It is part of the office, not a product of its own: a community member sees the gate,
+ * an office member gets the questionnaire and then the dashboard of the finished page.
+ */
 export default function AgentArea() {
-  const { stage } = useAgent()
+  const { stage, patch } = useAgent()
+  const { isOffice } = useMember()
+  // an office member who has not started yet goes straight into the questionnaire
+  useEffect(() => {
+    if (isOffice && stage === 'locked') patch({ stage: 'onboarding', step: 0, paidAt: new Date().toISOString() })
+  }, [isOffice, stage, patch])
   return (
     <div className="ag">
-      {stage === 'locked' && <Gate />}
-      {stage === 'onboarding' && <AgentWizard />}
-      {stage === 'ready' && <Dashboard />}
+      {!isOffice && <Gate />}
+      {isOffice && stage !== 'ready' && <AgentWizard />}
+      {isOffice && stage === 'ready' && <Dashboard />}
     </div>
   )
 }
 
-/* ---------------------------------------------------------------- before paying */
+/* ---------------------------------------------------------------- for a community member */
 
 function Gate() {
   return (
@@ -63,14 +73,14 @@ function Gate() {
         </ul>
         <div className="ag-gate-cta">
           <Link to="/join/office" className="btn btn-gold btn-lg">
-            להצטרפות למשרד, {OFFICE_PRICE} ₪ לחודש <ArrowLeft />
+            להצטרפות למשרד <ArrowLeft />
           </Link>
           <Link to="/agent/demo" className="btn btn-ghost btn-lg">
             לראות דף לדוגמה
           </Link>
         </div>
         <p className="ag-note">
-          <Lock /> האזור נפתח רק אחרי ההצטרפות למשרד: {OFFICE_PRICE} ₪ לחודש, מינימום {OFFICE_MIN_MONTHS} חודשים. בדמו אין תשלום אמיתי.
+          <Lock /> האזור כלול במשרד ונפתח לחברי המשרד. בדמו אין חיוב אמיתי, ואפשר לעבור לתצוגת "חבר משרד" במתג שלמעלה.
         </p>
       </div>
 
@@ -174,34 +184,26 @@ function Dashboard() {
           </section>
 
           <section className="ag-panel">
-            <h2>המנוי שלכם</h2>
+            <h2>החברות שלכם במשרד</h2>
             <dl className="ag-member">
               <div>
                 <dt>מסלול</dt>
                 <dd>{OFFICE_NAME}</dd>
               </div>
               <div>
-                <dt>מחיר</dt>
-                <dd className="num">{OFFICE_PRICE} ₪ לחודש</dd>
+                <dt>עמלה למשרד</dt>
+                <dd className="num">0%</dd>
+              </div>
+              <div>
+                <dt>דמי חבר</dt>
+                <dd>{PRICE_TBD}</dd>
               </div>
               <div>
                 <dt>הצטרפות</dt>
                 <dd>{paidAt ? new Date(paidAt).toLocaleDateString('he-IL', { timeZone: 'Asia/Jerusalem' }) : 'בדמו'}</dd>
               </div>
-              <div>
-                <dt>התחייבות מינימלית עד</dt>
-                <dd>
-                  {paidAt
-                    ? (() => {
-                        const d = new Date(paidAt)
-                        d.setMonth(d.getMonth() + OFFICE_MIN_MONTHS)
-                        return d.toLocaleDateString('he-IL', { timeZone: 'Asia/Jerusalem' })
-                      })()
-                    : `${OFFICE_MIN_MONTHS} חודשים`}
-                </dd>
-              </div>
             </dl>
-            <p className="ag-note">{shekel(OFFICE_PRICE * OFFICE_MIN_MONTHS)} התחייבות מינימלית. בדמו אין חיוב אמיתי.</p>
+            <p className="ag-note">{COMMIT_TBD}. בדמו אין חיוב אמיתי.</p>
           </section>
 
           <section className="ag-panel">

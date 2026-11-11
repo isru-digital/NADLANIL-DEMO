@@ -15,7 +15,7 @@ import {
   Users,
 } from 'lucide-react'
 import { CURRENT_BROKER_ID, PLATFORM_TAGLINE } from '../config'
-import { extraNav, extraResets } from '../config/navExtras'
+import { extraNav, extraResets, shellSlots } from '../config/navExtras'
 import type { LucideIcon } from 'lucide-react'
 import { brokerById } from '../data/demo'
 import { useStore } from '../store'
@@ -53,6 +53,8 @@ export default function AppShell() {
   const me = brokerById(CURRENT_BROKER_ID)
   const [moreOpen, setMoreOpen] = useState(false)
   const [lab, setLab] = useState<LabView>(null)
+  const Bar = shellSlots.bar
+  const Badge = shellSlots.badge
 
   useEffect(() => {
     setMoreOpen(false)
@@ -135,6 +137,7 @@ export default function AppShell() {
             <div>
               <strong>{me.name}</strong>
               <span>{me.title}</span>
+              {Badge && <Badge />}
             </div>
           </div>
           <div className="side-demo">
@@ -147,7 +150,7 @@ export default function AppShell() {
         </div>
       </aside>
 
-      <header className="topbar">
+      <header className={`topbar${Bar ? ' has-bar' : ''}`}>
         <div className="topbar-start">
           <BackButton fallback="/" className="is-icon" />
           <Link to="/" className="topbar-brand" aria-label="דף הבית">
@@ -155,11 +158,17 @@ export default function AppShell() {
           </Link>
         </div>
         <DemoTag />
+        {Bar && (
+          <div className="topbar-bar">
+            <Bar />
+          </div>
+        )}
       </header>
 
       <main className="main" id="main" tabIndex={-1}>
-        <div className="main-back">
+        <div className={`main-back${Bar ? ' has-bar' : ''}`}>
           <BackButton fallback="/" />
+          {Bar && <Bar />}
         </div>
         <AnimatePresence mode="wait" initial={false}>
           <motion.div

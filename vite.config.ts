@@ -15,6 +15,8 @@ function themeHtml(green: boolean): Plugin {
     '%FAVICON%': pick('favicon.png', 'favicon-green.png'),
     '%APPLE_ICON%': pick('apple-touch-icon.png', 'apple-touch-icon-green.png'),
     '%THEME_COLOR%': pick('#0A0F20', '#0B6B49'),
+    '%TITLE%': pick('הדבר הבא בעולם המתווכים - דמו', 'NadlanUP | המתווכים החופשיים - דמו'),
+    '%OG_TITLE%': pick('הדבר הבא בעולם המתווכים', 'NadlanUP | המתווכים החופשיים'),
     '%OG_IMAGE%': pick('https://isru-digital.github.io/NADLANIL-DEMO/og.jpg', 'https://isru-digital.github.io/NADLANIL-DEMO/green/og-green.jpg'),
   }
   return {
