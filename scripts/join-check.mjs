@@ -101,9 +101,12 @@ for (const [label, vp, phone] of [
   // the free way is the existing onboarding
   await click(page, '.jc-card:not(.is-office) .jc-cta', '')
   await wait(1400)
-  check(`${tag}: the community path opens the existing onboarding`, await page.evaluate(() => location.pathname.endsWith('/join/community') && document.body.textContent.includes('נעים להכיר') && document.body.textContent.includes('ההצטרפות בחינם')))
-  await page.goBack()
-  await wait(1000)
+  check(`${tag}: the community path opens the community's own page`, await page.evaluate(() => location.pathname.endsWith('/kehila') && document.body.textContent.includes('מתווכים לעסקאות')))
+  await page.goto(green + '/kehila/join', { waitUntil: 'load' })
+  await wait(1300)
+  check(`${tag}: ... and from there the existing onboarding`, await page.evaluate(() => document.body.textContent.includes('נעים להכיר') && document.body.textContent.includes('ההצטרפות בחינם')))
+  await page.goto(green + '/join', { waitUntil: 'load' })
+  await wait(1200)
 
   // the office page
   await click(page, '.jc-card.is-office .jc-cta', '')
@@ -120,7 +123,7 @@ for (const [label, vp, phone] of [
     sticky: getComputedStyle(document.querySelector('.jo-sticky')).display,
   }))
   check(`${tag}: the office page shows 0% to the office and the fee of 689 a month`, st.path.endsWith('/join/office') && st.price === '0%' && st.min.includes('689 ₪ לחודש'), JSON.stringify(st))
-  check(`${tag}: it has six gains, a comparison table and questions`, st.gains === 6 && st.rows === 10 && st.faq === 5, `${st.gains} gains, ${st.rows} rows, ${st.faq} questions`)
+  check(`${tag}: it has six gains, a comparison table and questions`, st.gains === 6 && st.rows === 11 && st.faq === 5, `${st.gains} gains, ${st.rows} rows, ${st.faq} questions`)
   check(`${tag}: no sideways overflow on the office page`, st.overflowX <= 1, `${st.overflowX}px`)
   check(`${tag}: the bottom join bar ${phone ? 'shows on the phone' : 'is hidden on desktop'}`, phone ? st.sticky === 'flex' : st.sticky === 'none', st.sticky)
   await page.screenshot({ path: `${out}/join-${label}-2-office-top.png` })
@@ -176,7 +179,7 @@ for (const [label, vp, phone] of [
   await page.screenshot({ path: `${out}/join-${label}-4-table.png` })
   const tableOk = await page.evaluate(() => {
     const rows = [...document.querySelectorAll('.jo-row')].slice(2)
-    return rows.length === 8 && rows.slice(0, 4).every((r) => r.querySelectorAll('.is-yes').length === 2) && rows.slice(4).every((r) => r.querySelectorAll('.is-no').length === 1 && r.querySelectorAll('.is-yes').length === 1)
+    return rows.length === 9 && rows.slice(0, 3).every((r) => r.querySelectorAll('.is-yes').length === 2) && rows.slice(3).every((r) => r.querySelectorAll('.is-no').length === 1 && r.querySelectorAll('.is-yes').length === 1)
   })
   check(`${tag}: the table shows the community has the base and the office has all of it`, tableOk)
   await click(page, '.jo-faq li:nth-child(2) button', '')

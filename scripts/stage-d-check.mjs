@@ -121,7 +121,8 @@ for (const [label, vp, phone] of [
 
   check(`${tag}: the lab steps aside after publishing, and the page scrolls again`, await page.evaluate(() => !document.querySelector('.bl') && !document.querySelector('.modal') && document.body.style.overflow !== 'hidden'))
 
-  // ---- 4. the folder's link
+  // ---- 4. the folder's link (the folder belongs to the office)
+  await page.evaluate(() => localStorage.setItem('nadlanup-member-v1', 'office'))
   await go('/app/folder')
   await clickText(page, '.folder-toolbar .btn', 'העתקת קישור')
   await wait(600)

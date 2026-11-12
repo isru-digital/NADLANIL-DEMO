@@ -41,10 +41,8 @@ for (const [label, vp, phone] of [
   // ---- a community member: the list, all closed
   await go('/app')
   if (phone) {
-    await clickText(page, '.bottom-link', 'עוד')
-    await wait(600)
-    check(`${tag}: "המשרד שלי" is in the more sheet`, await page.evaluate(() => [...document.querySelectorAll('.more-link')].some((l) => l.textContent.includes('המשרד שלי'))))
-    await clickText(page, '.more-link', 'המשרד שלי')
+    check(`${tag}: "המשרד" is in the bottom bar of a community member`, await page.evaluate(() => [...document.querySelectorAll('.bottom-link')].some((l) => l.textContent.trim() === 'המשרד')))
+    await clickText(page, '.bottom-link', 'המשרד')
   } else {
     check(`${tag}: "המשרד שלי" is in the sidebar`, await page.evaluate(() => [...document.querySelectorAll('.side-link')].some((l) => l.textContent.includes('המשרד שלי'))))
     await clickText(page, '.side-link', 'המשרד שלי')

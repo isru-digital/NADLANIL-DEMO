@@ -11,7 +11,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms))
 const results = []
 const check = (name, ok, detail = '') => console.error((ok ? 'ok   ' : 'FAIL ') + name, detail) || results.push(`${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? '  [' + detail + ']' : ''}`)
 
-const routes = (process.env.ROUTES ?? '/,/join,/join/community,/join/office,/about,/upgrade,/app,/app/community,/app/brokers,/app/crm,/app/builder,/app/folder,/app/office,/app/office/leads,/app/office/report,/app/office/pitch,/app/office/growth,/app/office/deal,/app/office/assistant,/app/office/benefits,/app/office/badge,/app/agent,/b/demo,/f/demo,/agent/demo')
+const routes = (process.env.ROUTES ?? '/,/join,/join/office,/about,/upgrade,/app,/app/community,/app/brokers,/app/crm,/app/builder,/app/folder,/app/office,/app/office/leads,/app/office/report,/app/office/pitch,/app/office/growth,/app/office/deal,/app/office/assistant,/app/office/benefits,/app/office/badge,/app/agent,/b/demo,/f/demo,/agent/demo')
   .split(',')
   .map((r) => (r === 'home' ? '/' : r.startsWith('/') ? r : '/' + r))
 
