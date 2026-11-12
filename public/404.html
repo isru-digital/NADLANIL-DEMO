@@ -6,9 +6,12 @@
     <title>טוען...</title>
     <script>
       // Static hosts have no SPA rewrite: remember the deep link and bounce to the app root.
+      // Old links that still say /green/ (the demo used to live there) are sent to the same page at the main address.
       var parts = location.pathname.split('/');
-      var base = '/' + parts[1] + '/' + (parts[2] === 'green' ? 'green/' : '');
-      sessionStorage.setItem('spa-path', location.pathname + location.search + location.hash);
+      var base = '/' + parts[1] + '/';
+      var path = location.pathname;
+      if (parts[2] === 'green') path = base + parts.slice(3).join('/');
+      sessionStorage.setItem('spa-path', path + location.search + location.hash);
       location.replace(base);
     </script>
   </head>

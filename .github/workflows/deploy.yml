@@ -24,7 +24,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run build:all
+      # only the green and white look is published, at the main address
+      - run: npm run build:site
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

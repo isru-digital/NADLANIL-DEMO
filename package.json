@@ -8,6 +8,7 @@
     "dev:green": "vite --mode green --port 5240 --strictPort",
     "build": "tsc --noEmit && vite build",
     "build:green": "vite build --mode green",
+    "build:site": "tsc --noEmit && vite build --mode site",
     "build:all": "npm run build && npm run build:green",
     "preview": "vite preview --port 5231"
   },
