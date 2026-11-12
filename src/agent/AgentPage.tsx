@@ -12,6 +12,7 @@ import { areaLabel, composeAbout, firstName, inArea, joinList, sampleProfile, sl
 import type { AgentProfile } from './agentData'
 import { useAgent } from './useAgent'
 import AreasMap from './AreasMap'
+import HomeStrip from '../components/HomeStrip'
 import '../styles/agent-page.css'
 
 const icons: Record<string, LucideIcon> = { home: Home, key: KeyRound, gem: Gem, building: Building2, trend: TrendingUp, briefcase: Briefcase, sun: Sun, globe: Globe }
@@ -180,6 +181,7 @@ function Page({ p }: { p: AgentProfile }) {
 
   return (
     <div className="agp">
+      <HomeStrip />
       <header className="agp-nav">
         <div className="agp-wrap agp-nav-in">
           <a href="#top" className="agp-brand" aria-label={name}>

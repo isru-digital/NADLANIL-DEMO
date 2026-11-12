@@ -7,6 +7,7 @@ import type { TemplateId } from '../data/demo'
 import { useStore } from '../store'
 import { BackButton, DemoTag, EASE } from '../components/ui'
 import LandingTemplate from '../templates/LandingTemplate'
+import HomeStrip from '../components/HomeStrip'
 import '../styles/public.css'
 
 /** The published broker landing page, full screen: /b/demo */
@@ -27,6 +28,7 @@ export default function PublicPage() {
 
   return (
     <div className="public">
+      <HomeStrip />
       <motion.div
         key={template}
         initial={{ opacity: 0 }}

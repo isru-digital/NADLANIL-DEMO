@@ -1,0 +1,30 @@
+/* The platform logo, top right, on a broker's public pages: a click goes to the home page */
+.home-strip {
+  position: relative;
+  z-index: 60;
+  background: #ffffff;
+  border-bottom: 1px solid rgb(15 40 30 / 0.1);
+}
+.home-strip-in {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 clamp(16px, 4vw, 32px);
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start; /* the page is right to left: the start is the right edge */
+}
+.home-strip-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  border-radius: 10px;
+  transition: opacity 0.2s ease;
+}
+.home-strip-link:hover {
+  opacity: 0.8;
+}
+.home-strip-link:focus-visible {
+  outline: 2px solid #0fa46b;
+  outline-offset: 2px;
+}
