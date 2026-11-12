@@ -1,0 +1,758 @@
+/* The clients of the CRM as one simple table (green version). Surfaces use var(--card) and the text tokens,
+   so day and night both work. On a phone the table turns into a short list of cards. */
+.ct {
+  display: grid;
+  gap: 14px;
+}
+.ct-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.ct-search {
+  flex: 1 1 240px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: 0 14px;
+  border-radius: 99px;
+  border: 1px solid var(--line);
+  background: var(--card);
+}
+.ct-search:focus-within {
+  border-color: var(--line-gold);
+  box-shadow: 0 0 0 3px rgb(var(--g) / 0.14);
+}
+.ct-search svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  color: var(--text-faint);
+}
+.ct-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 16px;
+  color: var(--text);
+}
+.ct-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: 0 14px;
+  border-radius: 99px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  font-family: var(--font-display);
+  font-size: 14.5px;
+  color: var(--text-dim);
+}
+.ct-sort select {
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font: inherit;
+  font-weight: 700;
+  color: var(--text);
+  cursor: pointer;
+}
+.ct-sort select option {
+  color: #10241b;
+}
+.ct-pull {
+  margin-inline-start: auto;
+}
+
+/* the filter by type: several can be on together, each with its count */
+.ct-types {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.ct-types-label {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+.ct-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 99px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  transition: background-color var(--t) var(--ease), border-color var(--t) var(--ease);
+}
+.ct-chip svg {
+  width: 15px;
+  height: 15px;
+  stroke-width: 2.6;
+}
+.ct-chip b {
+  min-width: 22px;
+  padding: 1px 7px;
+  border-radius: 99px;
+  background: rgb(var(--w) / 0.07);
+  font-size: 12.5px;
+  font-weight: 800;
+  text-align: center;
+  color: var(--text-dim);
+}
+button.ct-chip:hover {
+  border-color: var(--line-gold);
+}
+.ct-chip.is-on {
+  border-color: var(--line-gold);
+  background: rgb(var(--g) / 0.14);
+  color: var(--gold-soft);
+}
+.ct-chip.is-on b {
+  background: rgb(var(--g) / 0.22);
+  color: var(--gold-soft);
+}
+.ct-locked-types {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.ct-chip.is-locked {
+  border-style: dashed;
+  background: transparent;
+  color: var(--text-faint);
+  cursor: default;
+}
+.ct-chip.is-locked svg {
+  width: 13px;
+  height: 13px;
+  stroke-width: 2.2;
+}
+.ct-clear {
+  min-height: 40px;
+  padding: 0 8px;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gold-soft);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+/* what only the office has */
+.ct-office {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: 1px dashed rgb(var(--g) / 0.45);
+  background: rgb(var(--g) / 0.06);
+  font-size: 14.5px;
+  line-height: 1.4;
+  color: var(--text-dim);
+}
+.ct-office > svg {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  color: var(--gold-soft);
+}
+.ct-office b {
+  color: var(--text);
+}
+.ct-office em {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-inline-start: auto;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 800;
+  font-style: normal;
+  color: var(--gold-soft);
+  white-space: nowrap;
+}
+.ct-office em svg {
+  width: 15px;
+  height: 15px;
+}
+.ct-office:hover {
+  border-style: solid;
+}
+.ct-office.is-inline {
+  flex-wrap: wrap;
+}
+
+/* ------------------------------------------------------------------ the table */
+.ct-wrap {
+  overflow: hidden;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--line);
+  background: var(--card);
+  box-shadow: var(--shadow-1);
+}
+.ct-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: start;
+}
+.ct-table th {
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--line);
+  background: rgb(var(--w) / 0.03);
+  font-family: var(--font-display);
+  font-size: 13.5px;
+  font-weight: 700;
+  text-align: start;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.ct-table td {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--line);
+  font-size: 15.5px;
+  vertical-align: middle;
+}
+.ct-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+.ct-table tbody tr {
+  cursor: pointer;
+  transition: background-color var(--t) var(--ease);
+}
+.ct-table tbody tr:hover {
+  background: rgb(var(--g) / 0.06);
+}
+.ct-name button {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-height: 46px;
+  text-align: start;
+}
+.ct-name button:focus-visible {
+  outline: 2px solid var(--gold-soft);
+  outline-offset: 3px;
+  border-radius: 10px;
+}
+.ct-name i {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgb(var(--g) / 0.12);
+  color: var(--gold-soft);
+}
+.ct-name i svg {
+  width: 18px;
+  height: 18px;
+}
+.ct-name span {
+  display: grid;
+  min-width: 0;
+}
+.ct-name b {
+  font-family: var(--font-display);
+  font-size: 16.5px;
+  font-weight: 700;
+}
+.ct-name small {
+  max-width: 34ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13.5px;
+  color: var(--text-dim);
+}
+.ct-type {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 0 11px;
+  border-radius: 99px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+  --c: 15 164 107;
+  background: rgb(var(--c) / 0.14);
+  color: rgb(var(--c));
+}
+.ct-type.is-seller {
+  --c: 37 99 235;
+}
+.ct-type.is-renter {
+  --c: 180 110 10;
+}
+.ct-type.is-landlord {
+  --c: 147 51 234;
+}
+.ct-type.is-manage,
+.ct-type.is-commercial,
+.ct-type.is-land,
+.ct-type.is-pro {
+  --c: 71 96 86;
+}
+html[data-mode='night'] .ct-type {
+  --c: 80 220 160;
+}
+html[data-mode='night'] .ct-type.is-seller {
+  --c: 130 175 255;
+}
+html[data-mode='night'] .ct-type.is-renter {
+  --c: 255 200 110;
+}
+html[data-mode='night'] .ct-type.is-landlord {
+  --c: 205 160 255;
+}
+html[data-mode='night'] .ct-type.is-manage,
+html[data-mode='night'] .ct-type.is-commercial,
+html[data-mode='night'] .ct-type.is-land,
+html[data-mode='night'] .ct-type.is-pro {
+  --c: 175 205 192;
+}
+.ct-phone a {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 44px;
+  color: var(--text);
+  white-space: nowrap;
+}
+.ct-phone a:hover {
+  color: var(--gold-soft);
+}
+.ct-phone svg {
+  width: 15px;
+  height: 15px;
+  color: var(--text-faint);
+}
+.ct-last,
+.ct-date {
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.ct-none {
+  color: var(--text-faint);
+}
+.ct-act {
+  text-align: end;
+  white-space: nowrap;
+}
+.ct-match {
+  border: 1px solid var(--line-gold);
+  background: rgb(var(--g) / 0.1);
+  color: var(--gold-soft);
+  font-weight: 700;
+}
+.ct-match:hover {
+  background: rgb(var(--g) / 0.2);
+}
+.ct-stars {
+  display: inline-flex;
+  gap: 1px;
+}
+.ct-stars svg {
+  width: 16px;
+  height: 16px;
+  color: rgb(var(--w) / 0.2);
+}
+.ct-stars svg.is-on,
+.ct-stars .is-on svg {
+  color: #e2a400;
+  fill: #e2a400;
+}
+.ct-stars.is-edit button {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 40px;
+}
+.ct-stars.is-edit svg {
+  width: 24px;
+  height: 24px;
+}
+.ct-empty {
+  padding: 26px 16px;
+  text-align: center;
+  color: var(--text-dim);
+}
+.ct-demo {
+  font-size: 13.5px;
+  color: var(--text-faint);
+}
+
+/* ------------------------------------------------------------------ the windows */
+.ct-det,
+.ct-new {
+  display: grid;
+  gap: 16px;
+}
+.ct-det-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+}
+.ct-det-phone {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 40px;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+}
+.ct-det-phone svg {
+  width: 17px;
+  height: 17px;
+  color: var(--gold-soft);
+}
+.ct-det-last {
+  margin-inline-start: auto;
+  font-size: 13.5px;
+  color: var(--text-faint);
+}
+.ct-field {
+  display: grid;
+  gap: 7px;
+}
+.ct-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+.ct-label svg {
+  width: 15px;
+  height: 15px;
+}
+.ct-stage {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.ct-stage button {
+  min-height: 42px;
+  padding: 0 15px;
+  border-radius: 99px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+.ct-stage button.is-on {
+  border-color: transparent;
+  background: linear-gradient(135deg, #0a7a4f, #12a36c);
+  color: #fff;
+}
+.ct-marks {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.ct-mark {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 50px;
+  padding: 0 12px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  text-align: start;
+  color: var(--text);
+}
+.ct-mark i {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  border: 2px solid rgb(var(--w) / 0.28);
+}
+.ct-mark i svg {
+  width: 14px;
+  height: 14px;
+  stroke-width: 3.4;
+  color: #fff;
+}
+.ct-mark.is-on {
+  border-color: var(--line-gold);
+  background: rgb(var(--g) / 0.12);
+}
+.ct-mark.is-on i {
+  border-color: transparent;
+  background: #12a36c;
+}
+.ct-office-fields {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 14px 18px;
+  align-items: end;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid var(--line-gold);
+  background: rgb(var(--g) / 0.06);
+}
+.ct-created {
+  min-height: 46px;
+  display: inline-flex;
+  align-items: center;
+  color: var(--text-dim);
+}
+.ct-det-foot {
+  flex-wrap: wrap;
+}
+.ct-err {
+  font-size: 14px;
+  font-style: normal;
+  color: #c0392b;
+}
+html[data-mode='night'] .ct-err {
+  color: #ffa39b;
+}
+
+.ct-matches {
+  display: grid;
+  gap: 10px;
+}
+.ct-m {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: var(--card);
+}
+.ct-m-main {
+  display: grid;
+  gap: 2px;
+}
+.ct-m-main strong {
+  font-family: var(--font-display);
+  font-size: 17px;
+}
+.ct-m-main > span {
+  font-size: 15px;
+  color: var(--text-dim);
+}
+.ct-m-main > span b {
+  color: var(--text);
+}
+.ct-m-main small {
+  font-size: 13.5px;
+  color: var(--text-faint);
+}
+.ct-m-by {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+.ct-m-by > span {
+  display: grid;
+  min-width: 0;
+  line-height: 1.25;
+}
+.ct-m-by b {
+  font-family: var(--font-display);
+  font-size: 14.5px;
+}
+.ct-m-by small {
+  font-size: 12.5px;
+  color: var(--text-faint);
+}
+.ct-m-by .btn {
+  margin-inline-start: auto;
+}
+
+.ct-y2 {
+  display: grid;
+  gap: 12px;
+}
+.ct-y2-note {
+  width: fit-content;
+  padding: 5px 13px;
+  border-radius: 99px;
+  border: 1px dashed rgb(var(--g) / 0.55);
+  background: rgb(var(--g) / 0.08);
+  font-family: var(--font-display);
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--gold-soft);
+}
+.ct-y2 ul {
+  display: grid;
+  gap: 8px;
+}
+.ct-y2-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 9px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  text-align: start;
+}
+.ct-y2-item.is-on {
+  border-color: var(--line-gold);
+  background: rgb(var(--g) / 0.1);
+}
+.ct-y2-check {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  border: 2px solid rgb(var(--w) / 0.28);
+}
+.ct-y2-item.is-on .ct-y2-check {
+  border-color: transparent;
+  background: #12a36c;
+}
+.ct-y2-check svg {
+  width: 15px;
+  height: 15px;
+  stroke-width: 3.4;
+  color: #fff;
+}
+.ct-y2-item img {
+  flex: none;
+  width: 84px;
+  height: 62px;
+  border-radius: 11px;
+  object-fit: cover;
+}
+.ct-y2-item > span {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+.ct-y2-item strong {
+  font-family: var(--font-display);
+  font-size: 16px;
+}
+.ct-y2-item small {
+  font-size: 13.5px;
+  color: var(--text-dim);
+}
+.ct-y2-item b {
+  font-size: 15px;
+  color: var(--gold-soft);
+}
+
+/* ------------------------------------------------------------------ on a phone: a short list of cards */
+@media (max-width: 760px) {
+  .ct-bar .btn {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+  .ct-search {
+    order: -1;
+    flex-basis: 100%;
+  }
+  .ct-sort {
+    flex: 1 1 auto;
+    justify-content: space-between;
+  }
+  .ct-pull {
+    margin-inline-start: 0;
+    flex-basis: 100%;
+  }
+  .ct-office {
+    flex-wrap: wrap;
+  }
+  .ct-office em {
+    margin-inline-start: 26px;
+  }
+  .ct-wrap {
+    overflow: visible;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  .ct-table,
+  .ct-table tbody {
+    display: block;
+  }
+  .ct-table thead {
+    display: none;
+  }
+  .ct-hide-phone {
+    display: none;
+  }
+  .ct-table tbody tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 6px 10px;
+    align-items: center;
+    margin-bottom: 10px;
+    padding: 12px 14px;
+    border-radius: 18px;
+    border: 1px solid var(--line);
+    background: var(--card);
+    box-shadow: var(--shadow-1);
+  }
+  .ct-table td {
+    padding: 0;
+    border: 0;
+  }
+  .ct-table td.ct-name {
+    grid-column: 1;
+  }
+  .ct-name small {
+    display: none;
+  }
+  .ct-table td:nth-child(2) {
+    grid-column: 2;
+    justify-self: end;
+  }
+  .ct-table td.ct-phone {
+    grid-column: 1;
+  }
+  .ct-table td.ct-act {
+    grid-column: 2;
+    justify-self: end;
+  }
+  .ct-marks {
+    grid-template-columns: 1fr;
+  }
+  .ct-office-fields {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+  .ct-m-by {
+    flex-wrap: wrap;
+  }
+}

@@ -31,7 +31,9 @@ import { FREE_IDS, PAID_IDS, walletActions } from './config/tiers'
 import About from './pages/About'
 import { memberActions } from './config/member'
 import { agentActions } from './agent/useAgent'
-import { registerActions, registerLab, registerNames, registerNav, registerReset, registerShell } from './config/navExtras'
+import { registerActions, registerCrm, registerLab, registerNames, registerNav, registerReset, registerShell } from './config/navExtras'
+import ClientsTable from './crm/ClientsTable'
+import { clientActions } from './crm/clients'
 import './styles/lite.css'
 import './styles/theme-green.css'
 
@@ -48,6 +50,9 @@ registerNames({ Badge: NameBadge, MatchNote: MatchFirst })
 registerReset(() => agentActions.reset())
 registerReset(() => memberActions.reset())
 registerReset(() => walletActions.reset())
+registerReset(() => clientActions.reset())
+// the CRM's clients are one simple table (search, types, matches, quick marks); the board keeps the properties
+registerCrm({ Clients: ClientsTable, subtitle: 'הלקוחות בטבלה אחת, והנכסים על הלוח. התאמות מהקהילה בלחיצה אחת.' })
 // the top bar (the view switch with the wallet or the quota), the office member's mark, and the lab in three layers
 registerShell({ bar: MemberBar, badge: MemberBadge, lab: TieredLab })
 // the community under its own name: its name at the top for a community member, no dashboard and two locked lines

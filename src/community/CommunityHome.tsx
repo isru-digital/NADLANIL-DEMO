@@ -8,7 +8,7 @@ import { COMMUNITY_DESC, COMMUNITY_FEED, COMMUNITY_HOME, COMMUNITY_JOIN, COMMUNI
 import { DemoTag, EASE, Reveal } from '../components/ui'
 import CommunityBrand from './CommunityBrand'
 import '../styles/join-green.css'
-import '../styles/community.css'
+import '../styles/kehila.css'
 
 /**
  * The community's own entry page, with its own name (stands for its own address, apart from the office's page).

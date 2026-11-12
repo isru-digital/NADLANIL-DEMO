@@ -79,3 +79,15 @@ export const actionSlots: {
 export function registerActions(slots: typeof actionSlots) {
   Object.assign(actionSlots, slots)
 }
+
+/**
+ * The green version shows the CRM's clients as a table of its own, in place of their cards on the board. With
+ * nothing registered the CRM is the one board it always was. `onPublish` opens the CRM's own publish window.
+ */
+export const crmSlots: {
+  Clients?: ComponentType<{ onPublish: (item: import('../data/demo').CrmItem) => void }>
+  subtitle?: string
+} = {}
+export function registerCrm(slots: typeof crmSlots) {
+  Object.assign(crmSlots, slots)
+}

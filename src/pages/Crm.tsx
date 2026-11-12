@@ -23,7 +23,7 @@ import type { TopicId } from '../config/topics'
 import { brokerById, cities, crmStages, fitsSearch, formatPriceShort, roomsLabel, simulatedListings } from '../data/demo'
 import type { CommunityItem, CrmItem, CrmStatus } from '../data/demo'
 import { useStore } from '../store'
-import { actionSlots } from '../config/navExtras'
+import { actionSlots, crmSlots } from '../config/navExtras'
 import type { MatchAlert } from '../store'
 import { EASE, Modal, PageHead, Photo } from '../components/ui'
 import CommunityCard from '../components/CommunityCard'
@@ -125,7 +125,10 @@ export default function Crm() {
   const { crm, moveCrm, publishedIds, toast, autoPublish, setAutoPublish, showMatch } = useStore()
   const me = brokerById(CURRENT_BROKER_ID)
   const publishNow = usePublisher()
-  const [kind, setKind] = useState<Kind>('all')
+  // the green version has the clients in a table of their own: two tabs, clients first, and the board holds the properties
+  const Clients = crmSlots.Clients
+  const [kind, setKind] = useState<Kind>(Clients ? 'client' : 'all')
+  const table = !!Clients && kind === 'client'
   const [stage, setStage] = useState<CrmStatus>('new')
   const [dragId, setDragId] = useState<string | null>(null)
   const [overStage, setOverStage] = useState<CrmStatus | null>(null)
@@ -156,15 +159,20 @@ export default function Crm() {
       <PageHead
         eyebrow="CRM"
         title="לקוחות ונכסים"
-        subtitle="כל העבודה שלך על לוח אחד. מסמנים שת&quot;פ או לוחצים &quot;פרסם בקהילה&quot;, והפריט הופך להודעה בנושא המתאים."
+        subtitle={crmSlots.subtitle ?? 'כל העבודה שלך על לוח אחד. מסמנים שת"פ או לוחצים "פרסם בקהילה", והפריט הופך להודעה בנושא המתאים.'}
       >
         <div className="seg" role="group" aria-label="סוג כרטיס">
           {(
-            [
-              ['all', 'הכול'],
-              ['property', 'נכסים'],
-              ['client', 'לקוחות'],
-            ] as [Kind, string][]
+            (Clients
+              ? [
+                  ['client', 'לקוחות'],
+                  ['property', 'נכסים'],
+                ]
+              : [
+                  ['all', 'הכול'],
+                  ['property', 'נכסים'],
+                  ['client', 'לקוחות'],
+                ]) as [Kind, string][]
           ).map(([id, label]) => (
             <button
               key={id}
@@ -183,11 +191,17 @@ export default function Crm() {
             </button>
           ))}
         </div>
-        <button className="btn btn-ghost" data-act="new-card" onClick={() => (actionSlots.newCard ? actionSlots.newCard() : toast('בדמו לא ניתן להוסיף כרטיסים חדשים'))}>
-          <Plus />
-          כרטיס חדש
-        </button>
+        {!table && (
+          <button className="btn btn-ghost" data-act="new-card" onClick={() => (actionSlots.newCard ? actionSlots.newCard() : toast('בדמו לא ניתן להוסיף כרטיסים חדשים'))}>
+            <Plus />
+            כרטיס חדש
+          </button>
+        )}
       </PageHead>
+
+      {table && Clients && <Clients onPublish={(item) => setPublishing({ item, topicId: 'seeking' })} />}
+      {!table && (
+        <>
 
       <button
         className={`auto-bar${autoPublish ? ' is-on' : ''}`}
@@ -355,6 +369,8 @@ export default function Crm() {
         </div>
       </LayoutGroup>
       <p className="kan-hint">טיפ: אפשר לגרור כרטיס בין השלבים, או ללחוץ על החץ כדי לקדם אותו.</p>
+        </>
+      )}
 
       <PublishModal request={publishing} onClose={() => setPublishing(null)} publishNow={publishNow} />
     </>

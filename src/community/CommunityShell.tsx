@@ -8,7 +8,7 @@ import { Logo } from '../components/ui'
 import Dashboard from '../pages/Dashboard'
 import CommunityBrand from './CommunityBrand'
 import '../styles/office.css'
-import '../styles/community.css'
+import '../styles/kehila.css'
 
 /** The two tools that left the free community and stay in the office only. */
 const OFFICE_TOOLS = ['/app/builder', '/app/folder']

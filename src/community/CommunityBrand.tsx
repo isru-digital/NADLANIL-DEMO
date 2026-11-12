@@ -1,7 +1,7 @@
 import { Handshake } from 'lucide-react'
 import { PLATFORM_NAME } from '../config'
 import { COMMUNITY_NAME } from '../config/community'
-import '../styles/community.css'
+import '../styles/kehila.css'
 
 /**
  * The community's own name: "מתווכים לעסקאות" large, "מבית NadlanUP" small under it, next to a simple mark.
