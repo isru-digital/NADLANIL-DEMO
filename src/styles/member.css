@@ -18,7 +18,7 @@
   padding: 4px;
   border-radius: 99px;
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--card);
   box-shadow: var(--shadow-1);
 }
 .ms-thumb {

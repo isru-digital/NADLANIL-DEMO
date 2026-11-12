@@ -35,7 +35,7 @@
   position: relative;
   border-radius: var(--r-xl);
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--card);
   box-shadow: var(--shadow-2);
 }
 .up-cols,
@@ -52,7 +52,7 @@
   inset-block-start: 0;
   z-index: 3;
   border-radius: var(--r-xl) var(--r-xl) 0 0;
-  background: #fff;
+  background: var(--card);
   box-shadow: 0 12px 24px -22px rgba(4, 59, 43, 0.6);
 }
 .up-corner {
@@ -129,7 +129,7 @@
 .up-col.is-office {
   border-inline-start: 0;
   border-start-end-radius: var(--r-xl);
-  background: linear-gradient(160deg, #043b2b, #07643f 60%, #0fa46b);
+  background: linear-gradient(160deg, var(--deep-a), var(--deep-b) 60%, var(--deep-c));
   color: #fff;
 }
 .up-col.is-office .up-ico {

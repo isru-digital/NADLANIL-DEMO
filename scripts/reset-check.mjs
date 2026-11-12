@@ -8,7 +8,6 @@ import fs from 'node:fs'
 const out = process.argv[2] ?? '_shots'
 fs.mkdirSync(out, { recursive: true })
 const green = process.env.BASE_GREEN ?? 'http://localhost:5240/NADLANIL-DEMO/green'
-const navy = process.env.BASE_NAVY ?? 'http://localhost:5230/NADLANIL-DEMO'
 const browser = await puppeteer.launch({ executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: 'new', args: ['--hide-scrollbars'] })
 const wait = (ms) => new Promise((r) => setTimeout(r, ms))
 const results = []
@@ -107,16 +106,6 @@ for (const [label, vp] of [
   await wait(1500)
   check(`${tag}: the sample page is still there for the demo`, await page.evaluate(() => document.querySelector('.agp-hero h1')?.textContent === 'מאיה לנדאו'))
   check(`${tag}: no console errors`, errors.length === 0, errors.slice(0, 2).join(' | '))
-  await page.close()
-}
-
-// the navy look has no such tab
-{
-  const page = await browser.newPage()
-  await page.setViewport({ width: 1440, height: 900 })
-  await page.goto(navy + '/', { waitUntil: 'load' })
-  await wait(1500)
-  check('navy: no reset tab (green demo only)', await page.evaluate(() => !document.querySelector('.dreset')))
   await page.close()
 }
 

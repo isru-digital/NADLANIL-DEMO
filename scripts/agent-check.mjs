@@ -9,7 +9,6 @@ import path from 'node:path'
 const out = process.argv[2] ?? '_shots'
 fs.mkdirSync(out, { recursive: true })
 const green = process.env.BASE_GREEN ?? 'http://localhost:5240/NADLANIL-DEMO/green'
-const navy = process.env.BASE_NAVY ?? 'http://localhost:5230/NADLANIL-DEMO'
 const photo = path.resolve('public/img/broker-02.webp')
 const browser = await puppeteer.launch({ executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: 'new', args: ['--hide-scrollbars'] })
 const wait = (ms) => new Promise((r) => setTimeout(r, ms))
@@ -239,23 +238,6 @@ for (const [label, vp] of [
   await wait(1800)
   const w = await page.evaluate(() => ({ path: location.pathname, office: !!document.querySelector('.jo-hero'), wiz: !!document.querySelector('.ag-wiz') }))
   check(`home ${label}: the button leads to the office page and not around the payment`, w.office && w.path.endsWith('/join/office') && !w.wiz, JSON.stringify(w))
-  await page.close()
-}
-
-// the navy look has none of it
-{
-  const page = await browser.newPage()
-  await page.setViewport({ width: 1440, height: 900 })
-  await page.goto(navy + '/app', { waitUntil: 'load' })
-  await wait(1500)
-  const n = await page.evaluate(() => ({
-    link: [...document.querySelectorAll('.side-link')].some((l) => l.textContent.includes('הסוכן שלנו')),
-    count: document.querySelectorAll('.side-nav .side-link').length,
-  }))
-  check('navy: no "הסוכן שלנו" entry, the sidebar is unchanged', !n.link && n.count === 6, JSON.stringify(n))
-  await page.goto(navy + '/agent/demo', { waitUntil: 'load' })
-  await wait(1500)
-  check('navy: /agent/demo does not exist (goes home)', await page.evaluate(() => !document.querySelector('.agp') && location.pathname.replace(/\/$/, '').endsWith('NADLANIL-DEMO')))
   await page.close()
 }
 

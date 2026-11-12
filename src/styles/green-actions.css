@@ -104,7 +104,7 @@
   gap: 12px;
   padding: 14px 16px;
   border-radius: 18px;
-  background: linear-gradient(135deg, #043b2b, #07643f 60%, #0fa46b);
+  background: linear-gradient(135deg, var(--deep-a), var(--deep-b) 60%, var(--deep-c));
   color: #fff;
 }
 .ga-found > svg {

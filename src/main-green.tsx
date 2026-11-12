@@ -4,6 +4,8 @@ import './styles/global.css'
 import { Route } from 'react-router-dom'
 import { BadgeCheck, Building2 } from 'lucide-react'
 import { start } from './bootstrap'
+import { dayNight } from './config/dayNight'
+import DayNightSwitch from './components/DayNightSwitch'
 import { PLATFORM_NAME, PLATFORM_SUBNAME } from './config'
 import HomeGreen from './pages/HomeGreen'
 import Join from './pages/Join'
@@ -30,6 +32,8 @@ import './styles/lite.css'
 import './styles/theme-green.css'
 
 document.documentElement.dataset.theme = 'green'
+// light by day, dark in the evening: set before the first paint, so the page never flashes the other mood
+dayNight.apply()
 
 // "הסוכן שלנו" and joining the office exist only in the green look
 // what only the office gives: its own area, and "הסוכן שלנו" (part of the office)
@@ -82,6 +86,8 @@ start(<HomeGreen />, {
     </>
   ),
   // the "start again" tab is for the demo only: a real launch builds with VITE_DEMO_RESET=false
+  // the corner switch: light (day) or dark (night), instead of the old navy / green comparison
+  switcher: <DayNightSwitch />,
   overlay: (
     <>
       <GreenActions />

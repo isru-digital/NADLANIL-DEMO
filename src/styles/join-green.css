@@ -70,7 +70,7 @@
   padding: clamp(24px, 3vw, 38px);
   border-radius: var(--r-xl);
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--card);
   box-shadow: var(--shadow-1);
 }
 .jc-icon {
@@ -146,7 +146,7 @@
 .jc-card.is-office {
   color: #fff;
   border-color: transparent;
-  background: linear-gradient(155deg, #043b2b, #07643f 55%, #0a8a58);
+  background: linear-gradient(155deg, var(--deep-a), var(--deep-b) 55%, #0a8a58);
   box-shadow: 0 50px 90px -40px rgba(4, 59, 43, 0.8);
   overflow: hidden;
 }
@@ -214,7 +214,7 @@
   position: relative;
   overflow: hidden;
   padding-block: clamp(40px, 7vw, 90px);
-  background: linear-gradient(155deg, #043b2b, #07643f 58%, #0fa46b);
+  background: linear-gradient(155deg, var(--deep-a), var(--deep-b) 58%, var(--deep-c));
   color: #fff;
 }
 .jo-grid {
@@ -268,7 +268,7 @@
   gap: 16px;
   padding: 14px 28px;
   border-radius: 28px;
-  background: #fff;
+  background: var(--card);
   color: var(--text);
   box-shadow: 0 34px 60px -26px rgba(0, 0, 0, 0.55);
 }
@@ -368,7 +368,7 @@
   padding: clamp(22px, 3vw, 34px);
   border-radius: var(--r-xl);
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--card);
   box-shadow: var(--shadow-2);
 }
 .jo-ccard h3,
@@ -449,7 +449,7 @@
 .jo-ours {
   color: #fff;
   border-color: transparent;
-  background: linear-gradient(155deg, #043b2b, #07643f 58%, #0a8a58);
+  background: linear-gradient(155deg, var(--deep-a), var(--deep-b) 58%, #0a8a58);
   box-shadow: 0 40px 80px -36px rgba(4, 59, 43, 0.8);
   overflow: hidden;
 }
@@ -517,11 +517,11 @@
   padding: clamp(22px, 3vw, 34px);
   border-radius: var(--r-xl);
   border: 1px dashed var(--line-strong);
-  background: #fff;
+  background: var(--card);
 }
 .jo-diff.is-save {
   border: 1px solid rgb(var(--g) / 0.5);
-  background: linear-gradient(to left, rgb(var(--g) / 0.14), #fff 60%);
+  background: linear-gradient(to left, rgb(var(--g) / 0.14), var(--card) 60%);
   box-shadow: var(--shadow-2);
 }
 .jo-bars {
@@ -626,7 +626,7 @@
   padding: 26px;
   border-radius: 26px;
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--card);
   box-shadow: var(--shadow-1);
   transition: transform var(--t) var(--ease), box-shadow var(--t) var(--ease);
 }
@@ -663,7 +663,7 @@
   overflow: hidden;
   border-radius: var(--r-xl);
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--card);
   box-shadow: var(--shadow-1);
 }
 .jo-row {
@@ -700,7 +700,7 @@
 }
 .jo-row.is-head b.is-office {
   margin-block: -18px;
-  background: linear-gradient(160deg, #043b2b, #0a7a4f);
+  background: linear-gradient(160deg, var(--deep-a), #0a7a4f);
   color: #fff;
 }
 .jo-row.is-price {
@@ -741,7 +741,7 @@
   padding: 28px;
   border-radius: 26px;
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--card);
 }
 .jo-steps b {
   font-family: var(--font-display);
@@ -772,7 +772,7 @@
 .jo-faq li {
   border-radius: 22px;
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--card);
 }
 .jo-faq button {
   display: flex;
@@ -819,7 +819,7 @@
   position: relative;
   overflow: hidden;
   padding-block: clamp(60px, 8vw, 110px) calc(clamp(60px, 8vw, 110px) + 20px);
-  background: linear-gradient(155deg, #043b2b, #07643f 58%, #0fa46b);
+  background: linear-gradient(155deg, var(--deep-a), var(--deep-b) 58%, var(--deep-c));
   color: #fff;
   text-align: center;
 }
@@ -1143,7 +1143,7 @@
   padding: clamp(22px, 3vw, 36px);
   border-radius: var(--r-xl);
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--card);
   box-shadow: var(--shadow-2);
 }
 .jo-kicker-red {

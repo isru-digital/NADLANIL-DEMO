@@ -15,7 +15,7 @@
   padding: 0 16px 0 14px;
   border-radius: 99px;
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--card);
   box-shadow: var(--shadow-1);
   font-family: var(--font-display);
   color: var(--text);
@@ -49,11 +49,11 @@
 }
 .mb-chip.is-wallet {
   border-color: rgb(201 138 12 / 0.4);
-  background: linear-gradient(180deg, #fffaf0, #fff);
+  background: linear-gradient(180deg, #fffaf0, var(--card));
 }
 .mb-chip.is-quota {
   border-color: rgb(var(--g) / 0.45);
-  background: linear-gradient(180deg, rgb(var(--g) / 0.1), #fff);
+  background: linear-gradient(180deg, rgb(var(--g) / 0.1), var(--card));
 }
 .mb-chip.is-quota b {
   color: var(--gold-soft);

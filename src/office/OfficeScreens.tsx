@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowRight, BadgeCheck, CalendarCheck, Check, CheckCheck, Cl
 import { CURRENT_BROKER_ID, PLATFORM_NAME, PLATFORM_SUBNAME, asset } from '../config'
 import { brokerById, brokers, crmItems, formatPriceShort } from '../data/demo'
 import { useStore } from '../store'
+import { useDayNight } from '../config/dayNight'
 import { Avatar, EASE, Modal } from '../components/ui'
 import AreasMap from '../agent/AreasMap'
 import { OFFICE_BROKER_IDS, benefits, chatScript, dealDocs, dealSteps, goals, leadAreas, leads, report, sampleFlat, sessions, weekTasks } from './officeData'
@@ -119,13 +120,14 @@ export function LeadsScreen() {
 export function ReportScreen() {
   const { toast } = useStore()
   const [sent, setSent] = useState(false)
+  const night = useDayNight().mode === 'night'
   const top = Math.max(...report.days.map((d) => d.v))
   return (
     <>
       <div className="of-cols is-report">
         <article className="of-paper">
           <header>
-            <img src={asset('brand/nadlanup-light.png')} alt={PLATFORM_NAME} />
+            <img src={asset(night ? 'brand/nadlanup-dark.png' : 'brand/nadlanup-light.png')} alt={PLATFORM_NAME} />
             <span>
               דוח שבועי למוכר <i /> {report.week}
             </span>

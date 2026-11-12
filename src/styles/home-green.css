@@ -33,7 +33,7 @@
   position: sticky;
   inset-block-start: 0;
   z-index: var(--z-nav);
-  background: #fff;
+  background: var(--card);
   border-bottom: 1px solid var(--line);
 }
 .hg-nav-in {
@@ -84,7 +84,7 @@
   position: relative;
   overflow: hidden;
   color: #fff;
-  background: linear-gradient(155deg, #043b2b 0%, #07643f 44%, #0fa46b 100%);
+  background: linear-gradient(155deg, var(--deep-a) 0%, var(--deep-b) 44%, var(--deep-c) 100%);
   padding-block: 56px 150px;
 }
 .hg-hero-bg {
@@ -234,7 +234,7 @@
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(#fff 1.4px, transparent 2px) 0 0 / 8.5px 8.5px,
+    radial-gradient(var(--card) 1.4px, transparent 2px) 0 0 / 8.5px 8.5px,
     rgb(255 255 255 / 0.12);
 }
 .hg-arcs {
@@ -259,7 +259,7 @@
   height: 9px;
   margin: -4.5px 0 0 -4.5px;
   border-radius: 50%;
-  background: #fff;
+  background: var(--card);
   box-shadow:
     0 0 0 4px rgb(255 255 255 / 0.2),
     0 0 14px 4px rgb(125 255 194 / 0.85);
@@ -282,7 +282,7 @@
   border-radius: 50%;
 }
 .hg-node i {
-  background: #fff;
+  background: var(--card);
   box-shadow: 0 0 0 2px rgb(255 255 255 / 0.28);
 }
 .hg-node b {
@@ -344,7 +344,7 @@
 .hg-card {
   position: absolute;
   color: var(--text);
-  background: #fff;
+  background: var(--card);
   border-radius: 20px;
   box-shadow: 0 28px 54px -20px rgba(2, 38, 26, 0.6);
   animation: hg-bob 7.5s ease-in-out var(--bd, 0s) infinite;
@@ -371,7 +371,7 @@
   inset-inline-start: 8px;
   padding: 3px 10px;
   border-radius: var(--r-pill);
-  background: #fff;
+  background: var(--card);
   font-family: var(--font-display);
   font-size: 11.5px;
   font-weight: 700;
@@ -419,7 +419,7 @@
   gap: 0;
   width: 150px;
   padding: 14px 16px 16px;
-  background: linear-gradient(160deg, #ffffff, #e9fbf2);
+  background: linear-gradient(160deg, var(--card), #e9fbf2);
 }
 .hg-card-fee small {
   font-family: var(--font-display);
@@ -432,7 +432,7 @@
   font-weight: 900;
   line-height: 1.05;
   letter-spacing: -0.03em;
-  background: linear-gradient(180deg, #27c07f, #07643f);
+  background: linear-gradient(180deg, #27c07f, var(--deep-b));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -490,14 +490,14 @@
   inset-block-end: -1px;
   height: 96px;
   border-radius: 50% 50% 0 0 / 100% 100% 0 0;
-  background: #fff;
+  background: var(--card);
 }
 
 /* ---------------------------------------------------------------- city strip */
 .hg-marquee {
   overflow: hidden;
   padding: 0 0 18px;
-  background: #fff;
+  background: var(--card);
   direction: ltr;
   -webkit-mask-image: linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent);
   mask-image: linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent);
@@ -528,7 +528,7 @@
 /* ---------------------------------------------------------------- 0% / 100% */
 .hg-duo {
   padding-block: 34px 90px;
-  background: #fff;
+  background: var(--card);
 }
 .hg-duo-card {
   position: relative;
@@ -537,7 +537,7 @@
   padding: clamp(36px, 5vw, 64px) clamp(20px, 4vw, 48px) clamp(64px, 7vw, 92px);
   border-radius: var(--r-xl);
   border: 1px solid var(--line);
-  background: linear-gradient(180deg, #ffffff, #effaf4);
+  background: linear-gradient(180deg, var(--card), #effaf4);
   box-shadow: var(--shadow-2);
   text-align: center;
   overflow: hidden;
@@ -563,7 +563,7 @@
   color: #b5ccc1;
 }
 .hg-duo-item.is-full .hg-duo-num {
-  background: linear-gradient(180deg, #2fd08c 0%, #0a8051 70%, #07643f 100%);
+  background: linear-gradient(180deg, #2fd08c 0%, #0a8051 70%, var(--deep-b) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -610,7 +610,7 @@
   border-radius: var(--r-xl);
   color: #fff;
   text-align: center;
-  background: linear-gradient(150deg, #043b2b 0%, #07643f 50%, #0fa46b 100%);
+  background: linear-gradient(150deg, var(--deep-a) 0%, var(--deep-b) 50%, var(--deep-c) 100%);
   overflow: hidden;
   isolation: isolate;
 }
@@ -636,23 +636,23 @@
   background: var(--bg);
 }
 .hg .home-foot {
-  background: #fff;
+  background: var(--card);
 }
 
 .hg .shift-panel {
-  background: #fff;
+  background: var(--card);
   box-shadow: var(--shadow-1);
 }
 .hg .shift-panel.is-after {
   background:
     radial-gradient(120% 90% at 100% 0%, rgb(var(--g) / 0.16), transparent 60%),
-    #fff;
+    var(--card);
 }
 .hg .chat {
   background: #f4faf7;
 }
 .hg .bubble {
-  background: #fff;
+  background: var(--card);
   box-shadow: 0 1px 2px rgba(8, 52, 36, 0.1);
 }
 .hg .bubble.is-mine {
@@ -668,7 +668,7 @@
   background: rgb(var(--g) / 0.14);
 }
 .hg .saved-chips li {
-  background: #fff;
+  background: var(--card);
 }
 .hg .saved-alert {
   background: linear-gradient(to left, rgb(var(--g) / 0.2), rgb(var(--g) / 0.07));

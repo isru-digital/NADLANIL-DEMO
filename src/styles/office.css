@@ -73,7 +73,7 @@
   padding: 16px 20px;
   border-radius: 22px;
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--card);
   box-shadow: var(--shadow-1);
 }
 .of-banner > span {
@@ -105,7 +105,7 @@
 }
 .of-banner.is-in {
   border-color: transparent;
-  background: linear-gradient(135deg, #043b2b, #07643f 60%, #0fa46b);
+  background: linear-gradient(135deg, var(--deep-a), var(--deep-b) 60%, var(--deep-c));
   color: #fff;
 }
 .of-banner.is-in > span {
@@ -131,7 +131,7 @@
   padding: 22px;
   border-radius: 24px;
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--card);
   box-shadow: var(--shadow-1);
   transition: transform var(--t) var(--ease), box-shadow var(--t) var(--ease), border-color var(--t) var(--ease);
 }
@@ -244,7 +244,7 @@
   padding: clamp(22px, 3vw, 40px);
   border-radius: var(--r-xl);
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--card);
   box-shadow: var(--shadow-2);
 }
 .of-locked-copy {
@@ -333,7 +333,7 @@
   height: 66px;
   padding: 18px;
   border-radius: 50%;
-  background: #fff;
+  background: var(--card);
   color: var(--gold-soft);
   box-shadow: var(--shadow-2);
 }
@@ -352,7 +352,7 @@
   padding: clamp(18px, 2vw, 26px);
   border-radius: 24px;
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--card);
   box-shadow: var(--shadow-1);
 }
 .of-panel h2 {
@@ -382,12 +382,12 @@
   padding: 18px 20px;
   border-radius: 22px;
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--card);
   box-shadow: var(--shadow-1);
 }
 .of-stats > div:first-child {
   border-color: transparent;
-  background: linear-gradient(135deg, #043b2b, #07643f 60%, #0fa46b);
+  background: linear-gradient(135deg, var(--deep-a), var(--deep-b) 60%, var(--deep-c));
   color: #fff;
 }
 .of-stats b {
@@ -569,7 +569,7 @@
   padding: clamp(20px, 2.6vw, 34px);
   border-radius: 24px;
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--card);
   box-shadow: var(--shadow-2);
 }
 .of-paper header {
@@ -943,7 +943,7 @@
   padding: clamp(22px, 3vw, 40px);
   border-radius: 24px;
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--card);
   box-shadow: var(--shadow-2);
   overflow: hidden;
 }
@@ -1074,7 +1074,7 @@
   height: 44px;
   border-radius: 50%;
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--card);
   box-shadow: var(--shadow-1);
   cursor: pointer;
 }
@@ -1127,7 +1127,7 @@
   position: absolute;
   inset: 7px;
   border-radius: 50%;
-  background: #fff;
+  background: var(--card);
 }
 .of-ring b {
   position: relative;
@@ -1291,7 +1291,7 @@
   padding: 22px 12px;
   border-radius: 24px;
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--card);
   box-shadow: var(--shadow-1);
 }
 .of-line li {
@@ -1328,7 +1328,7 @@
   height: 42px;
   border-radius: 50%;
   border: 3px solid rgb(var(--g) / 0.2);
-  background: #fff;
+  background: var(--card);
   font-family: var(--font-display);
   font-weight: 900;
   color: var(--text-faint);
@@ -1505,7 +1505,7 @@
   overflow: hidden;
   border-radius: 26px;
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--card);
   box-shadow: var(--shadow-2);
 }
 .of-chat header {
@@ -1513,7 +1513,7 @@
   align-items: center;
   gap: 12px;
   padding: 12px 16px;
-  background: linear-gradient(135deg, #043b2b, #07643f 60%, #0fa46b);
+  background: linear-gradient(135deg, var(--deep-a), var(--deep-b) 60%, var(--deep-c));
   color: #fff;
 }
 .of-chat header img {
@@ -1547,7 +1547,7 @@
   justify-self: center;
   padding: 3px 12px;
   border-radius: 99px;
-  background: #fff;
+  background: var(--card);
   font-size: 12.5px;
   color: var(--text-faint);
 }
@@ -1564,7 +1564,7 @@
 .of-bubble.is-lead {
   justify-self: end;
   border-end-end-radius: 6px;
-  background: #fff;
+  background: var(--card);
   border: 1px solid var(--line);
 }
 .of-bubble.is-bot {
@@ -1747,7 +1747,7 @@
   padding: 22px;
   border-radius: 22px;
   border: 1px dashed rgb(var(--g) / 0.45);
-  background: #fff;
+  background: var(--card);
   transition: border-color var(--t) var(--ease), background var(--t) var(--ease);
 }
 .of-benefits li.is-on {

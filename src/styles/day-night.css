@@ -1,0 +1,344 @@
+/* ==========================================================================
+   Day and night. The same site in two moods (see config/dayNight.ts for the clock rule).
+   <html data-mode="day">   light, with the warmth of sunlight
+   <html data-mode="night"> dark, like an evening
+   The styles are written against tokens; this file gives the tokens their night values, adds the sun and the
+   evening sky, and fixes the few places where a colour was fixed for a light page.
+   ========================================================================== */
+
+/* tokens that the day look did not need: a surface that follows the mode, and the deep green of heroes and banners */
+html[data-theme='green'] {
+  --card: #ffffff;
+  --deep-a: #043b2b;
+  --deep-b: #07643f;
+  --deep-c: #0fa46b;
+  --sun: 255 205 96;
+}
+
+/* ---------------------------------------------------------------- the switch */
+.dn {
+  position: fixed;
+  left: 12px;
+  inset-block-end: calc(12px + env(safe-area-inset-bottom));
+  z-index: var(--z-nav);
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  border-radius: 99px;
+  border: 1px solid var(--line-strong);
+  background: color-mix(in srgb, var(--card) 90%, transparent);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.45);
+  font-family: var(--font-display);
+}
+.dn button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 13px;
+  border-radius: 99px;
+  font-size: 13.5px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: color var(--t) var(--ease), background var(--t) var(--ease);
+}
+.dn button svg {
+  width: 16px;
+  height: 16px;
+}
+.dn button:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+.dn button[data-mode='day'][aria-pressed='true'] {
+  background: linear-gradient(135deg, #ffd66b, #ffb52e);
+  color: #4a2f00;
+  box-shadow: 0 6px 16px -6px rgba(255, 181, 46, 0.9);
+}
+.dn button[data-mode='night'][aria-pressed='true'] {
+  background: linear-gradient(135deg, #1c2f52, #0d1a33);
+  color: #dbe7ff;
+  box-shadow: 0 6px 16px -6px rgba(13, 26, 51, 0.9);
+}
+.dn-auto {
+  width: 36px;
+  padding: 0 !important;
+  justify-content: center;
+  color: var(--gold-soft) !important;
+}
+@media (max-width: 980px) {
+  .dn.on-app {
+    inset-block-end: calc(80px + env(safe-area-inset-bottom));
+  }
+}
+
+/* the mood changes softly, not with a flash */
+html[data-theme='green'] body,
+html[data-theme='green'] .sidebar,
+html[data-theme='green'] .topbar,
+html[data-theme='green'] .hg-nav {
+  transition: background-color 500ms var(--ease), color 500ms var(--ease);
+}
+
+/* ==========================================================================
+   DAY: sunlight
+   ========================================================================== */
+html[data-theme='green'][data-mode='day'] body {
+  background-image:
+    radial-gradient(900px 520px at 0% -6%, rgb(var(--sun) / 0.3), transparent 62%),
+    radial-gradient(700px 420px at 100% 0%, rgb(255 255 255 / 0.9), transparent 60%);
+  background-repeat: no-repeat;
+}
+/* the sun over the heroes: a warm disc in the corner and its light across the green */
+html[data-theme='green'] .hg-hero::before,
+html[data-theme='green'] .jo-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+/* the sky is behind the hero's words and cards, never over them */
+html[data-theme='green'] .hg-hero-in,
+html[data-theme='green'] .jo-hero-in {
+  position: relative;
+  z-index: 1;
+}
+html[data-theme='green'][data-mode='day'] .hg-hero::before,
+html[data-theme='green'][data-mode='day'] .jo-hero::before {
+  background:
+    radial-gradient(circle at 7% 10%, rgb(255 244 200 / 0.95) 0, rgb(255 226 140 / 0.7) 3.2%, rgb(var(--sun) / 0.32) 9%, rgb(var(--sun) / 0.12) 24%, transparent 46%),
+    linear-gradient(115deg, rgb(255 236 170 / 0.16), transparent 42%);
+}
+html[data-theme='green'][data-mode='day'] .hg-hero,
+html[data-theme='green'][data-mode='day'] .jo-hero {
+  --deep-a: #06533b;
+  --deep-b: #0a7a4f;
+  --deep-c: #19b87a;
+}
+
+/* ==========================================================================
+   NIGHT: evening
+   ========================================================================== */
+html[data-theme='green'][data-mode='night'] {
+  color-scheme: dark;
+
+  --bg: #07130f;
+  --text: #e8f5ee;
+  --text-dim: #a9c3b7;
+  --text-faint: #7f9c8f;
+  --cream: #e8f5ee;
+
+  /* overlays are light again, fills are dark */
+  --w: 222 244 234;
+  --g: 52 211 153;
+  --k1: 9 26 20;
+  --k2: 11 31 24;
+
+  --gold: #14a06c;
+  --gold-soft: #6ee7b7;
+  --gold-deep: #34d399;
+  --gold-hi1: #d7fbe9;
+  --gold-hi2: #a7f3d0;
+  --gold-hi3: #86efc0;
+  --gold-hi4: #6ee7b7;
+  --gold-hi5: #34d399;
+  --gold-hi6: #1fbf80;
+  --gold-lo1: #0f8a5c;
+  --gold-lo2: #0c7a51;
+  --gold-lo3: #0a6846;
+  --gold-lo4: #074a32;
+
+  --card: #0f231b;
+  --panel: #0f231b;
+  --panel-raised: #142c22;
+  --panel-raised2: #19352a;
+  --surface: rgba(222, 244, 234, 0.045);
+  --surface-2: rgba(222, 244, 234, 0.08);
+  --surface-solid: #0f231b;
+  --line: rgba(222, 244, 234, 0.1);
+  --line-strong: rgba(222, 244, 234, 0.2);
+  --line-gold: rgba(52, 211, 153, 0.45);
+  --on-accent: #ffffff;
+
+  --success: #34d399;
+  --danger: #f87171;
+  --info: #7aa7ff;
+
+  --deep-a: #020d09;
+  --deep-b: #052318;
+  --deep-c: #0a4d35;
+
+  --navy-950: #07130f;
+  --navy-900: #0b1d16;
+  --navy-850: #0f231b;
+  --navy-800: #142c22;
+  --navy-700: #19352a;
+  --navy-600: #214535;
+
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4), 0 14px 34px -18px rgba(0, 0, 0, 0.7);
+  --shadow-2: 0 2px 4px rgba(0, 0, 0, 0.4), 0 36px 70px -30px rgba(0, 0, 0, 0.85);
+  --glow-gold: 0 14px 34px -12px rgba(52, 211, 153, 0.45);
+}
+
+/* the evening sky behind the page: a last warm line on the horizon side, a cool moonlit corner */
+html[data-theme='green'][data-mode='night'] body {
+  background-image:
+    radial-gradient(900px 520px at 0% -6%, rgb(120 150 255 / 0.13), transparent 62%),
+    radial-gradient(800px 460px at 100% 0%, rgb(52 211 153 / 0.1), transparent 60%);
+  background-repeat: no-repeat;
+}
+/* the moon and a few stars over the heroes */
+html[data-theme='green'][data-mode='night'] .hg-hero::before,
+html[data-theme='green'][data-mode='night'] .jo-hero::before {
+  background:
+    radial-gradient(circle at 7% 11%, rgb(236 242 255 / 0.95) 0, rgb(214 226 255 / 0.85) 2.1%, rgb(150 176 255 / 0.2) 2.6%, rgb(120 150 255 / 0.1) 12%, transparent 30%),
+    radial-gradient(1.4px 1.4px at 18% 22%, #fff 50%, transparent 52%),
+    radial-gradient(1.2px 1.2px at 31% 9%, rgb(255 255 255 / 0.9) 50%, transparent 52%),
+    radial-gradient(1.6px 1.6px at 44% 17%, #fff 50%, transparent 52%),
+    radial-gradient(1.1px 1.1px at 57% 7%, rgb(255 255 255 / 0.8) 50%, transparent 52%),
+    radial-gradient(1.4px 1.4px at 69% 20%, #fff 50%, transparent 52%),
+    radial-gradient(1.2px 1.2px at 82% 11%, rgb(255 255 255 / 0.85) 50%, transparent 52%),
+    radial-gradient(1.5px 1.5px at 93% 26%, #fff 50%, transparent 52%),
+    radial-gradient(1.1px 1.1px at 12% 38%, rgb(255 255 255 / 0.7) 50%, transparent 52%),
+    radial-gradient(1.3px 1.3px at 76% 36%, rgb(255 255 255 / 0.75) 50%, transparent 52%),
+    linear-gradient(180deg, rgb(16 28 64 / 0.5), transparent 55%);
+}
+html[data-theme='green'][data-mode='night'] .hg-hero,
+html[data-theme='green'][data-mode='night'] .jo-hero {
+  --deep-a: #030b12;
+  --deep-b: #06231d;
+  --deep-c: #0b5a3d;
+}
+
+/* ---------------------------------------------------------------- night: places fixed for a light page */
+html[data-theme='green'][data-mode='night'] ::selection {
+  background: rgb(var(--g) / 0.5);
+}
+html[data-theme='green'][data-mode='night'] .sidebar {
+  box-shadow: 0 0 40px -20px rgba(0, 0, 0, 0.8);
+}
+html[data-theme='green'][data-mode='night'] .modal {
+  box-shadow: 0 50px 100px -30px rgba(0, 0, 0, 0.9);
+}
+html[data-theme='green'][data-mode='night'] .modal-scrim {
+  background: rgba(2, 10, 7, 0.72);
+}
+html[data-theme='green'][data-mode='night'] .match-alert {
+  background: linear-gradient(180deg, #14301f, #0f231b);
+  box-shadow: 0 30px 70px -26px rgba(0, 0, 0, 0.8);
+}
+
+/* pale green surfaces that were literal: at night they are a shade of the dark page */
+html[data-theme='green'][data-mode='night'] .hg-marquee span,
+html[data-theme='green'][data-mode='night'] .hg .chat,
+html[data-theme='green'][data-mode='night'] .hg .saved,
+html[data-theme='green'][data-mode='night'] .jo-section.is-tint,
+html[data-theme='green'][data-mode='night'] .jo-row.is-head,
+html[data-theme='green'][data-mode='night'] .ag-frame {
+  background: #0b1d16;
+}
+html[data-theme='green'][data-mode='night'] .hg-split,
+html[data-theme='green'][data-mode='night'] .hg .bubble.is-mine,
+html[data-theme='green'][data-mode='night'] .ag-frame-bar {
+  background: #163427;
+}
+html[data-theme='green'][data-mode='night'] .ag-frame-bar i {
+  background: #2c5745;
+}
+html[data-theme='green'][data-mode='night'] .hg-card-fee {
+  background: linear-gradient(160deg, var(--card), #153326);
+}
+html[data-theme='green'][data-mode='night'] .hg-duo-card {
+  background: linear-gradient(180deg, var(--card), #0c1f18);
+}
+html[data-theme='green'][data-mode='night'] .jo-sticky {
+  background: rgb(11 29 22 / 0.97);
+}
+html[data-theme='green'][data-mode='night'] .ab-person {
+  background: rgb(222 244 234 / 0.04);
+}
+html[data-theme='green'][data-mode='night'] .of-chip.is-lock,
+html[data-theme='green'][data-mode='night'] .of-card.is-locked .of-ico,
+html[data-theme='green'][data-mode='night'] .of-docs li > span {
+  background: rgb(222 244 234 / 0.1);
+  color: var(--text-dim);
+}
+html[data-theme='green'][data-mode='night'] .of-docs li.is-ok > span {
+  background: linear-gradient(135deg, #0a7a4f, #12a36c);
+  color: #fff;
+}
+
+/* green ink that was fixed for a white page */
+html[data-theme='green'][data-mode='night'] .jo-run .is-green b {
+  color: var(--gold-soft);
+}
+html[data-theme='green'][data-mode='night'] .jo-end.is-green {
+  fill: var(--gold-soft);
+}
+html[data-theme='green'][data-mode='night'] .of-sign-pad path {
+  stroke: #d7fbe9;
+}
+html[data-theme='green'][data-mode='night'] .up-head h1 span,
+html[data-theme='green'][data-mode='night'] .jo-price b,
+html[data-theme='green'][data-mode='night'] .ab-split b {
+  background-image: linear-gradient(100deg, #34d399, #a7f3d0);
+}
+
+/* amber: the "in setup" marks, the credits column, the lawyer's note */
+html[data-theme='green'][data-mode='night'] .of-sign small,
+html[data-theme='green'][data-mode='night'] .of-soon p,
+html[data-theme='green'][data-mode='night'] .of-benefits em,
+html[data-theme='green'][data-mode='night'] .of-chip.is-soon,
+html[data-theme='green'][data-mode='night'] .up-cell em:not(.is-office),
+html[data-theme='green'][data-mode='night'] .up-col.is-credits strong,
+html[data-theme='green'][data-mode='night'] .up-col.is-credits .up-ico {
+  color: #ffd27a;
+}
+html[data-theme='green'][data-mode='night'] .up-cell:nth-child(2) em {
+  color: var(--gold-soft);
+}
+html[data-theme='green'][data-mode='night'] .of-soon {
+  border-color: rgb(242 181 46 / 0.4);
+  background: linear-gradient(135deg, #2b230f, #1a1a12);
+}
+html[data-theme='green'][data-mode='night'] .mb-chip.is-wallet {
+  background: linear-gradient(180deg, #2b230f, var(--card));
+}
+
+/* red: what was paid to the office (the calculator), kept readable on dark */
+html[data-theme='green'][data-mode='night'] .jo-today .jo-big,
+html[data-theme='green'][data-mode='night'] .jo-bars .is-red b,
+html[data-theme='green'][data-mode='night'] .jo-run .is-red b,
+html[data-theme='green'][data-mode='night'] .tl-ask[data-kind='empty'] .tl-lead b:last-child {
+  color: #ff6b5e;
+}
+html[data-theme='green'][data-mode='night'] .jo-end.is-red {
+  fill: #ff6b5e;
+}
+html[data-theme='green'][data-mode='night'] .jo-bars .is-red small,
+html[data-theme='green'][data-mode='night'] .jo-kicker-red,
+html[data-theme='green'][data-mode='night'] .jo-today .jo-total em,
+html[data-theme='green'][data-mode='night'] .jo-today .jo-total small {
+  color: #ffa39b;
+}
+
+/* the Google result preview keeps Google's own dark colours */
+html[data-theme='green'][data-mode='night'] .ag-serp b {
+  color: #8ab4f8;
+}
+html[data-theme='green'][data-mode='night'] .ag-serp small {
+  color: #7fd6a8;
+}
+html[data-theme='green'][data-mode='night'] .agp-mini {
+  background: linear-gradient(180deg, var(--card), #12281f);
+}
+html[data-theme='green'][data-mode='night'] .public-bar,
+html[data-theme='green'][data-mode='night'] .demo-tag {
+  background: rgb(15 35 27 / 0.97) !important;
+}
