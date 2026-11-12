@@ -50,7 +50,7 @@ const land = async (p, ms = 2200) => {
 // the main address
 let s = await land('/')
 check('the main address is the green and white demo', s.path === `${base}/` && s.theme === 'green' && s.hero, JSON.stringify(s))
-check('its title carries both lines of the name', s.title === 'NadlanUP | המתווכים החופשיים')
+check("its title carries the office's name", s.title === 'NadlanUP | משרד תיווך ארצי', s.title)
 const meta = await page.evaluate(() => ({ og: document.querySelector('meta[property="og:image"]')?.content, twitter: document.querySelector('meta[name="twitter:image"]')?.content, ogTitle: document.querySelector('meta[property="og:title"]')?.content, desc: document.querySelector('meta[property="og:description"]')?.content, icon: document.querySelector('link[rel="icon"]')?.getAttribute('href') }))
 // the address in the page is always the published one, even when this runs against a local copy
 check('the share image is the NadlanUP logo card, at the main address', meta.og === `https://isru-digital.github.io${base}/og-green.jpg` && meta.twitter === meta.og, JSON.stringify(meta))
@@ -60,7 +60,7 @@ const img = await page.evaluate(async (u) => {
   return { ok: r.ok, type: r.headers.get('content-type'), w: b.width, h: b.height }
 }, `${origin}${base}/og-green.jpg`)
 check('... it loads, and it is 1200 x 630', img.ok && img.type.includes('jpeg') && img.w === 1200 && img.h === 630, JSON.stringify(img))
-check('the share text speaks about the office (0% to the office), not the old system line', meta.ogTitle.includes('המתווכים החופשיים') && meta.desc.includes('0% עמלה למשרד') && !meta.desc.includes('למערכת'), meta.desc)
+check('the share text speaks about the office (0% to the office), not the old system line', meta.ogTitle === 'NadlanUP | משרד תיווך ארצי' && meta.desc.includes('מתווכים לעסקאות') && meta.desc.includes('0% עמלה למשרד') && !meta.desc.includes('למערכת'), meta.desc)
 const html = await (await fetch(origin + base + '/')).text()
 check('nothing in the page points to the old navy files or to /green/', !html.includes('og.jpg') && !html.includes('/green/') && !html.includes('favicon.png') && !html.includes('apple-touch-icon.png'))
 

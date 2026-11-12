@@ -37,9 +37,10 @@ const gains: { icon: LucideIcon; title: string; text: string }[] = [
 
 const rows: { what: string; community: boolean; office: boolean }[] = [
   { what: 'קהילת מתווכים ארצית ופיד שת"פים', community: true, office: true },
-  { what: 'CRM למתווך ופולדר דיגיטלי', community: true, office: true },
-  { what: 'דף נחיתה אישי לפי תבנית', community: true, office: true },
+  { what: 'CRM ללקוחות ולנכסים', community: true, office: true },
   { what: 'מוואטסאפ למערכת, מדד אמינות והתאמות', community: true, office: true },
+  { what: 'דף נחיתה אישי לפי תבנית', community: false, office: true },
+  { what: 'פולדר דיגיטלי ללקוח', community: false, office: true },
   { what: 'הסוכן שלנו: דף אישי מרשים שמופיע בגוגל', community: false, office: true },
   { what: 'שם ומותג של משרד תיווך ארצי', community: false, office: true },
   { what: 'ליווי וניהול מקצועי של צוות המשרד', community: false, office: true },

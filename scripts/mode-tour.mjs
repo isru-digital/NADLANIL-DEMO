@@ -14,10 +14,10 @@ const page = await browser.newPage()
 await page.setViewport(device === 'phone' ? { width: 390, height: 844, isMobile: true, hasTouch: true } : { width: 1440, height: 900 })
 const wait = (ms) => new Promise((r) => setTimeout(r, ms))
 await page.goto(base + '/', { waitUntil: 'load' })
-await page.evaluate((m) => {
+await page.evaluate((m, member) => {
   localStorage.setItem('nadlanup-mode-v1', JSON.stringify({ mode: m, until: Date.now() + 9e9 }))
-  localStorage.setItem('nadlanup-member-v1', 'office')
-}, mode)
+  localStorage.setItem('nadlanup-member-v1', member)
+}, mode, process.env.MEMBER ?? 'office')
 const routes = (process.env.ROUTES ?? '/,/join,/join/office,/about,/upgrade,/app,/app/community,/app/brokers,/app/crm,/app/builder,/app/folder,/app/office,/app/office/leads,/app/office/report,/app/office/pitch,/app/office/growth,/app/office/deal,/app/office/assistant,/app/office/benefits,/app/office/badge,/app/agent').split(',').map((r) => (r === 'home' ? '/' : r.startsWith('/') ? r : '/' + r)) // ROUTES may be written without the leading slash (Git Bash rewrites it)
 for (const r of routes) {
   await page.goto(base + r, { waitUntil: 'load' })

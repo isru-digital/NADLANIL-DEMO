@@ -11,7 +11,9 @@ const browser = await puppeteer.launch({ executablePath: 'C:/Program Files/Googl
 const wait = (ms) => new Promise((r) => setTimeout(r, ms))
 const results = []
 const check = (name, ok, detail = '') => results.push(`${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? '  [' + detail + ']' : ''}`)
+// the old second line of the name: gone everywhere since the community got its own name (see kehila-check.mjs)
 const SUB = 'המתווכים החופשיים'
+const noSub = (page) => page.evaluate((old) => !document.querySelector('.logo-sub, .hg-pill-sub, .hg-final-sub') && !document.body.innerText.includes(old) && !document.title.includes(old), SUB)
 
 // what a visitor can read on the page, without the calculator (the one place the example fee stays)
 const pageText = (page, dropCalc = false) =>
@@ -60,8 +62,8 @@ for (const [label, vp, phone] of [
     about: [...document.querySelectorAll('.hg-nav-links a, .foot-links a')].filter((a) => a.textContent === 'אודות' && a.getAttribute('href')?.endsWith('/about')).length,
     overflowX: document.documentElement.scrollWidth - document.documentElement.clientWidth,
   }))
-  check(`${tag}: home: "${SUB}" under the logo in the menu, in the hero, in the closing panel and in the footer`, st.navSub === SUB && st.pill === SUB && st.final === SUB && st.foot === SUB, JSON.stringify(st))
-  check(`${tag}: home: the tab title carries both lines of the name`, st.title.startsWith('NadlanUP | ' + SUB), st.title)
+  check(`${tag}: home: the logo stands alone, the old second line is gone`, await noSub(page), JSON.stringify(st))
+  check(`${tag}: home: the tab title carries the office's name`, st.title.startsWith('NadlanUP | משרד תיווך ארצי'), st.title)
   check(`${tag}: home: links to the about page (menu and footer)`, st.about === 2, String(st.about))
   check(`${tag}: home: no sideways overflow`, st.overflowX <= 1, `${st.overflowX}px`)
   await page.screenshot({ path: `${out}/a-${label}-1-home.png` })
@@ -70,7 +72,7 @@ for (const [label, vp, phone] of [
   await page.goto(green + '/join', { waitUntil: 'load' })
   await wait(1300)
   let t = await pageText(page)
-  check(`${tag}: join: the logo has its second line, the office shows 0% and the fee of 689 a month`, (await page.evaluate(() => document.querySelector('.jc-top .logo-sub')?.textContent)) === SUB && t.includes('דמי חבר: 689 ₪ לחודש') && !t.includes('מחיר יקבע') && !t.includes('אחרי תשלום') && (await page.evaluate(() => document.querySelector('.jc-card.is-office .jc-price b')?.textContent)) === '0%')
+  check(`${tag}: join: the logo stands alone, the office shows 0% and the fee of 689 a month`, (await noSub(page)) && t.includes('דמי חבר: 689 ₪ לחודש') && !t.includes('מחיר יקבע') && !t.includes('אחרי תשלום') && (await page.evaluate(() => document.querySelector('.jc-card.is-office .jc-price b')?.textContent)) === '0%')
   await page.screenshot({ path: `${out}/a-${label}-2-join.png` })
 
   await page.goto(green + '/join/office', { waitUntil: 'load' })
@@ -123,12 +125,12 @@ for (const [label, vp, phone] of [
     badge: [...document.querySelectorAll('.ms-badge')].filter((n) => n.getBoundingClientRect().width > 0).length,
     overflowX: document.documentElement.scrollWidth - document.documentElement.clientWidth,
   }))
-  check(`${tag}: app: the logo has its second line, no sideways overflow`, st.sub.length === 1 && st.sub[0] === SUB && st.overflowX <= 1, JSON.stringify(st))
+  check(`${tag}: app: the logo stands alone, no sideways overflow`, st.sub.length === 0 && st.overflowX <= 1, JSON.stringify(st))
   if (!phone) check(`${tag}: app: an office member has the "חבר משרד" mark next to the name`, st.badge === 1, String(st.badge))
   await page.screenshot({ path: `${out}/a-${label}-6-app-office.png` })
   await flip(page, 'community')
   await wait(700)
-  if (!phone) check(`${tag}: app: the mark goes away for a community member`, (await page.evaluate(() => document.querySelectorAll('.ms-badge').length)) === 0)
+  if (!phone) check(`${tag}: app: the mark goes away for a community member`, (await page.evaluate(() => document.querySelectorAll('.side-user .ms-badge').length)) === 0)
 
   // ---- about
   await page.goto(green + '/about', { waitUntil: 'load' })
@@ -144,7 +146,7 @@ for (const [label, vp, phone] of [
   }))
   t = await pageText(page)
   check(`${tag}: about: the page exists with its four headings`, st.path.endsWith('/about') && ['מי אנחנו', 'מה אנחנו עושים', 'מאיפה באנו ולאן הולכים', 'הצוות'].every((h) => st.tags.includes(h)), JSON.stringify(st.tags))
-  check(`${tag}: about: the name with its second line, and 0% / 100%`, st.h1.includes('NadlanUP') && st.h1.includes(SUB) && st.split.includes('0%') && st.split.includes('100%') && st.sub === SUB, st.h1)
+  check(`${tag}: about: the name alone, and 0% / 100%`, st.h1.includes('NadlanUP') && !st.h1.includes(SUB) && st.split.includes('0%') && st.split.includes('100%') && !st.sub, st.h1)
   check(`${tag}: about: no invented facts: no years, no counts, no prices, team names "ימולאו בהמשך"`, st.team.includes('השמות ימולאו בהמשך') && !/\d{2,}(?!%)/.test(t.replace(/100%/g, '')) && !t.includes('₪') && !/[\u2013\u2014]/.test(t), '')
   check(`${tag}: about: no sideways overflow`, st.overflowX <= 1, `${st.overflowX}px`)
   await page.screenshot({ path: `${out}/a-${label}-7-about.png` })

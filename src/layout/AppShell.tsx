@@ -16,7 +16,7 @@ import {
 } from 'lucide-react'
 import { CURRENT_BROKER_ID, PLATFORM_TAGLINE } from '../config'
 import { extraNav, extraResets, shellSlots } from '../config/navExtras'
-import type { LucideIcon } from 'lucide-react'
+import type { ShellNav } from '../config/navExtras'
 import { brokerById } from '../data/demo'
 import { useStore } from '../store'
 import { Avatar, BackButton, DemoTag, EASE, Logo, Modal } from '../components/ui'
@@ -25,9 +25,9 @@ import BetaLab, { labItems } from '../components/BetaLab'
 import type { LabView } from '../components/BetaLab'
 import '../styles/shell.css'
 
-type NavItem = { to: string; label: string; short?: string; icon: LucideIcon; end?: boolean }
+type NavItem = ShellNav
 
-const baseNav = [
+const baseNav: NavItem[] = [
   { to: '/app', label: 'דשבורד', icon: LayoutDashboard, end: true },
   { to: '/app/community', label: 'קהילה', icon: MessagesSquare },
   { to: '/app/brokers', label: 'אינדקס מתווכים', short: 'מתווכים', icon: Users },
@@ -47,7 +47,9 @@ function FrozenOutlet() {
 }
 
 export default function AppShell() {
-  const nav: NavItem[] = [...baseNav, ...extraNav]
+  const all: NavItem[] = [...baseNav, ...extraNav]
+  // the green version may change the menu for the member who is looking (see config/navExtras)
+  const nav = shellSlots.useNav ? shellSlots.useNav(all) : all
   const location = useLocation()
   const { reset, toast } = useStore()
   const me = brokerById(CURRENT_BROKER_ID)
@@ -56,6 +58,8 @@ export default function AppShell() {
   const Bar = shellSlots.bar
   const Badge = shellSlots.badge
   const Lab = shellSlots.lab ?? BetaLab
+  const Brand = shellSlots.brand
+  const Banner = shellSlots.banner
 
   useEffect(() => {
     setMoreOpen(false)
@@ -75,9 +79,13 @@ export default function AppShell() {
       </a>
 
       <aside className="sidebar">
-        <Link to="/" className="sidebar-brand" aria-label="חזרה לדף הבית">
-          <Logo size={30} withName />
-        </Link>
+        {Brand ? (
+          <Brand place="side" />
+        ) : (
+          <Link to="/" className="sidebar-brand" aria-label="חזרה לדף הבית">
+            <Logo size={30} withName />
+          </Link>
+        )}
 
         <nav className="side-nav" aria-label="ניווט ראשי">
           {nav.map((item) => (
@@ -93,6 +101,11 @@ export default function AppShell() {
                   )}
                   <item.icon />
                   <span>{item.label}</span>
+                  {item.locked && (
+                    <em className="nav-lock" title={item.locked} aria-label={item.locked}>
+                      <Lock />
+                    </em>
+                  )}
                 </>
               )}
             </NavLink>
@@ -154,9 +167,13 @@ export default function AppShell() {
       <header className={`topbar${Bar ? ' has-bar' : ''}`}>
         <div className="topbar-start">
           <BackButton fallback="/" className="is-icon" />
-          <Link to="/" className="topbar-brand" aria-label="דף הבית">
-            <Logo size={26} withName />
-          </Link>
+          {Brand ? (
+            <Brand place="top" />
+          ) : (
+            <Link to="/" className="topbar-brand" aria-label="דף הבית">
+              <Logo size={26} withName />
+            </Link>
+          )}
         </div>
         <DemoTag />
         {Bar && (
@@ -171,6 +188,7 @@ export default function AppShell() {
           <BackButton fallback="/" />
           {Bar && <Bar />}
         </div>
+        {Banner && <Banner />}
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={location.pathname}
@@ -210,6 +228,12 @@ export default function AppShell() {
             <Link key={item.to} to={item.to} className="more-link">
               <item.icon />
               <span>{item.label}</span>
+              {item.locked && (
+                <em className="nav-lock is-text">
+                  <Lock />
+                  {item.locked}
+                </em>
+              )}
             </Link>
           ))}
           <button

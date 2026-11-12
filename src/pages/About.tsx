@@ -2,7 +2,8 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowLeft, BadgeCheck, Coins, UserRound, Users } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { PLATFORM_NAME, PLATFORM_SUBNAME } from '../config'
+import { PLATFORM_NAME } from '../config'
+import { COMMUNITY_NAME } from '../config/community'
 import { BackButton, DemoTag, EASE, Logo, Reveal } from '../components/ui'
 import '../styles/join-green.css'
 import '../styles/about.css'
@@ -13,9 +14,9 @@ import '../styles/about.css'
  * numbers of brokers, no biographies: those are filled in when they are real.
  */
 const layers: { icon: LucideIcon; tag: string; title: string; text: string }[] = [
-  { icon: Users, tag: 'תמיד בחינם', title: 'הקהילה', text: 'פיד לפי נושאים, אינדקס מתווכים, CRM, דף נחיתה ופולדר ללקוח. מי שנכנס מקבל ערך אמיתי, בלי לשלם.' },
+  { icon: Users, tag: 'הקהילה, תמיד בחינם', title: COMMUNITY_NAME, text: 'פיד לפי נושאים, אינדקס מתווכים ו-CRM. שיתוף נכסים, איתור קונים והתייעצויות, בלי לשלם.' },
   { icon: Coins, tag: 'לפי שימוש', title: 'כלים מתקדמים', text: 'למי שרוצה יותר בלי להצטרף למשרד: כלים מתקדמים שפותחים רק כשצריך אותם.' },
-  { icon: BadgeCheck, tag: 'המסלול המלא', title: 'המשרד', text: 'שם ומותג של משרד ארצי, דף אישי, צוות שמלווה, וכל הכלים המתקדמים כלולים. והעמלה כולה שלכם.' },
+  { icon: BadgeCheck, tag: 'המסלול המלא', title: 'המשרד', text: 'שם ומותג של משרד ארצי, דף אישי, דף נחיתה ופולדר ללקוח, צוות שמלווה, וכל הכלים המתקדמים כלולים. והעמלה כולה שלכם.' },
 ]
 
 export default function About() {
@@ -44,8 +45,6 @@ export default function About() {
           </motion.span>
           <motion.h1 initial={{ opacity: 0, y: 22 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.1, ease: EASE }}>
             {PLATFORM_NAME}
-            <br />
-            <span>{PLATFORM_SUBNAME}</span>
           </motion.h1>
           <motion.p className="jo-sub" initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.2, ease: EASE }}>
             משרד תיווך בפריסה ארצית, שבו העמלה נשארת אצל מי שעשה את העבודה.
@@ -116,7 +115,7 @@ export default function About() {
             <Reveal delay={0.08} className="ab-road-card is-next">
               <small>לאן הולכים</small>
               <h3>קודם קהילה, ואז UP</h3>
-              <p>הקהילה החינמית מחברת מתווכים מכל הארץ ונותנת ערך לכל מי שנכנס. המשרד הוא השלב הבא, למי שרוצה את כל הכלים, את המותג ואת הצוות.</p>
+              <p>הקהילה החינמית, {COMMUNITY_NAME}, מחברת מתווכים מכל הארץ ונותנת ערך לכל מי שנכנס. המשרד הוא השלב הבא, למי שרוצה את כל הכלים, את המותג ואת הצוות.</p>
             </Reveal>
           </div>
         </div>

@@ -4,10 +4,11 @@ import { ArrowLeft, BadgeCheck, Check, Lock, Users } from 'lucide-react'
 import { BackButton, DemoTag, EASE, Logo } from '../components/ui'
 import { OFFICE_FEE, OFFICE_NAME } from '../config/office'
 import { useMember } from '../config/member'
+import { COMMUNITY_HOME, COMMUNITY_NAME } from '../config/community'
 import '../styles/join-green.css'
 
-const community = ['קהילת מתווכים ארצית ופיד שת"פים', 'CRM למתווך ופולדר דיגיטלי', 'דף נחיתה אישי לפי תבנית', 'מוואטסאפ למערכת, מדד אמינות והתאמות', 'כלים מתקדמים לפי שימוש, בקרדיטים']
-const office = ['כל מה שבקהילה', 'כל הכלים המתקדמים כלולים, במכסה חודשית', 'הסוכן שלנו: דף אישי מרשים שמופיע בגוגל', 'שם ומותג של משרד תיווך ארצי', 'ליווי וניהול מקצועי של צוות המשרד']
+const community = ['קהילת מתווכים ארצית ופיד שת"פים', 'CRM ללקוחות ולנכסים', 'מוואטסאפ למערכת, מדד אמינות והתאמות', 'כלים מתקדמים לפי שימוש, בקרדיטים']
+const office = ['כל מה שבקהילה', 'דף נחיתה אישי ופולדר דיגיטלי ללקוח', 'כל הכלים המתקדמים כלולים, במכסה חודשית', 'הסוכן שלנו: דף אישי מרשים שמופיע בגוגל', 'שם ומותג של משרד תיווך ארצי', 'ליווי וניהול מקצועי של צוות המשרד']
 
 /** The first screen of joining (green version): the free community, or the office (0% of the commission, a fixed fee). */
 export default function JoinChoice() {
@@ -62,10 +63,10 @@ export default function JoinChoice() {
             <span className="jc-icon">
               <Users />
             </span>
-            <h2>הקהילה</h2>
+            <h2>{COMMUNITY_NAME}</h2>
             <div className="jc-price">
               <b>חינם</b>
-              <small>בלי כרטיס אשראי</small>
+              <small>הקהילה החינמית. בלי כרטיס אשראי</small>
             </div>
             <p className="jc-sub">להכיר את המערכת, לעבוד עם מתווכים בכל הארץ ולהתחיל לשתף פעולה.</p>
             <ul>
@@ -75,8 +76,8 @@ export default function JoinChoice() {
                 </li>
               ))}
             </ul>
-            <Link to="/join/community" className="btn btn-ghost btn-lg jc-cta">
-              להצטרף לקהילה, בחינם
+            <Link to={COMMUNITY_HOME} className="btn btn-ghost btn-lg jc-cta">
+              לדף הקהילה, בחינם
               <ArrowLeft />
             </Link>
           </motion.article>

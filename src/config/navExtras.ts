@@ -22,7 +22,19 @@ export function registerReset(fn: () => void) {
  * a mark next to the user's name, and its own wrapper around the beta lab (the three layers).
  */
 type LabProps = { view: null | string; setView: (v: null | string) => void }
-export const shellSlots: { bar?: ComponentType; badge?: ComponentType; lab?: ComponentType<LabProps> } = {}
+/** One line of the app's menu. `locked` is the note shown on a line that is there but closed to this member. */
+export type ShellNav = { to: string; label: string; short?: string; icon: LucideIcon; end?: boolean; locked?: string }
+export const shellSlots: {
+  bar?: ComponentType
+  badge?: ComponentType
+  lab?: ComponentType<LabProps>
+  /** a hook that may drop, lock or reorder the menu's lines for the member who is looking */
+  useNav?: (items: ShellNav[]) => ShellNav[]
+  /** the name at the top of the menu and of the phone's top bar, in place of the logo */
+  brand?: ComponentType<{ place: 'side' | 'top' }>
+  /** a strip above every screen inside the app */
+  banner?: ComponentType
+} = {}
 export function registerShell(slots: typeof shellSlots) {
   Object.assign(shellSlots, slots)
 }

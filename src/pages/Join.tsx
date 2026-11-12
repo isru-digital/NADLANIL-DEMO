@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import type { FormEvent } from 'react'
+import type { FormEvent, ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ArrowLeft, ArrowRight, Building2, Check, Handshake, Home, LayoutTemplate, Radar, ShieldCheck, User } from 'lucide-react'
@@ -11,13 +11,20 @@ import { BackButton, DemoTag, EASE, Logo } from '../components/ui'
 import '../styles/join.css'
 import '../styles/topics.css'
 
-const steps = ['הפרטים שלך', 'על הקהילה', 'הערים שלך', 'הנכס הראשון', 'הדף העסקי שלך']
+const allSteps = ['הפרטים שלך', 'על הקהילה', 'הערים שלך', 'הנכס הראשון', 'הדף העסקי שלך']
 const whyIcons = [Radar, Handshake, ShieldCheck]
 
 type Office = 'office' | 'solo'
 
+/**
+ * What the green version changes when the steps run under the community's own name: its name at the top, where
+ * the steps lead, and no landing page step (the landing page belongs to the office there).
+ */
+export type JoinCommunity = { brand: ReactNode; home: string; after: string; foot: string }
+
 /** Onboarding for a broker who just joined. Visual demo only: nothing is sent anywhere. */
-export default function Join() {
+export default function Join({ community }: { community?: JoinCommunity }) {
+  const steps = community ? allSteps.slice(0, 4) : allSteps
   const navigate = useNavigate()
   const { myCities, setMyCities, addCrm, setBuilder, builder, setOnboarded, toast } = useStore()
   const persona = brokerById(CURRENT_BROKER_ID)
@@ -77,26 +84,34 @@ export default function Join() {
     setBuilder({ propertyIds: [id, ...builder.propertyIds].slice(0, 3) })
     setAdded(true)
     toast('הנכס הראשון נוסף ל-CRM')
-    go(4)
+    afterProperty()
   }
 
   const finish = () => {
     setOnboarded(true)
-    navigate('/app')
+    navigate(community?.after ?? '/app')
   }
+  // under the community's name there is no landing page step: the property step is the last one
+  const afterProperty = () => (community ? finish() : go(4))
 
   return (
     <div className="join grain">
       <header className="join-top">
         <div className="join-top-start">
-          <BackButton fallback="/" className="is-icon" />
-          <Link to="/" aria-label="דף הבית">
-            <Logo size={28} withName />
-          </Link>
+          <BackButton fallback={community?.home ?? '/'} className="is-icon" />
+          {community ? (
+            <Link to={community.home} className="join-brand" aria-label="דף הקהילה">
+              {community.brand}
+            </Link>
+          ) : (
+            <Link to="/" aria-label="דף הבית">
+              <Logo size={28} withName />
+            </Link>
+          )}
         </div>
         <div className="join-top-end">
           <DemoTag />
-          <Link to="/app" className="join-skip">
+          <Link to={community?.after ?? '/app'} className="join-skip">
             דילוג לדמו
           </Link>
         </div>
@@ -350,7 +365,7 @@ export default function Join() {
                     <ArrowRight />
                     חזרה
                   </button>
-                  <button className="btn btn-ghost" onClick={() => go(4)}>
+                  <button className="btn btn-ghost" onClick={afterProperty}>
                     אעלה אחר כך
                   </button>
                   <button className="btn btn-gold btn-lg" onClick={addFirstProperty}>
@@ -409,9 +424,7 @@ export default function Join() {
       </main>
 
       <footer className="join-foot">
-        <span>
-          {PLATFORM_NAME} · {PLATFORM_TAGLINE.join(' · ')}
-        </span>
+        <span>{community?.foot ?? `${PLATFORM_NAME} · ${PLATFORM_TAGLINE.join(' · ')}`}</span>
       </footer>
     </div>
   )

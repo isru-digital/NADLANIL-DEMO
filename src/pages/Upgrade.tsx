@@ -6,6 +6,7 @@ import { PLATFORM_NAME } from '../config'
 import { OFFICE_FEE, OFFICE_NAME, PRICE_TBD } from '../config/office'
 import { useMember } from '../config/member'
 import { PAID_IDS } from '../config/tiers'
+import { COMMUNITY_JOIN, COMMUNITY_NAME } from '../config/community'
 import { BackButton, DemoTag, EASE, Logo, Reveal } from '../components/ui'
 import { labItems } from '../components/BetaLab'
 import '../styles/join-green.css'
@@ -27,7 +28,6 @@ const groups: { title: string; sub: string; rows: Row[] }[] = [
     rows: [
       { what: 'פיד הקהילה לפי נושאים ואינדקס מתווכים', cells: [true, true, true] },
       { what: 'CRM ופרסום נכס לקהילה', cells: [true, true, true] },
-      { what: 'בונה דף נחיתה ופולדר ללקוח', cells: [true, true, true] },
       { what: 'מוואטסאפ למערכת', note: 'מדביקים הודעה, מקבלים נכס או בקשה מסודרים', cells: [true, true, true] },
       { what: 'מדד אמינות והתאמות', cells: [true, true, true] },
       { what: 'בקשה בוערת', cells: ['1 בחודש', 'בקרדיטים', 'במכסה'] },
@@ -43,6 +43,8 @@ const groups: { title: string; sub: string; rows: Row[] }[] = [
     sub: 'מה שרק משרד יכול לתת',
     rows: [
       { what: '0% עמלה למשרד, 100% למתווך', cells: [false, false, true] },
+      { what: 'בונה דף נחיתה', note: 'דף נחיתה אישי לפי תבנית', cells: [false, false, true], to: '/app/builder' },
+      { what: 'פולדר דיגיטלי', note: 'תיק נכסים ממותג ללקוח, בקישור אחד', cells: [false, false, true], to: '/app/folder' },
       { what: 'הסוכן שלנו', note: 'דף אישי ממותג שמופיע בגוגל', cells: [false, false, true], to: '/app/agent' },
       { what: 'מכונת הלידים של המשרד', note: 'קמפיינים ארציים, והלידים מחולקים לפי אזור', cells: [false, false, true], to: '/app/office/leads' },
       { what: 'דוח שבועי אוטומטי למוכר', cells: [false, false, true], to: '/app/office/report' },
@@ -57,7 +59,7 @@ const groups: { title: string; sub: string; rows: Row[] }[] = [
 ]
 
 const tiers: { key: 'community' | 'credits' | 'office'; icon: LucideIcon; name: string; price: string; unit: string }[] = [
-  { key: 'community', icon: Users, name: 'הקהילה', price: 'חינם', unit: 'תמיד' },
+  { key: 'community', icon: Users, name: COMMUNITY_NAME, price: 'חינם', unit: 'הקהילה, תמיד' },
   { key: 'credits', icon: Coins, name: 'קרדיטים', price: 'לפי שימוש', unit: `מחיר קרדיט: ${PRICE_TBD}` },
   { key: 'office', icon: BadgeCheck, name: 'המשרד', price: OFFICE_FEE, unit: '0% עמלה למשרד' },
 ]
@@ -153,7 +155,7 @@ export default function Upgrade() {
           <div className="up-cta" role="row">
             <span className="up-corner" />
             <div>
-              <Link to="/join/community" className="btn btn-ghost">
+              <Link to={COMMUNITY_JOIN} className="btn btn-ghost">
                 להצטרף בחינם
               </Link>
             </div>

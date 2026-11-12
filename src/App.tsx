@@ -14,18 +14,31 @@ import FolderPublic from './pages/FolderPublic'
 import Join from './pages/Join'
 import VersionSwitch from './components/VersionSwitch'
 
-export default function App({ home, join, routes, appRoutes, overlay, switcher }: { home?: ReactElement; join?: ReactElement; routes?: ReactNode; appRoutes?: ReactNode; overlay?: ReactNode; switcher?: ReactNode }) {
+type Props = {
+  home?: ReactElement
+  join?: ReactElement
+  routes?: ReactNode
+  appRoutes?: ReactNode
+  overlay?: ReactNode
+  switcher?: ReactNode
+  /** the first screen inside the app, in place of the dashboard */
+  appIndex?: ReactElement
+  /** wraps the landing page builder and the folder, so a look can close them to some members */
+  gate?: (id: 'builder' | 'folder', screen: ReactElement) => ReactElement
+}
+
+export default function App({ home, join, routes, appRoutes, overlay, switcher, appIndex, gate }: Props) {
   return (
     <>
       <Routes>
         <Route path="/" element={home ?? <Home />} />
         <Route path="/app" element={<AppShell />}>
-          <Route index element={<Dashboard />} />
+          <Route index element={appIndex ?? <Dashboard />} />
           <Route path="community" element={<Community />} />
           <Route path="brokers" element={<Brokers />} />
           <Route path="crm" element={<Crm />} />
-          <Route path="builder" element={<Builder />} />
-          <Route path="folder" element={<FolderPage />} />
+          <Route path="builder" element={gate ? gate('builder', <Builder />) : <Builder />} />
+          <Route path="folder" element={gate ? gate('folder', <FolderPage />) : <FolderPage />} />
           {appRoutes}
         </Route>
         <Route path="/join" element={join ?? <Join />} />

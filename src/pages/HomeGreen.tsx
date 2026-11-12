@@ -2,7 +2,9 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowLeft, Heart } from 'lucide-react'
-import { PLATFORM_SUBNAME, PLATFORM_NAME, PLATFORM_TAGLINE, asset } from '../config'
+import { PLATFORM_NAME, PLATFORM_TAGLINE, asset } from '../config'
+import { COMMUNITY_DESC, COMMUNITY_HOME, COMMUNITY_NAME } from '../config/community'
+import CommunityBrand from '../community/CommunityBrand'
 import { brokers, formatPriceShort } from '../data/demo'
 import { Avatar, DemoTag, EASE, Logo, Reveal } from '../components/ui'
 import NetworkMap from '../components/NetworkMap'
@@ -47,6 +49,7 @@ export default function HomeGreen() {
             <a href="#shift">מה משתנה</a>
             <a href="#agent">הסוכן שלנו</a>
             <Link to="/join/office">המשרד</Link>
+            <Link to={COMMUNITY_HOME}>הקהילה</Link>
             <a href="#features">מה בפנים</a>
             <a href="#behind">מאחורי הקלעים</a>
             <Link to="/about">אודות</Link>
@@ -74,7 +77,6 @@ export default function HomeGreen() {
             <motion.div className="hg-brand" {...rise(0)}>
               <span className="hg-pill is-logo">
                 <img src={asset('brand/nadlanup-ongreen.png')} alt={PLATFORM_NAME} />
-                <em className="hg-pill-sub">{PLATFORM_SUBNAME}</em>
               </span>
               <span className="hg-tags">
                 {PLATFORM_TAGLINE.map((part) => {
@@ -199,6 +201,22 @@ export default function HomeGreen() {
         </div>
       </section>
 
+      {/* ------------------------------------------------- the door to the free community, under its own name */}
+      <section className="hg-kehila" id="community">
+        <div className="container">
+          <Reveal className="hg-kehila-card">
+            <CommunityBrand size="lg" />
+            <div>
+              <small>הקהילה החינמית</small>
+              <p>{COMMUNITY_DESC}</p>
+            </div>
+            <Link to={COMMUNITY_HOME} className="btn btn-gold btn-lg" aria-label={`לדף הקהילה ${COMMUNITY_NAME}`}>
+              לדף הקהילה <ArrowLeft />
+            </Link>
+          </Reveal>
+        </div>
+      </section>
+
       {/* ------------------------------------------------- the agent area and its questionnaire */}
       <AgentTeaser />
 
@@ -281,7 +299,6 @@ export default function HomeGreen() {
           <Reveal className="hg-final-card">
             <i className="hg-grid" aria-hidden />
             <img className="hg-final-logo" src={asset('brand/nadlanup-lockup-ongreen.png')} alt={PLATFORM_NAME} />
-            <span className="hg-final-sub">{PLATFORM_SUBNAME}</span>
             <h2>בואו להיות חלק מהמהפכה</h2>
             <Link to="/join" className="btn btn-white btn-lg">
               אני בפנים
@@ -304,7 +321,7 @@ export default function HomeGreen() {
             <Link to="/join/office">המשרד</Link>
             <Link to="/app">אזור החבר</Link>
             <Link to="/app/agent">הסוכן שלנו</Link>
-            <Link to="/app/community">קהילה</Link>
+            <Link to={COMMUNITY_HOME}>הקהילה: {COMMUNITY_NAME}</Link>
             <Link to="/app/brokers">אינדקס מתווכים</Link>
             <Link to="/b/demo">דף נחיתה לדוגמה</Link>
             <Link to="/f/demo">פולדר לדוגמה</Link>

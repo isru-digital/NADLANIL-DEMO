@@ -6,7 +6,11 @@ import { BadgeCheck, Building2 } from 'lucide-react'
 import { start } from './bootstrap'
 import { dayNight } from './config/dayNight'
 import DayNightSwitch from './components/DayNightSwitch'
-import { PLATFORM_NAME, PLATFORM_SUBNAME } from './config'
+import { PLATFORM_NAME } from './config'
+import { COMMUNITY_FEED, COMMUNITY_FROM, COMMUNITY_HOME, COMMUNITY_JOIN, COMMUNITY_NAME } from './config/community'
+import CommunityHome from './community/CommunityHome'
+import CommunityBrand from './community/CommunityBrand'
+import { AppIndex, OfficeOnly, ShellBrand, UpgradeBanner, useCommunityNav } from './community/CommunityShell'
 import HomeGreen from './pages/HomeGreen'
 import Join from './pages/Join'
 import AgentArea from './agent/AgentArea'
@@ -46,6 +50,9 @@ registerReset(() => memberActions.reset())
 registerReset(() => walletActions.reset())
 // the top bar (the view switch with the wallet or the quota), the office member's mark, and the lab in three layers
 registerShell({ bar: MemberBar, badge: MemberBadge, lab: TieredLab })
+// the community under its own name: its name at the top for a community member, no dashboard and two locked lines
+// in the menu, and a strip that leads to the office's page
+registerShell({ useNav: useCommunityNav, brand: ShellBrand, banner: UpgradeBanner })
 registerLab({
   Chip: LabChip,
   Badge: LabBadge,
@@ -66,6 +73,11 @@ registerActions({
   copied: 'הקישור הועתק',
 })
 
+// joining the community runs under its own name, ends in the feed, and has no landing page step
+const joinCommunity = (
+  <Join community={{ brand: <CommunityBrand size="sm" />, home: COMMUNITY_HOME, after: COMMUNITY_FEED, foot: `${COMMUNITY_NAME}, ${COMMUNITY_FROM}` }} />
+)
+
 start(<HomeGreen />, {
   // joining is a choice: the free community (the existing onboarding) or the office
   join: <JoinChoice />,
@@ -78,7 +90,9 @@ start(<HomeGreen />, {
   ),
   routes: (
     <>
-      <Route path="/join/community" element={<Join />} />
+      <Route path={COMMUNITY_HOME} element={<CommunityHome />} />
+      <Route path={COMMUNITY_JOIN} element={joinCommunity} />
+      <Route path="/join/community" element={joinCommunity} />
       <Route path="/join/office" element={<JoinOffice />} />
       <Route path="/agent/:slug" element={<AgentPage />} />
       <Route path="/about" element={<About />} />
@@ -88,6 +102,10 @@ start(<HomeGreen />, {
   // the "start again" tab is for the demo only: a real launch builds with VITE_DEMO_RESET=false
   // the corner switch: light (day) or dark (night), instead of the old navy / green comparison
   switcher: <DayNightSwitch />,
+  // a community member has no dashboard: the first screen inside is the feed
+  appIndex: <AppIndex />,
+  // the landing page builder and the digital folder belong to the office
+  gate: (id, screen) => <OfficeOnly id={id}>{screen}</OfficeOnly>,
   overlay: (
     <>
       <GreenActions />
@@ -96,5 +114,5 @@ start(<HomeGreen />, {
   ),
 })
 
-// the name always comes with its second line, in the tab too
-document.title = `${PLATFORM_NAME} | ${PLATFORM_SUBNAME}`
+// the tab carries the office's name; the community's own page sets its own while it is open
+document.title = `${PLATFORM_NAME} | משרד תיווך ארצי`

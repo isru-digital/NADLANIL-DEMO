@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ArrowLeft, ArrowRight, BadgeCheck, CalendarCheck, Check, CheckCheck, Clock, Eye, FileSignature, Footprints, Info, MapPin, MessageCircle, PenLine, RotateCcw, Send, ShieldCheck, Sparkles, UserRound, WandSparkles } from 'lucide-react'
-import { CURRENT_BROKER_ID, PLATFORM_NAME, PLATFORM_SUBNAME, asset } from '../config'
+import { CURRENT_BROKER_ID, PLATFORM_NAME, asset } from '../config'
 import { brokerById, brokers, crmItems, formatPriceShort } from '../data/demo'
 import { useStore } from '../store'
 import { useDayNight } from '../config/dayNight'
@@ -177,7 +177,7 @@ export function ReportScreen() {
             <b>ההמלצה שלנו:</b> {report.next}
           </p>
           <footer>
-            {brokerById(CURRENT_BROKER_ID).name} <i /> {PLATFORM_NAME}, {PLATFORM_SUBNAME}
+            {brokerById(CURRENT_BROKER_ID).name} <i /> {PLATFORM_NAME}
           </footer>
         </article>
 
@@ -311,7 +311,7 @@ export function PitchScreen() {
     <div className="of-slide is-why" key="why">
       <small>למה איתנו</small>
       <h3>
-        {PLATFORM_NAME}, {PLATFORM_SUBNAME}
+        {PLATFORM_NAME}
       </h3>
       <ul className="of-done">
         <li>
