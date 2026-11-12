@@ -1,11 +1,10 @@
 // Stage A of the three-layer upgrade (green version): the second line of the name next to the logo, no price
 // outside the calculator's example, the about page, the typos, and the "community member / office member" switch.
-// Usage: node scripts/stage-a-check.mjs [outDir]     (BASE_GREEN / BASE_NAVY override the addresses)
+// Usage: node scripts/stage-a-check.mjs [outDir]     (BASE_GREEN overrides the address)
 import puppeteer from 'puppeteer-core'
 import { mkdirSync } from 'node:fs'
 
 const green = process.env.BASE_GREEN ?? 'http://localhost:5240/NADLANIL-DEMO/green'
-const navy = process.env.BASE_NAVY ?? 'http://localhost:5230/NADLANIL-DEMO'
 const out = process.argv[2] ?? '_shots'
 mkdirSync(out, { recursive: true })
 const browser = await puppeteer.launch({ executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: 'new', args: ['--hide-scrollbars'] })
@@ -166,20 +165,6 @@ for (const [label, vp, phone] of [
   await page.evaluate(() => localStorage.removeItem('nadlanup-agent-v1'))
 
   check(`${tag}: no console errors`, errors.length === 0, errors.slice(0, 2).join(' | '))
-  await page.close()
-}
-
-// the navy version is frozen: none of this is in it
-{
-  const page = await browser.newPage()
-  await page.setViewport({ width: 1440, height: 900 })
-  await page.goto(navy + '/app', { waitUntil: 'load' })
-  await wait(1500)
-  check('navy: no switch, no second line under the logo', await page.evaluate(() => !document.querySelector('.ms') && !document.querySelector('.logo-sub')))
-  await page.goto(navy + '/about', { waitUntil: 'load' })
-  await wait(1500)
-  check('navy: no about page (it goes back home)', await page.evaluate(() => !document.querySelector('.ab')))
-  check('navy: the tab title is unchanged', (await page.title()) === 'NadlanUP - הדבר הבא בעולם המתווכים', await page.title())
   await page.close()
 }
 

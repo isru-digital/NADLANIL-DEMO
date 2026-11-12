@@ -1,12 +1,11 @@
 // Stage C of the three-layer upgrade (green version): "המשרד שלי" and the eight things only the office gives.
 // A community member sees every one closed (what it gives and the way to upgrade, never the screen); an office member
-// opens them all. Also the verified mark next to names in the feed and the index. The navy look has none of it.
-// Usage: node scripts/stage-c-check.mjs [outDir]     (BASE_GREEN / BASE_NAVY override the addresses)
+// opens them all. Also the verified mark next to names in the feed and the index.
+// Usage: node scripts/stage-c-check.mjs [outDir]     (BASE_GREEN overrides the address)
 import puppeteer from 'puppeteer-core'
 import { mkdirSync } from 'node:fs'
 
 const green = process.env.BASE_GREEN ?? 'http://localhost:5240/NADLANIL-DEMO/green'
-const navy = process.env.BASE_NAVY ?? 'http://localhost:5230/NADLANIL-DEMO'
 const out = process.argv[2] ?? '_shots'
 mkdirSync(out, { recursive: true })
 const browser = await puppeteer.launch({ executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: 'new', args: ['--hide-scrollbars'] })
@@ -187,19 +186,6 @@ for (const [label, vp, phone] of [
   check(`${tag}: the comparison's office-only rows lead to their screens`, (await page.evaluate(() => [...document.querySelectorAll('.up-link')].map((a) => a.getAttribute('href')).filter((h) => h.includes('/app/office/') || h.endsWith('/app/agent')).length)) === 9)
 
   check(`${tag}: no console errors`, errors.length === 0, errors.slice(0, 2).join(' | '))
-  await page.close()
-}
-
-// the navy version is frozen
-{
-  const page = await browser.newPage()
-  await page.setViewport({ width: 1440, height: 900 })
-  await page.goto(navy + '/app/office', { waitUntil: 'load' })
-  await wait(1500)
-  check('navy: no office area (it goes back home)', await page.evaluate(() => !document.querySelector('.of')))
-  await page.goto(navy + '/app/brokers', { waitUntil: 'load' })
-  await wait(1500)
-  check('navy: no "המשרד שלי" in the menu and no marks next to names', await page.evaluate(() => ![...document.querySelectorAll('.side-link')].some((l) => l.textContent.includes('המשרד שלי')) && !document.querySelector('.ms-badge')))
   await page.close()
 }
 

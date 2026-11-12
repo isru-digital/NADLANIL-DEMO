@@ -205,7 +205,7 @@ export default function HomeGreen() {
       {/* -------------------------------------------------------- features */}
       <section className="features" id="features">
         <div className="container">
-          <SectionHead eyebrow="מה בפנים">מערכת שבנויה למתווכים. פשוטה ונוחה.</SectionHead>
+          <SectionHead eyebrow="מה בפנים">מערכת למתווכים פשוטה ונוחה</SectionHead>
           <div className="bento">
             {features.map((f, i) => {
               const body = (
@@ -260,7 +260,7 @@ export default function HomeGreen() {
       {/* ------------------------------------------------------ behind the scenes */}
       <section className="behind" id="behind">
         <div className="container">
-          <SectionHead eyebrow="מאחורי הקלעים">יש מי שעומד מאחורי זה.</SectionHead>
+          <SectionHead eyebrow="מאחורי הקלעים">יש מי שעומד מאחורייכם</SectionHead>
           <div className="behind-grid">
             {behind.map((b, i) => (
               <Reveal key={b.title} delay={i * 0.08} className="card card-pad behind-card">
@@ -282,7 +282,7 @@ export default function HomeGreen() {
             <i className="hg-grid" aria-hidden />
             <img className="hg-final-logo" src={asset('brand/nadlanup-lockup-ongreen.png')} alt={PLATFORM_NAME} />
             <span className="hg-final-sub">{PLATFORM_SUBNAME}</span>
-            <h2>בואו להיות חלק מזה</h2>
+            <h2>בואו להיות חלק מהמהפכה</h2>
             <Link to="/join" className="btn btn-white btn-lg">
               אני בפנים
               <ArrowLeft />

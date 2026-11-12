@@ -105,13 +105,13 @@ export default function About() {
         <div className="jo-in">
           <Reveal className="jo-head">
             <span className="jo-tag">מאיפה באנו ולאן הולכים</span>
-            <h2>מהשאלה אל המשרד</h2>
+            <h2>מהרעיון ועד להקמה</h2>
           </Reveal>
           <div className="ab-road">
             <Reveal className="ab-road-card">
               <small>מאיפה באנו</small>
               <h3>שאלה אחת פשוטה</h3>
-              <p>מתווך עובד קשה על כל עסקה, ובמשרדים רבים חלק מהעמלה נשאר במשרד. שאלנו מה יקרה אם המשרד ייתן את הגב, והעמלה תישאר אצל המתווך.</p>
+              <p>מתווך עובד קשה על כל עסקה, במשרדים רבים חלק מהעמלה (לרוב 50%) נשאר במשרד. שאלנו מה יקרה אם המשרד ייתן את הגב, והעמלה תישאר אצל המתווך.</p>
             </Reveal>
             <Reveal delay={0.08} className="ab-road-card is-next">
               <small>לאן הולכים</small>

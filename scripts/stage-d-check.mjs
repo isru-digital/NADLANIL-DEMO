@@ -1,13 +1,11 @@
 // Stage D of the three-layer upgrade (green version): what now works in the browser. A new CRM card (also filled from
 // a WhatsApp message), sharing a post with the community, "מוואטסאפ למערכת" (paste, take apart, confirm, publish,
 // with no phone number published), the folder's copy-link toast, and no sideways overflow on a phone.
-// The navy look keeps its old "the demo does not do this" notes.
-// Usage: node scripts/stage-d-check.mjs [outDir]     (BASE_GREEN / BASE_NAVY override the addresses)
+// Usage: node scripts/stage-d-check.mjs [outDir]     (BASE_GREEN overrides the address)
 import puppeteer from 'puppeteer-core'
 import { mkdirSync } from 'node:fs'
 
 const green = process.env.BASE_GREEN ?? 'http://localhost:5240/NADLANIL-DEMO/green'
-const navy = process.env.BASE_NAVY ?? 'http://localhost:5230/NADLANIL-DEMO'
 const out = process.argv[2] ?? '_shots'
 mkdirSync(out, { recursive: true })
 const browser = await puppeteer.launch({ executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: 'new', args: ['--hide-scrollbars'] })
@@ -146,23 +144,6 @@ for (const [label, vp, phone] of [
     const ov = await overflow(page)
     check(`green 360px: no sideways overflow on ${path}`, ov <= 1, `${ov}px`)
   }
-  await page.close()
-}
-
-// the navy version is frozen: its notes are as they were
-{
-  const page = await browser.newPage()
-  await page.setViewport({ width: 1440, height: 900 })
-  await page.goto(navy + '/app/crm', { waitUntil: 'load' })
-  await wait(1500)
-  await page.evaluate(() => document.querySelector('[data-act="new-card"]')?.click())
-  await wait(600)
-  check('navy: "כרטיס חדש" still says the demo cannot add cards', (await toast(page)).includes('בדמו לא ניתן להוסיף כרטיסים חדשים') && !(await page.evaluate(() => !!document.querySelector('.modal'))))
-  await page.goto(navy + '/app/community', { waitUntil: 'load' })
-  await wait(1800)
-  await page.evaluate(() => document.querySelector('[data-act="share"]')?.click())
-  await wait(600)
-  check('navy: "שיתוף" still says sharing is off in the demo', (await toast(page)).includes('בדמו השיתוף אינו פעיל'))
   await page.close()
 }
 

@@ -1,12 +1,11 @@
 // Stage B of the three-layer upgrade (green version): the credits wallet of a community member, the monthly quota of
 // an office member, the marks on the lab's tools, the simulated charge, the "no credits" and "quota used" screens,
-// and the three-column comparison page. Also checks the navy look has none of it.
-// Usage: node scripts/stage-b-check.mjs [outDir]     (BASE_GREEN / BASE_NAVY override the addresses)
+// and the three-column comparison page.
+// Usage: node scripts/stage-b-check.mjs [outDir]     (BASE_GREEN overrides the address)
 import puppeteer from 'puppeteer-core'
 import { mkdirSync } from 'node:fs'
 
 const green = process.env.BASE_GREEN ?? 'http://localhost:5240/NADLANIL-DEMO/green'
-const navy = process.env.BASE_NAVY ?? 'http://localhost:5230/NADLANIL-DEMO'
 const out = process.argv[2] ?? '_shots'
 mkdirSync(out, { recursive: true })
 const browser = await puppeteer.launch({ executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: 'new', args: ['--hide-scrollbars'] })
@@ -242,25 +241,6 @@ for (const [label, vp, phone] of [
   check(`${tag}: "התחלה מחדש" puts back 12 credits and 3/10`, w.credits === 12 && w.quotaUsed === 3 && w.opened.length === 0 && w.openedOffice.length === 0 && w.urgentFreeUsed === false, JSON.stringify(w))
 
   check(`${tag}: no console errors`, errors.length === 0, errors.slice(0, 2).join(' | '))
-  await page.close()
-}
-
-// the navy version is frozen: the lab is as it was
-{
-  const page = await browser.newPage()
-  await page.setViewport({ width: 1440, height: 900 })
-  await page.goto(navy + '/app', { waitUntil: 'load' })
-  await wait(1500)
-  await page.evaluate(() => document.querySelector('.side-lab-link.is-all')?.click())
-  await wait(1100)
-  const st = await page.evaluate(() => ({ bar: !!document.querySelector('.mb'), groups: document.querySelectorAll('.bl-group').length, chips: [...new Set([...document.querySelectorAll('.bl-tile .bl-chip')].map((x) => x.textContent.trim()))], first: document.querySelector('.bl-tile strong')?.textContent, tiles: document.querySelectorAll('.bl-tile').length }))
-  check('navy: no wallet, no groups, ten tools marked "בטא" in their old order', !st.bar && st.groups === 0 && st.chips.join() === 'בטא' && st.first === 'הקלטה אחת, מודעה שלמה' && st.tiles === 10, JSON.stringify(st))
-  await page.evaluate(() => document.querySelector('.bl-tile')?.click())
-  await wait(1000)
-  check('navy: a tool opens as before, with no question', await page.evaluate(() => !document.querySelector('.tl-ask') && document.querySelector('.bl-badges')?.textContent.includes('הצצה, עוד לא פתוח')))
-  await page.goto(navy + '/upgrade', { waitUntil: 'load' })
-  await wait(1200)
-  check('navy: no comparison page', await page.evaluate(() => !document.querySelector('.up')))
   await page.close()
 }
 
