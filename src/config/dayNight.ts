@@ -46,8 +46,8 @@ let choice: Choice | null = loadChoice()
 let state: { mode: Mode; byHand: boolean } = { mode: choice?.mode ?? modeByClock(), byHand: !!choice }
 const listeners = new Set<() => void>()
 
-/** Pages a broker's client sees (landing page, folder, agent page) keep their own look and are always light. */
-const alwaysDay = () => /\/(b|f|agent)\//.test(location.pathname)
+/** Pages a broker's client sees (landing page, folder, agent page, the owner's page) keep their own look and are always light. */
+const alwaysDay = () => /\/(b|f|agent|o)\//.test(location.pathname)
 
 function apply() {
   if (choice && choice.until <= Date.now()) {

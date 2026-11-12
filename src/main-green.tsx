@@ -1,5 +1,7 @@
 // must stay first: it removes what an earlier session left in the browser before any store reads it
 import './config/cleanStart'
+// must come before the screens: it gives a shared lab tool its name in this look
+import { ROOM_NAME } from './config/labNames'
 import './styles/global.css'
 import { Route } from 'react-router-dom'
 import { BadgeCheck, Building2 } from 'lucide-react'
@@ -33,6 +35,9 @@ import { memberActions } from './config/member'
 import { agentActions } from './agent/useAgent'
 import { registerActions, registerCrm, registerLab, registerNames, registerNav, registerReset, registerShell } from './config/navExtras'
 import ClientsTable from './crm/ClientsTable'
+import OwnerPage from './owner/OwnerPage'
+import { AutoPublish, AutoPublishNote, OwnerLinkButton } from './owner/OwnerPublish'
+import { OWNER_PATH, ownerActions } from './owner/ownerLink'
 import { clientActions } from './crm/clients'
 import './styles/lite.css'
 import './styles/theme-green.css'
@@ -51,8 +56,11 @@ registerReset(() => agentActions.reset())
 registerReset(() => memberActions.reset())
 registerReset(() => walletActions.reset())
 registerReset(() => clientActions.reset())
+registerReset(() => ownerActions.reset())
 // the CRM's clients are one simple table (search, types, matches, quick marks); the board keeps the properties
 registerCrm({ Clients: ClientsTable, subtitle: 'הלקוחות בטבלה אחת, והנכסים על הלוח. התאמות מהקהילה בלחיצה אחת.' })
+// every property put in the CRM goes up to the community by itself; a published card carries the link for its owner
+registerCrm({ AutoBar: AutoPublishNote, CardExtra: OwnerLinkButton })
 // the top bar (the view switch with the wallet or the quota), the office member's mark, and the lab in three layers
 registerShell({ bar: MemberBar, badge: MemberBadge, lab: TieredLab })
 // the community under its own name: its name at the top for a community member, no dashboard and two locked lines
@@ -66,6 +74,7 @@ registerLab({
     { title: 'חינם בקהילה', sub: 'פתוח לכל חבר, תמיד', ids: FREE_IDS },
     { title: 'כלים מתקדמים', sub: 'לחבר קהילה בקרדיטים, לחבר משרד כלול במכסה החודשית', ids: PAID_IDS },
   ],
+  roomName: ROOM_NAME,
   hubSub: 'כלים בגרסת בטא. חלק חינם בקהילה, והמתקדמים נפתחים בקרדיטים או כלולים במשרד.',
   hubNote: 'גרסת בטא עם נתוני דמו. אין חיוב אמיתי.',
   peekNote: 'גרסת בטא: הדגמה עם נתוני דמו בלבד.',
@@ -80,7 +89,15 @@ registerActions({
 
 // joining the community runs under its own name, ends in the feed, and has no landing page step
 const joinCommunity = (
-  <Join community={{ brand: <CommunityBrand size="sm" />, home: COMMUNITY_HOME, after: COMMUNITY_FEED, foot: `${COMMUNITY_NAME}, ${COMMUNITY_FROM}` }} />
+  <Join
+    community={{
+      brand: <CommunityBrand size="sm" />,
+      home: COMMUNITY_HOME,
+      after: COMMUNITY_FEED,
+      foot: `${COMMUNITY_NAME}, ${COMMUNITY_FROM}`,
+      propertyLead: 'נכס אחד מספיק כדי להתחיל לקבל פניות ממתווכים באזור. הוא נכנס ל-CRM שלכם ועולה אוטומטית לקהילה, באזור של הנכס. שם בעל הנכס והטלפון שלו לא מתפרסמים.',
+    }}
+  />
 )
 
 start(<HomeGreen />, {
@@ -102,6 +119,7 @@ start(<HomeGreen />, {
       <Route path="/agent/:slug" element={<AgentPage />} />
       <Route path="/about" element={<About />} />
       <Route path="/upgrade" element={<Upgrade />} />
+      <Route path={OWNER_PATH} element={<OwnerPage />} />
     </>
   ),
   // the "start again" tab is for the demo only: a real launch builds with VITE_DEMO_RESET=false
@@ -114,6 +132,7 @@ start(<HomeGreen />, {
   overlay: (
     <>
       <GreenActions />
+      <AutoPublish />
       {import.meta.env.VITE_DEMO_RESET === 'false' ? null : <DemoReset />}
     </>
   ),

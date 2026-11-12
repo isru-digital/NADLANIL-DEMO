@@ -1,0 +1,343 @@
+/* "קישור לבעל הנכס" (green version): the note on the properties board, the button and window on a published card,
+   and the small page the owner opens. The owner's page is always light, like the broker's other public pages. */
+
+/* ------------------------------------------------------------------ the note above the board */
+.ol-note {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+  padding: 14px 18px;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--line-gold);
+  background: rgb(var(--g) / 0.08);
+}
+.ol-note-ico {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: linear-gradient(150deg, var(--deep-b), var(--deep-c));
+  color: #fff;
+}
+.ol-note-ico svg {
+  width: 22px;
+  height: 22px;
+}
+.ol-note > span:last-child {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.ol-note strong {
+  font-family: var(--font-display);
+  font-size: 17px;
+  line-height: 1.3;
+}
+.ol-note small {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14.5px;
+  line-height: 1.4;
+  color: var(--text-dim);
+}
+.ol-note small svg {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  color: var(--gold-soft);
+}
+
+/* ------------------------------------------------------------------ on a published card */
+.ol-btn {
+  width: 100%;
+  justify-content: center;
+  margin-top: 8px;
+  border: 1px solid var(--line-gold);
+  background: rgb(var(--g) / 0.1);
+  font-weight: 700;
+  color: var(--gold-soft);
+}
+.ol-btn:hover {
+  background: rgb(var(--g) / 0.2);
+}
+.ol {
+  display: grid;
+  gap: 14px;
+}
+.ol-facts {
+  display: grid;
+  gap: 0;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: var(--card);
+}
+.ol-facts li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 11px 14px;
+  font-size: 15px;
+}
+.ol-facts li + li {
+  border-top: 1px solid var(--line);
+}
+.ol-facts li > span {
+  color: var(--text-dim);
+}
+.ol-facts b {
+  font-family: var(--font-display);
+  text-align: end;
+}
+.ol-facts em,
+.own-stats em {
+  padding: 2px 9px;
+  border-radius: 99px;
+  border: 1px dashed rgb(var(--g) / 0.55);
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 700;
+  font-style: normal;
+  color: var(--gold-soft);
+  white-space: nowrap;
+}
+.ol-url {
+  display: grid;
+  gap: 6px;
+}
+.ol-url > span {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+.ol-url input {
+  font-size: 13.5px;
+  text-overflow: ellipsis;
+}
+.ol-private {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+.ol-private svg {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  margin-top: 3px;
+  color: var(--gold-soft);
+}
+
+/* ------------------------------------------------------------------ the owner's page */
+.own {
+  min-height: 100dvh;
+  background: radial-gradient(120% 60% at 50% 0%, #e6f6ee, #f6fbf8 60%);
+  color: #10241b;
+}
+.own-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  max-width: 620px;
+  margin: 0 auto;
+  padding: calc(14px + env(safe-area-inset-top)) 18px 10px;
+}
+.own-brand {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+.own-main {
+  display: grid;
+  justify-items: center;
+  gap: 16px;
+  max-width: 620px;
+  margin: 0 auto;
+  padding: 18px 18px calc(48px + env(safe-area-inset-bottom));
+  text-align: center;
+}
+.own-ok {
+  display: grid;
+  place-items: center;
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: linear-gradient(150deg, #07643f, #0fa46b);
+  color: #fff;
+  box-shadow: 0 18px 34px -16px rgb(7 100 63 / 0.7);
+}
+.own-ok svg {
+  width: 36px;
+  height: 36px;
+}
+.own h1 {
+  font-size: clamp(30px, 7.4vw, 44px);
+  font-weight: 800;
+  line-height: 1.12;
+  letter-spacing: -0.025em;
+}
+.own h1 span {
+  color: #0a7a4f;
+}
+.own-lead {
+  max-width: 30em;
+  font-size: 18px;
+  line-height: 1.5;
+  color: #47604f;
+}
+.own-card {
+  display: grid;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 24px;
+  border: 1px solid rgb(15 40 30 / 0.1);
+  background: #fff;
+  box-shadow: 0 26px 50px -30px rgb(4 59 43 / 0.5);
+  text-align: start;
+}
+.own-card img {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+.own-card > div {
+  display: grid;
+  gap: 4px;
+  padding: 16px 18px 18px;
+}
+.own-card strong {
+  font-family: var(--font-display);
+  font-size: 21px;
+  line-height: 1.25;
+}
+.own-card span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 16px;
+  color: #47604f;
+}
+.own-card span b {
+  color: #10241b;
+}
+.own-card svg {
+  width: 16px;
+  height: 16px;
+  color: #0a7a4f;
+}
+.own-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+}
+.own-stats > div {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 18px 12px;
+  border-radius: 20px;
+  border: 1px solid rgb(15 40 30 / 0.1);
+  background: #fff;
+}
+.own-stats i {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 13px;
+  background: rgb(15 164 107 / 0.14);
+  color: #0a7a4f;
+}
+.own-stats i svg {
+  width: 21px;
+  height: 21px;
+}
+.own-stats > div > span {
+  font-size: 14.5px;
+  line-height: 1.35;
+  color: #47604f;
+}
+.own-stats > div > b {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 800;
+  color: #10241b;
+}
+.own-stats em {
+  color: #0a7a4f;
+  border-color: rgb(10 122 79 / 0.5);
+}
+.own-private {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px dashed rgb(10 122 79 / 0.45);
+  background: rgb(15 164 107 / 0.06);
+  font-size: 15.5px;
+  line-height: 1.5;
+  text-align: start;
+  color: #47604f;
+}
+.own-private svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 3px;
+  color: #0a7a4f;
+}
+.own-private b {
+  color: #10241b;
+}
+.own-broker {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 20px;
+  border: 1px solid rgb(15 40 30 / 0.1);
+  background: #fff;
+  text-align: start;
+}
+.own-broker > div {
+  display: grid;
+  line-height: 1.3;
+}
+.own-broker small {
+  font-size: 13px;
+  color: #6b8275;
+}
+.own-broker b {
+  font-family: var(--font-display);
+  font-size: 18px;
+}
+.own-broker span {
+  font-size: 14.5px;
+  color: #47604f;
+}
+.own-foot {
+  font-size: 13.5px;
+  color: #6b8275;
+}
+@media (max-width: 420px) {
+  .own-stats {
+    grid-template-columns: 1fr;
+  }
+}

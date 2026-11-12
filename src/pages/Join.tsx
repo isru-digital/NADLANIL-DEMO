@@ -20,7 +20,7 @@ type Office = 'office' | 'solo'
  * What the green version changes when the steps run under the community's own name: its name at the top, where
  * the steps lead, and no landing page step (the landing page belongs to the office there).
  */
-export type JoinCommunity = { brand: ReactNode; home: string; after: string; foot: string }
+export type JoinCommunity = { brand: ReactNode; home: string; after: string; foot: string; propertyLead?: string }
 
 /** Onboarding for a broker who just joined. Visual demo only: nothing is sent anywhere. */
 export default function Join({ community }: { community?: JoinCommunity }) {
@@ -317,8 +317,8 @@ export default function Join({ community }: { community?: JoinCommunity }) {
                 <span className="eyebrow">הנכס הראשון</span>
                 <h1>מעלים נכס אחד, ומתחילים.</h1>
                 <p className="join-lead">
-                  נכס אחד מספיק כדי להתחיל לקבל פניות ממתווכים באזור. הוא נכנס ל-CRM שלכם, ורק אתם מחליטים אם לפתוח אותו
-                  לשיתוף פעולה.
+                  {community?.propertyLead ??
+                    'נכס אחד מספיק כדי להתחיל לקבל פניות ממתווכים באזור. הוא נכנס ל-CRM שלכם, ורק אתם מחליטים אם לפתוח אותו לשיתוף פעולה.'}
                 </p>
                 <div className="first-prop">
                   <div className="first-prop-photo">

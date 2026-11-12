@@ -1,11 +1,9 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { RotateCcw } from 'lucide-react'
 import { Modal } from './ui'
 import { useStore } from '../store'
-import { agentActions } from '../agent/useAgent'
-import { memberActions } from '../config/member'
-import { walletActions } from '../config/tiers'
+import { extraResets } from '../config/navExtras'
 import '../styles/demo-reset.css'
 
 /**
@@ -15,19 +13,22 @@ import '../styles/demo-reset.css'
  */
 export default function DemoReset() {
   const navigate = useNavigate()
+  const { pathname } = useLocation()
   const { reset, toast } = useStore()
   const [open, setOpen] = useState(false)
 
   const restart = () => {
     reset()
-    agentActions.reset()
-    memberActions.reset()
-    walletActions.reset()
+    // everything the green version keeps on its own: the agent page, the member view, the wallet, the clients, the owner links
+    extraResets.forEach((fn) => fn())
     setOpen(false)
     navigate('/')
     window.scrollTo({ top: 0 })
     toast('הדמו התחיל מחדש')
   }
+
+  // the page a property's owner opens is not part of the demo's tour
+  if (/^\/o\//.test(pathname)) return null
 
   return (
     <>

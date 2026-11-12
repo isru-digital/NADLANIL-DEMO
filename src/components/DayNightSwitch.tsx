@@ -26,7 +26,7 @@ export default function DayNightSwitch() {
     }
   }, [])
 
-  if (/^\/(b|f|agent)\//.test(pathname)) return null
+  if (/^\/(b|f|agent|o)\//.test(pathname)) return null
   return (
     <nav className={`dn${pathname.startsWith('/app') ? ' on-app' : ''}`} aria-label="תצוגת יום או לילה">
       <button type="button" data-mode="day" aria-pressed={mode === 'day'} onClick={() => dayNight.set('day')}>

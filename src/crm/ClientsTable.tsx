@@ -287,7 +287,7 @@ export default function ClientsTable({ onPublish }: { onPublish: (item: CrmItem)
               }),
             )
           setPulling(false)
-          toast(ids.length === 1 ? 'נכס אחד נכנס ל-CRM, בלשונית "נכסים"' : `${ids.length} נכסים נכנסו ל-CRM, בלשונית "נכסים"`)
+          toast(ids.length === 1 ? 'נכס אחד נכנס ל-CRM ופורסם בקהילה, באזור שלו' : `${ids.length} נכסים נכנסו ל-CRM ופורסמו בקהילה, כל אחד באזור שלו`)
         }}
       />
     </section>

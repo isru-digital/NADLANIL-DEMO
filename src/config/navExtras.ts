@@ -52,6 +52,8 @@ export const labSlots: {
   peekNote?: string
   /** a working button inside an open tool's card */
   Action?: ComponentType<{ id: string }>
+  /** the name of the shared deal room tool, where the look gives it another one */
+  roomName?: string
 } = {}
 export function registerLab(slots: typeof labSlots) {
   Object.assign(labSlots, slots)
@@ -87,6 +89,10 @@ export function registerActions(slots: typeof actionSlots) {
 export const crmSlots: {
   Clients?: ComponentType<{ onPublish: (item: import('../data/demo').CrmItem) => void }>
   subtitle?: string
+  /** in place of the on / off switch above the board */
+  AutoBar?: ComponentType
+  /** an extra line of actions at the bottom of a card on the board */
+  CardExtra?: ComponentType<{ item: import('../data/demo').CrmItem; publishedTo?: string }>
 } = {}
 export function registerCrm(slots: typeof crmSlots) {
   Object.assign(crmSlots, slots)

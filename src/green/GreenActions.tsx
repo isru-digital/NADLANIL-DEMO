@@ -129,7 +129,7 @@ export default function GreenActions() {
     // a client who is looking also joins the clients table (the board holds properties only)
     if (item.kind === 'client') clientActions.add({ name: item.client, type: 'buyer', phone: '', about: item.title, cities: [item.city], rooms: Math.round(rooms) || 0, sum: item.price, crmId: item.id })
     close()
-    toast(item.kind === 'client' ? 'הלקוח נוסף לטבלת הלקוחות' : 'הכרטיס נוסף לעמודה "חדש"')
+    toast(item.kind === 'client' ? 'הלקוח נוסף לטבלת הלקוחות' : `הכרטיס נוסף לעמודה "חדש", והנכס פורסם בקהילה באזור ${item.city}`)
   }
 
   const publishWa = () => {

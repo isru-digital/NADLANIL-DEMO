@@ -203,6 +203,7 @@ export default function Crm() {
       {!table && (
         <>
 
+      {crmSlots.AutoBar ? <crmSlots.AutoBar /> : (
       <button
         className={`auto-bar${autoPublish ? ' is-on' : ''}`}
         role="switch"
@@ -224,6 +225,7 @@ export default function Crm() {
           <i />
         </span>
       </button>
+      )}
 
       {/* phone: one stage at a time */}
       <div className="stage-tabs chip-row" role="tablist" aria-label="שלב">
@@ -356,6 +358,7 @@ export default function Crm() {
                                 </button>
                               )}
                             </div>
+                            {crmSlots.CardExtra && <crmSlots.CardExtra item={it} publishedTo={publishedTo} />}
                           </div>
                         </article>
                       </motion.div>

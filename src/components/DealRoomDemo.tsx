@@ -7,6 +7,7 @@ import { asset } from '../config'
 import { brokers, formatPriceShort } from '../data/demo'
 import { Avatar, EASE } from './ui'
 import { lockScroll } from '../lib/scrollLock'
+import { labSlots } from '../config/navExtras'
 import '../styles/deal-demo.css'
 
 /**
@@ -273,7 +274,7 @@ export default function DealRoomDemo({ open, onClose }: { open: boolean; onClose
             className="dr"
             role="dialog"
             aria-modal="true"
-            aria-label="חדר עסקה משותף, דמו"
+            aria-label={`${labSlots.roomName ?? 'חדר עסקה משותף'}, דמו`}
             tabIndex={-1}
             initial={{ opacity: 0, y: 40, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -284,7 +285,7 @@ export default function DealRoomDemo({ open, onClose }: { open: boolean; onClose
 
             <header className="dr-head">
               <div className="dr-title">
-                <h2>חדר עסקה משותף</h2>
+                <h2>{labSlots.roomName ?? 'חדר עסקה משותף'}</h2>
                 <span className="dr-badges">
                   <b>גרסת בטא</b>
                   <em>דמו לצפייה בלבד</em>
