@@ -178,12 +178,16 @@ export default function ClientsTable({ onPublish }: { onPublish: (item: CrmItem)
                     <span className={`ct-type is-${cl.type}`}>{typeOf(cl.type).one}</span>
                   </td>
                   <td className="ct-phone">
-                    <a href={`tel:${cl.phone.replace(/-/g, '')}`} onClick={(e) => e.stopPropagation()}>
-                      <Phone aria-hidden />
-                      <bdi dir="ltr" className="num">
-                        {cl.phone}
-                      </bdi>
-                    </a>
+                    {cl.phone ? (
+                      <a href={`tel:${cl.phone.replace(/-/g, '')}`} onClick={(e) => e.stopPropagation()}>
+                        <Phone aria-hidden />
+                        <bdi dir="ltr" className="num">
+                          {cl.phone}
+                        </bdi>
+                      </a>
+                    ) : (
+                      <span className="ct-none">לא הוזן טלפון</span>
+                    )}
                   </td>
                   <td className="ct-hide-phone ct-last">{lastText(cl.lastDays)}</td>
                   {isOffice && (
@@ -339,12 +343,16 @@ function Details({
       <div className="modal-body ct-det" data-id={cl.id}>
         <div className="ct-det-top">
           <span className={`ct-type is-${cl.type}`}>{typeOf(cl.type).one}</span>
-          <a href={`tel:${cl.phone.replace(/-/g, '')}`} className="ct-det-phone">
-            <Phone aria-hidden />
-            <bdi dir="ltr" className="num">
-              {cl.phone}
-            </bdi>
-          </a>
+          {cl.phone ? (
+            <a href={`tel:${cl.phone.replace(/-/g, '')}`} className="ct-det-phone">
+              <Phone aria-hidden />
+              <bdi dir="ltr" className="num">
+                {cl.phone}
+              </bdi>
+            </a>
+          ) : (
+            <span className="ct-none">לא הוזן טלפון</span>
+          )}
           <span className="ct-det-last">עדכון אחרון: {lastText(cl.lastDays)}</span>
         </div>
 

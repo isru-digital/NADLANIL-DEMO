@@ -49,6 +49,9 @@ for (const [label, vp, phone] of [
 
   // ---- 1. a new CRM card
   await go('/app/crm')
+  // the clients are a table of their own now: new cards and the board live in the properties tab
+  await page.evaluate(() => [...document.querySelectorAll('.seg .seg-btn')].find((b) => b.textContent.trim() === 'נכסים')?.click())
+  await wait(700)
   const before = await page.evaluate(() => document.querySelectorAll('.kan-card').length)
   await page.evaluate(() => document.querySelector('[data-act="new-card"]')?.click())
   await wait(800)
@@ -69,6 +72,8 @@ for (const [label, vp, phone] of [
   await shot('2-card-added')
   await page.reload({ waitUntil: 'load' })
   await wait(1400)
+  await page.evaluate(() => [...document.querySelectorAll('.seg .seg-btn')].find((b) => b.textContent.trim() === 'נכסים')?.click())
+  await wait(700)
   check(`${tag}: and it is still there after a reload`, await page.evaluate(() => document.querySelector('.kanban')?.textContent.includes('דירת 4 חדרים בפתח תקווה')))
   check(`${tag}: no sideways overflow in the CRM`, (await overflow(page)) <= 1)
 

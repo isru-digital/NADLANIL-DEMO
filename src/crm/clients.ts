@@ -113,9 +113,9 @@ export const clientActions = {
   patch(id: string, p: Partial<Client>) {
     save(list.map((x) => (x.id === id ? { ...x, ...p, lastDays: 0, touched: Date.now() } : x)))
   },
-  add(p: Pick<Client, 'name' | 'type' | 'phone'>) {
+  add(p: Pick<Client, 'name' | 'type' | 'phone'> & Partial<Pick<Client, 'about' | 'cities' | 'rooms' | 'sum' | 'crmId'>>) {
     const id = `k-${Date.now()}`
-    save([c({ id, ...p, about: '', cities: [], rooms: 0, sum: 0, stage: 'new', lastDays: 0, createdDays: 0, touched: Date.now() }), ...list])
+    save([c({ about: '', cities: [], rooms: 0, sum: 0, ...p, id, stage: 'new', lastDays: 0, createdDays: 0, touched: Date.now() }), ...list])
     return id
   },
   reset() {

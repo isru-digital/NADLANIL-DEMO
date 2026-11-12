@@ -10,6 +10,7 @@ import { greenUi } from './ui'
 import type { GreenAsk } from './ui'
 import { allExtras, knownCities, parseWhatsapp, sampleMessage, sampleRequest, titleOf } from './whatsapp'
 import type { Parsed } from './whatsapp'
+import { clientActions } from '../crm/clients'
 import '../styles/green-actions.css'
 
 /**
@@ -125,8 +126,10 @@ export default function GreenActions() {
       search: card.kind === 'request' ? { cities: [card.city], roomsMin: Math.floor(rooms) || 1, roomsMax: Math.ceil(rooms) || 6, budget: num(card.price), wants: card.extras } : undefined,
     }
     addCrm(item)
+    // a client who is looking also joins the clients table (the board holds properties only)
+    if (item.kind === 'client') clientActions.add({ name: item.client, type: 'buyer', phone: '', about: item.title, cities: [item.city], rooms: Math.round(rooms) || 0, sum: item.price, crmId: item.id })
     close()
-    toast('הכרטיס נוסף לעמודה "חדש"')
+    toast(item.kind === 'client' ? 'הלקוח נוסף לטבלת הלקוחות' : 'הכרטיס נוסף לעמודה "חדש"')
   }
 
   const publishWa = () => {
