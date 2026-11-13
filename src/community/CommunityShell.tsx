@@ -1,6 +1,6 @@
 import type { ReactElement } from 'react'
 import { Link, Navigate, useLocation } from 'react-router-dom'
-import { ArrowLeft, BadgeCheck, Check, Lock } from 'lucide-react'
+import { ArrowLeft, BadgeCheck, Check, Home, Lock, UserRound } from 'lucide-react'
 import { useMember } from '../config/member'
 import { COMMUNITY_FEED, COMMUNITY_HOME, COMMUNITY_NAME, OFFICE_ONLY, OFFICE_PAGE, UPGRADE_LABEL } from '../config/community'
 import type { ShellNav } from '../config/navExtras'
@@ -10,6 +10,13 @@ import CommunityBrand from './CommunityBrand'
 import '../styles/office.css'
 import '../styles/kehila.css'
 
+/** The CRM's two views. Each one is its own line under "CRM" in the side menu, and its own screen. */
+export const CRM_PATH = '/app/crm'
+const CRM_VIEWS = [
+  { to: CRM_PATH, label: 'לקוחות', icon: UserRound },
+  { to: `${CRM_PATH}?v=properties`, label: 'נכסים', icon: Home },
+]
+
 /** The two tools that left the free community and stay in the office only. */
 const OFFICE_TOOLS = ['/app/builder', '/app/folder']
 
@@ -17,8 +24,10 @@ const OFFICE_TOOLS = ['/app/builder', '/app/folder']
  * The menu of a community member: no dashboard (the feed is the first screen), and the landing page builder and the
  * digital folder are there but locked, after the things that are open. An office member's menu is unchanged.
  */
-export function useCommunityNav(items: ShellNav[]): ShellNav[] {
+export function useCommunityNav(all: ShellNav[]): ShellNav[] {
   const { isOffice } = useMember()
+  // for everyone: opening the CRM opens its two views under it, each one a screen of its own
+  const items = all.map((x) => (x.to === CRM_PATH ? { ...x, label: 'CRM', children: CRM_VIEWS } : x))
   if (isOffice) return items
   const open = items.filter((x) => x.to !== '/app' && !OFFICE_TOOLS.includes(x.to))
   const locked = items.filter((x) => OFFICE_TOOLS.includes(x.to)).map((x) => ({ ...x, locked: OFFICE_ONLY }))

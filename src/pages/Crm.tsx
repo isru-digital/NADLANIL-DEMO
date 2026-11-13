@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { DragEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { AnimatePresence, LayoutGroup, motion } from 'framer-motion'
 import {
   ArrowLeft,
@@ -127,8 +127,13 @@ export default function Crm() {
   const publishNow = usePublisher()
   // the green version has the clients in a table of their own: two tabs, clients first, and the board holds the properties
   const Clients = crmSlots.Clients
-  const [kind, setKind] = useState<Kind>(Clients ? 'client' : 'all')
+  // there the view lives in the address (?v=properties), so the side menu can open each one directly
+  const [params, setParams] = useSearchParams()
+  const [picked, setPicked] = useState<Kind>('all')
+  const kind: Kind = Clients ? (params.get('v') === 'properties' ? 'property' : 'client') : picked
+  const setKind = (k: Kind) => (Clients ? setParams(k === 'property' ? { v: 'properties' } : {}, { replace: true }) : setPicked(k))
   const table = !!Clients && kind === 'client'
+  const head = crmSlots.heads && kind !== 'all' ? crmSlots.heads[kind] : undefined
   const [stage, setStage] = useState<CrmStatus>('new')
   const [dragId, setDragId] = useState<string | null>(null)
   const [overStage, setOverStage] = useState<CrmStatus | null>(null)
@@ -158,10 +163,10 @@ export default function Crm() {
     <>
       <PageHead
         eyebrow="CRM"
-        title="לקוחות ונכסים"
-        subtitle={crmSlots.subtitle ?? 'כל העבודה שלך על לוח אחד. מסמנים שת"פ או לוחצים "פרסם בקהילה", והפריט הופך להודעה בנושא המתאים.'}
+        title={head?.title ?? 'לקוחות ונכסים'}
+        subtitle={head?.subtitle ?? crmSlots.subtitle ?? 'כל העבודה שלך על לוח אחד. מסמנים שת"פ או לוחצים "פרסם בקהילה", והפריט הופך להודעה בנושא המתאים.'}
       >
-        <div className="seg" role="group" aria-label="סוג כרטיס">
+        <div className={`seg${Clients ? ' crm-kinds' : ''}`} role="group" aria-label="סוג כרטיס">
           {(
             (Clients
               ? [

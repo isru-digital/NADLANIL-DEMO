@@ -23,7 +23,16 @@ export function registerReset(fn: () => void) {
  */
 type LabProps = { view: null | string; setView: (v: null | string) => void }
 /** One line of the app's menu. `locked` is the note shown on a line that is there but closed to this member. */
-export type ShellNav = { to: string; label: string; short?: string; icon: LucideIcon; end?: boolean; locked?: string }
+export type ShellNav = {
+  to: string
+  label: string
+  short?: string
+  icon: LucideIcon
+  end?: boolean
+  locked?: string
+  /** lines that open under this one in the side menu while the visitor is inside it */
+  children?: { to: string; label: string; icon?: LucideIcon }[]
+}
 export const shellSlots: {
   bar?: ComponentType
   badge?: ComponentType
@@ -89,6 +98,8 @@ export function registerActions(slots: typeof actionSlots) {
 export const crmSlots: {
   Clients?: ComponentType<{ onPublish: (item: import('../data/demo').CrmItem) => void }>
   subtitle?: string
+  /** the page's own title and line for each of the two views, when they are separate entries of the side menu */
+  heads?: Record<'client' | 'property', { title: string; subtitle: string }>
   /** in place of the on / off switch above the board */
   AutoBar?: ComponentType
   /** an extra line of actions at the bottom of a card on the board */

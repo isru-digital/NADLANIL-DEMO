@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import { Link, NavLink, useLocation, useOutlet } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
@@ -35,6 +35,12 @@ const baseNav: NavItem[] = [
   { to: '/app/builder', label: 'בונה דף נחיתה', short: 'דף נחיתה', icon: LayoutTemplate },
   { to: '/app/folder', label: 'פולדר דיגיטלי', short: 'פולדר', icon: FolderOpen },
 ]
+
+/** A line under an entry is the current one when its path and its `v` (the view inside the page) both match. */
+const subActive = (to: string, pathname: string, search: string) => {
+  const [path, query = ''] = to.split('?')
+  return pathname === path && (new URLSearchParams(query).get('v') ?? '') === (new URLSearchParams(search).get('v') ?? '')
+}
 
 /**
  * Keeps rendering the route it was mounted with. Without this the exiting page
@@ -89,7 +95,8 @@ export default function AppShell() {
 
         <nav className="side-nav" aria-label="ניווט ראשי">
           {nav.map((item) => (
-            <NavLink key={item.to} to={item.to} end={item.end} className="side-link">
+            <Fragment key={item.to}>
+            <NavLink to={item.to} end={item.end} className="side-link">
               {({ isActive }) => (
                 <>
                   {isActive && (
@@ -109,6 +116,21 @@ export default function AppShell() {
                 </>
               )}
             </NavLink>
+            {/* the lines that open under an entry while the visitor is inside it (the green version's CRM) */}
+            {item.children && location.pathname.startsWith(item.to) && (
+              <div className="side-sub" role="group" aria-label={item.label}>
+                {item.children.map((ch) => {
+                  const on = subActive(ch.to, location.pathname, location.search)
+                  return (
+                    <Link key={ch.to} to={ch.to} className={`side-sub-link${on ? ' active' : ''}`} aria-current={on ? 'page' : undefined}>
+                      {ch.icon && <ch.icon />}
+                      <span>{ch.label}</span>
+                    </Link>
+                  )
+                })}
+              </div>
+            )}
+            </Fragment>
           ))}
         </nav>
 

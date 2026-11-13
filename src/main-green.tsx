@@ -58,7 +58,15 @@ registerReset(() => walletActions.reset())
 registerReset(() => clientActions.reset())
 registerReset(() => ownerActions.reset())
 // the CRM's clients are one simple table (search, types, matches, quick marks); the board keeps the properties
-registerCrm({ Clients: ClientsTable, subtitle: 'הלקוחות בטבלה אחת, והנכסים על הלוח. התאמות מהקהילה בלחיצה אחת.' })
+registerCrm({
+  Clients: ClientsTable,
+  subtitle: 'הלקוחות בטבלה אחת, והנכסים על הלוח. התאמות מהקהילה בלחיצה אחת.',
+  // each view is a screen of its own, opened from the lines under "CRM" in the side menu
+  heads: {
+    client: { title: 'לקוחות', subtitle: 'כל הלקוחות בטבלה אחת. התאמות מהקהילה בלחיצה אחת.' },
+    property: { title: 'נכסים', subtitle: 'הנכסים שלך על לוח אחד, לפי שלב. כל נכס חדש מתפרסם אוטומטית בקהילה.' },
+  },
+})
 // every property put in the CRM goes up to the community by itself; a published card carries the link for its owner
 registerCrm({ AutoBar: AutoPublishNote, CardExtra: OwnerLinkButton })
 // the top bar (the view switch with the wallet or the quota), the office member's mark, and the lab in three layers
