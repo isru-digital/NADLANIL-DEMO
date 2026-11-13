@@ -6,8 +6,8 @@ export const PLATFORM_NAME = 'NadlanUP'
 /** The two-part slogan shown under the name. Each part starts with its number. */
 export const PLATFORM_TAGLINE = ['100% גב קהילתי', '0% גזירות בעמלה']
 
-/** Resolve a file in /public against the deployed base path. */
-export const asset = (path: string) => `${import.meta.env.BASE_URL}${path.replace(/^\//, '')}`
+/** Resolve a file in /public against the deployed base path. A full address (a photo held in the browser, a web link) is left as it is. */
+export const asset = (path: string) => (/^(data:|blob:|https?:)/.test(path) ? path : `${import.meta.env.BASE_URL}${path.replace(/^\//, '')}`)
 
 /** The logo mark file for this build's look (gold on navy, or green). */
 export const LOGO_FILE = __THEME__ === 'green' ? 'logo-green.png' : 'logo.png'

@@ -6,6 +6,7 @@ import { crmItems } from '../data/demo'
 import type { CommunityItem, CrmItem } from '../data/demo'
 import { useStore } from '../store'
 import { Modal } from '../components/ui'
+import { CardPhotos } from '../green/PhotoPicker'
 import { dateHe, ownerActions, ownerLink, usePublishDates, viewersIn } from './ownerLink'
 import '../styles/owner.css'
 
@@ -69,8 +70,17 @@ export function AutoPublishNote() {
   )
 }
 
-/** On a published property's card: the link for the owner. The broker copies it and sends it himself. */
+/** At the bottom of a property's card: its other photos, and once it is published, the link for the owner. */
 export function OwnerLinkButton({ item, publishedTo }: { item: CrmItem; publishedTo?: string }) {
+  return (
+    <>
+      <CardPhotos images={item.images} />
+      <OwnerLink item={item} publishedTo={publishedTo} />
+    </>
+  )
+}
+
+function OwnerLink({ item, publishedTo }: { item: CrmItem; publishedTo?: string }) {
   const dates = usePublishDates()
   const { toast } = useStore()
   const [open, setOpen] = useState(false)

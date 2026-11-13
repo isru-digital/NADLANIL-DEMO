@@ -11,6 +11,7 @@ import type { GreenAsk } from './ui'
 import { allExtras, knownCities, parseWhatsapp, sampleMessage, sampleRequest, titleOf } from './whatsapp'
 import type { Parsed } from './whatsapp'
 import { clientActions } from '../crm/clients'
+import PhotoPicker from './PhotoPicker'
 import '../styles/green-actions.css'
 
 /**
@@ -88,6 +89,7 @@ export default function GreenActions() {
   // ---- a new CRM card
   const [card, setCard] = useState<Draft>(emptyDraft)
   const [client, setClient] = useState('')
+  const [photos, setPhotos] = useState<string[]>([])
   const [paste, setPaste] = useState('')
   const [pasting, setPasting] = useState(false)
   // ---- a message from WhatsApp
@@ -101,6 +103,7 @@ export default function GreenActions() {
     if (!ask) return
     setCard(emptyDraft)
     setClient('')
+    setPhotos([])
     setPaste('')
     setPasting(false)
     setWa('')
@@ -123,6 +126,9 @@ export default function GreenActions() {
       client: client.trim() || (card.kind === 'property' ? 'בעל הנכס' : 'לקוח חדש'),
       note: card.extras.join(', '),
       updated: 'נוסף עכשיו',
+      // photos belong to a property only; the first one is the card's and the post's picture
+      image: card.kind === 'property' ? photos[0] : undefined,
+      images: card.kind === 'property' && photos.length ? photos : undefined,
       search: card.kind === 'request' ? { cities: [card.city], roomsMin: Math.floor(rooms) || 1, roomsMax: Math.ceil(rooms) || 6, budget: num(card.price), wants: card.extras } : undefined,
     }
     addCrm(item)
@@ -208,6 +214,7 @@ export default function GreenActions() {
             </button>
           )}
           <Fields draft={card} set={(d) => setCard((c) => ({ ...c, ...d }))} kinds={['נכס', 'לקוח שמחפש']} />
+          {card.kind === 'property' && <PhotoPicker photos={photos} onChange={setPhotos} />}
           <label className="field">
             <span className="field-label">{card.kind === 'property' ? 'שם בעל הנכס' : 'שם הלקוח'} (נשאר אצלכם, לא מתפרסם)</span>
             <input className="input" value={client} onChange={(e) => setClient(e.target.value)} placeholder="לדוגמה: משפחת כהן" />

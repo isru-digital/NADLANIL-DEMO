@@ -64,7 +64,7 @@ export type OwnerView = { title: string; area: string; city: string; rooms: stri
 
 export function ownerLink(item: CrmItem, date: string | undefined, brokerId: string) {
   const q = new URLSearchParams({ t: item.title, a: item.area, c: item.city, r: item.rooms, p: String(item.price), d: date ?? today(), b: brokerId })
-  if (item.image) q.set('i', item.image)
+  if (item.image && /^img\/[\w.-]+$/.test(item.image)) q.set('i', item.image)
   return `${location.origin}${import.meta.env.BASE_URL.replace(/\/$/, '')}${OWNER_PATH}?${q.toString()}`
 }
 

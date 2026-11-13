@@ -33,6 +33,8 @@ export type CrmItem = {
   note: string
   updated: string
   image?: string
+  /** every photo of a property, the first one is `image` (green version: photos the broker uploaded) */
+  images?: string[]
   sqm?: number
   floor?: string
   /** city used for community filtering and matching */

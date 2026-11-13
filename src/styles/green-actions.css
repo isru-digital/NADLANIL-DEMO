@@ -194,3 +194,144 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ------------------------------------------------------------------ photos of a property in the new card */
+.ga-photos .field-label small {
+  margin-inline-start: 6px;
+  font-weight: 500;
+  color: var(--text-faint);
+}
+.ga-photo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.ga-photo,
+.ga-photo-add {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  border-radius: 16px;
+  overflow: hidden;
+}
+.ga-photo {
+  margin: 0;
+  border: 1px solid var(--line);
+  background: rgb(var(--w) / 0.04);
+}
+.ga-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.ga-photo figcaption {
+  position: absolute;
+  inset-block-end: 6px;
+  inset-inline-start: 6px;
+  padding: 2px 9px;
+  border-radius: 99px;
+  background: rgb(4 59 43 / 0.82);
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+}
+.ga-photo button {
+  position: absolute;
+  inset-block-start: 4px;
+  inset-inline-end: 4px;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgb(10 20 16 / 0.62);
+  color: #fff;
+}
+.ga-photo button:hover {
+  background: rgb(10 20 16 / 0.85);
+}
+.ga-photo button svg {
+  width: 17px;
+  height: 17px;
+}
+.ga-photo-add {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 6px;
+  border: 1.5px dashed rgb(var(--g) / 0.55);
+  background: rgb(var(--g) / 0.06);
+  font-family: var(--font-display);
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--gold-soft);
+  cursor: pointer;
+  transition: background-color var(--t) var(--ease);
+}
+.ga-photo-add:hover {
+  background: rgb(var(--g) / 0.13);
+}
+.ga-photo-add svg {
+  width: 26px;
+  height: 26px;
+  stroke-width: 1.7;
+}
+.ga-photo-add input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.ga-photo-add:focus-within {
+  outline: 2px solid var(--gold-soft);
+  outline-offset: 2px;
+}
+.ga-photo-add.is-busy {
+  opacity: 0.6;
+}
+.ga-photo-err {
+  font-size: 14px;
+  font-style: normal;
+  line-height: 1.45;
+  color: #c0392b;
+}
+html[data-mode='night'] .ga-photo-err {
+  color: #ffa39b;
+}
+.ga-tiny {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  min-height: 40px;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--gold-soft);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.ga-tiny svg {
+  flex: none;
+  width: 15px;
+  height: 15px;
+}
+
+/* the other photos, small, on the card on the board */
+.ga-card-photos {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+.ga-card-photos img {
+  width: 46px;
+  height: 36px;
+  border-radius: 9px;
+  object-fit: cover;
+  border: 1px solid var(--line);
+}
+.ga-card-photos span {
+  margin-inline-start: auto;
+  font-size: 13px;
+  color: var(--text-dim);
+}
