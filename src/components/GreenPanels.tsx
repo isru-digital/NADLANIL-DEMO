@@ -34,7 +34,7 @@ export const panelChange: Record<string, Partial<Panel>> = {
     ),
   },
   match: { image: 'img/panel-street.webp', position: '50% 50%' },
-  wallet: { image: 'img/panel-keys.webp', position: '40% 50%' },
+  wallet: { image: 'img/panel-keys.webp', position: '40% 50%', text: 'אין עמלה למשרד. ארנק העמלות מראה כמה נכנס החודש וכמה עוד בצנרת.' },
 }
 
 export const panelOffice: Panel = {

@@ -96,7 +96,7 @@ export default function HomeGreen() {
               </motion.span>
             </h1>
             <motion.p className="hg-sub" {...rise(3)}>
-              קהילה ארצית של מתווכים ומערכת פשוטה שעובדת בשבילם. <span className="nb">0% עמלה למערכת,</span>{' '}
+              קהילה ארצית של מתווכים ומערכת פשוטה שעובדת בשבילם. <span className="nb">0% עמלה למשרד,</span>{' '}
               <span className="nb">100% עמלה למתווך.</span>
             </motion.p>
             <motion.div className="hg-cta" {...rise(4)}>
@@ -173,7 +173,7 @@ export default function HomeGreen() {
               <span className="hg-duo-num num">
                 <CountUp from={100} to={0} />%
               </span>
-              <strong>עמלה למערכת</strong>
+              <strong>עמלה למשרד</strong>
             </div>
             <div className="hg-duo-item is-full">
               <span className="hg-duo-num num">
