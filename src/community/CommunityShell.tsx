@@ -73,7 +73,7 @@ export function UpgradeBanner() {
       </i>
       <span>
         <b>{UPGRADE_LABEL}</b>
-        <small>0% עמלה למשרד. דף נחיתה, פולדר דיגיטלי וכל הכלים המתקדמים כלולים.</small>
+        <small>0% עמלה למשרד, 100% עמלה למתווך. דף נחיתה, פולדר דיגיטלי וכל הכלים המתקדמים כלולים.</small>
       </span>
       <em>
         לדף המשרד <ArrowLeft />

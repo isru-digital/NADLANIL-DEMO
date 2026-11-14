@@ -1,12 +1,13 @@
 import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowLeft, BadgeCheck, Building2, Check, FolderOpen, Handshake, KanbanSquare, LayoutTemplate, Lock, MessageCircle, MessagesSquare, Search, Users } from 'lucide-react'
+import { ArrowLeft, Building2, Check, FolderOpen, Handshake, KanbanSquare, LayoutTemplate, Lock, MessageCircle, MessagesSquare, Search, Users } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { PLATFORM_NAME } from '../config'
-import { COMMUNITY_DESC, COMMUNITY_FEED, COMMUNITY_HOME, COMMUNITY_JOIN, COMMUNITY_NAME, COMMUNITY_SUB, OFFICE_ONLY, OFFICE_PAGE, UPGRADE_LABEL } from '../config/community'
+import { COMMUNITY_DESC, COMMUNITY_FEED, COMMUNITY_HOME, COMMUNITY_JOIN, COMMUNITY_NAME, COMMUNITY_SUB, OFFICE_ONLY } from '../config/community'
 import { DemoTag, EASE, Reveal } from '../components/ui'
 import CommunityBrand from './CommunityBrand'
+import OfficePitch from './OfficePitch'
 import '../styles/join-green.css'
 import '../styles/kehila.css'
 
@@ -147,21 +148,7 @@ export default function CommunityHome() {
 
       <section className="jo-section">
         <div className="jo-in">
-          <Reveal className="kh-office">
-            <span className="kh-office-ico">
-              <BadgeCheck />
-            </span>
-            <div>
-              <small>רוצים יותר מהקהילה?</small>
-              <h2>
-                המשרד <bdi dir="ltr">{PLATFORM_NAME}</bdi>
-              </h2>
-              <p>משרד תיווך ארצי עם 0% עמלה למשרד. דף נחיתה, פולדר דיגיטלי וכל הכלים המתקדמים כלולים.</p>
-            </div>
-            <Link to={OFFICE_PAGE} className="btn btn-gold btn-lg">
-              {UPGRADE_LABEL} <ArrowLeft />
-            </Link>
-          </Reveal>
+          <OfficePitch />
         </div>
       </section>
 
