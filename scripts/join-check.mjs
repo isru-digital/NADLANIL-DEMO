@@ -138,7 +138,7 @@ for (const [label, vp, phone] of [
   check(`${tag}: the bars show the difference (today full, ours about a fifth)`, c.bars[0] === 100 && c.bars[1] >= 15 && c.bars[1] <= 21, c.bars.join(','))
   check(`${tag}: one deal covers 54 months of the BASIC fee`, c.cover.includes('54') && c.cover.includes('₪30,000'), c.cover)
   await page.screenshot({ path: `${out}/join-${label}-3-calc.png` })
-  check(`${tag}: what was paid to the office is in red, and labelled as paid`, /rgb\((21[0-9], 4\d, 3\d|255, 107, 94)\)/.test(c.redColor) && c.redColor === c.redBar && c.paidLabel.includes('שילמתם למשרד') && c.usLabel.includes('NadlanUP'), JSON.stringify([c.redColor, c.redBar, c.paidLabel, c.usLabel]))
+  check(`${tag}: what was paid to the office is in red, and labelled as paid`, /rgb\((21[0-9], 4\d, 3\d|255, 107, 94)\)/.test(c.redColor) && c.redColor === c.redBar && c.paidLabel.includes('הוצאתם') && c.usLabel.includes('NadlanUP'), JSON.stringify([c.redColor, c.redBar, c.paidLabel, c.usLabel]))
   check(`${tag}: "the same things, and even more" is there`, c.same.includes('אצלנו מקבלים את אותם דברים, ואפילו יותר') && c.same.includes('הסוכן שלנו') && c.same.includes('מותג של משרד תיווך ארצי') && c.same.includes('0% עמלה למשרד, 100% למתווך'), c.same.slice(0, 80))
   await page.evaluate(() => document.querySelector('.jo-marathon')?.scrollIntoView())
   await wait(2200)

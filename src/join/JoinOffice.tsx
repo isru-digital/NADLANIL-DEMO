@@ -8,7 +8,7 @@ import { BackButton, DemoTag, EASE, Logo, Modal, Reveal } from '../components/ui
 import { useAgent } from '../agent/useAgent'
 import { useMember } from '../config/member'
 import { OFFICE_FEE, OFFICE_NAME, shekel } from '../config/office'
-import { MADLAN_EXTRA, PLANS, TERMS, costOf, priceText, usePick } from '../config/pricing'
+import { AD_PRICE_EXAMPLE, ADS_WHY, EXAMPLE_ONLY, MADLAN_EXTRA, PLANS, TERMS, costOf, pickActions, priceText, usePick } from '../config/pricing'
 import { useStore } from '../store'
 import PriceList, { PlanChooser } from './PriceList'
 import '../styles/join-green.css'
@@ -131,7 +131,12 @@ export default function JoinOffice() {
   // Madlan is a commitment of 6 months, the membership of 3: the calculator does not go under it
   const months = Math.max(monthsWanted, cost.minMonths)
   const { toast } = useStore()
-  const yearToday = deals * fee * (pct / 100) + fixed * 12
+  // the fair side: in a regular office or alone the broker buys the same ads himself, at his own price per ad
+  const [adPriceText, setAdPrice] = useState(String(AD_PRICE_EXAMPLE))
+  const adPrice = Math.max(0, Number(adPriceText.replace(/[^\d.]/g, '')) || 0)
+  const adsIncluded = cost.plan.yad2 + cost.madlanAds
+  const adsMonthly = adsIncluded * adPrice
+  const yearToday = deals * fee * (pct / 100) + fixed * 12 + adsMonthly * 12
   const today = (yearToday * months) / 12
   const ours = monthly * months
   const diff = today - ours
@@ -240,13 +245,16 @@ export default function JoinOffice() {
           <Reveal className="jo-head">
             <span className="jo-tag">בואו נחשב</span>
             <h2>כמה כסף יצא לכם בשנה האחרונה?</h2>
-            <p>קודם כמה שילמתם למשרד שלכם, ואחר כך כמה זה היה עולה עם אותן עסקאות ואותם סכומים אצלנו.</p>
+            <p>קודם כמה הוצאתם במשרד רגיל או כעצמאים, כולל מודעות, ואחר כך כמה זה היה עולה עם אותן עסקאות ואותן מודעות אצלנו.</p>
+            <span className="jo-example" data-note="example">
+              {EXAMPLE_ONLY}
+            </span>
           </Reveal>
 
           <div className="jo-calcs">
             <Reveal className="jo-ccard jo-today">
               <span className="jo-step">1</span>
-              <h3>במשרד שלכם היום</h3>
+              <h3>במשרד רגיל או כעצמאים</h3>
               <div className="jo-inputs">
                 <label>
                   <span>
@@ -273,11 +281,39 @@ export default function JoinOffice() {
                   </span>
                   <input data-k="fixed" type="range" min={0} max={5000} step={100} value={fixed} onChange={(e) => setFixed(Number(e.target.value))} />
                 </label>
+                <label className="jo-adprice">
+                  <span>מחיר למודעה בחודש</span>
+                  <span className="jo-adprice-in">
+                    <input
+                      data-k="adPrice"
+                      type="text"
+                      inputMode="numeric"
+                      value={adPriceText}
+                      onChange={(e) => setAdPrice(e.target.value.replace(/[^\d]/g, '').slice(0, 6))}
+                      aria-describedby="adprice-note"
+                    />
+                    <i>₪</i>
+                  </span>
+                  <small id="adprice-note">
+                    {AD_PRICE_EXAMPLE} ₪ הוא ערך לדוגמה בלבד. כתבו כמה אתם משלמים היום על מודעה אחת בחודש, ביד2 או במדלן.
+                  </small>
+                </label>
               </div>
+              <p className="jo-ads-line" data-fact="ads-today">
+                {adsIncluded > 0 ? (
+                  <>
+                    המודעות שכלולות במסלול {cost.plan.name}
+                    {cost.pack ? ' ובחבילת המדלן' : ''}, אם קונים אותן לבד: <b className="num">{adsIncluded}</b> × <b className="num">{shekel(adPrice)}</b> ={' '}
+                    <b className="num">{shekel(adsMonthly)}</b> בחודש
+                  </>
+                ) : (
+                  <>במסלול {cost.plan.name} אין מודעות כלולות, ולכן לא נוספה כאן עלות מודעות.</>
+                )}
+              </p>
               <div className="jo-total">
-                <small>שילמתם למשרד {period}</small>
+                <small>הוצאתם {period}</small>
                 <b className="num jo-big">{shekel(gToday)}</b>
-                <em>{fixed > 0 ? 'עמלות ותשלום קבוע' : 'עמלות שנלקחו מכם'}</em>
+                <em>{[pct > 0 ? 'עמלות' : '', fixed > 0 ? 'תשלום קבוע' : '', adsMonthly > 0 ? 'מודעות' : ''].filter(Boolean).join(', ') || 'אין הוצאות'}</em>
               </div>
             </Reveal>
 
@@ -332,6 +368,43 @@ export default function JoinOffice() {
             </Reveal>
           </div>
 
+          {/* how many ads each plan includes, and what they would cost bought alone, at the visitor's own price */}
+          <Reveal className="jo-ads" delay={0.05}>
+            <h3>כמה מודעות כלולות בכל מסלול</h3>
+            <p className="jo-ads-sub">
+              לפי המחיר שכתבתם: <b className="num">{shekel(adPrice)}</b> למודעה בחודש.
+            </p>
+            <div className="jo-ads-rows" role="radiogroup" aria-label="מסלול">
+              {PLANS.map((p) => {
+                const on = pick.plan === p.id
+                return (
+                  <button key={p.id} type="button" role="radio" aria-checked={on} className={`jo-ads-row${on ? ' is-on' : ''}`} data-plan={p.id} onClick={() => pickActions.set({ plan: p.id })}>
+                    <b>{p.name}</b>
+                    <span className="jo-ads-n">{p.yad2 > 0 ? `${p.yad2} מודעות יד2` : 'ללא מודעות יד2'}</span>
+                    <span className="jo-ads-worth">
+                      {p.yad2 > 0 ? (
+                        <>
+                          לקנות לבד: <b className="num">{shekel(p.yad2 * adPrice)}</b> בחודש
+                        </>
+                      ) : (
+                        'אין מודעות לקנות'
+                      )}
+                    </span>
+                    <span className="jo-ads-price num">{priceText(p.price)}</span>
+                  </button>
+                )
+              })}
+            </div>
+            {cost.pack && (
+              <p className="jo-ads-madlan">
+                חבילת המדלן שבחרתם מוסיפה <b className="num">{cost.madlanAds}</b> מודעות לכל מסלול, בתשלום נוסף.
+              </p>
+            )}
+            <p className="jo-ads-why" data-note="why">
+              {ADS_WHY}
+            </p>
+          </Reveal>
+
           <Reveal className={`jo-diff${diff > 0 ? ' is-save' : ''}`}>
             <span className="jo-step">3</span>
             <h3>ההבדל</h3>
@@ -340,7 +413,7 @@ export default function JoinOffice() {
             </p>
             <div className="jo-bars" aria-hidden>
               <div className="is-red">
-                <small>שילמתם למשרד</small>
+                <small>הוצאתם היום</small>
                 <i>
                   <u style={{ width: `${(today / top) * 100}%` }} />
                 </i>
@@ -399,7 +472,7 @@ export default function JoinOffice() {
                 </div>
               </div>
             </div>
-            <small className="jo-note">חישוב לפי המספרים שהזנתם והמסלול שבחרתם. המחירים אצלנו לפני מע"מ. כל משרד עובד אחרת, כדאי לבדוק מה משלמים היום.</small>
+            <small className="jo-note">{EXAMPLE_ONLY}: לפי המספרים שהזנתם, המחיר למודעה שכתבתם והמסלול שבחרתם. המחירים אצלנו לפני מע"מ. כל משרד עובד אחרת, כדאי לבדוק מה משלמים היום.</small>
           </Reveal>
 
           <Reveal className="jo-marathon">

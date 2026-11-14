@@ -63,6 +63,15 @@ const num = (n: number) => n.toLocaleString('he-IL')
 export const priceText = (n: number) => `${num(n)} ₪ + מע"מ לחודש`
 /** Where one short line stands for the three plans. */
 export const FROM_FEE = `החל מ-${num(PLANS[0].price)} ₪ + מע"מ לחודש`
+/**
+ * The calculator's fair side (Itzik, 14.11.2026): in a regular office or alone, the broker pays for ads himself.
+ * There is no real price for an ad here: the visitor writes his own, and the field starts on an example value that
+ * says it is an example. The explanation is his, word for word, and makes no promise about deals.
+ */
+export const AD_PRICE_EXAMPLE = 100
+export const ADS_WHY = 'יותר מודעות = יותר חשיפה = יותר סיכוי לסגור עסקאות. לכן מסלול גדול יותר משתלם יותר ממה שנראה במחיר.'
+export const EXAMPLE_ONLY = 'חישוב לדוגמה בלבד'
+
 /** What every plan also has (his fourth note). */
 export const ALL_PLANS_NOTE = 'בכל המסלולים כלולים גם "הסוכן שלנו" וכל מה שכלול במשרד.'
 
