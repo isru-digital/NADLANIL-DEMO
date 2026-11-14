@@ -66,7 +66,7 @@ for (const [label, vp, phone] of [
   await wait(900)
   await page.screenshot({ path: `${out}/agent-${label}-2b-pay.png` })
   check(`${tag}: joining is a simulation with no card fields`, await page.evaluate(() => !!document.querySelector('.jo-pay') && document.querySelectorAll('.jo-pay input[type=text], .jo-pay input[type=tel], .jo-pay input[type=number]').length === 0 && document.body.textContent.includes('בדמו אין חיוב אמיתי')))
-  check(`${tag}: the joining shows 0% to the office and 689 a month`, await page.evaluate(() => { const t = document.querySelector('.jo-sum')?.textContent ?? ''; return t.includes('0%') && t.includes('689 ₪ לחודש') && !t.includes('2,067') }))
+  check(`${tag}: the joining shows 0% to the office and the plan's price`, await page.evaluate(() => { const t = document.querySelector('[data-sum]')?.textContent ?? ''; return t.includes('0%') && t.includes('549 ₪ + מע"מ לחודש') }))
   check(`${tag}: joining needs the terms to be approved`, await page.evaluate(() => document.querySelector('.jo-go')?.disabled === true))
   await page.evaluate(() => document.querySelector('.jo-agree input')?.click())
   await wait(300)

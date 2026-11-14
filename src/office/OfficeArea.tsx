@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRight, BadgeCheck, Check, Lock } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useMember } from '../config/member'
 import { OFFICE_FEE, OFFICE_NAME } from '../config/office'
+import { planById, usePick } from '../config/pricing'
 import { EASE } from '../components/ui'
 import { extraById, extras } from './officeData'
 import type { Extra } from './officeData'
@@ -16,6 +17,7 @@ import '../styles/office.css'
  */
 export function OfficeHub() {
   const { isOffice } = useMember()
+  const plan = planById(usePick().plan)
   return (
     <div className="of">
       <header className="of-head">
@@ -33,7 +35,9 @@ export function OfficeHub() {
           </span>
           <div>
             <b>אתם חברי משרד. הכול פתוח.</b>
-            <small>0% עמלה למשרד, 100% נשאר אצלכם.</small>
+            <small>
+              מסלול {plan.name}. 0% עמלה למשרד, 100% נשאר אצלכם.
+            </small>
           </div>
         </div>
       ) : (

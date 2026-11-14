@@ -79,7 +79,7 @@ for (const [label, vp, phone] of [
   await page.evaluate(`(${seen('.mb-chip')}).click()`)
   await wait(800)
   let t = await page.evaluate(() => document.querySelector('.mb-sheet')?.textContent.replace(/\s+/g, ' ') ?? '')
-  check(`${tag}: the wallet sheet: balance, what each tool costs, no price for a credit, a way to the comparison`, t.includes('מחיר קרדיט: מחיר יקבע') && t.includes('חדר עסקה משותף') && t.includes('3 קרדיטים') && t.includes('1 חינם בחודש') && !t.includes('₪') && (await page.evaluate(() => document.querySelector('.mb-cta')?.getAttribute('href')?.endsWith('/upgrade'))), t.slice(0, 120))
+  check(`${tag}: the wallet sheet: balance, what each tool costs, no price for a credit, a way to the comparison`, t.includes('מחיר קרדיט: מחיר יקבע') && t.includes('טינדר של הדירות') && t.includes('3 קרדיטים') && t.includes('1 חינם בחודש') && !t.includes('₪') && (await page.evaluate(() => document.querySelector('.mb-cta')?.getAttribute('href')?.endsWith('/upgrade'))), t.slice(0, 120))
   await page.screenshot({ path: `${out}/b-${label}-2-wallet.png` })
   await page.evaluate(() => document.querySelector('.modal .icon-btn')?.click())
   await wait(600)
@@ -163,7 +163,7 @@ for (const [label, vp, phone] of [
     text: document.querySelector('.up')?.textContent ?? '',
   }))
   check(`${tag}: the "no credits" screen leads to the comparison page`, st.path.endsWith('/upgrade'))
-  check(`${tag}: three columns: the community free, credits by use with no price, the office at 689 a month and 0%`, JSON.stringify(st.cols) === JSON.stringify([['מתווכים לעסקאות', 'חינם', 'הקהילה, תמיד'], ['קרדיטים', 'לפי שימוש', 'מחיר קרדיט: מחיר יקבע'], ['המשרד', '689 ₪ לחודש', '0% עמלה למשרד']]), JSON.stringify(st.cols))
+  check(`${tag}: three columns: the community free, credits by use with no price, the office at 689 a month and 0%`, JSON.stringify(st.cols) === JSON.stringify([['מתווכים לעסקאות', 'חינם', 'הקהילה, תמיד'], ['קרדיטים', 'לפי שימוש', 'מחיר קרדיט: מחיר יקבע'], ['המשרד', 'החל מ-549 ₪ + מע"מ לחודש', '0% עמלה למשרד']]), JSON.stringify(st.cols))
   check(`${tag}: three groups of rows: the base, advanced tools, office only`, st.groups.join('|') === 'הבסיס|כלים מתקדמים|בלעדי למשרד' && st.rows === 24 && st.exclusive === 12, `${st.groups.join('|')} / ${st.rows} rows`)
   check(`${tag}: it marks the layer being viewed (the community), benefits are "בהקמה", and no invented price`, st.you.join() === 'מתווכים לעסקאות' && st.text.includes('בהקמה') && (st.text.match(/₪/g) ?? []).length === 2 && !/[\u2013\u2014]/.test(st.text), `${st.you.join()} / ${(st.text.match(/₪/g) ?? []).length} shekel signs`)
   check(`${tag}: its buttons lead to the free join, the app and the office join`, st.cta.length === 3 && st.cta[0].endsWith('/kehila/join') && st.cta[1].endsWith('/app') && st.cta[2].endsWith('/join/office'), st.cta.join(' '))

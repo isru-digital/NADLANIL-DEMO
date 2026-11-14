@@ -7,7 +7,10 @@ import { PLATFORM_NAME } from '../config'
 import { BackButton, DemoTag, EASE, Logo, Modal, Reveal } from '../components/ui'
 import { useAgent } from '../agent/useAgent'
 import { useMember } from '../config/member'
-import { COMMIT_TBD, OFFICE_FEE, OFFICE_MIN_MONTHS, OFFICE_NAME, OFFICE_PRICE, OFFICE_YEAR, shekel } from '../config/office'
+import { OFFICE_FEE, OFFICE_NAME, shekel } from '../config/office'
+import { MADLAN_EXTRA, PLANS, TERMS, costOf, priceText, usePick } from '../config/pricing'
+import { useStore } from '../store'
+import PriceList, { PlanChooser } from './PriceList'
 import '../styles/join-green.css'
 
 /** A number that glides to its new value, so the calculator feels alive. */
@@ -48,7 +51,7 @@ const rows: { what: string; community: boolean; office: boolean }[] = [
 ]
 
 const faq = [
-  { q: 'כמה זה עולה?', a: `${OFFICE_FEE}, מחיר קבוע. המשרד לא לוקח אחוז מהעמלה, ו-100% נשארים אצלכם.` },
+  { q: 'כמה זה עולה?', a: `שלושה מסלולים: ${PLANS.map((p) => `${p.name} ב-${p.price.toLocaleString('he-IL')} ₪`).join(', ')}. כל המחירים חודשיים ולפני מע"מ. המשרד לא לוקח אחוז מהעמלה, ו-100% נשארים אצלכם.` },
   { q: 'האם לוקחים אחוז מהעמלה?', a: 'לא. 0% עמלה למשרד, והעמלה כולה נשארת אצלכם.' },
   { q: 'מתי אפשר להתחיל?', a: 'מיד אחרי ההצטרפות נפתח האזור "הסוכן שלנו", שהוא חלק מהמשרד. עונים על 15 שאלות קלילות, ואנחנו בונים את הדף.' },
   { q: 'אפשר להתחיל בקהילה ולעבור למשרד אחר כך?', a: 'כן. מצטרפים לקהילה בחינם, ועוברים למשרד בכל שלב.' },
@@ -118,17 +121,25 @@ export default function JoinOffice() {
   const [fee, setFee] = useState(30000)
   const [pct, setPct] = useState(20)
   const [fixed, setFixed] = useState(0)
-  const [months, setMonths] = useState(12)
+  const [monthsWanted, setMonths] = useState(12)
   const [years, setYears] = useState(5)
+  // what is paid here: the chosen plan, and Madlan if it was added (all before VAT)
+  const pick = usePick()
+  const cost = costOf(pick)
+  const monthly = cost.month
+  const yearOurs = monthly * 12
+  // Madlan is a commitment of 6 months, the membership of 3: the calculator does not go under it
+  const months = Math.max(monthsWanted, cost.minMonths)
+  const { toast } = useStore()
   const yearToday = deals * fee * (pct / 100) + fixed * 12
   const today = (yearToday * months) / 12
-  const ours = OFFICE_PRICE * months
+  const ours = monthly * months
   const diff = today - ours
-  const yearGap = yearToday - OFFICE_YEAR
-  const covers = Math.floor(fee / OFFICE_PRICE)
+  const yearGap = yearToday - yearOurs
+  const covers = Math.floor(fee / monthly)
   const period = months === 12 ? 'בשנה האחרונה' : `ב-${months} חודשים`
   const perDealToday = deals ? yearToday / deals : 0
-  const perDealOurs = deals ? OFFICE_YEAR / deals : 0
+  const perDealOurs = deals ? yearOurs / deals : 0
   const top = Math.max(today, ours, 1)
   const gToday = useGlide(today)
   const gOurs = useGlide(ours)
@@ -213,8 +224,18 @@ export default function JoinOffice() {
         </div>
       </section>
 
+      {/* ------------------------------------------------------------ the price list: three plans, Madlan, terms */}
+      <PriceList
+        joined={joined}
+        onJoin={(plan) => {
+          if (joined) return toast(`המסלול עודכן בדמו: ${PLANS.find((p) => p.id === plan)?.name}`)
+          setAgree(false)
+          setPay('open')
+        }}
+      />
+
       {/* ------------------------------------------------------------ the calculator */}
-      <section className="jo-section" id="calc">
+      <section className="jo-section is-tint" id="calc">
         <div className="jo-in">
           <Reveal className="jo-head">
             <span className="jo-tag">בואו נחשב</span>
@@ -263,20 +284,31 @@ export default function JoinOffice() {
             <Reveal delay={0.1} className="jo-ccard jo-ours">
               <span className="jo-step">2</span>
               <h3>דרך {PLATFORM_NAME}</h3>
+              <PlanChooser compact />
               <div className="jo-inputs">
                 <label>
                   <span>
                     כמה חודשים? <b className="num">{months}</b>
                   </span>
-                  <input data-k="months" type="range" min={OFFICE_MIN_MONTHS} max={12} value={months} onChange={(e) => setMonths(Number(e.target.value))} />
-                  <small>מינימום {OFFICE_MIN_MONTHS} חודשים.</small>
+                  <input data-k="months" type="range" min={cost.minMonths} max={12} value={months} onChange={(e) => setMonths(Number(e.target.value))} />
+                  <small>{cost.pack ? `מינימום ${cost.minMonths} חודשים: פרסום במדלן הוא התחייבות ל-6 חודשים.` : `מינימום ${cost.minMonths} חודשים.`}</small>
                 </label>
               </div>
               <ul className="jo-facts">
                 <li>
                   <Check />
-                  <span>{OFFICE_PRICE} ₪ לחודש, מחיר קבוע</span>
+                  <span data-fact="plan">
+                    מסלול {cost.plan.name}: {priceText(cost.plan.price)}
+                  </span>
                 </li>
+                {cost.pack && (
+                  <li>
+                    <Check />
+                    <span data-fact="madlan">
+                      מדלן, {cost.madlanAds} מודעות: {priceText(cost.madlan)}
+                    </span>
+                  </li>
+                )}
                 <li>
                   <Check />
                   <span>0% מהעמלה, היא כולה אצלכם</span>
@@ -293,8 +325,8 @@ export default function JoinOffice() {
               <div className="jo-total">
                 <small>אותן עסקאות, אצלנו זה היה עולה {months === 12 ? 'בשנה' : `ב-${months} חודשים`}</small>
                 <b className="num jo-big">{shekel(gOurs)}</b>
-                <em>
-                  {OFFICE_PRICE} × {months}
+                <em data-fact="sum">
+                  {monthly.toLocaleString('he-IL')} × {months}, לפני מע"מ
                 </em>
               </div>
             </Reveal>
@@ -367,7 +399,7 @@ export default function JoinOffice() {
                 </div>
               </div>
             </div>
-            <small className="jo-note">חישוב לפי המספרים שהזנתם. כל משרד עובד אחרת, כדאי לבדוק מה משלמים היום.</small>
+            <small className="jo-note">חישוב לפי המספרים שהזנתם והמסלול שבחרתם. המחירים אצלנו לפני מע"מ. כל משרד עובד אחרת, כדאי לבדוק מה משלמים היום.</small>
           </Reveal>
 
           <Reveal className="jo-marathon">
@@ -382,7 +414,7 @@ export default function JoinOffice() {
             </label>
             {yearGap > 0 ? (
               <>
-                <MarathonChart perYearToday={yearToday} perYearOurs={OFFICE_YEAR} years={years} />
+                <MarathonChart perYearToday={yearToday} perYearOurs={yearOurs} years={years} />
                 <div className="jo-run">
                   <div className="is-red">
                     <small>במשרד שלכם, אחרי {years} {years === 1 ? 'שנה' : 'שנים'}</small>
@@ -390,7 +422,7 @@ export default function JoinOffice() {
                   </div>
                   <div className="is-green">
                     <small>אצלנו, אחרי {years} {years === 1 ? 'שנה' : 'שנים'}</small>
-                    <b className="num">{shekel(OFFICE_YEAR * years)}</b>
+                    <b className="num">{shekel(yearOurs * years)}</b>
                   </div>
                   <div className="is-stay">
                     <small>נשארים אצלכם</small>
@@ -470,7 +502,7 @@ export default function JoinOffice() {
           </Reveal>
           <ol className="jo-steps">
             {[
-              ['מצטרפים למשרד', `${OFFICE_FEE}, ו-0% עמלה למשרד. בדמו אין חיוב אמיתי.`],
+              ['בוחרים מסלול ומצטרפים', 'BASIC, PLUS או PRO, ו-0% עמלה למשרד. בדמו אין חיוב אמיתי.'],
               ['עונים על 15 שאלות', 'קלילות, בכיף: תמונה, רישיון, אזורים והסיפור שלכם.'],
               ['הדף והמשרד שלכם מוכנים', 'דף אישי מרשים בשמכם, ומקום במשרד תיווך ארצי.'],
             ].map(([t, d], i) => (
@@ -550,25 +582,59 @@ export default function JoinOffice() {
             </div>
           ) : (
             <>
-              <dl className="jo-sum">
+              <PlanChooser />
+              <dl className="prc-sum" data-sum>
                 <div>
-                  <dt>מסלול</dt>
-                  <dd>{OFFICE_NAME}</dd>
+                  <dt>מסלול {cost.plan.name}</dt>
+                  <dd className="num">{priceText(cost.plan.price)}</dd>
                 </div>
+                {cost.pack && (
+                  <div>
+                    <dt>{cost.pack.label}</dt>
+                    <dd className="num">{priceText(cost.pack.price)}</dd>
+                  </div>
+                )}
+                {cost.pack && pick.extra > 0 && (
+                  <div>
+                    <dt>
+                      {MADLAN_EXTRA.label} × <span className="num">{pick.extra}</span>
+                    </dt>
+                    <dd className="num">{priceText(pick.extra * MADLAN_EXTRA.price)}</dd>
+                  </div>
+                )}
                 <div>
                   <dt>עמלה למשרד</dt>
                   <dd className="num">0%</dd>
                 </div>
                 <div>
-                  <dt>דמי חבר</dt>
-                  <dd className="num">{OFFICE_FEE}</dd>
+                  <dt>{TERMS[4][0]}</dt>
+                  <dd>{TERMS[4][1]}</dd>
                 </div>
                 <div className="is-total">
+                  <dt>סך הכול לחודש</dt>
+                  <dd className="num">{priceText(cost.month)}</dd>
+                </div>
+                <div>
                   <dt>חיוב היום</dt>
                   <dd>אין, זה דמו</dd>
                 </div>
               </dl>
-              <p className="jo-commit">{COMMIT_TBD}</p>
+              {/* the terms that apply to what was picked, in the price list's own words */}
+              <ul className="prc-terms" data-terms>
+                <li>
+                  {TERMS[0][0]}: {TERMS[0][1]}
+                </li>
+                {cost.plan.yad2 > 0 && (
+                  <li>
+                    {TERMS[1][0]}: {TERMS[1][1]}
+                  </li>
+                )}
+                {cost.pack && (
+                  <li>
+                    {TERMS[2][0]}: {TERMS[2][1]}
+                  </li>
+                )}
+              </ul>
               <label className="jo-agree">
                 <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} />
                 <span>אני מאשר/ת את תנאי ההצטרפות. בדמו זה ממשק בלבד: התנאים דורשים אישור עורך דין לפני גרסה אמיתית.</span>

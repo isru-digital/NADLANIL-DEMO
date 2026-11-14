@@ -71,7 +71,7 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
   check(`${d} it lands on 0% to the office and 100% to the broker`, s.share === 100 && s.office === '0%' && s.broker === '100%' && s.labels === 'עמלה למשרד|עמלה למתווך' && s.bar === 100 && s.done, JSON.stringify({ o: s.office, b: s.broker, bar: s.bar }))
   check(`${d} the headline says the whole commission stays with the broker, with no full stop`, s.h2 === 'במשרד NadlanUP כל העמלה נשארת אצלכם', s.h2)
   check(`${d} the button is "שדרג למשרד NadlanUP", large, and leads to the office's page`, s.btn === 'שדרג למשרד NadlanUP' && s.to === '/join/office' && s.btnH >= 56, JSON.stringify({ b: s.btn, to: s.to, h: s.btnH }))
-  check(`${d} the fee is on the block (689 ₪ לחודש), and the note explains the half it started from`, s.fee === 'דמי חבר: 689 ₪ לחודש' && s.note.includes('לרוב 50%') && s.note.includes('0%'), `${s.fee} / ${s.note}`)
+  check(`${d} the fee is on the block (from 549), and the note explains the half it started from`, s.fee === 'דמי חבר: החל מ-549 ₪ + מע"מ לחודש' && s.note.includes('לרוב 50%') && s.note.includes('0%'), `${s.fee} / ${s.note}`)
   check(`${d} a screen reader gets the result, not the moving numbers`, s.label.includes('0% עמלה למשרד') && s.label.includes('100% עמלה למתווך'))
   check(`${d} it fits the screen, nothing scrolls sideways`, s.inside && s.ov <= 1, `${s.ov}px`)
   await page.screenshot({ path: `${out}/${d}-2-landed.png` })

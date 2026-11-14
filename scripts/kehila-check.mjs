@@ -89,7 +89,7 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
   await page.evaluate(() => document.querySelector('.upb')?.click())
   await wait(1700)
   check(`${d} the strip leads to the office's page`, (await path(page)) === '/join/office', await path(page))
-  check(`${d} the office's page shows the fee 689 ₪ לחודש, unchanged`, (await text(page)).includes('689 ₪ לחודש'))
+  check(`${d} the office's page shows the fee from 549`, (await text(page)).includes('החל מ-549 ₪ + מע"מ לחודש'))
 
   // ---- 4. the two tools that belong to the office
   for (const [id, title] of [['builder', 'בונה דף נחיתה'], ['folder', 'פולדר דיגיטלי']]) {

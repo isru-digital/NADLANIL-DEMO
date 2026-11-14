@@ -4,7 +4,8 @@ import { useStore } from '../store'
 import { PLATFORM_NAME } from '../config'
 import { useEffect } from 'react'
 import { useMember } from '../config/member'
-import { COMMIT_TBD, OFFICE_FEE, OFFICE_NAME } from '../config/office'
+import { OFFICE_NAME } from '../config/office'
+import { TERMS, costOf, priceText, usePick } from '../config/pricing'
 import { firstName, inArea, sampleProfile, slugOf } from './agentData'
 import { useAgent } from './useAgent'
 import AgentWizard from './AgentWizard'
@@ -104,6 +105,7 @@ function Gate() {
 /* ---------------------------------------------------------------- the finished page */
 
 function Dashboard() {
+  const cost = costOf(usePick())
   const { profile: p, patch, reset, paidAt } = useAgent()
   const { toast } = useStore()
   const slug = slugOf(p.name)
@@ -191,7 +193,9 @@ function Dashboard() {
             <dl className="ag-member">
               <div>
                 <dt>מסלול</dt>
-                <dd>{OFFICE_NAME}</dd>
+                <dd>
+                  {OFFICE_NAME}, {cost.plan.name}
+                </dd>
               </div>
               <div>
                 <dt>עמלה למשרד</dt>
@@ -199,14 +203,16 @@ function Dashboard() {
               </div>
               <div>
                 <dt>דמי חבר</dt>
-                <dd className="num">{OFFICE_FEE}</dd>
+                <dd className="num">{priceText(cost.month)}</dd>
               </div>
               <div>
                 <dt>הצטרפות</dt>
                 <dd>{paidAt ? new Date(paidAt).toLocaleDateString('he-IL', { timeZone: 'Asia/Jerusalem' }) : 'בדמו'}</dd>
               </div>
             </dl>
-            <p className="ag-note">{COMMIT_TBD}. בדמו אין חיוב אמיתי.</p>
+            <p className="ag-note">
+              {TERMS[0][0]}: {TERMS[0][1]}. בדמו אין חיוב אמיתי.
+            </p>
           </section>
 
           <section className="ag-panel">

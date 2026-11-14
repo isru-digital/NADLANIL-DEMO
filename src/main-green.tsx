@@ -35,6 +35,7 @@ import { memberActions } from './config/member'
 import { agentActions } from './agent/useAgent'
 import { registerActions, registerCommunity, registerCrm, registerLab, registerNames, registerNav, registerReset, registerShell } from './config/navExtras'
 import ClientsTable from './crm/ClientsTable'
+import { pickActions } from './config/pricing'
 import FeedMasthead from './community/FeedMasthead'
 import { CATEGORIES, CommercialSeed, categoryOf } from './crm/categories'
 import OwnerPage from './owner/OwnerPage'
@@ -59,6 +60,7 @@ registerReset(() => memberActions.reset())
 registerReset(() => walletActions.reset())
 registerReset(() => clientActions.reset())
 registerReset(() => ownerActions.reset())
+registerReset(() => pickActions.reset())
 // the CRM's clients are one simple table (search, types, matches, quick marks); the board keeps the properties
 registerCrm({
   Clients: ClientsTable,
