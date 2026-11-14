@@ -7,7 +7,7 @@ import type { CommunityItem, CrmItem } from '../data/demo'
 import { useStore } from '../store'
 import { Modal } from '../components/ui'
 import { CardPhotos } from '../green/PhotoPicker'
-import { categoryOf, commercialBody, commercialSeedIds, isCommercial } from '../crm/categories'
+import { commercialBody, commercialSeedIds, isCommercial } from '../crm/categories'
 import { dateHe, ownerActions, ownerLink, usePublishDates, viewersIn } from './ownerLink'
 import '../styles/owner.css'
 
@@ -30,7 +30,7 @@ const postOf = (item: CrmItem, authorId: string): CommunityItem => ({
   sourceId: item.id,
   city: item.city,
   title: item.title,
-  body: isCommercial(item) ? commercialBody(categoryOf(item)) : 'נכס חדש אצלי. פתוח לשיתוף פעולה עם מתווך שיש לו קונה מתאים.',
+  body: isCommercial(item) ? commercialBody : 'נכס חדש אצלי. פתוח לשיתוף פעולה עם מתווך שיש לו קונה מתאים.',
   image: item.image,
   // an office or a business property has no rooms: its size goes next to its area
   property: isCommercial(item)

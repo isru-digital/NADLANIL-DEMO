@@ -153,7 +153,7 @@ export default function GreenActions() {
     const item: CrmItem = {
       id: `n${Date.now()}`,
       kind: card.kind === 'property' ? 'property' : 'client',
-      title: commercial ? commercialTitle(card.category, num(card.sqm), card.city) : titleOf(card.kind, rooms || null, card.city),
+      title: commercial ? commercialTitle(num(card.sqm), card.city) : titleOf(card.kind, rooms || null, card.city),
       area: card.city,
       city: card.city,
       rooms: commercial ? '-' : card.rooms || '-',
