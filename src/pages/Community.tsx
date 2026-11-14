@@ -27,6 +27,7 @@ import type { TopicId } from '../config/topics'
 import { brokerById, brokers, cities, fitsSearch, formatPriceShort, roomsLabel } from '../data/demo'
 import type { CommunityItem } from '../data/demo'
 import { useStore } from '../store'
+import { communitySlots } from '../config/navExtras'
 import { Avatar, EASE, Modal } from '../components/ui'
 import CommunityCard from '../components/CommunityCard'
 import '../styles/community.css'
@@ -138,6 +139,7 @@ export default function Community() {
 
   return (
     <div className="fbx-page">
+      {communitySlots.Top && <communitySlots.Top items={scoped} view={view} onView={setView as (v: never) => void} />}
       {/* -------------------------------------------------------- top bar */}
       <header className="fbx-top">
         <h1>קהילה</h1>

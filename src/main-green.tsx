@@ -33,8 +33,9 @@ import { FREE_IDS, PAID_IDS, walletActions } from './config/tiers'
 import About from './pages/About'
 import { memberActions } from './config/member'
 import { agentActions } from './agent/useAgent'
-import { registerActions, registerCrm, registerLab, registerNames, registerNav, registerReset, registerShell } from './config/navExtras'
+import { registerActions, registerCommunity, registerCrm, registerLab, registerNames, registerNav, registerReset, registerShell } from './config/navExtras'
 import ClientsTable from './crm/ClientsTable'
+import FeedMasthead from './community/FeedMasthead'
 import { CATEGORIES, CommercialSeed, categoryOf } from './crm/categories'
 import OwnerPage from './owner/OwnerPage'
 import { AutoPublish, AutoPublishNote, OwnerLinkButton } from './owner/OwnerPublish'
@@ -68,6 +69,8 @@ registerCrm({
     property: { title: 'נכסים', subtitle: 'הנכסים שלך על לוח אחד, לפי שלב. כל נכס חדש מתפרסם אוטומטית בקהילה.' },
   },
 })
+// the feed opens like the front page of a daily paper of deals: a nameplate, and the day's figures as filters
+registerCommunity({ Top: FeedMasthead as never })
 // every property put in the CRM goes up to the community by itself; a published card carries the link for its owner
 registerCrm({ AutoBar: AutoPublishNote, CardExtra: OwnerLinkButton })
 // a property is a private home, an office or a business property: picked when it is opened, shown and filtered on the board

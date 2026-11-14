@@ -111,3 +111,14 @@ export const crmSlots: {
 export function registerCrm(slots: typeof crmSlots) {
   Object.assign(crmSlots, slots)
 }
+
+/**
+ * What the green version puts at the very top of the community feed (its nameplate, with the day's figures as
+ * filters). With nothing registered the feed starts with its plain title, as it always did.
+ */
+export const communitySlots: {
+  Top?: ComponentType<{ items: import('../data/demo').CommunityItem[]; view: string; onView: (v: never) => void }>
+} = {}
+export function registerCommunity(slots: typeof communitySlots) {
+  Object.assign(communitySlots, slots)
+}

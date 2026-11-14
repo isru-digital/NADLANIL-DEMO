@@ -17,12 +17,18 @@ function load(): Member {
 }
 
 let member: Member = load()
+// the stylesheets can tell the two views apart (a few things are shown to one of them only)
+const mark = () => {
+  document.documentElement.dataset.member = member
+}
+mark()
 const listeners = new Set<() => void>()
 
 export const memberActions = {
   set(next: Member) {
     if (next === member) return
     member = next
+    mark()
     try {
       localStorage.setItem(KEY, next)
     } catch {
