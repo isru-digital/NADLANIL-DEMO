@@ -7,11 +7,12 @@ import type { CommunityItem, CrmItem } from '../data/demo'
 import { useStore } from '../store'
 import { Modal } from '../components/ui'
 import { CardPhotos } from '../green/PhotoPicker'
+import { categoryOf, commercialBody, commercialSeedIds, isCommercial } from '../crm/categories'
 import { dateHe, ownerActions, ownerLink, usePublishDates, viewersIn } from './ownerLink'
 import '../styles/owner.css'
 
 /** The properties the demo starts with. Anything else in the CRM was put there by the broker. */
-const seed = new Set(crmItems.map((x) => x.id))
+const seed = new Set([...crmItems.map((x) => x.id), ...commercialSeedIds])
 /** Being published right now (the store updates a moment later). */
 const pending = new Set<string>()
 
@@ -29,9 +30,12 @@ const postOf = (item: CrmItem, authorId: string): CommunityItem => ({
   sourceId: item.id,
   city: item.city,
   title: item.title,
-  body: 'נכס חדש אצלי. פתוח לשיתוף פעולה עם מתווך שיש לו קונה מתאים.',
+  body: isCommercial(item) ? commercialBody(categoryOf(item)) : 'נכס חדש אצלי. פתוח לשיתוף פעולה עם מתווך שיש לו קונה מתאים.',
   image: item.image,
-  property: { area: item.area, rooms: item.rooms, price: item.price, split: 'חלוקת עמלה שווה', showPrice: true },
+  // an office or a business property has no rooms: its size goes next to its area
+  property: isCommercial(item)
+    ? { area: item.sqm ? `${item.area} · ${item.sqm} מ"ר` : item.area, rooms: '', price: item.price, split: 'חלוקת עמלה שווה', showPrice: true }
+    : { area: item.area, rooms: item.rooms, price: item.price, split: 'חלוקת עמלה שווה', showPrice: true },
   fresh: true,
 })
 

@@ -35,6 +35,7 @@ import { memberActions } from './config/member'
 import { agentActions } from './agent/useAgent'
 import { registerActions, registerCrm, registerLab, registerNames, registerNav, registerReset, registerShell } from './config/navExtras'
 import ClientsTable from './crm/ClientsTable'
+import { CATEGORIES, CommercialSeed, categoryOf } from './crm/categories'
 import OwnerPage from './owner/OwnerPage'
 import { AutoPublish, AutoPublishNote, OwnerLinkButton } from './owner/OwnerPublish'
 import { OWNER_PATH, ownerActions } from './owner/ownerLink'
@@ -69,6 +70,8 @@ registerCrm({
 })
 // every property put in the CRM goes up to the community by itself; a published card carries the link for its owner
 registerCrm({ AutoBar: AutoPublishNote, CardExtra: OwnerLinkButton })
+// a property is a private home, an office or a business property: picked when it is opened, shown and filtered on the board
+registerCrm({ categories: CATEGORIES.map(({ id, label }) => ({ id, label })), categoryOf })
 // the top bar (the view switch with the wallet or the quota), the office member's mark, and the lab in three layers
 registerShell({ bar: MemberBar, badge: MemberBadge, lab: TieredLab })
 // the community under its own name: its name at the top for a community member, no dashboard and two locked lines
@@ -141,6 +144,7 @@ start(<HomeGreen />, {
     <>
       <GreenActions />
       <AutoPublish />
+      <CommercialSeed />
       {import.meta.env.VITE_DEMO_RESET === 'false' ? null : <DemoReset />}
     </>
   ),

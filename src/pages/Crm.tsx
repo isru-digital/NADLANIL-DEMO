@@ -12,6 +12,7 @@ import {
   Lock,
   MapPin,
   Plus,
+  Ruler,
   Share2,
   Sparkles,
   UserSearch,
@@ -139,7 +140,12 @@ export default function Crm() {
   const [overStage, setOverStage] = useState<CrmStatus | null>(null)
   const [publishing, setPublishing] = useState<{ item: CrmItem; topicId: TopicId } | null>(null)
 
-  const items = kind === 'all' ? crm : crm.filter((c) => c.kind === kind)
+  // the green version gives a property a category (private, office, business) and lets the board show one of them
+  const cats = crmSlots.categories
+  const catOf = crmSlots.categoryOf
+  const [cat, setCat] = useState('all')
+  const ofKind = kind === 'all' ? crm : crm.filter((c) => c.kind === kind)
+  const items = cats && catOf && cat !== 'all' ? ofKind.filter((c) => c.kind !== 'property' || catOf(c) === cat) : ofKind
 
   const onDrop = (status: CrmStatus) => (e: DragEvent) => {
     e.preventDefault()
@@ -232,6 +238,18 @@ export default function Crm() {
       </button>
       )}
 
+      {cats && catOf && (
+        <div className="ct-types crm-cats" role="group" aria-label="סינון לפי קטגוריה">
+          <span className="ct-types-label">קטגוריה</span>
+          {[{ id: 'all', label: 'הכול' }, ...cats].map((c) => (
+            <button key={c.id} className={`ct-chip${cat === c.id ? ' is-on' : ''}`} aria-pressed={cat === c.id} data-cat={c.id} onClick={() => setCat(c.id)}>
+              {c.label}
+              <b className="num">{c.id === 'all' ? ofKind.length : ofKind.filter((x) => catOf(x) === c.id).length}</b>
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* phone: one stage at a time */}
       <div className="stage-tabs chip-row" role="tablist" aria-label="שלב">
         {crmStages.map((s) => (
@@ -300,7 +318,7 @@ export default function Crm() {
                             <div className="kan-top">
                               <span className={`tag ${isProperty ? 'tag-gold' : 'tag-blue'}`}>
                                 {isProperty ? <Home /> : <UserSearch />}
-                                {isProperty ? 'נכס' : 'לקוח'}
+                                {isProperty ? (cats && catOf ? (cats.find((c) => c.id === catOf(it))?.label ?? 'נכס') : 'נכס') : 'לקוח'}
                               </span>
                               {isProperty ? (
                                 <button
@@ -323,10 +341,17 @@ export default function Crm() {
                                 <MapPin />
                                 {it.area}
                               </span>
-                              <span>
-                                <BedDouble />
-                                <span className="num">{it.rooms}</span> חד'
-                              </span>
+                              {it.category && it.category !== 'home' ? (
+                                <span>
+                                  <Ruler />
+                                  <span className="num">{it.sqm ?? '-'}</span> מ"ר
+                                </span>
+                              ) : (
+                                <span>
+                                  <BedDouble />
+                                  <span className="num">{it.rooms}</span> חד'
+                                </span>
+                              )}
                             </div>
                             <div className="kan-price">
                               <span>{isProperty ? 'מחיר' : 'תקציב עד'}</span>

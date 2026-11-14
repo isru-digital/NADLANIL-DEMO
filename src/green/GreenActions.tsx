@@ -12,19 +12,24 @@ import { allExtras, knownCities, parseWhatsapp, sampleMessage, sampleRequest, ti
 import type { Parsed } from './whatsapp'
 import { clientActions } from '../crm/clients'
 import PhotoPicker from './PhotoPicker'
+import { CATEGORIES, commercialExtras, commercialTitle } from '../crm/categories'
+import type { PropCategory } from '../crm/categories'
 import '../styles/green-actions.css'
 
 /**
  * The pop-ups of the actions that work in the browser in the green version: a new CRM card, sharing a post with
  * the community, and "מוואטסאפ למערכת". Everything stays in this browser; nothing is sent anywhere.
  */
-type Draft = { kind: 'property' | 'request'; city: string; rooms: string; price: string; extras: string[] }
-const emptyDraft: Draft = { kind: 'property', city: 'פתח תקווה', rooms: '4', price: '', extras: [] }
-const toDraft = (p: Parsed): Draft => ({ kind: p.kind, city: p.city || 'פתח תקווה', rooms: p.rooms ? String(p.rooms) : '', price: p.price ? String(p.price) : '', extras: p.extras })
+type Draft = { kind: 'property' | 'request'; city: string; rooms: string; price: string; extras: string[]; category: PropCategory; sqm: string }
+const emptyDraft: Draft = { kind: 'property', city: 'פתח תקווה', rooms: '4', price: '', extras: [], category: 'home', sqm: '' }
+const toDraft = (p: Parsed): Draft => ({ kind: p.kind, city: p.city || 'פתח תקווה', rooms: p.rooms ? String(p.rooms) : '', price: p.price ? String(p.price) : '', extras: p.extras, category: 'home', sqm: '' })
 const num = (s: string) => Number(s.replace(/[^\d.]/g, '')) || 0
 
 /** The fields a property or a request is made of; shared by the CRM card and the WhatsApp confirmation. */
-function Fields({ draft, set, kinds }: { draft: Draft; set: (d: Partial<Draft>) => void; kinds: [string, string] }) {
+function Fields({ draft, set, kinds, categories = false }: { draft: Draft; set: (d: Partial<Draft>) => void; kinds: [string, string]; categories?: boolean }) {
+  // an office or a business property is measured in square metres and has its own list of extras
+  const commercial = categories && draft.kind === 'property' && draft.category !== 'home'
+  const extras = commercial ? commercialExtras : allExtras
   return (
     <div className="ga-fields">
       <div className="field">
@@ -38,6 +43,29 @@ function Fields({ draft, set, kinds }: { draft: Draft; set: (d: Partial<Draft>) 
           </button>
         </div>
       </div>
+      {categories && draft.kind === 'property' && (
+        <div className="field" data-f="category">
+          <span className="field-label">קטגוריה</span>
+          <div className="chip-row">
+            {CATEGORIES.map((c) => (
+              <button
+                key={c.id}
+                type="button"
+                className="chip"
+                aria-pressed={draft.category === c.id}
+                data-cat={c.id}
+                onClick={() => {
+                  // the two lists of extras are different: keep only what the new category also has
+                  const list = c.id === 'home' ? allExtras : commercialExtras
+                  set({ category: c.id, extras: draft.extras.filter((x) => list.includes(x)) })
+                }}
+              >
+                <c.icon /> {c.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
       <div className="ga-row">
         <label className="field">
           <span className="field-label">עיר</span>
@@ -47,10 +75,17 @@ function Fields({ draft, set, kinds }: { draft: Draft; set: (d: Partial<Draft>) 
             ))}
           </select>
         </label>
-        <label className="field">
-          <span className="field-label">חדרים</span>
-          <input className="input" inputMode="decimal" value={draft.rooms} onChange={(e) => set({ rooms: e.target.value })} placeholder="4" />
-        </label>
+        {commercial ? (
+          <label className="field">
+            <span className="field-label">שטח, במ"ר</span>
+            <input className="input" inputMode="numeric" value={draft.sqm} onChange={(e) => set({ sqm: e.target.value })} placeholder="120" data-f="sqm" />
+          </label>
+        ) : (
+          <label className="field">
+            <span className="field-label">חדרים</span>
+            <input className="input" inputMode="decimal" value={draft.rooms} onChange={(e) => set({ rooms: e.target.value })} placeholder="4" />
+          </label>
+        )}
         <label className="field">
           <span className="field-label">{draft.kind === 'property' ? 'מחיר, בשקלים' : 'תקציב, בשקלים'}</span>
           <input className="input" inputMode="numeric" value={draft.price} onChange={(e) => set({ price: e.target.value })} placeholder="2650000" />
@@ -59,7 +94,7 @@ function Fields({ draft, set, kinds }: { draft: Draft; set: (d: Partial<Draft>) 
       <div className="field">
         <span className="field-label">תוספות</span>
         <div className="chip-row">
-          {allExtras.map((x) => (
+          {extras.map((x) => (
             <button
               key={x}
               type="button"
@@ -114,13 +149,16 @@ export default function GreenActions() {
 
   const saveCard = () => {
     const rooms = num(card.rooms)
+    const commercial = card.kind === 'property' && card.category !== 'home'
     const item: CrmItem = {
       id: `n${Date.now()}`,
       kind: card.kind === 'property' ? 'property' : 'client',
-      title: titleOf(card.kind, rooms || null, card.city),
+      title: commercial ? commercialTitle(card.category, num(card.sqm), card.city) : titleOf(card.kind, rooms || null, card.city),
       area: card.city,
       city: card.city,
-      rooms: card.rooms || '-',
+      rooms: commercial ? '-' : card.rooms || '-',
+      sqm: commercial ? num(card.sqm) || undefined : undefined,
+      category: card.kind === 'property' ? card.category : undefined,
       price: num(card.price),
       status: 'new',
       client: client.trim() || (card.kind === 'property' ? 'בעל הנכס' : 'לקוח חדש'),
@@ -213,7 +251,7 @@ export default function GreenActions() {
               <ClipboardPaste /> למלא מהודעת וואטסאפ
             </button>
           )}
-          <Fields draft={card} set={(d) => setCard((c) => ({ ...c, ...d }))} kinds={['נכס', 'לקוח שמחפש']} />
+          <Fields draft={card} set={(d) => setCard((c) => ({ ...c, ...d }))} kinds={['נכס', 'לקוח שמחפש']} categories />
           {card.kind === 'property' && <PhotoPicker photos={photos} onChange={setPhotos} />}
           <label className="field">
             <span className="field-label">{card.kind === 'property' ? 'שם בעל הנכס' : 'שם הלקוח'} (נשאר אצלכם, לא מתפרסם)</span>

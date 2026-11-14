@@ -102,6 +102,9 @@ export const crmSlots: {
   heads?: Record<'client' | 'property', { title: string; subtitle: string }>
   /** in place of the on / off switch above the board */
   AutoBar?: ComponentType
+  /** the categories a property can have: the board can be filtered by them, and a card carries its own */
+  categories?: { id: string; label: string }[]
+  categoryOf?: (item: import('../data/demo').CrmItem) => string
   /** an extra line of actions at the bottom of a card on the board */
   CardExtra?: ComponentType<{ item: import('../data/demo').CrmItem; publishedTo?: string }>
 } = {}

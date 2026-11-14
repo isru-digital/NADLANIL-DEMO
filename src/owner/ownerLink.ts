@@ -60,10 +60,13 @@ export function usePublishDates() {
 export const OWNER_PATH = '/o/p'
 
 /** What the owner's page shows. Nothing here identifies the owner. */
-export type OwnerView = { title: string; area: string; city: string; rooms: string; price: number; date: string; image?: string; brokerId: string }
+export type OwnerView = { title: string; area: string; city: string; rooms: string; sqm?: number; price: number; date: string; image?: string; brokerId: string }
 
 export function ownerLink(item: CrmItem, date: string | undefined, brokerId: string) {
-  const q = new URLSearchParams({ t: item.title, a: item.area, c: item.city, r: item.rooms, p: String(item.price), d: date ?? today(), b: brokerId })
+  // an office or a business property is described by its size, not by rooms
+  const commercial = !!item.category && item.category !== 'home'
+  const q = new URLSearchParams({ t: item.title, a: item.area, c: item.city, r: commercial ? '' : item.rooms, p: String(item.price), d: date ?? today(), b: brokerId })
+  if (commercial && item.sqm) q.set('s', String(item.sqm))
   if (item.image && /^img\/[\w.-]+$/.test(item.image)) q.set('i', item.image)
   return `${location.origin}${import.meta.env.BASE_URL.replace(/\/$/, '')}${OWNER_PATH}?${q.toString()}`
 }
@@ -77,6 +80,7 @@ export function readOwnerView(q: URLSearchParams): OwnerView | null {
     area: q.get('a') ?? '',
     city: q.get('c') ?? '',
     rooms: q.get('r') ?? '',
+    sqm: Number(q.get('s')) || undefined,
     price: Number(q.get('p')) || 0,
     date: /^\d{4}-\d{2}-\d{2}$/.test(q.get('d') ?? '') ? q.get('d')! : today(),
     // only a picture from the demo's own folder

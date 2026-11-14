@@ -60,7 +60,16 @@ export default function OwnerPage() {
               <MapPin /> {v.area || v.city}
             </span>
             <span>
-              <b className="num">{v.rooms}</b> חדרים{v.price > 0 && ' · '}
+              {v.rooms ? (
+                <>
+                  <b className="num">{v.rooms}</b> חדרים
+                </>
+              ) : v.sqm ? (
+                <>
+                  <b className="num">{v.sqm}</b> מ"ר
+                </>
+              ) : null}
+              {v.price > 0 && (v.rooms || v.sqm) ? ' · ' : ''}
               {v.price > 0 && <b className="num">{formatPriceShort(v.price)}</b>}
             </span>
           </div>
