@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { Check, FileText, FlaskConical, Inbox, LoaderCircle, LogOut, MailWarning, RefreshCw, Trash2, UserPlus, X } from 'lucide-react'
+import { Check, ChevronLeft, FileText, FlaskConical, Hourglass, Inbox, LoaderCircle, LogOut, MailWarning, RefreshCw, Trash2, UserPlus, X } from 'lucide-react'
 import { COMMUNITY_HOME, COMMUNITY_NAME } from '../config/community'
 import { Modal } from '../components/ui'
 import CommunityBrand from '../community/CommunityBrand'
@@ -28,15 +28,18 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'approved', label: 'מאושרות' },
   { id: 'rejected', label: 'נדחו' },
 ]
-const SECTIONS = [
-  { id: 'dk-overview', label: 'סקירה' },
-  { id: 'dk-requests', label: 'בקשות' },
-  { id: 'dk-activity', label: 'החלטות וכניסות' },
-  { id: 'dk-people', label: 'מתווכים' },
-  { id: 'dk-who', label: 'פילוח' },
-  { id: 'dk-soon', label: 'מעורבות' },
-  { id: 'dk-tools', label: 'צוות וכלים' },
+// the screen's tabs: each shows only its own part. The tab is kept in the address (#requests), so a reload or a
+// link opens the same tab.
+type View = 'overview' | 'requests' | 'people' | 'breakdown' | 'tools'
+const VIEWS: { id: View; label: string }[] = [
+  { id: 'overview', label: 'סקירה' },
+  { id: 'requests', label: 'בקשות' },
+  { id: 'people', label: 'מתווכים' },
+  { id: 'breakdown', label: 'פילוח' },
+  { id: 'tools', label: 'צוות וכלים' },
 ]
+const viewOf = (hash: string): View => (VIEWS.find((v) => `#${v.id}` === hash)?.id ?? 'overview')
+const PENDING_SHOWN = 5
 const when = (ms: number | null) => (ms ? new Date(ms).toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '')
 const mailWords: Record<string, string> = { sent: 'נשלח', no_password: 'לא נשלח: חסרה סיסמת האפליקציה', failed: 'השליחה נכשלה', test: 'מצב בדיקה' }
 const kindWords: Record<string, string> = { approval: 'בקשת אישור', welcome: 'ברוכים הבאים', reject: 'דחייה', login: 'קישור כניסה' }
@@ -61,6 +64,12 @@ export default function Admin() {
   const [stats, setStats] = useState<Stats | null>(null)
   const [statsError, setStatsError] = useState('')
   const [openId, setOpenId] = useState<string | null>(null)
+  const [view, setView] = useState<View>(() => viewOf(window.location.hash))
+  const go = useCallback((v: View) => {
+    setView(v)
+    window.history.replaceState(window.history.state, '', `${window.location.pathname}${window.location.search}#${v}`)
+    window.scrollTo({ top: 0 })
+  }, [])
 
   const load = useCallback(async () => {
     const [r, st] = await Promise.all([call<{ members: MemberInfo[]; mail: Mail[]; mailReady: boolean }>('/api/admin/members'), call<Stats>('/api/admin/stats')])
@@ -153,6 +162,11 @@ export default function Admin() {
 
   const shown = (members ?? []).filter((m) => m.status === tab)
   const count = (t: Tab) => (members ?? []).filter((m) => m.status === t).length
+  const waiting = (members ?? []).filter((m) => m.status === 'pending')
+  const startReject = (m: MemberInfo) => {
+    setReason('')
+    setRejecting(m)
+  }
 
   return (
     <div className="au ad">
@@ -181,17 +195,28 @@ export default function Admin() {
           </button>
         </div>
 
-        <nav className="dk-nav" aria-label="חלקי המסך">
-          {SECTIONS.map((x) => (
-            <a key={x.id} href={`#${x.id}`} onClick={(e) => {
-              e.preventDefault()
-              document.getElementById(x.id)?.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' })
-            }}>
+        <div className="dk-nav" role="tablist" aria-label="חלקי המסך">
+          {VIEWS.map((x) => (
+            <button
+              key={x.id}
+              type="button"
+              role="tab"
+              id={`dk-tab-${x.id}`}
+              aria-selected={view === x.id}
+              aria-controls="dk-view"
+              className={view === x.id ? 'is-on' : ''}
+              data-view={x.id}
+              onClick={() => go(x.id)}
+            >
               {x.label}
-              {x.id === 'dk-requests' && count('pending') > 0 && <b className="num">{count('pending')}</b>}
-            </a>
+              {x.id === 'requests' && count('pending') > 0 && (
+                <b className="num" aria-label={`${count('pending')} ממתינות`}>
+                  {count('pending')}
+                </b>
+              )}
+            </button>
           ))}
-        </nav>
+        </div>
 
         {!mailReady && (
           <p className="ad-warn" data-warn="mail">
@@ -209,6 +234,8 @@ export default function Admin() {
           </p>
         )}
 
+        <div id="dk-view" role="tabpanel" aria-labelledby={`dk-tab-${view}`} data-view-shown={view} className="dk-view">
+        {view === 'overview' && (
         <section id="dk-overview" className="dk-section" aria-label="סקירה">
           {statsError && (
             <p className="au-fail" role="alert">
@@ -218,6 +245,60 @@ export default function Admin() {
           {stats ? (
             <>
               <Kpis s={stats} />
+              <section className="dk-card dk-pend" data-card="pending" aria-labelledby="dk-pend-h">
+                <header className="dk-card-head">
+                  <h2 id="dk-pend-h">
+                    <Hourglass /> בקשות שממתינות לאישור
+                  </h2>
+                  <span className={`dk-pend-num num${waiting.length ? ' is-on' : ''}`} data-n={waiting.length}>
+                    {waiting.length}
+                  </span>
+                </header>
+                {members === null ? (
+                  <p className="dk-none">
+                    <LoaderCircle className="au-spin" /> טוענים...
+                  </p>
+                ) : waiting.length === 0 ? (
+                  <p className="dk-none" data-state="no-pending">
+                    אין בקשות שממתינות לאישור
+                  </p>
+                ) : (
+                  <ul className="dk-pend-list">
+                    {waiting.slice(0, PENDING_SHOWN).map((m) => (
+                      <li key={m.id} data-pending={m.id}>
+                        <span className="dk-avatar" aria-hidden="true">
+                          {m.name.slice(0, 1)}
+                        </span>
+                        <span className="dk-feed-main">
+                          <b>
+                            {m.name}
+                            {m.is_test && <em className="ad-test">בדיקה</em>}
+                          </b>
+                          <small>
+                            {m.cities.join(', ')} · {m.work === 'office' ? `משרד: ${m.office_name}` : 'עצמאי'} · נשלחה {when(m.created_at)}
+                          </small>
+                        </span>
+                        <span className="dk-pend-acts">
+                          <button type="button" className="btn btn-gold" disabled={!!busy} data-act="approve" onClick={() => approve(m)}>
+                            {busy === `ok-${m.id}` ? <LoaderCircle className="au-spin" /> : <Check />} כן, לאשר
+                          </button>
+                          <button type="button" className="btn btn-ghost" disabled={!!busy} data-act="reject" onClick={() => startReject(m)}>
+                            <X /> לא
+                          </button>
+                          <button type="button" className="ad-quiet" data-act="details" onClick={() => setOpenId(m.id)}>
+                            פרטים
+                          </button>
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {waiting.length > 0 && (
+                  <button type="button" className="dk-more" onClick={() => go('requests')} data-act="all-requests">
+                    {waiting.length > PENDING_SHOWN ? `ועוד ${waiting.length - PENDING_SHOWN} בקשות, לכל הבקשות` : 'לכל הבקשות'} <ChevronLeft />
+                  </button>
+                )}
+              </section>
               <div className="dk-row">
                 <Signups s={stats} />
                 <Timing s={stats} />
@@ -233,7 +314,10 @@ export default function Admin() {
             )
           )}
         </section>
+        )}
 
+        {view === 'requests' && (
+        <>
         <section id="dk-requests" className="dk-section" aria-labelledby="dk-req-h">
         <h2 className="dk-title" id="dk-req-h">
           <Inbox /> בקשות הצטרפות
@@ -314,10 +398,7 @@ export default function Admin() {
                         className="btn btn-ghost"
                         disabled={!!busy}
                         data-act="reject"
-                        onClick={() => {
-                          setReason('')
-                          setRejecting(m)
-                        }}
+                        onClick={() => startReject(m)}
                       >
                         <X /> לא
                       </button>
@@ -340,29 +421,44 @@ export default function Admin() {
           </ul>
         )}
         </section>
-
         {stats && (
-          <>
-            <div className="dk-row is-even dk-section" id="dk-activity">
-              <Decisions s={stats} onOpen={setOpenId} />
-              <Visits s={stats} onOpen={setOpenId} />
-            </div>
-            <div id="dk-people" className="dk-section">
-              <Directory s={stats} onOpen={setOpenId} />
-            </div>
-            <div id="dk-who" className="dk-section">
-              <h2 className="dk-title">פילוח המתווכים</h2>
-              <Breakdown s={stats} />
-            </div>
-          </>
+          <div className="dk-section" id="dk-activity">
+            <Decisions s={stats} onOpen={setOpenId} />
+          </div>
         )}
-        <div id="dk-soon" className="dk-section">
-          <Engagement />
-        </div>
+        </>
+        )}
 
-        <h2 className="dk-title dk-section" id="dk-tools">
-          <UserPlus /> צוות וכלים
-        </h2>
+        {view === 'people' && (
+          <div id="dk-people" className="dk-section">
+            {stats ? (
+              <>
+                <Visits s={stats} onOpen={setOpenId} />
+                <Directory s={stats} onOpen={setOpenId} />
+              </>
+            ) : (
+              <p className="ad-empty">
+                <LoaderCircle className="au-spin" /> טוענים...
+              </p>
+            )}
+          </div>
+        )}
+
+        {view === 'breakdown' && (
+          <div id="dk-who" className="dk-section">
+            {stats ? <Breakdown s={stats} /> : (
+              <p className="ad-empty">
+                <LoaderCircle className="au-spin" /> טוענים...
+              </p>
+            )}
+            <div id="dk-soon">
+              <Engagement />
+            </div>
+          </div>
+        )}
+
+        {view === 'tools' && (
+        <div id="dk-tools" className="dk-section">
         <div className="ad-side">
           <form className="ad-box" onSubmit={makeTest} data-box="test">
             <h2>
@@ -437,6 +533,9 @@ export default function Admin() {
               </ul>
             )}
           </div>
+        </div>
+        </div>
+        )}
         </div>
       </main>
 

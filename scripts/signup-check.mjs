@@ -311,6 +311,14 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
   await page.waitForSelector('[data-state="sent"]', { timeout: 15000 })
   await page.goto(links((await lastTo('itzik@test.local')).html).find((l) => l.includes('/kehila/enter?t=')), { waitUntil: 'load' })
   await page.waitForFunction(() => location.pathname.endsWith('/kehila/admin'), { timeout: 20000 })
+  // the screen opens on its overview; the requests are in their own tab
+  const view = async (v) => {
+    await page.waitForSelector(`[data-view="${v}"]`, { timeout: 15000 })
+    await page.evaluate((x) => document.querySelector(`[data-view="${x}"]`).click(), v)
+    await page.waitForFunction((x) => document.querySelector('[data-view-shown]')?.dataset.viewShown === x, { timeout: 5000 }, v)
+    await wait(300)
+  }
+  await view('requests')
   await page.waitForSelector('.ad-tabs', { timeout: 15000 })
   await wait(1200)
   const tabs = async () => page.evaluate(() => Object.fromEntries([...document.querySelectorAll('.ad-tabs button')].map((b) => [b.dataset.tab, Number(b.querySelector('b').textContent)])))
@@ -326,12 +334,14 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
 
   // a test registrant, all the way through from this screen
   const tester = `tester-${d}-${run}@test.local`
+  await view('tools')
   await fill(page, '[data-f="test-name"]', 'בדיקה של איציק')
   await fill(page, '[data-f="test-email"]', tester)
   await page.evaluate(() => document.querySelector('[data-act="make-test"]').scrollIntoView({ block: 'center' }))
   await tap(page, '[data-act="make-test"]')
   await page.waitForFunction(() => document.querySelector('.ad-note')?.textContent.includes('נרשם הבדיקה נוצר'), { timeout: 15000 })
   await wait(700)
+  await view('requests')
   n = await tabs()
   const testAsk = await lastTo('itzik@test.local')
   check(`${d} "נרשם בדיקה" creates a waiting request, and its approval e-mail goes only to whoever made it`, n.pending >= 1 && testAsk.subject.startsWith('(בדיקה)') && !(await outbox()).some((m) => m.to_email === 'ofek@test.local' && m.subject.includes('בדיקה של איציק')), JSON.stringify(n))
@@ -343,11 +353,13 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
   check(`${d} a request can be approved from the screen, and the welcome e-mail goes out`, (await lastTo(tester)).subject.includes('ברוכים הבאים'))
 
   // and a rejection from the screen
+  await view('tools')
   await fill(page, '[data-f="test-name"]', 'בדיקת דחייה')
   await fill(page, '[data-f="test-email"]', 'r-' + tester)
   await tap(page, '[data-act="make-test"]')
   await page.waitForFunction(() => document.querySelector('.ad-note')?.textContent.includes('נרשם הבדיקה נוצר'), { timeout: 15000 })
   await wait(600)
+  await view('requests')
   await page.evaluate(() => [...document.querySelectorAll('.ad-row')].find((r) => r.textContent.includes('בדיקת דחייה')).querySelector('[data-act="reject"]').click())
   await wait(600)
   await page.type('[data-f="reason"]', 'בדיקה של מסלול הדחייה.')
@@ -359,6 +371,7 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
   check(`${d} a request can be rejected from the screen, with a reason, and the polite e-mail goes out`, (await lastTo('r-' + tester)).html.includes('בדיקה של מסלול הדחייה.'))
 
   // the list of approvers
+  await view('tools')
   await fill(page, '[data-f="staff-name"]', 'רותי')
   await fill(page, '[data-f="staff-email"]', `ruti-${d}-${run}@test.local`)
   await tap(page, '[data-act="add-staff"]')

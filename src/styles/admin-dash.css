@@ -68,7 +68,7 @@ html[data-mode='night'] .ad {
 .dk-nav::-webkit-scrollbar {
   display: none;
 }
-.dk-nav a {
+.dk-nav button {
   flex: none;
   display: inline-flex;
   align-items: center;
@@ -83,11 +83,15 @@ html[data-mode='night'] .ad {
   text-decoration: none;
   transition: background-color 0.18s ease, color 0.18s ease;
 }
-.dk-nav a:hover {
+.dk-nav button:hover {
   background: var(--dk-tint);
   color: var(--text);
 }
-.dk-nav a:focus-visible {
+.dk-nav button.is-on {
+  background: linear-gradient(135deg, #0a7a4f, #12a36c);
+  color: #fff;
+}
+.dk-nav button:focus-visible {
   outline: 2px solid var(--dk-green);
   outline-offset: 1px;
 }
@@ -102,6 +106,100 @@ html[data-mode='night'] .ad {
 }
 html[data-mode='night'] .dk-nav b {
   color: #1d1300;
+}
+
+.dk-view {
+  display: grid;
+  gap: 14px;
+  min-height: 50vh;
+}
+.dk-view > .dk-section {
+  display: grid;
+  gap: 14px;
+}
+.dk-view .dk-row,
+.dk-view .dk-dir,
+.dk-view .dk-soon,
+.dk-view .dk-split {
+  margin-top: 0;
+}
+.dk-view .ad-side {
+  margin-top: 0;
+}
+
+/* the waiting requests, on the overview */
+.dk-pend {
+  border-color: color-mix(in srgb, var(--dk-amber) 35%, var(--line));
+}
+.dk-pend h2 svg {
+  color: var(--dk-amber);
+}
+.dk-pend-num {
+  display: grid;
+  place-items: center;
+  min-width: 44px;
+  height: 44px;
+  padding: 0 10px;
+  border-radius: 99px;
+  background: var(--dk-tint);
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-dim);
+}
+.dk-pend-num.is-on {
+  background: var(--dk-amber);
+  color: #fff;
+}
+html[data-mode='night'] .dk-pend-num.is-on {
+  color: #1d1300;
+}
+.dk-pend-list {
+  display: grid;
+}
+.dk-pend-list li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+}
+.dk-pend-list li + li {
+  border-top: 1px solid var(--line);
+}
+.dk-pend-list .dk-feed-main b {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.dk-pend-acts {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.dk-pend-acts .btn {
+  min-height: 44px;
+  padding-inline: 18px;
+}
+.dk-pend-acts .btn svg {
+  width: 17px;
+  height: 17px;
+}
+.dk-more {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  font-family: var(--font-display);
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--dk-green);
+}
+.dk-more svg {
+  width: 16px;
+  height: 16px;
 }
 
 /* ---------------------------------------------------------------- summary cards */
@@ -890,6 +988,14 @@ button.dk-tr:hover {
   }
 }
 @media (max-width: 640px) {
+  .dk-pend-list li {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .dk-pend-acts {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+  }
   .dk-split {
     grid-template-columns: 1fr;
   }
