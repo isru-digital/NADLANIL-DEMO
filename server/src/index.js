@@ -240,7 +240,10 @@ async function decisionPage(env, request, origin, token, url) {
     const what = member.status === 'approved' ? 'אושרה' : 'נדחתה'
     return html(donePage({ site: site(env), title: 'הבקשה כבר טופלה', text: `הבקשה של ${member.name} ${what}${member.decided_by ? ` על ידי ${member.decided_by}` : ''}.`, mark: '✓', grey: true, link: admin }))
   }
-  if (t.used_at || t.expires_at < Date.now()) return html(donePage({ site: site(env), title: 'הקישור פג', text: `הכפתורים במייל בתוקף ל-${DECIDE_HOURS} שעות. הבקשה של ${member.name} עדיין ממתינה, ואפשר לטפל בה ממסך הניהול.`, mark: '!', grey: true, link: admin }), 410)
+  // a spent button of a request that is waiting again: the broker signed up again after a rejection, and the
+  // approvers got a new e-mail with new buttons
+  if (t.used_at) return html(donePage({ site: site(env), title: 'הקישור הזה כבר לא בתוקף', text: `${member.name} נרשם שוב, ולכן נשלח מייל חדש עם כפתורים חדשים. אפשר לטפל בבקשה גם ממסך הניהול.`, mark: '!', grey: true, link: admin }), 410)
+  if (t.expires_at < Date.now()) return html(donePage({ site: site(env), title: 'הקישור פג', text: `הכפתורים במייל בתוקף ל-${DECIDE_HOURS} שעות. הבקשה של ${member.name} עדיין ממתינה, ואפשר לטפל בה ממסך הניהול.`, mark: '!', grey: true, link: admin }), 410)
 
   const staff = await env.DB.prepare('SELECT * FROM staff WHERE email = ?').bind(t.staff_email).first()
   if (!staff) return html(donePage({ site: site(env), title: 'אין הרשאה', text: 'הכתובת שאליה נשלח המייל כבר לא ברשימת המאשרים.', mark: '!', grey: true }), 403)

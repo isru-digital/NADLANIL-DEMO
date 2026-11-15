@@ -17,10 +17,14 @@ type Fields = 'name' | 'phone' | 'email' | 'license' | 'work' | 'office_name' | 
 const ORDER: Fields[] = ['name', 'phone', 'email', 'license', 'work', 'office_name', 'cities', 'areas']
 
 export default function SignUp() {
-  const [waiting, setWaiting] = useState(() => pending.get())
-  const [name, setName] = useState('')
+  // "להרשמה מחדש" in the rejection e-mail opens the form even on the device that still shows the waiting screen,
+  // with the name and address it remembers already filled in
+  const [again] = useState(() => new URLSearchParams(window.location.search).has('again'))
+  const [before] = useState(() => (again ? pending.get() : null))
+  const [waiting, setWaiting] = useState(() => (again ? null : pending.get()))
+  const [name, setName] = useState(before?.name ?? '')
   const [phone, setPhone] = useState('')
-  const [email, setEmail] = useState('')
+  const [email, setEmail] = useState(before?.email ?? '')
   const [license, setLicense] = useState('')
   const [work, setWork] = useState<'office' | 'solo' | ''>('')
   const [officeName, setOfficeName] = useState('')
@@ -31,6 +35,10 @@ export default function SignUp() {
   const [busy, setBusy] = useState(false)
   const [failure, setFailure] = useState('')
   const form = useRef<HTMLFormElement>(null)
+
+  useEffect(() => {
+    if (again) pending.set(null)
+  }, [again])
 
   useEffect(() => {
     const prev = document.title

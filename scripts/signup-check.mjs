@@ -258,6 +258,39 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
   await b.page.goto(green + '/app/community', { waitUntil: 'load' })
   await wait(1000)
   check(`${d} ... and he stays outside`, (await stateOf(b.page)) === 'locked')
+
+  // the rejection e-mail's "להרשמה מחדש": on the same device, which still remembers the waiting screen
+  const againLink = links(sorry.html).find((l) => l.includes('/kehila/join?again=1'))
+  check(`${d} the rejection e-mail has a "להרשמה מחדש" button`, !!againLink && sorry.html.includes('>להרשמה מחדש</a>'))
+  await b.page.goto(againLink, { waitUntil: 'load' })
+  await wait(1000)
+  const reForm = await b.page.evaluate(() => ({
+    form: !!document.querySelector('form.au-card [data-act="register"]'),
+    waiting: !!document.querySelector('[data-state="waiting"]'),
+    name: document.querySelector('[data-f="name"]')?.value,
+    email: document.querySelector('[data-f="email"]')?.value,
+  }))
+  check(`${d} it opens the form, not the old waiting screen, with his name and address filled in`, reForm.form && !reForm.waiting && reForm.name === other.name && reForm.email === other.email, JSON.stringify(reForm))
+  await wait(350)
+  await b.page.screenshot({ path: `${out}/${d}-11b-sign-up-again.png` })
+  await fetch(API + '/api/test/rate', { method: 'DELETE', headers: { origin: ORIGIN } })
+  await fill(b.page, '[data-f="phone"]', '050-555-0177')
+  await fill(b.page, '[data-f="license"]', '2718281')
+  await tap(b.page, '[data-v="solo"]')
+  await b.page.evaluate(() => document.querySelector('[data-city="נתניה"]')?.click())
+  await fill(b.page, '[data-f="areas"]', 'קריית שרת')
+  await tap(b.page, '[data-act="register"]')
+  await b.page.waitForSelector('[data-state="waiting"]', { timeout: 15000 })
+  const asks = (await outbox()).filter((m) => m.to_email === 'ofek@test.local' && m.subject.includes(other.name))
+  check(`${d} he signs up again with the same address: back to waiting, and the approvers are asked again`, asks.length === 2 && (await stateOf(b.page)) === 'waiting')
+  // the new request is decided like any other (rejected again, so the approvers' screen below still has one)
+  const no3 = await browser.newPage()
+  await no3.goto(links(asks.at(-1).html).find((l) => l.includes('a=no')), { waitUntil: 'load' })
+  await no3.waitForSelector('textarea#reason', { timeout: 10000 })
+  await no3.type('#reason', 'לא הצלחנו לאמת את מספר הרישיון.')
+  await Promise.all([no3.waitForNavigation({ waitUntil: 'load' }), no3.click('button[type="submit"]')])
+  check(`${d} the new request can be decided again`, (await no3.evaluate(() => document.body.innerText)).includes('הבקשה נדחתה'))
+  await no3.close()
   await b.ctx.close()
 
   check(`${d} no page errors`, errors.length === 0, errors.slice(0, 2).join(' | '))

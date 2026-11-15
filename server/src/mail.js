@@ -19,7 +19,8 @@ const clean = (s) => String(s).replace(/[\r\n]+/g, ' ').trim()
 
 function message({ from, fromName, to, subject, html, text, replyTo }) {
   const boundary = `b${crypto.randomUUID().replace(/-/g, '')}`
-  const id = `<${crypto.randomUUID()}@nadlanup>`
+  // a Message-ID must end in a full domain name: a bare word ("@nadlanup") is a known spam sign
+  const id = `<${crypto.randomUUID()}@${String(from).split('@')[1] || 'gmail.com'}>`
   return [
     `From: ${word(clean(fromName))} <${from}>`,
     `To: <${clean(to)}>`,

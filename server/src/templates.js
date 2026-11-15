@@ -45,7 +45,7 @@ function frame(site, inner, { preheader = '', foot = '' } = {}) {
 <html lang="he" dir="rtl">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light only"></head>
 <body style="margin:0;padding:0;background:#eef6f1;">
-<div style="display:none;max-height:0;overflow:hidden;opacity:0;">${esc(preheader)}</div>
+${preheader ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0;">${esc(preheader)}</div>` : ''}
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eef6f1;">
 <tr><td align="center" style="padding:28px 14px;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;">
@@ -117,9 +117,15 @@ export function welcomeMail({ site, member, enter }) {
   return { subject, html, text }
 }
 
-/** To the broker: not approved, with the approver's short reason. */
+/**
+ * To the broker: not approved, with the approver's short reason and a way to sign up again.
+ * Written to look like the two e-mails that reach the inbox (a personal subject, a real button to the site, a full
+ * plain-text twin) and with no hidden preview text, the trick a spam filter weighs most in a short e-mail.
+ */
+export const againUrl = (site) => `${site}/kehila/join?again=1`
 export function rejectMail({ site, member, reason }) {
-  const subject = `לגבי הבקשה שלך להצטרף לקהילת ${COMMUNITY}`
+  const again = againUrl(site)
+  const subject = `${member.name}, הבקשה שלך להצטרף ל${COMMUNITY}`
   const html = frame(
     site,
     `${h1(`היי ${esc(member.name)},`)}
@@ -128,10 +134,25 @@ export function rejectMail({ site, member, reason }) {
        <div style="font-size:13px;font-weight:700;color:${DIM};">הסיבה</div>
        <div style="font-size:17px;line-height:1.55;color:${INK};padding-top:4px;white-space:pre-line;">${esc(reason)}</div>
      </td></tr></table>
-     ${p('אם משהו השתנה, או שחסר לנו פרט, אפשר להשיב למייל הזה ונשמח לבדוק שוב.')}`,
-    { preheader: 'עדכון לגבי הבקשה שלך להצטרף לקהילה.' },
+     ${p('אם תיקנת את מה שחסר, אפשר להירשם שוב עם אותה כתובת מייל. הבקשה החדשה תגיע אלינו ונבדוק אותה מחדש.')}
+     <div style="padding:6px 0 18px;">${button(again, 'להרשמה מחדש')}</div>
+     ${p('יש שאלה? אפשר פשוט להשיב למייל הזה.', 'font-size:15px;margin:0;')}`,
+    { foot: 'קהילה חינמית למתווכי נדל"ן עם רישיון.' },
   )
-  const text = [`היי ${member.name},`, 'תודה שביקשת להצטרף לקהילה. עברנו על הפרטים, ולצערנו לא נוכל לאשר את הבקשה בשלב הזה.', '', `הסיבה: ${reason}`, '', 'אם משהו השתנה, או שחסר לנו פרט, אפשר להשיב למייל הזה ונשמח לבדוק שוב.'].join('\n')
+  const text = [
+    `היי ${member.name},`,
+    '',
+    'תודה שביקשת להצטרף לקהילה. עברנו על הפרטים, ולצערנו לא נוכל לאשר את הבקשה בשלב הזה.',
+    '',
+    `הסיבה: ${reason}`,
+    '',
+    'אם תיקנת את מה שחסר, אפשר להירשם שוב עם אותה כתובת מייל. הבקשה החדשה תגיע אלינו ונבדוק אותה מחדש.',
+    `להרשמה מחדש: ${again}`,
+    '',
+    'יש שאלה? אפשר פשוט להשיב למייל הזה.',
+    '',
+    `${COMMUNITY}, מבית NadlanUP`,
+  ].join('\n')
   return { subject, html, text }
 }
 
