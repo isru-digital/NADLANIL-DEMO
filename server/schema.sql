@@ -68,6 +68,22 @@ CREATE TABLE IF NOT EXISTS rate (
   reset_at INTEGER NOT NULL
 );
 
+-- when an approved broker opens the community (kept since 15.11.2026): first and last time, and sign-ins by link
+CREATE TABLE IF NOT EXISTS activity (
+  member_id TEXT PRIMARY KEY,
+  first_at  INTEGER NOT NULL,
+  last_at   INTEGER NOT NULL,
+  signins   INTEGER NOT NULL DEFAULT 0
+);
+-- one row per broker per day (Israel time) he opened the community: "active this week"
+CREATE TABLE IF NOT EXISTS visits (
+  member_id TEXT NOT NULL,
+  day       TEXT NOT NULL,             -- YYYY-MM-DD
+  first_at  INTEGER NOT NULL,
+  PRIMARY KEY (member_id, day)
+);
+CREATE INDEX IF NOT EXISTS visits_day ON visits (day);
+
 -- local testing only (TEST_MODE): the e-mails that would have been sent, so a test can follow their links
 CREATE TABLE IF NOT EXISTS outbox (
   id         INTEGER PRIMARY KEY AUTOINCREMENT,

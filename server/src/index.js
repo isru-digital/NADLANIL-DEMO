@@ -1,5 +1,6 @@
 import { sendMail } from './mail.js'
 import { approvalMail, approveConfirmPage, donePage, loginMail, rejectFormPage, rejectMail, welcomeMail } from './templates.js'
+import { activityOf, dayKey, maskPhone, seen, stats } from './stats.js'
 
 /**
  * The community's sign-up, for real: a broker asks to join, an approver says yes or no from an e-mail (or from the
@@ -226,6 +227,7 @@ async function openSession(env, request) {
   await env.DB.prepare('INSERT INTO sessions (hash, member_id, staff_email, created_at, expires_at) VALUES (?, ?, ?, ?, ?)').bind(await sha(token), t.member_id, t.staff_email, now, now + SESSION_DAYS * DAY).run()
   const s = await sessionOf(env, new Request('https://x/', { headers: { authorization: `Bearer ${token}` } }))
   if (!s) return json({ error: 'אי אפשר להיכנס עם הקישור הזה.', code: 'bad' }, 403)
+  if (s.member) await seen(env, s.member.id, true)
   return json({ ok: true, token, ...who(s) })
 }
 
@@ -277,13 +279,17 @@ async function admin(env, request, origin, path, s) {
   if (path === '/api/admin/members' && method === 'GET') {
     const rows = (await env.DB.prepare('SELECT * FROM members ORDER BY created_at DESC LIMIT 500').all()).results
     const mail = (await env.DB.prepare('SELECT to_email, kind, status, error, created_at FROM mail_log ORDER BY id DESC LIMIT 12').all()).results
-    return json({ members: rows.map(memberView), mail, mailReady: env.TEST_MODE === '1' || !!env.GMAIL_APP_PASSWORD, decideHours: DECIDE_HOURS })
+    // the general list never carries a full phone number: it is in a broker's own details only
+    return json({ members: rows.map((m) => ({ ...memberView(m), phone: maskPhone(m.phone) })), mail, mailReady: env.TEST_MODE === '1' || !!env.GMAIL_APP_PASSWORD, decideHours: DECIDE_HOURS })
   }
+  if (path === '/api/admin/stats' && method === 'GET') return json(await stats(env))
 
   const one = path.match(/^\/api\/admin\/members\/([a-f0-9]{16})(?:\/(approve|reject|resend))?$/)
   if (one) {
     const member = await env.DB.prepare('SELECT * FROM members WHERE id = ?').bind(one[1]).first()
     if (!member) return json({ error: 'הבקשה לא נמצאה.' }, 404)
+    // one broker's full details (the full phone is here only)
+    if (!one[2] && method === 'GET') return json({ member: memberView(member), activity: await activityOf(env, member.id) })
     if (one[2] === 'approve' && method === 'POST') {
       const ok = await decide(env, member, true, s.staff.name)
       return ok ? json({ ok: true }) : json({ error: 'הבקשה כבר טופלה.', code: 'handled' }, 409)
@@ -305,6 +311,8 @@ async function admin(env, request, origin, path, s) {
       await env.DB.batch([
         env.DB.prepare('DELETE FROM tokens WHERE member_id = ?').bind(member.id),
         env.DB.prepare('DELETE FROM sessions WHERE member_id = ?').bind(member.id),
+        env.DB.prepare('DELETE FROM activity WHERE member_id = ?').bind(member.id),
+        env.DB.prepare('DELETE FROM visits WHERE member_id = ?').bind(member.id),
         env.DB.prepare('DELETE FROM members WHERE id = ?').bind(member.id),
       ])
       return json({ ok: true })
@@ -320,7 +328,7 @@ async function admin(env, request, origin, path, s) {
     const old = await env.DB.prepare('SELECT * FROM members WHERE email = ?').bind(email).first()
     if (old && !old.is_test) return json({ error: 'הכתובת הזו שייכת לבקשה אמיתית. בחרו כתובת אחרת.' }, 409)
     if (old) {
-      await env.DB.batch([env.DB.prepare('DELETE FROM tokens WHERE member_id = ?').bind(old.id), env.DB.prepare('DELETE FROM sessions WHERE member_id = ?').bind(old.id), env.DB.prepare('DELETE FROM members WHERE id = ?').bind(old.id)])
+      await env.DB.batch(['tokens', 'sessions', 'activity', 'visits'].map((t) => env.DB.prepare(`DELETE FROM ${t} WHERE member_id = ?`).bind(old.id)).concat(env.DB.prepare('DELETE FROM members WHERE id = ?').bind(old.id)))
     }
     const id = newId()
     await env.DB.prepare("INSERT INTO members (id, name, phone, email, license, work, office_name, cities, areas, is_test, created_at) VALUES (?, ?, '050-555-0100', ?, '0000000', 'solo', '', ?, 'נרשם בדיקה', 1, ?)")
@@ -387,7 +395,7 @@ export default {
       // local testing only: the e-mails that would have gone out
       if (path === '/api/test/outbox' && env.TEST_MODE === '1') {
         if (request.method === 'DELETE') {
-          await env.DB.batch(['outbox', 'members', 'tokens', 'sessions', 'mail_log', 'rate'].map((t) => env.DB.prepare(`DELETE FROM ${t}`)))
+          await env.DB.batch(['outbox', 'members', 'tokens', 'sessions', 'mail_log', 'rate', 'activity', 'visits'].map((t) => env.DB.prepare(`DELETE FROM ${t}`)))
           return withCors(json({ ok: true }))
         }
         return withCors(json({ outbox: (await env.DB.prepare('SELECT * FROM outbox ORDER BY id').all()).results }))
@@ -397,13 +405,36 @@ export default {
         await env.DB.prepare('UPDATE tokens SET expires_at = 1 WHERE used_at IS NULL').run()
         return withCors(json({ ok: true }))
       }
+      if (path === '/api/test/backdate' && env.TEST_MODE === '1' && request.method === 'POST') {
+        // local testing only: moves a request back in time and gives a broker visits on past days, so the
+        // screen's numbers and chart can be checked against known values
+        const b = await request.json().catch(() => ({}))
+        const m = await env.DB.prepare('SELECT * FROM members WHERE email = ?').bind(emailOf(b.email)).first()
+        if (!m) return withCors(json({ error: 'not found' }, 404))
+        const now = Date.now()
+        const created = now - Number(b.created_days_ago ?? 0) * DAY - Number(b.created_minutes_ago ?? 0) * 60_000
+        const decided = b.decided_hours_after == null ? m.decided_at : created + Number(b.decided_hours_after) * HOUR
+        await env.DB.prepare('UPDATE members SET created_at = ?, decided_at = ? WHERE id = ?').bind(created, decided, m.id).run()
+        for (const ago of b.visits_days_ago ?? []) {
+          const at = now - Number(ago) * DAY
+          await env.DB.batch([
+            env.DB.prepare('INSERT OR IGNORE INTO visits (member_id, day, first_at) VALUES (?, ?, ?)').bind(m.id, dayKey(at), at),
+            env.DB.prepare('INSERT INTO activity (member_id, first_at, last_at, signins) VALUES (?, ?, ?, 0) ON CONFLICT(member_id) DO UPDATE SET first_at = MIN(first_at, excluded.first_at), last_at = MAX(last_at, excluded.last_at)').bind(m.id, at, at),
+          ])
+        }
+        return withCors(json({ ok: true }))
+      }
       if (path === '/api/test/rate' && env.TEST_MODE === '1' && request.method === 'DELETE') {
         await env.DB.prepare('DELETE FROM rate').run()
         return withCors(json({ ok: true }))
       }
 
       const s = await sessionOf(env, request)
-      if (path === '/api/me' && request.method === 'GET') return withCors(s ? json({ ok: true, ...who(s) }) : json({ error: 'לא מחוברים.' }, 401))
+      if (path === '/api/me' && request.method === 'GET') {
+        // the site asks this each time a signed-in broker opens the community: that is a visit
+        if (s?.member) await seen(env, s.member.id)
+        return withCors(s ? json({ ok: true, ...who(s) }) : json({ error: 'לא מחוברים.' }, 401))
+      }
       if (path === '/api/logout' && request.method === 'POST') {
         if (s) await env.DB.prepare('DELETE FROM sessions WHERE hash = ?').bind(s.hash).run()
         return withCors(json({ ok: true }))

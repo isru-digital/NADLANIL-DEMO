@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { Check, FlaskConical, LoaderCircle, LogOut, MailWarning, RefreshCw, Trash2, UserPlus, X } from 'lucide-react'
+import { Check, FileText, FlaskConical, Inbox, LoaderCircle, LogOut, MailWarning, RefreshCw, Trash2, UserPlus, X } from 'lucide-react'
 import { COMMUNITY_HOME, COMMUNITY_NAME } from '../config/community'
 import { Modal } from '../components/ui'
 import CommunityBrand from '../community/CommunityBrand'
@@ -10,11 +10,15 @@ import type { MemberInfo } from './session'
 import '../styles/join-green.css'
 import '../styles/auth.css'
 import '../styles/admin.css'
+import '../styles/admin-dash.css'
+import { Breakdown, Decisions, Directory, Engagement, Kpis, MemberDetails, Signups, Timing, Visits } from './AdminDash'
+import type { Stats } from './AdminDash'
 
 /**
- * The approvers' screen: the requests that wait, the ones that were approved and the ones that were rejected, with a
- * yes or a no from here too; a test registrant, to try the whole way through; and the list of approvers.
- * Brokers' details come from the server only to a signed-in member of staff.
+ * The approvers' screen: what is happening in the community (real numbers from the server), the requests with a yes
+ * or a no from here too, the brokers with their details, a test registrant, and the list of approvers.
+ * Brokers' details come from the server only to a signed-in member of staff; the general lists carry a masked phone,
+ * the full one is in a broker's own details.
  */
 type Mail = { to_email: string; kind: string; status: string; error: string; created_at: number }
 type Staff = { email: string; name: string; approver: boolean }
@@ -23,6 +27,15 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'pending', label: 'ממתינות' },
   { id: 'approved', label: 'מאושרות' },
   { id: 'rejected', label: 'נדחו' },
+]
+const SECTIONS = [
+  { id: 'dk-overview', label: 'סקירה' },
+  { id: 'dk-requests', label: 'בקשות' },
+  { id: 'dk-activity', label: 'החלטות וכניסות' },
+  { id: 'dk-people', label: 'מתווכים' },
+  { id: 'dk-who', label: 'פילוח' },
+  { id: 'dk-soon', label: 'מעורבות' },
+  { id: 'dk-tools', label: 'צוות וכלים' },
 ]
 const when = (ms: number | null) => (ms ? new Date(ms).toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '')
 const mailWords: Record<string, string> = { sent: 'נשלח', no_password: 'לא נשלח: חסרה סיסמת האפליקציה', failed: 'השליחה נכשלה', test: 'מצב בדיקה' }
@@ -45,10 +58,17 @@ export default function Admin() {
   const [toAll, setToAll] = useState(false)
   const [newName, setNewName] = useState('')
   const [newEmail, setNewEmail] = useState('')
+  const [stats, setStats] = useState<Stats | null>(null)
+  const [statsError, setStatsError] = useState('')
+  const [openId, setOpenId] = useState<string | null>(null)
 
   const load = useCallback(async () => {
-    const r = await call<{ members: MemberInfo[]; mail: Mail[]; mailReady: boolean }>('/api/admin/members')
+    const [r, st] = await Promise.all([call<{ members: MemberInfo[]; mail: Mail[]; mailReady: boolean }>('/api/admin/members'), call<Stats>('/api/admin/stats')])
     if (r.status === 401 || r.status === 403) return sessionActions.signOut('/kehila/login')
+    if (st.ok) {
+      setStats(st.data)
+      setStatsError('')
+    } else setStatsError(st.data.error ?? 'לא הצלחנו לטעון את הנתונים.')
     if (!r.ok) return setError(r.data.error ?? 'לא הצלחנו לטעון את הבקשות.')
     setError('')
     setMembers(r.data.members)
@@ -67,6 +87,7 @@ export default function Admin() {
     }
   }, [staff, load])
   const closeReject = useCallback(() => setRejecting(null), [])
+  const closeDetails = useCallback(() => setOpenId(null), [])
 
   if (!staff) {
     return (
@@ -150,11 +171,27 @@ export default function Admin() {
       <main className="ad-main">
         <div className="ad-head">
           <span className="au-kicker">מסך הניהול</span>
-          <h1>בקשות הצטרפות לקהילה</h1>
+          <h1>מה קורה בקהילה</h1>
+          <p className="dk-lead">
+            נתונים אמיתיים מהשרת, בלי נרשמי בדיקה{stats ? `. עודכן ב-${new Date(stats.generated_at).toLocaleTimeString('he-IL', { timeZone: 'Asia/Jerusalem', hour: '2-digit', minute: '2-digit' })}` : ''}
+            {stats && stats.tests > 0 ? (stats.tests === 1 ? '. נרשם בדיקה אחד לא נספר.' : `. ${stats.tests} נרשמי בדיקה לא נספרים.`) : '.'}
+          </p>
           <button type="button" className="btn btn-ghost" onClick={load} data-act="reload">
             <RefreshCw /> רענון
           </button>
         </div>
+
+        <nav className="dk-nav" aria-label="חלקי המסך">
+          {SECTIONS.map((x) => (
+            <a key={x.id} href={`#${x.id}`} onClick={(e) => {
+              e.preventDefault()
+              document.getElementById(x.id)?.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' })
+            }}>
+              {x.label}
+              {x.id === 'dk-requests' && count('pending') > 0 && <b className="num">{count('pending')}</b>}
+            </a>
+          ))}
+        </nav>
 
         {!mailReady && (
           <p className="ad-warn" data-warn="mail">
@@ -172,6 +209,35 @@ export default function Admin() {
           </p>
         )}
 
+        <section id="dk-overview" className="dk-section" aria-label="סקירה">
+          {statsError && (
+            <p className="au-fail" role="alert">
+              <X /> {statsError}
+            </p>
+          )}
+          {stats ? (
+            <>
+              <Kpis s={stats} />
+              <div className="dk-row">
+                <Signups s={stats} />
+                <Timing s={stats} />
+              </div>
+            </>
+          ) : (
+            !statsError && (
+              <div className="dk-kpis" aria-busy="true" aria-label="טוענים נתונים">
+                {[0, 1, 2, 3].map((i) => (
+                  <div key={i} className="dk-kpi dk-skel" />
+                ))}
+              </div>
+            )
+          )}
+        </section>
+
+        <section id="dk-requests" className="dk-section" aria-labelledby="dk-req-h">
+        <h2 className="dk-title" id="dk-req-h">
+          <Inbox /> בקשות הצטרפות
+        </h2>
         <div className="ad-tabs" role="tablist" aria-label="מצב הבקשה">
           {TABS.map((t) => (
             <button key={t.id} type="button" role="tab" aria-selected={tab === t.id} className={tab === t.id ? 'is-on' : ''} data-tab={t.id} onClick={() => setTab(t.id)}>
@@ -260,6 +326,9 @@ export default function Admin() {
                       </button>
                     </>
                   )}
+                  <button type="button" className="ad-quiet" data-act="details" onClick={() => setOpenId(m.id)}>
+                    <FileText /> פרטים מלאים
+                  </button>
                   {m.is_test && (
                     <button type="button" className="ad-quiet is-danger" disabled={!!busy} data-act="delete" onClick={() => act(`del-${m.id}`, () => call(`/api/admin/members/${m.id}`, { method: 'DELETE' }), 'נרשם הבדיקה נמחק.')}>
                       <Trash2 /> מחיקת נרשם הבדיקה
@@ -270,7 +339,30 @@ export default function Admin() {
             ))}
           </ul>
         )}
+        </section>
 
+        {stats && (
+          <>
+            <div className="dk-row is-even dk-section" id="dk-activity">
+              <Decisions s={stats} onOpen={setOpenId} />
+              <Visits s={stats} onOpen={setOpenId} />
+            </div>
+            <div id="dk-people" className="dk-section">
+              <Directory s={stats} onOpen={setOpenId} />
+            </div>
+            <div id="dk-who" className="dk-section">
+              <h2 className="dk-title">פילוח המתווכים</h2>
+              <Breakdown s={stats} />
+            </div>
+          </>
+        )}
+        <div id="dk-soon" className="dk-section">
+          <Engagement />
+        </div>
+
+        <h2 className="dk-title dk-section" id="dk-tools">
+          <UserPlus /> צוות וכלים
+        </h2>
         <div className="ad-side">
           <form className="ad-box" onSubmit={makeTest} data-box="test">
             <h2>
@@ -347,6 +439,8 @@ export default function Admin() {
           </div>
         </div>
       </main>
+
+      <MemberDetails id={openId} onClose={closeDetails} />
 
       <Modal open={!!rejecting} onClose={closeReject} title={rejecting ? `לא לאשר את ${rejecting.name}` : ''} subtitle="כותבים סיבה קצרה. המתווך יקבל מייל מנומס עם הסיבה הזו.">
         <form onSubmit={reject}>

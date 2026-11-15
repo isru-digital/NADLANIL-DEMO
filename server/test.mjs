@@ -222,6 +222,53 @@ for (let i = 0; i < 7; i++) codes.push((await call('/api/login', { method: 'POST
 check('more than 5 sign-in requests in an hour for one address are stopped', codes.slice(0, 5).every((c) => c === 200) && codes[5] === 429, codes.join())
 await freshRate()
 
+// ---------------------------------------------------------------- 12. the approvers' screen: real numbers only
+const stats = async (token = staff) => call('/api/admin/stats', { token })
+r = await call('/api/admin/stats')
+check('the numbers are closed to a visitor', r.status === 401)
+const s0 = (await stats()).data
+const michal = { name: 'שירה בן דוד', phone: '054-777-1234', email: 'shira@test.local', license: '1618033', work: 'office', office_name: 'רימקס מרכז', cities: ['חיפה'], areas: 'כרמל, נווה שאנן' }
+await call('/api/register', { method: 'POST', body: michal })
+let s1 = (await stats()).data
+check('a new request counts as waiting and as a sign-up of today', s1.totals.pending === s0.totals.pending + 1 && s1.signups.today === s0.signups.today + 1 && s1.signups.daily.at(-1).n === s0.signups.daily.at(-1).n + 1 && s1.signups.daily.length === 30)
+await call('/api/test/backdate', { method: 'POST', body: { email: michal.email, created_days_ago: 3 } })
+s1 = (await stats()).data
+check('a request from 3 days ago counts in the week and the month, not today, and sits on its day in the chart', s1.signups.today === s0.signups.today && s1.signups.week === s0.signups.week + 1 && s1.signups.month === s0.signups.month + 1 && s1.signups.daily.at(-4).n === s0.signups.daily.at(-4).n + 1)
+const mid = (await call('/api/admin/members', { token: staff })).data.members.find((m) => m.email === michal.email)
+check('the general list shows a masked phone only', mid.phone === '054-•••-••34' && !JSON.stringify((await call('/api/admin/members', { token: staff })).data).includes('777-1234'))
+r = await call(`/api/admin/members/${mid.id}`, { token: staff })
+check("a broker's own details carry the full phone", r.status === 200 && r.data.member.phone === '054-777-1234' && r.data.activity.signins === 0 && r.data.activity.last_at === null)
+r = await call(`/api/admin/members/${mid.id}/approve`, { method: 'POST', token: staff })
+await call('/api/test/backdate', { method: 'POST', body: { email: michal.email, created_days_ago: 3, decided_hours_after: 6 } })
+let s2 = (await stats()).data
+const dec = s2.decisions.find((x) => x.name === 'שירה בן דוד')
+check('the decision is listed, with who decided and when', !!dec && dec.status === 'approved' && dec.decided_by === 'איציק' && dec.decided_at - dec.created_at === 6 * 3600_000 && s2.decisions.every((x, i) => i === 0 || s2.decisions[i - 1].decided_at >= x.decided_at))
+check('the time to decide counts it', s2.decision_time.approved.n === s1.decision_time.approved.n + 1 && s2.decision_time.all.avg_ms > 0 && s2.approvers.some((a) => a.name === 'איציק' && a.approved >= 1))
+check('approved, he is in the directory, never signed in yet', s2.totals.approved === s1.totals.approved + 1 && s2.activity.never === s1.activity.never + 1 && s2.directory.some((m) => m.name === 'שירה בן דוד' && m.last_seen === null && m.cities[0] === 'חיפה' && m.work === 'office'))
+check('the directory carries no phone and no e-mail', !s2.directory.some((m) => 'phone' in m || 'email' in m) && !JSON.stringify(s2).includes('777-1234') && !JSON.stringify(s2).includes(michal.email))
+check('the breakdown counts his city, his areas one by one, and his office', s2.breakdown.cities.some((c) => c.name === 'חיפה') && ['כרמל', 'נווה שאנן'].every((a) => s2.breakdown.areas.some((x) => x.name === a)) && s2.breakdown.work.office === s1.breakdown.work.office + 1 && s2.breakdown.offices.some((o) => o.name === 'רימקס מרכז'))
+// he opens the community
+const michalWelcome = await lastTo(michal.email)
+r = await call('/api/session', { method: 'POST', body: { token: new URL(links(michalWelcome.html).find((l) => l.includes('/kehila/enter'))).searchParams.get('t') } })
+const michalToken = r.data.token
+await call('/api/me', { token: michalToken })
+await call('/api/me', { token: michalToken })
+let s3 = (await stats()).data
+const me3 = s3.directory.find((m) => m.name === 'שירה בן דוד')
+check('signing in and opening the community are kept: active today and this week, once, with his last visit', s3.activity.today === s2.activity.today + 1 && s3.activity.week === s2.activity.week + 1 && s3.activity.never === s2.activity.never - 1 && me3.last_seen > Date.now() - 60_000 && me3.signins === 1 && me3.days30 === 1)
+await call('/api/test/backdate', { method: 'POST', body: { email: michal.email, visits_days_ago: [12] } })
+s3 = (await stats()).data
+check('a visit 12 days ago counts in the month and not in the week', s3.directory.find((m) => m.name === 'שירה בן דוד').days30 === 2 && s3.activity.week === s2.activity.week + 1 && s3.activity.month === s2.activity.month + 1)
+r = await stats(michalToken)
+check('a broker cannot read the numbers', r.status === 403)
+r = await call(`/api/admin/members/${mid.id}`, { token: michalToken })
+check("a broker cannot read anyone's details", r.status === 403)
+// a test registrant is left out of every number
+const before = (await stats()).data
+await call('/api/admin/test', { method: 'POST', token: staff, body: { name: 'נרשם לספירה', email: 'count-test@test.local' } })
+const after = (await stats()).data
+check('a test registrant is left out of the numbers', after.totals.all === before.totals.all && after.totals.pending === before.totals.pending && after.tests === before.tests + 1 && after.signups.today === before.signups.today)
+
 const failed = results.filter((x) => !x).length
 console.log(`\n${results.length - failed} passed, ${failed} failed`)
 console.log(failed ? 'SOME CHECKS FAILED' : 'ALL CHECKS PASSED')
