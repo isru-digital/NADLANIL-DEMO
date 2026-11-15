@@ -1,0 +1,347 @@
+/* Signing up, waiting, signing in and the locked door of the community (green version).
+   Surfaces use var(--card) and the text tokens, so day and night both work. */
+.au {
+  min-height: 100dvh;
+}
+.au-main {
+  width: min(760px, 100% - var(--gutter) * 2);
+  margin-inline: auto;
+  padding-block: clamp(14px, 3vw, 34px) 80px;
+}
+.au-main.is-narrow {
+  width: min(560px, 100% - var(--gutter) * 2);
+}
+.au-card {
+  display: grid;
+  gap: 18px;
+  padding: clamp(22px, 3.4vw, 40px);
+  border-radius: 30px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  box-shadow: var(--shadow-2);
+  animation: au-in 520ms var(--ease) both;
+}
+@keyframes au-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+.au-kicker {
+  width: fit-content;
+  padding: 4px 13px;
+  border-radius: 99px;
+  background: rgb(var(--g) / 0.14);
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--gold-soft);
+}
+.au h1 {
+  font-size: clamp(28px, 4.2vw, 44px);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+.au-lead {
+  font-size: 18px;
+  line-height: 1.55;
+  color: var(--text-dim);
+}
+.au-note {
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--text-faint);
+}
+
+/* ------------------------------------------------------------------ the form */
+.au-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 16px;
+}
+.au-field {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.au-field > span,
+.au-field > legend {
+  padding: 0;
+  font-family: var(--font-display);
+  font-size: 15.5px;
+  font-weight: 700;
+}
+.au-field > legend {
+  margin-bottom: 7px;
+}
+.au-field b {
+  color: var(--gold-soft);
+}
+.au-field .input {
+  min-height: 52px;
+  font-size: 17px;
+}
+.au-field small {
+  font-size: 13.5px;
+  color: var(--text-faint);
+}
+.au-err {
+  font-size: 14.5px;
+  font-style: normal;
+  font-weight: 600;
+  color: #c0392b;
+}
+html[data-mode='night'] .au-err {
+  color: #ffa39b;
+}
+.au-field .input[aria-invalid='true'] {
+  border-color: #c0392b;
+}
+.au-choice {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.au-choice button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 60px;
+  border-radius: 18px;
+  border: 1.5px solid var(--line);
+  background: var(--card);
+  font-family: var(--font-display);
+  font-size: 17px;
+  color: var(--text);
+  transition: border-color 200ms var(--ease), background-color 200ms var(--ease), transform 200ms var(--ease);
+}
+.au-choice button svg {
+  width: 21px;
+  height: 21px;
+  color: var(--gold-soft);
+}
+.au-choice button:hover {
+  border-color: var(--line-gold);
+}
+.au-choice button:active {
+  transform: scale(0.98);
+}
+.au-choice button.is-on {
+  border-color: transparent;
+  background: linear-gradient(135deg, #0a7a4f, #12a36c);
+  color: #fff;
+}
+.au-choice button.is-on svg {
+  color: #fff;
+}
+.au-cities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.au-cities button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 15px;
+  border-radius: 99px;
+  border: 1.5px solid var(--line);
+  background: var(--card);
+  font-family: var(--font-display);
+  font-size: 15.5px;
+  font-weight: 600;
+  color: var(--text);
+  transition: border-color 200ms var(--ease), background-color 200ms var(--ease);
+}
+.au-cities button svg {
+  width: 15px;
+  height: 15px;
+  stroke-width: 2.6;
+  color: var(--text-faint);
+}
+.au-cities button.is-on {
+  border-color: var(--line-gold);
+  background: rgb(var(--g) / 0.14);
+  color: var(--gold-soft);
+}
+.au-cities button.is-on svg {
+  color: inherit;
+}
+.au-other {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+.au-other .input {
+  flex: 1;
+  min-width: 0;
+}
+.au :is(.au-choice button, .au-cities button, .au-link):focus-visible {
+  outline: 2px solid var(--gold-soft);
+  outline-offset: 2px;
+}
+.au-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 18px;
+  margin-top: 4px;
+}
+.au-private {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--text-dim);
+}
+.au-private svg {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  color: var(--gold-soft);
+}
+.au-fail {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgb(192 57 43 / 0.1);
+  font-size: 15.5px;
+  font-weight: 600;
+  color: #c0392b;
+}
+html[data-mode='night'] .au-fail {
+  color: #ffa39b;
+}
+.au-fail svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+}
+.au-spin {
+  animation: au-spin 0.9s linear infinite;
+}
+@keyframes au-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.au-link {
+  min-height: 44px;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--gold-soft);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+/* ------------------------------------------------------------------ waiting, sent, locked */
+.au-wait {
+  justify-items: center;
+  text-align: center;
+}
+.au-wait .au-actions {
+  justify-content: center;
+}
+.au-mark {
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: linear-gradient(150deg, #07643f, #0fa46b);
+  color: #fff;
+  box-shadow: 0 20px 36px -18px rgb(7 100 63 / 0.75);
+}
+.au-mark svg {
+  width: 36px;
+  height: 36px;
+}
+.au-mark.is-grey {
+  background: rgb(var(--w) / 0.08);
+  color: var(--text-dim);
+  box-shadow: none;
+}
+
+/* ------------------------------------------------------------------ in the app: who is signed in */
+.au-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+  padding-inline: 14px 4px;
+  border-radius: 99px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  font-family: var(--font-display);
+}
+.au-chip-name {
+  max-width: 16ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 15px;
+  font-weight: 700;
+}
+.au-chip button,
+.au-chip-admin {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 38px;
+  height: 38px;
+  border-radius: 99px;
+  color: var(--text-dim);
+}
+.au-chip-admin {
+  margin-inline-start: -8px;
+  padding-inline: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--gold-soft);
+}
+.au-chip button:hover,
+.au-chip-admin:hover {
+  background: rgb(var(--w) / 0.06);
+  color: var(--text);
+}
+.au-chip svg {
+  width: 17px;
+  height: 17px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .au-card {
+    animation: none;
+  }
+}
+@media (max-width: 640px) {
+  .au-grid {
+    grid-template-columns: 1fr;
+  }
+  .au-card {
+    border-radius: 24px;
+  }
+  .au-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+  .au-chip-name {
+    max-width: 9ch;
+  }
+  .au-chip-admin span {
+    display: none;
+  }
+}

@@ -20,6 +20,7 @@ const BAD = /עמלה\s+ל(מערכת|פלטפורמה)|(המערכת|הפלטפ
 const routes = ['/', '/join', '/join/office', '/about', '/upgrade', '/kehila', '/kehila/join', '/app', '/app/community', '/app/brokers', '/app/crm', '/app/crm?v=properties', '/app/office', '/app/agent', '/b/demo', '/f/demo', '/agent/demo', '/o/p']
 
 const page = await browser.newPage()
+await page.evaluateOnNewDocument(() => { try { localStorage.setItem('nadlanup-demo-v1', '1') } catch {} }) // the community is closed to visitors: these checks walk the open demo
 await page.setViewport({ width: 1440, height: 900 })
 await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }])
 for (const member of ['community', 'office']) {

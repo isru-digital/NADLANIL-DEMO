@@ -42,6 +42,7 @@ const probe = () =>
 
 for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name: 'phone', vp: { width: 390, height: 844, isMobile: true, hasTouch: true } }]) {
   const page = await browser.newPage()
+  await page.evaluateOnNewDocument(() => { try { localStorage.setItem('nadlanup-demo-v1', '1') } catch {} }) // the community is closed to visitors: these checks walk the open demo
   await page.setViewport(dev.vp)
   await page.goto(green + '/', { waitUntil: 'load' })
   await page.evaluate(() => {

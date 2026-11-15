@@ -90,7 +90,7 @@ const KEY = 'nadlanup-clients-v1'
 function load(): Client[] {
   try {
     const raw = JSON.parse(localStorage.getItem(KEY) ?? 'null') as Client[] | null
-    return Array.isArray(raw) && raw.length ? raw : seed
+    return Array.isArray(raw) ? raw : seed
   } catch {
     return seed
   }

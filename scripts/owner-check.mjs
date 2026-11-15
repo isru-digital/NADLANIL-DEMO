@@ -33,6 +33,7 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
   const context = await browser.createBrowserContext()
   await context.overridePermissions(new URL(green).origin, ['clipboard-read', 'clipboard-write']).catch(() => {})
   const page = await context.newPage()
+  await page.evaluateOnNewDocument(() => { try { localStorage.setItem('nadlanup-demo-v1', '1') } catch {} }) // the community is closed to visitors: these checks walk the open demo
   const errors = []
   page.on('pageerror', (e) => errors.push(String(e)))
   await page.setViewport(dev.vp)
@@ -109,6 +110,7 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
   // ---- 5. the owner's page, as the owner opens it (a clean browser: nothing of the broker's is stored there)
   const ownerCtx = await browser.createBrowserContext()
   const op = await ownerCtx.newPage()
+  await op.evaluateOnNewDocument(() => { try { localStorage.setItem('nadlanup-demo-v1', '1') } catch {} }) // the community is closed to visitors: these checks walk the open demo
   await op.setViewport(dev.vp)
   await op.goto(url, { waitUntil: 'load' })
   await wait(1800)

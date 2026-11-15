@@ -34,6 +34,7 @@ const state = (page) =>
 
 for (const member of ['community', 'office']) {
   const page = await browser.newPage()
+  await page.evaluateOnNewDocument(() => { try { localStorage.setItem('nadlanup-demo-v1', '1') } catch {} }) // the community is closed to visitors: these checks walk the open demo
   await page.setViewport({ width: 1440, height: 900 })
   await page.goto(green + '/', { waitUntil: 'load' })
   await page.evaluate((m) => {
@@ -78,6 +79,7 @@ for (const member of ['community', 'office']) {
 // a phone has no side menu: the two views are tabs at the top of the page
 {
   const page = await browser.newPage()
+  await page.evaluateOnNewDocument(() => { try { localStorage.setItem('nadlanup-demo-v1', '1') } catch {} }) // the community is closed to visitors: these checks walk the open demo
   await page.setViewport({ width: 390, height: 844, isMobile: true, hasTouch: true })
   await page.goto(green + '/app/crm', { waitUntil: 'load' })
   await wait(1700)

@@ -38,6 +38,7 @@ const results = []
 const check = (name, ok, detail = '') => results.push(`${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? '  [' + detail + ']' : ''}`)
 
 const page = await browser.newPage()
+await page.evaluateOnNewDocument(() => { try { localStorage.setItem('nadlanup-demo-v1', '1') } catch {} }) // the community is closed to visitors: these checks walk the open demo
 await page.setViewport({ width: 1440, height: 900 })
 const errors = []
 page.on('pageerror', (e) => errors.push(String(e)))

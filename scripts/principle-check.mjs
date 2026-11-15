@@ -15,6 +15,7 @@ for (const [name, vp, stacked] of [
   ['d1440', { width: 1440, height: 900 }, false],
 ]) {
   const page = await browser.newPage()
+  await page.evaluateOnNewDocument(() => { try { localStorage.setItem('nadlanup-demo-v1', '1') } catch {} }) // the community is closed to visitors: these checks walk the open demo
   await page.setViewport(vp)
   await page.goto(base + '/', { waitUntil: 'load' })
   await wait(1200)

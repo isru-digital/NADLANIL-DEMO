@@ -5,6 +5,7 @@ import { ArrowLeft, Heart } from 'lucide-react'
 import { PLATFORM_NAME, PLATFORM_TAGLINE, asset } from '../config'
 import { COMMUNITY_DESC, COMMUNITY_HOME, COMMUNITY_NAME } from '../config/community'
 import CommunityBrand from '../community/CommunityBrand'
+import { hasAccess } from '../auth/session'
 import { brokers, formatPriceShort } from '../data/demo'
 import { Avatar, DemoTag, EASE, Logo, Reveal } from '../components/ui'
 import NetworkMap from '../components/NetworkMap'
@@ -55,7 +56,7 @@ export default function HomeGreen() {
             <Link to="/about">אודות</Link>
           </nav>
           <div className="hg-nav-cta">
-            <Link to="/app" className="hg-login">
+            <Link to={hasAccess ? '/app' : '/kehila/login'} className="hg-login">
               כניסה
             </Link>
             <Link to="/join" className="btn btn-gold btn-sm">
@@ -319,7 +320,7 @@ export default function HomeGreen() {
             <Link to="/about">אודות</Link>
             <Link to="/join">הצטרפות</Link>
             <Link to="/join/office">המשרד</Link>
-            <Link to="/app">אזור החבר</Link>
+            <Link to={hasAccess ? '/app' : '/kehila/login'}>אזור החבר</Link>
             <Link to="/app/agent">הסוכן שלנו</Link>
             <Link to={COMMUNITY_HOME}>הקהילה: {COMMUNITY_NAME}</Link>
             <Link to="/app/brokers">אינדקס מתווכים</Link>

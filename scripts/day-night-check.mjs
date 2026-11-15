@@ -22,6 +22,7 @@ const at = (hhmm, day = 12) => {
 /** A page whose clock stands at the given moment. Storage is shared between the pages of one browser. */
 async function pageAt(ms, vp = { width: 1440, height: 900 }) {
   const page = await browser.newPage()
+  await page.evaluateOnNewDocument(() => { try { localStorage.setItem('nadlanup-demo-v1', '1') } catch {} }) // the community is closed to visitors: these checks walk the open demo
   await page.setViewport(vp)
   await page.evaluateOnNewDocument((fixed) => {
     const Real = Date
@@ -58,6 +59,7 @@ const state = (page) =>
   })
 const fresh = async () => {
   const p = await browser.newPage()
+  await p.evaluateOnNewDocument(() => { try { localStorage.setItem('nadlanup-demo-v1', '1') } catch {} }) // the community is closed to visitors: these checks walk the open demo
   await p.goto(green + '/', { waitUntil: 'load' })
   await p.evaluate(() => localStorage.clear())
   await p.close()

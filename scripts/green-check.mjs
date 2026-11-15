@@ -15,6 +15,7 @@ for (const [label, vp, phone] of [
   ['phone', { width: 375, height: 812, isMobile: true, hasTouch: true }, true],
 ]) {
   const page = await browser.newPage()
+  await page.evaluateOnNewDocument(() => { try { localStorage.setItem('nadlanup-demo-v1', '1') } catch {} }) // the community is closed to visitors: these checks walk the open demo
   const errors = []
   page.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
   page.on('pageerror', (e) => errors.push(String(e)))
@@ -79,6 +80,7 @@ for (const [label, vp, phone] of [
 // the navy version is still navy and still has the switch
 {
   const page = await browser.newPage()
+  await page.evaluateOnNewDocument(() => { try { localStorage.setItem('nadlanup-demo-v1', '1') } catch {} }) // the community is closed to visitors: these checks walk the open demo
   await page.setViewport({ width: 1440, height: 900 })
   await page.goto(navy + '/', { waitUntil: 'load' })
   await page.waitForSelector('.vswitch a', { timeout: 15000 }).catch(() => {})

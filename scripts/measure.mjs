@@ -2,6 +2,7 @@
 import puppeteer from 'puppeteer-core'
 const browser = await puppeteer.launch({ executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: 'new' })
 const page = await browser.newPage()
+await page.evaluateOnNewDocument(() => { try { localStorage.setItem('nadlanup-demo-v1', '1') } catch {} }) // the community is closed to visitors: these checks walk the open demo
 await page.setViewport({ width: Number(process.argv[2] ?? 1440), height: 900 })
 await page.goto((process.env.BASE ?? 'http://localhost:5230/NADLANIL-DEMO') + '/app/crm', { waitUntil: 'networkidle0' })
 await new Promise((r) => setTimeout(r, 1500))

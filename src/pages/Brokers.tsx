@@ -120,7 +120,7 @@ export default function Brokers() {
             >
               <button className="broker-face" onClick={() => setProfile(b)} aria-label={`פרופיל של ${b.name}`}>
                 <img src={asset(b.avatar)} alt={b.name} loading="lazy" decoding="async" />
-                <span className="broker-years num">{b.years} שנות ניסיון</span>
+                {b.years > 0 && <span className="broker-years num">{b.years} שנות ניסיון</span>}
                 <span className="broker-over">
                   <strong>{b.name}</strong>
                   <span>{b.title}</span>
@@ -172,7 +172,13 @@ export default function Brokers() {
                 <li>
                   <span>ניסיון</span>
                   <strong>
-                    <span className="num">{profile.years}</span> שנים
+                    {profile.years > 0 ? (
+                      <>
+                        <span className="num">{profile.years}</span> שנים
+                      </>
+                    ) : (
+                      'לא צוין'
+                    )}
                   </strong>
                 </li>
                 <li>

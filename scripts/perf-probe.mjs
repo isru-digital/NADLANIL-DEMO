@@ -22,6 +22,7 @@ const variants = {
 const rows = []
 for (const [name, css] of Object.entries(variants)) {
   const page = await browser.newPage()
+  await page.evaluateOnNewDocument(() => { try { localStorage.setItem('nadlanup-demo-v1', '1') } catch {} }) // the community is closed to visitors: these checks walk the open demo
   await page.setViewport({ width: 390, height: 844, deviceScaleFactor: 3, isMobile: true, hasTouch: true })
   const cdp = await page.createCDPSession()
   await cdp.send('Performance.enable')

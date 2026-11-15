@@ -31,6 +31,7 @@ for (const [label, vp, phone] of [
 ]) {
   const tag = `green ${label}`
   const page = await browser.newPage()
+  await page.evaluateOnNewDocument(() => { try { localStorage.setItem('nadlanup-demo-v1', '1') } catch {} }) // the community is closed to visitors: these checks walk the open demo
   const errors = []
   page.on('console', (m) => m.type() === 'error' && !/404/.test(m.text()) && errors.push(m.text()))
   page.on('pageerror', (e) => errors.push(String(e)))
@@ -199,6 +200,7 @@ for (const [label, vp, phone] of [
 // the sample page works without registering, and a missing name says so
 {
   const page = await browser.newPage()
+  await page.evaluateOnNewDocument(() => { try { localStorage.setItem('nadlanup-demo-v1', '1') } catch {} }) // the community is closed to visitors: these checks walk the open demo
   await page.setViewport({ width: 1440, height: 900 })
   await page.goto(green + '/agent/demo', { waitUntil: 'load' })
   await wait(1800)
@@ -215,6 +217,7 @@ for (const [label, vp] of [
   ['phone', { width: 375, height: 812, isMobile: true, hasTouch: true }],
 ]) {
   const page = await browser.newPage()
+  await page.evaluateOnNewDocument(() => { try { localStorage.setItem('nadlanup-demo-v1', '1') } catch {} }) // the community is closed to visitors: these checks walk the open demo
   await page.setViewport(vp)
   await page.goto(green + '/', { waitUntil: 'load' })
   await page.evaluate(() => localStorage.removeItem('nadlanup-agent-v1'))

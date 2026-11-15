@@ -32,6 +32,7 @@ const viewports = {
 
 async function open(vp, path) {
   const page = await browser.newPage()
+  await page.evaluateOnNewDocument(() => { try { localStorage.setItem('nadlanup-demo-v1', '1') } catch {} }) // the community is closed to visitors: these checks walk the open demo
   await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }])
   await page.setViewport(vp)
   await page.goto(base + path, { waitUntil: 'load' })

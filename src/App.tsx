@@ -25,14 +25,16 @@ type Props = {
   appIndex?: ReactElement
   /** wraps the landing page builder and the folder, so a look can close them to some members */
   gate?: (id: 'builder' | 'folder', screen: ReactElement) => ReactElement
+  /** wraps everything under /app, so a look can close it to whoever may not enter */
+  appGuard?: (app: ReactElement) => ReactElement
 }
 
-export default function App({ home, join, routes, appRoutes, overlay, switcher, appIndex, gate }: Props) {
+export default function App({ home, join, routes, appRoutes, overlay, switcher, appIndex, gate, appGuard }: Props) {
   return (
     <>
       <Routes>
         <Route path="/" element={home ?? <Home />} />
-        <Route path="/app" element={<AppShell />}>
+        <Route path="/app" element={appGuard ? appGuard(<AppShell />) : <AppShell />}>
           <Route index element={appIndex ?? <Dashboard />} />
           <Route path="community" element={<Community />} />
           <Route path="brokers" element={<Brokers />} />

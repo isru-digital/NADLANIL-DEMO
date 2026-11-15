@@ -9,6 +9,8 @@ import { PRICE_TBD } from '../config/office'
 import { Modal } from './ui'
 import { labItems } from './BetaLab'
 import MemberSwitch from './MemberSwitch'
+import { AccountChip } from '../auth/Access'
+import { demo } from '../auth/session'
 import '../styles/tiers.css'
 
 /**
@@ -39,7 +41,8 @@ export default function MemberBar() {
           <span>קרדיטים</span>
         </button>
       )}
-      <MemberSwitch />
+      {/* the view switch is a control of the demo: a real broker is a community member, and sees who is signed in */}
+      {demo ? <MemberSwitch /> : <AccountChip />}
 
       <Modal
         open={open}

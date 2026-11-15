@@ -16,6 +16,7 @@ type Extra = {
   switcher?: ReactNode
   appIndex?: ReactElement
   gate?: (id: 'builder' | 'folder', screen: ReactElement) => ReactElement
+  appGuard?: (app: ReactElement) => ReactElement
 }
 
 export function start(home?: ReactElement, extra?: Extra) {
@@ -26,7 +27,7 @@ export function start(home?: ReactElement, extra?: Extra) {
       <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, '')}>
         <MotionConfig reducedMotion="user">
           <StoreProvider>
-            <App home={home} join={extra?.join} routes={extra?.routes} appRoutes={extra?.appRoutes} overlay={extra?.overlay} switcher={extra?.switcher} appIndex={extra?.appIndex} gate={extra?.gate} />
+            <App home={home} join={extra?.join} routes={extra?.routes} appRoutes={extra?.appRoutes} overlay={extra?.overlay} switcher={extra?.switcher} appIndex={extra?.appIndex} gate={extra?.gate} appGuard={extra?.appGuard} />
           </StoreProvider>
         </MotionConfig>
       </BrowserRouter>

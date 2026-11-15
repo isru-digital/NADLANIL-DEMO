@@ -11,6 +11,7 @@ const base = process.env.BASE_GREEN ?? 'http://localhost:5240/NADLANIL-DEMO/gree
 mkdirSync(out, { recursive: true })
 const browser = await puppeteer.launch({ executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: 'new', args: ['--hide-scrollbars'] })
 const page = await browser.newPage()
+await page.evaluateOnNewDocument(() => { try { localStorage.setItem('nadlanup-demo-v1', '1') } catch {} }) // the community is closed to visitors: these checks walk the open demo
 await page.setViewport(device === 'phone' ? { width: 390, height: 844, isMobile: true, hasTouch: true } : { width: 1440, height: 900 })
 const wait = (ms) => new Promise((r) => setTimeout(r, ms))
 await page.goto(base + '/', { waitUntil: 'load' })

@@ -1,5 +1,7 @@
 // must stay first: it removes what an earlier session left in the browser before any store reads it
 import './config/cleanStart'
+// must come before every store: it decides whose area this browser shows (a signed-in broker's own, or the demo's)
+import './auth/profile'
 // must come before the screens: it gives a shared lab tool its name in this look
 import { ROOM_NAME } from './config/labNames'
 import './styles/global.css'
@@ -9,12 +11,10 @@ import { start } from './bootstrap'
 import { dayNight } from './config/dayNight'
 import DayNightSwitch from './components/DayNightSwitch'
 import { PLATFORM_NAME } from './config'
-import { COMMUNITY_FEED, COMMUNITY_FROM, COMMUNITY_HOME, COMMUNITY_JOIN, COMMUNITY_NAME } from './config/community'
+import { COMMUNITY_HOME, COMMUNITY_JOIN } from './config/community'
 import CommunityHome from './community/CommunityHome'
-import CommunityBrand from './community/CommunityBrand'
 import { AppIndex, OfficeOnly, ShellBrand, UpgradeBanner, useCommunityNav } from './community/CommunityShell'
 import HomeGreen from './pages/HomeGreen'
-import Join from './pages/Join'
 import AgentArea from './agent/AgentArea'
 import AgentPage from './agent/AgentPage'
 import JoinChoice from './join/JoinChoice'
@@ -35,6 +35,10 @@ import { memberActions } from './config/member'
 import { agentActions } from './agent/useAgent'
 import { registerActions, registerCommunity, registerCrm, registerLab, registerNames, registerNav, registerReset, registerShell } from './config/navExtras'
 import ClientsTable from './crm/ClientsTable'
+import SignUp from './auth/SignUp'
+import Admin from './auth/Admin'
+import { AppGuard, DemoStart, Enter, Login } from './auth/Access'
+import { demo } from './auth/session'
 import { pickActions } from './config/pricing'
 import FeedMasthead from './community/FeedMasthead'
 import { CATEGORIES, CommercialSeed, categoryOf } from './crm/categories'
@@ -103,19 +107,6 @@ registerActions({
   copied: 'הקישור הועתק',
 })
 
-// joining the community runs under its own name, ends in the feed, and has no landing page step
-const joinCommunity = (
-  <Join
-    community={{
-      brand: <CommunityBrand size="sm" />,
-      home: COMMUNITY_HOME,
-      after: COMMUNITY_FEED,
-      foot: `${COMMUNITY_NAME}, ${COMMUNITY_FROM}`,
-      propertyLead: 'נכס אחד מספיק כדי להתחיל לקבל פניות ממתווכים באזור. הוא נכנס ל-CRM שלכם ועולה אוטומטית לקהילה, באזור של הנכס. שם בעל הנכס והטלפון שלו לא מתפרסמים.',
-    }}
-  />
-)
-
 start(<HomeGreen />, {
   // joining is a choice: the free community (the existing onboarding) or the office
   join: <JoinChoice />,
@@ -129,8 +120,14 @@ start(<HomeGreen />, {
   routes: (
     <>
       <Route path={COMMUNITY_HOME} element={<CommunityHome />} />
-      <Route path={COMMUNITY_JOIN} element={joinCommunity} />
-      <Route path="/join/community" element={joinCommunity} />
+      {/* joining the community is real now: a form, an approver's yes, and a sign-in link by e-mail */}
+      <Route path={COMMUNITY_JOIN} element={<SignUp />} />
+      <Route path="/join/community" element={<SignUp />} />
+      <Route path="/kehila/login" element={<Login />} />
+      <Route path="/kehila/enter" element={<Enter />} />
+      <Route path="/kehila/admin" element={<Admin />} />
+      {/* the link for presentations: the open demo, with the example user */}
+      <Route path="/demo" element={<DemoStart />} />
       <Route path="/join/office" element={<JoinOffice />} />
       <Route path="/agent/:slug" element={<AgentPage />} />
       <Route path="/about" element={<About />} />
@@ -143,14 +140,17 @@ start(<HomeGreen />, {
   switcher: <DayNightSwitch />,
   // a community member has no dashboard: the first screen inside is the feed
   appIndex: <AppIndex />,
+  // the community's screens are for approved brokers (and staff, and a presentation of the demo)
+  appGuard: (app) => <AppGuard>{app}</AppGuard>,
   // the landing page builder and the digital folder belong to the office
   gate: (id, screen) => <OfficeOnly id={id}>{screen}</OfficeOnly>,
   overlay: (
     <>
       <GreenActions />
       <AutoPublish />
-      <CommercialSeed />
-      {import.meta.env.VITE_DEMO_RESET === 'false' ? null : <DemoReset />}
+      {/* the demo's own example data and its start-again tab are not for a real broker's area */}
+      {demo && <CommercialSeed />}
+      {demo && import.meta.env.VITE_DEMO_RESET !== 'false' ? <DemoReset /> : null}
     </>
   ),
 })

@@ -7,6 +7,7 @@ import { PLATFORM_NAME } from '../config'
 import { COMMUNITY_DESC, COMMUNITY_FEED, COMMUNITY_HOME, COMMUNITY_JOIN, COMMUNITY_NAME, COMMUNITY_SUB, OFFICE_ONLY } from '../config/community'
 import { DemoTag, EASE, Reveal } from '../components/ui'
 import CommunityBrand from './CommunityBrand'
+import { hasAccess } from '../auth/session'
 import OfficePitch from './OfficePitch'
 import '../styles/join-green.css'
 import '../styles/kehila.css'
@@ -40,6 +41,8 @@ const rise = (i: number) => ({
 })
 
 export default function CommunityHome() {
+  // whoever is already in goes straight to the feed; anyone else signs in first
+  const enter = hasAccess ? COMMUNITY_FEED : '/kehila/login'
   useEffect(() => {
     const prev = document.title
     document.title = `${COMMUNITY_NAME} | מבית ${PLATFORM_NAME}`
@@ -56,7 +59,7 @@ export default function CommunityHome() {
           <CommunityBrand />
         </Link>
         <div className="jc-top-end">
-          <Link to={COMMUNITY_FEED} className="jo-free">
+          <Link to={enter} className="jo-free">
             כניסה
           </Link>
           <DemoTag />
@@ -85,12 +88,12 @@ export default function CommunityHome() {
             <Link to={COMMUNITY_JOIN} className="btn btn-white btn-lg">
               הצטרפות לקהילה, בחינם <ArrowLeft />
             </Link>
-            <Link to={COMMUNITY_FEED} className="btn btn-outline-white btn-lg">
+            <Link to={enter} className="btn btn-outline-white btn-lg">
               כניסה לחברים
             </Link>
           </motion.div>
           <motion.small className="kh-note" {...rise(6)}>
-            אחרי הכניסה מגיעים ישר לפיד של הקהילה.
+            ההצטרפות באישור: נרשמים, הצוות מאשר, ומקבלים מייל עם כניסה.
           </motion.small>
         </div>
       </section>
@@ -157,7 +160,7 @@ export default function CommunityHome() {
           <CommunityBrand size="sm" />
           <nav aria-label="קישורים">
             <Link to={COMMUNITY_JOIN}>הצטרפות</Link>
-            <Link to={COMMUNITY_FEED}>כניסה</Link>
+            <Link to={enter}>כניסה</Link>
             <Link to="/">
               לאתר <bdi dir="ltr">{PLATFORM_NAME}</bdi>
             </Link>

@@ -35,6 +35,7 @@ for (const [label, vp, phone] of [
 ]) {
   const tag = `green ${label}`
   const page = await browser.newPage()
+  await page.evaluateOnNewDocument(() => { try { localStorage.setItem('nadlanup-demo-v1', '1') } catch {} }) // the community is closed to visitors: these checks walk the open demo
   const errors = []
   page.on('console', (m) => m.type() === 'error' && !/404/.test(m.text()) && errors.push(m.text()))
   page.on('pageerror', (e) => errors.push(String(e)))
@@ -141,6 +142,7 @@ for (const [label, vp, phone] of [
 // a narrow phone: the feed and the app's main screens do not scroll sideways
 {
   const page = await browser.newPage()
+  await page.evaluateOnNewDocument(() => { try { localStorage.setItem('nadlanup-demo-v1', '1') } catch {} }) // the community is closed to visitors: these checks walk the open demo
   await page.setViewport({ width: 360, height: 780, isMobile: true, hasTouch: true })
   for (const path of ['/app', '/app/community', '/app/brokers', '/app/crm', '/app/office', '/app/office/leads', '/app/office/deal', '/upgrade', '/join/office', '/about']) {
     await page.goto(green + path, { waitUntil: 'load' })

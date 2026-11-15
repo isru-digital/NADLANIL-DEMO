@@ -29,6 +29,7 @@ const shot = async (page, name) => {
 for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name: 'phone', vp: { width: 390, height: 844, isMobile: true, hasTouch: true } }]) {
   const d = dev.name
   const page = await browser.newPage()
+  await page.evaluateOnNewDocument(() => { try { localStorage.setItem('nadlanup-demo-v1', '1') } catch {} }) // the community is closed to visitors: these checks walk the open demo
   await page.setViewport(dev.vp)
   await page.goto(green + '/', { waitUntil: 'load' })
   await page.evaluate(() => {
@@ -116,25 +117,18 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
     await page.screenshot({ path: `${out}/phone-4-more.png` })
   }
 
-  // ---- 5. joining the community: under its name, no landing page step, ends in the feed
+  // ---- 5. joining the community is a real sign-up now, under its name (its full walk is in signup-check.mjs)
   await page.goto(green + '/kehila/join', { waitUntil: 'load' })
   await wait(1500)
   const j = await page.evaluate(() => ({
-    steps: [...document.querySelectorAll('.join-steps li')].map((x) => x.textContent.replace(/^\d+/, '').trim()),
-    brand: document.querySelector('.join-brand')?.textContent.replace(/\s+/g, ' ').trim(),
-    logo: !!document.querySelector('.join-top .logo'),
+    form: !!document.querySelector('form.au-card [data-act="register"]'),
+    fields: document.querySelectorAll('.au-field').length,
+    brand: document.querySelector('.kh-brand')?.textContent.replace(/\s+/g, ' ').trim(),
+    logo: !!document.querySelector('.jc-top .logo'),
+    old: !!document.querySelector('.join-steps'),
   }))
-  check(`${d} joining: four steps, no landing page step, under the community's name`, j.steps.length === 4 && !j.steps.some((x) => x.includes('הדף העסקי')) && j.brand?.includes(NAME) && !j.logo, JSON.stringify(j))
+  check(`${d} joining: the sign-up form, under the community's name, in place of the old steps`, j.form && j.fields >= 7 && j.brand?.includes(NAME) && !j.logo && !j.old, JSON.stringify(j))
   await shot(page, `${d}-5-join`)
-  await page.evaluate(() => document.querySelector('.join-card form button.btn-gold')?.click())
-  await wait(900)
-  for (let i = 0; i < 2; i++) {
-    await page.evaluate(() => [...document.querySelectorAll('.join-actions .btn-gold')].at(-1)?.click())
-    await wait(900)
-  }
-  await page.evaluate(() => [...document.querySelectorAll('.join-actions button')].find((b) => b.textContent.includes('אעלה אחר כך'))?.click())
-  await wait(1800)
-  check(`${d} joining ends in the feed`, (await path(page)) === '/app/community', await path(page))
 
   // ---- 6. an office member: the dashboard and both tools are there, under the office's logo
   await page.evaluate(() => localStorage.setItem('nadlanup-member-v1', 'office'))
