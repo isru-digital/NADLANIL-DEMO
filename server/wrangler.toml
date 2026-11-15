@@ -4,15 +4,18 @@
 name = "nadlanup-api"
 main = "src/index.js"
 compatibility_date = "2026-10-01"
+# the Cloudflare account of ISRU (info@isru.co.il); a deploy signed in to any other account fails instead of
+# creating a second server there
+account_id = "b809465d38bf6222b25b1611fcf66172"
 
 [[d1_databases]]
 binding = "DB"
 database_name = "nadlanup-db"
-database_id = "5a51ed56-6908-466f-98a7-a608673288e8"
+database_id = "96e08571-7a7e-4a89-9ffc-6ae3863114db"
 
 [vars]
 # where the site lives (links in the e-mails lead here)
 SITE_URL = "https://isru-digital.github.io/NADLANIL-DEMO"
 # the Gmail box the e-mails are sent from, and the name shown next to it
-MAIL_FROM = "nadlanupcontact@gmail.com"
+MAIL_FROM = "nadlanup.office@gmail.com"
 MAIL_NAME = "NadlanUP"

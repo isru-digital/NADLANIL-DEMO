@@ -31,7 +31,7 @@ export type Session = { token: string; member: MemberInfo | null; staff: StaffIn
 
 /** The server. On this computer it is the local copy in test mode; anywhere else, the real one. */
 export const API: string =
-  (import.meta.env.VITE_API_URL as string | undefined) ?? (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? 'http://localhost:8787' : 'https://nadlanup-api.beapromanager.workers.dev')
+  (import.meta.env.VITE_API_URL as string | undefined) ?? (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? 'http://localhost:8787' : 'https://nadlanup-api.isru.workers.dev')
 
 const KEY = 'nadlanup-session-v1'
 const DEMO = 'nadlanup-demo-v1'

@@ -19,7 +19,7 @@ await page.goto(site + '/kehila/join', { waitUntil: 'load' }); await wait(2500)
 check('live: the sign-up form is there', await page.evaluate(() => !!document.querySelector('form.au-card [data-act="register"]')))
 const api = await page.evaluate(async () => {
   const mod = [...document.querySelectorAll('script[type="module"]')].length
-  const A = 'https://nadlanup-api.beapromanager.workers.dev'
+  const A = 'https://nadlanup-api.isru.workers.dev'
   const r = await fetch(A + '/api/register', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' }).then(async (x) => ({ s: x.status, j: await x.json() }), (e) => ({ s: 0, e: String(e) }))
   const me = await fetch(A + '/api/me').then((x) => x.status, () => 0)
   const adm = await fetch(A + '/api/admin/members').then((x) => x.status, () => 0)
