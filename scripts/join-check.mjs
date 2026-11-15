@@ -99,13 +99,13 @@ for (const [label, vp, phone] of [
   check(`${tag}: no sideways overflow on the choice`, st.overflowX <= 1, `${st.overflowX}px`)
   await page.screenshot({ path: `${out}/join-${label}-1-choice.png` })
 
-  // the free way is the existing onboarding
+  // the free way is the community's page, and from it the real sign-up
   await click(page, '.jc-card:not(.is-office) .jc-cta', '')
   await wait(1400)
   check(`${tag}: the community path opens the community's own page`, await page.evaluate(() => location.pathname.endsWith('/kehila') && document.body.textContent.includes('מתווכים לעסקאות')))
   await page.goto(green + '/kehila/join', { waitUntil: 'load' })
   await wait(1300)
-  check(`${tag}: ... and from there the existing onboarding`, await page.evaluate(() => document.body.textContent.includes('נעים להכיר') && document.body.textContent.includes('ההצטרפות בחינם')))
+  check(`${tag}: ... and from there the sign-up form (free, with approval)`, await page.evaluate(() => !!document.querySelector('form.au-card [data-act="register"]') && document.body.textContent.includes('הרשמה לקהילה, בחינם')))
   await page.goto(green + '/join', { waitUntil: 'load' })
   await wait(1200)
 
