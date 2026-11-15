@@ -1,0 +1,772 @@
+/* The community's own page ("מתווכים לעסקאות"): light, white with a very soft mint, the brand's dark green for the
+   name and the main button, and a warm gold for the tags and the icons. Only this page (.khv): the office's pages
+   keep their own look. */
+.khv {
+  --khv-bg: #f7fbf8;
+  --khv-mint: #e2f4ea;
+  --khv-mint-2: #c7ebd8;
+  --khv-card: #ffffff;
+  --khv-ink: #0b2a1f;
+  --khv-dim: #3b574b;
+  --khv-faint: #5f7a6e;
+  --khv-green: #0b5a3c;
+  --khv-green-2: #0a7a4f;
+  --khv-gold: #d6982a;
+  --khv-gold-soft: #f8e3b6;
+  --khv-gold-ink: #7f5205;
+  --khv-line: rgba(10, 70, 48, 0.1);
+  --khv-shadow: 0 1px 2px rgba(8, 52, 36, 0.06), 0 18px 40px -22px rgba(8, 52, 36, 0.3);
+  background: var(--khv-bg);
+  color: var(--khv-ink);
+}
+html[data-mode='night'] .khv {
+  --khv-bg: #08140f;
+  --khv-mint: rgba(52, 211, 153, 0.1);
+  --khv-mint-2: rgba(52, 211, 153, 0.18);
+  --khv-card: #10221a;
+  --khv-ink: #e8f5ee;
+  --khv-dim: #b2cbbf;
+  --khv-faint: #8eab9e;
+  --khv-green: #12a36c;
+  --khv-green-2: #34d399;
+  --khv-gold: #e8b75a;
+  --khv-gold-soft: rgba(232, 183, 90, 0.2);
+  --khv-gold-ink: #f3cf86;
+  --khv-line: rgba(222, 244, 234, 0.1);
+  --khv-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 18px 40px -22px rgba(0, 0, 0, 0.8);
+}
+
+/* the icons of this page: one line, one warm shape behind */
+.khv .khi {
+  width: 1em;
+  height: 1em;
+  flex: none;
+}
+.khv .khi-warm {
+  fill: var(--khv-gold-soft);
+}
+.khv .khi.is-xs {
+  width: 13px;
+  height: 13px;
+  vertical-align: -2px;
+}
+.khv-sample {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 7px;
+  border-radius: 99px;
+  background: var(--khv-gold-soft);
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 1.5;
+  color: var(--khv-gold-ink);
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------- the head of the page */
+.khv .khv-hero {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  padding-block: clamp(30px, 5vw, 76px) clamp(44px, 6.5vw, 92px);
+  background:
+    radial-gradient(60% 70% at 85% 10%, var(--khv-mint) 0%, transparent 70%),
+    radial-gradient(40% 45% at 12% 70%, color-mix(in srgb, var(--khv-gold-soft) 50%, transparent) 0%, transparent 70%),
+    var(--khv-bg);
+  color: var(--khv-ink);
+}
+.khv-hero-in {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  gap: clamp(24px, 4vw, 64px);
+  align-items: center;
+}
+.khv-copy {
+  display: grid;
+  gap: 16px;
+  justify-items: center;
+  text-align: center;
+}
+.khv-kicker {
+  padding: 6px 16px;
+  border-radius: 99px;
+  border: 1px solid var(--khv-mint-2);
+  background: color-mix(in srgb, var(--khv-card) 70%, var(--khv-mint));
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--khv-green);
+}
+.khv .kh-hero h1 {
+  font-size: clamp(46px, 6.6vw, 100px);
+  line-height: 0.98;
+  letter-spacing: -0.02em;
+  color: var(--khv-green);
+  text-wrap: balance;
+}
+.khv .kh-from {
+  margin-top: -6px;
+  color: var(--khv-dim);
+}
+.khv .kh-sub {
+  gap: 10px;
+  margin-top: 4px;
+  font-size: clamp(16px, 1.5vw, 19px);
+}
+.khv .kh-sub li {
+  padding: 7px 18px;
+  border-radius: 99px;
+  border: 1px solid color-mix(in srgb, var(--khv-gold) 35%, transparent);
+  background: var(--khv-gold-soft);
+  color: var(--khv-gold-ink);
+}
+.khv .kh-sub li + li {
+  border-inline-start: 1px solid color-mix(in srgb, var(--khv-gold) 35%, transparent);
+}
+.khv .kh-desc {
+  max-width: 31em;
+  font-size: clamp(17px, 1.45vw, 20px);
+  line-height: 1.6;
+  color: var(--khv-dim);
+}
+.khv .kh-cta {
+  margin-top: 6px;
+}
+.khv .khv-primary {
+  background: var(--khv-green);
+  border: 2px solid var(--khv-green);
+  color: #fff;
+  box-shadow: 0 14px 30px -14px color-mix(in srgb, var(--khv-green) 80%, transparent);
+  transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+.khv .khv-primary:hover {
+  background: var(--khv-green-2);
+  border-color: var(--khv-green-2);
+  transform: translateY(-2px);
+}
+html[data-mode='night'] .khv .khv-primary {
+  color: #03140d;
+}
+.khv .khv-ghost {
+  background: var(--khv-card);
+  border: 1.5px solid color-mix(in srgb, var(--khv-ink) 22%, transparent);
+  color: var(--khv-ink);
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+.khv .khv-ghost:hover {
+  border-color: var(--khv-green-2);
+  transform: translateY(-2px);
+}
+.khv .khv-primary:active,
+.khv .khv-ghost:active {
+  transform: scale(0.97);
+}
+.khv .khv-primary:focus-visible,
+.khv .khv-ghost:focus-visible {
+  outline: 3px solid var(--khv-gold);
+  outline-offset: 3px;
+}
+.khv .kh-note {
+  color: var(--khv-faint);
+}
+
+/* "עכשיו בקהילה" */
+.khv-now {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 100%;
+  margin-top: 4px;
+  padding: 7px 8px;
+  padding-inline: 8px 14px;
+  border-radius: 99px;
+  border: 1px solid var(--khv-line);
+  background: var(--khv-card);
+  box-shadow: var(--khv-shadow);
+  font-size: 15px;
+}
+.khv-now-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 11px;
+  border-radius: 99px;
+  background: var(--khv-mint);
+  font-family: var(--font-display);
+  font-size: 13.5px;
+  font-weight: 800;
+  color: var(--khv-green);
+  white-space: nowrap;
+}
+.khv-now-live i {
+  position: relative;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--khv-green-2);
+}
+.khv-now-live i::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid var(--khv-green-2);
+  opacity: 0;
+  animation: khv-ping 2.4s ease-out infinite;
+}
+.khv-now-line {
+  position: relative;
+  display: inline-block;
+  min-width: 14.5em;
+  overflow: hidden;
+  font-weight: 700;
+  color: var(--khv-ink);
+  text-align: start;
+  white-space: nowrap;
+}
+.khv-now-line > span {
+  display: inline-block;
+}
+
+/* the cluster of floating cards */
+.khv-collage {
+  position: relative;
+  width: 100%;
+  max-width: 560px;
+  justify-self: center;
+}
+.khv-collage-in {
+  position: relative;
+  aspect-ratio: 1.12;
+}
+.khv-orbit {
+  position: absolute;
+  inset: 9% 11%;
+  border-radius: 50%;
+  border: 1.5px dashed color-mix(in srgb, var(--khv-gold) 55%, transparent);
+}
+.khv-photo {
+  position: absolute;
+  top: 22%;
+  left: 21%;
+  width: 58%;
+  margin: 0;
+  border-radius: 24px;
+  border: 6px solid var(--khv-card);
+  background: var(--khv-card);
+  box-shadow: var(--khv-shadow);
+  overflow: hidden;
+}
+.khv-photo img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 18px;
+}
+.khv-photo figcaption {
+  position: absolute;
+  inset-block-end: 10px;
+  inset-inline-start: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--khv-card) 92%, transparent);
+  font-family: var(--font-display);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--khv-ink);
+}
+.khv-card {
+  position: absolute;
+  z-index: 2;
+}
+.khv-card.is-broker {
+  top: 2%;
+  right: 0;
+}
+.khv-card.is-new {
+  top: 11%;
+  left: -2%;
+}
+.khv-card.is-buyer {
+  bottom: 9%;
+  left: 0;
+}
+.khv-card.is-deal {
+  bottom: 0;
+  right: 3%;
+}
+.khv-float {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  border: 1px solid var(--khv-line);
+  background: var(--khv-card);
+  box-shadow: var(--khv-shadow);
+  animation: khv-bob 7s ease-in-out infinite;
+}
+.khv-float.is-2 {
+  animation-duration: 8.5s;
+  animation-delay: -2s;
+}
+.khv-float.is-3 {
+  animation-duration: 7.6s;
+  animation-delay: -4s;
+}
+.khv-float.is-4 {
+  animation-duration: 9s;
+  animation-delay: -1s;
+}
+.khv-float > .khv-sample {
+  position: absolute;
+  top: -9px;
+  inset-inline-end: 12px;
+  box-shadow: 0 0 0 2px var(--khv-card);
+}
+.khv-card-txt {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+.khv-card-txt strong {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+.khv-card-txt small {
+  font-size: 12.5px;
+  color: var(--khv-faint);
+  white-space: nowrap;
+}
+.khv-person {
+  position: relative;
+  flex: none;
+}
+.khv-person img {
+  display: block;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--khv-gold-soft);
+}
+.khv-online {
+  position: absolute;
+  bottom: 1px;
+  inset-inline-start: 1px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--khv-green-2);
+  border: 2px solid var(--khv-card);
+}
+.khv-mini {
+  position: absolute;
+  bottom: -4px;
+  inset-inline-start: -6px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--khv-gold);
+  border: 2px solid var(--khv-card);
+  color: #fff;
+  font-size: 15px;
+}
+.khv-mini .khi-warm {
+  fill: transparent;
+}
+.khv-badge {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: var(--khv-mint);
+  color: var(--khv-green);
+  font-size: 26px;
+}
+.khv-badge.is-gold {
+  background: var(--khv-gold-soft);
+  color: var(--khv-gold-ink);
+}
+.khv-badge.is-gold .khi-warm {
+  fill: color-mix(in srgb, var(--khv-gold) 35%, transparent);
+}
+.khv-pair {
+  display: flex;
+  flex: none;
+}
+.khv-pair img {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2.5px solid var(--khv-card);
+}
+.khv-pair img + img {
+  margin-inline-start: -12px;
+}
+
+/* soft shapes behind the head of the page */
+.khv-shapes {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  /* the shapes fade out before the edge of the head, so no shape is cut by a line */
+  -webkit-mask-image: linear-gradient(to bottom, #000 70%, transparent);
+  mask-image: linear-gradient(to bottom, #000 70%, transparent);
+}
+.khv-shapes > i {
+  position: absolute;
+  display: block;
+  border-radius: 50%;
+}
+.khv-blob.is-mint {
+  background: radial-gradient(circle, var(--khv-mint-2), transparent 68%);
+  filter: blur(6px);
+}
+.khv-blob.is-gold {
+  background: radial-gradient(circle, color-mix(in srgb, var(--khv-gold) 30%, transparent), transparent 66%);
+  filter: blur(8px);
+}
+.khv-ring {
+  border: 1.5px solid var(--khv-mint-2);
+}
+.khv-ring.is-gold {
+  border-color: color-mix(in srgb, var(--khv-gold) 40%, transparent);
+}
+.khv-dot {
+  background: var(--khv-mint-2);
+}
+.khv-dot.is-gold {
+  background: color-mix(in srgb, var(--khv-gold) 55%, transparent);
+}
+.khv-shapes .is-a {
+  width: 520px;
+  height: 520px;
+  top: -200px;
+  right: -140px;
+}
+.khv-shapes .is-b {
+  width: 360px;
+  height: 360px;
+  bottom: -40px;
+  left: 4%;
+}
+.khv-shapes .is-c {
+  width: 180px;
+  height: 180px;
+  top: 14%;
+  right: 46%;
+}
+.khv-shapes .is-d {
+  width: 90px;
+  height: 90px;
+  bottom: 12%;
+  right: 8%;
+}
+.khv-shapes .is-e {
+  width: 14px;
+  height: 14px;
+  top: 20%;
+  left: 7%;
+}
+.khv-shapes .is-f {
+  width: 22px;
+  height: 22px;
+  bottom: 9%;
+  left: 44%;
+}
+
+/* ---------------------------------------------------------------- the three pillars, not three equal boxes */
+.khv .khv-pillars-wrap {
+  background: var(--khv-bg);
+}
+.khv .khv-bento {
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  gap: 18px;
+}
+.khv .khv-pillar {
+  position: relative;
+  overflow: hidden;
+  gap: 10px;
+  padding: clamp(22px, 2.6vw, 32px);
+  border-radius: 28px;
+  border: 1px solid var(--khv-line);
+  background: var(--khv-card);
+  box-shadow: var(--khv-shadow);
+}
+.khv .khv-pillar::after {
+  content: '';
+  position: absolute;
+  width: 170px;
+  height: 170px;
+  inset-block-start: -70px;
+  inset-inline-end: -60px;
+  border-radius: 50%;
+  border: 1.5px solid var(--khv-mint-2);
+  pointer-events: none;
+}
+.khv .khv-pillar.is-1 {
+  grid-row: span 2;
+  background: linear-gradient(170deg, var(--khv-card) 45%, var(--khv-mint));
+}
+.khv .khv-pillar.is-3 {
+  background: linear-gradient(170deg, var(--khv-card) 40%, color-mix(in srgb, var(--khv-gold-soft) 70%, var(--khv-card)));
+}
+.khv .khv-pillar.is-3::after {
+  border-color: color-mix(in srgb, var(--khv-gold) 40%, transparent);
+}
+.khv .khv-pillar-icon {
+  display: grid;
+  place-items: center;
+  width: 62px;
+  height: 62px;
+  border-radius: 19px;
+  background: var(--khv-mint);
+  color: var(--khv-green);
+  font-size: 34px;
+}
+.khv .khv-pillar-icon .khi {
+  width: 34px;
+  height: 34px;
+}
+.khv .khv-pillar.is-3 .khv-pillar-icon {
+  background: var(--khv-gold-soft);
+  color: var(--khv-gold-ink);
+}
+.khv .khv-pillar.is-3 .khi-warm {
+  fill: color-mix(in srgb, var(--khv-gold) 35%, transparent);
+}
+.khv .khv-pillar h2 {
+  font-size: clamp(24px, 2.3vw, 30px);
+  color: var(--khv-ink);
+}
+.khv .khv-pillar p {
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--khv-dim);
+}
+.khv .khv-pillar > .khv-pillar-art {
+  position: relative;
+  display: block;
+  justify-self: stretch;
+  width: 100%;
+  height: auto;
+  margin-top: 10px;
+  border-radius: 0;
+  background: none;
+}
+.khv-pillar-art img {
+  display: block;
+  width: 100%;
+  height: clamp(180px, 18vw, 250px);
+  object-fit: cover;
+  border-radius: 20px;
+}
+.khv-pillar-chip {
+  white-space: nowrap;
+  position: absolute;
+  inset-block-start: 14px;
+  inset-inline-start: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 12px;
+  border-radius: 99px;
+  background: var(--khv-card);
+  box-shadow: var(--khv-shadow);
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--khv-ink);
+}
+.khv-pillar-chip .khi {
+  width: 20px;
+  height: 20px;
+  color: var(--khv-green);
+}
+
+/* ---------------------------------------------------------------- what you get */
+.khv .khv-inside-wrap {
+  background: linear-gradient(180deg, var(--khv-bg), color-mix(in srgb, var(--khv-mint) 60%, var(--khv-bg)));
+}
+.khv .jo-tag {
+  color: var(--khv-gold-ink);
+}
+.khv .jo-head h2 {
+  color: var(--khv-ink);
+}
+.khv .kh-list li {
+  border-color: var(--khv-line);
+  background: var(--khv-card);
+  box-shadow: var(--khv-shadow);
+}
+.khv .kh-list li > i {
+  background: var(--khv-mint);
+  color: var(--khv-green);
+  font-size: 26px;
+}
+.khv .kh-list li > i svg.khi {
+  width: 1em;
+  height: 1em;
+  stroke-width: 1.8;
+}
+.khv .kh-list li.is-locked > i {
+  background: var(--khv-gold-soft);
+  color: var(--khv-gold-ink);
+}
+.khv .kh-list li.is-locked .khi-warm {
+  fill: color-mix(in srgb, var(--khv-gold) 30%, transparent);
+}
+
+@keyframes khv-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-9px);
+  }
+}
+@keyframes khv-ping {
+  0% {
+    opacity: 0.7;
+    transform: scale(0.6);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.6);
+  }
+}
+
+/* ---------------------------------------------------------------- smaller screens */
+/* on a wide screen the name sits on one line */
+@media (min-width: 981px) {
+  .khv .kh-hero h1 {
+    font-size: clamp(56px, 5.1vw, 82px);
+    white-space: nowrap;
+  }
+}
+@media (max-width: 980px) {
+  .khv-hero-in {
+    grid-template-columns: 1fr;
+  }
+  .khv-collage {
+    max-width: 470px;
+  }
+  .khv .khv-bento {
+    grid-template-columns: 1fr;
+  }
+  .khv .khv-pillar.is-1 {
+    grid-row: auto;
+  }
+}
+@media (max-width: 560px) {
+  .khv .kh-hero h1 {
+    font-size: clamp(42px, 13vw, 58px);
+  }
+  .khv .kh-sub {
+    gap: 7px;
+  }
+  .khv .kh-sub li {
+    padding: 6px 13px;
+  }
+  .khv .kh-cta {
+    width: 100%;
+  }
+  .khv .kh-cta .btn {
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+  .khv-now {
+    display: flex;
+    width: 100%;
+    font-size: 14px;
+  }
+  .khv-now-line {
+    flex: 1;
+    min-width: 0;
+    text-overflow: ellipsis;
+  }
+  .khv-now > .khv-sample {
+    display: none;
+  }
+  .khv-collage-in {
+    aspect-ratio: 0.95;
+  }
+  .khv-photo {
+    top: 25%;
+    left: 15%;
+    width: 70%;
+  }
+  .khv-float {
+    gap: 8px;
+    padding: 9px 10px;
+    border-radius: 15px;
+  }
+  .khv-card-txt strong {
+    font-size: 13px;
+  }
+  .khv-card-txt small {
+    font-size: 11px;
+  }
+  .khv-person img {
+    width: 36px;
+    height: 36px;
+  }
+  .khv-badge {
+    width: 34px;
+    height: 34px;
+    border-radius: 11px;
+    font-size: 20px;
+  }
+  .khv-pair img {
+    width: 30px;
+    height: 30px;
+  }
+  .khv-card.is-broker {
+    top: 0;
+    right: 0;
+  }
+  .khv-card.is-new {
+    top: 13%;
+    left: 0;
+  }
+  .khv-card.is-buyer {
+    bottom: 11%;
+    left: 0;
+  }
+  .khv-card.is-deal {
+    bottom: 0;
+    right: 0;
+  }
+  .khv-shapes .is-a {
+    width: 320px;
+    height: 320px;
+    top: -120px;
+    right: -120px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .khv-float,
+  .khv-now-live i::after {
+    animation: none;
+  }
+}
