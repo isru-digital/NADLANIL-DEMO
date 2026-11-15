@@ -657,10 +657,14 @@ html[data-mode='night'] .khv .khv-primary {
 }
 
 /* ---------------------------------------------------------------- smaller screens */
-/* on a wide screen the name sits on one line */
+/* on a wide screen the name sits on one line, sized to its own column (the column is the container), so it can never
+   reach into the floating cards beside it: the name is 7.53 times its font size wide */
 @media (min-width: 981px) {
+  .khv-copy {
+    container-type: inline-size;
+  }
   .khv .kh-hero h1 {
-    font-size: clamp(56px, 5.1vw, 82px);
+    font-size: min(82px, 12.4cqi);
     white-space: nowrap;
   }
 }
