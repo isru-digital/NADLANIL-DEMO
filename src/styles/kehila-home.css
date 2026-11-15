@@ -263,6 +263,7 @@ html[data-mode='night'] .khv .khv-primary {
 .khv-photo img {
   display: block;
   width: 100%;
+  height: auto;
   aspect-ratio: 4 / 3;
   object-fit: cover;
   border-radius: 18px;
@@ -578,6 +579,7 @@ html[data-mode='night'] .khv .khv-primary {
   width: 100%;
   height: clamp(180px, 18vw, 250px);
   object-fit: cover;
+  object-position: 50% 62%;
   border-radius: 20px;
 }
 .khv-pillar-chip {

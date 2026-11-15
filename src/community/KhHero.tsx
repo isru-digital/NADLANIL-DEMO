@@ -47,7 +47,7 @@ export function KhCollage() {
       <div aria-hidden="true" className="khv-collage-in">
         <i className="khv-orbit" />
         <motion.figure className="khv-photo" {...card(0)}>
-          <img src={asset('img/prop-04.webp')} alt="" width="360" height="270" loading="eager" />
+          <img src={asset('img/il-haifa-carmel.webp')} alt="" width="960" height="723" loading="eager" />
           <figcaption>
             <IconPin className="is-xs" /> נכס ששותף · חיפה
           </figcaption>

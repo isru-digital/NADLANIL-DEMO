@@ -121,7 +121,7 @@ export default function CommunityHome() {
                 <p>{p.text}</p>
                 {i === 0 && (
                   <span className="khv-pillar-art" aria-hidden="true">
-                    <img src={asset('img/prop-06.webp')} alt="" width="420" height="260" loading="lazy" />
+                    <img src={asset('img/il-ramat-gan-living.webp')} alt="" width="1100" height="829" loading="lazy" />
                     <span className="khv-pillar-chip">
                       <IconHome /> נכס ששותף <em className="khv-sample">דוגמה</em>
                     </span>
