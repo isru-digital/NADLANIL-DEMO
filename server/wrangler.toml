@@ -1,0 +1,18 @@
+# The server of the community's sign-up: registrations, approval by e-mail, sign-in links.
+# Nothing secret lives in this file (the repository is public). The Gmail app password is a secret of the
+# Worker (GMAIL_APP_PASSWORD), and the list of approvers lives in the database (table "staff").
+name = "nadlanup-api"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "nadlanup-db"
+database_id = "5a51ed56-6908-466f-98a7-a608673288e8"
+
+[vars]
+# where the site lives (links in the e-mails lead here)
+SITE_URL = "https://isru-digital.github.io/NADLANIL-DEMO"
+# the Gmail box the e-mails are sent from, and the name shown next to it
+MAIL_FROM = "nadlanupcontact@gmail.com"
+MAIL_NAME = "NadlanUP"

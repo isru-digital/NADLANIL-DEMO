@@ -6,3 +6,8 @@ _shots
 screenshots
 _visual
 _shots_*
+
+# the server: local settings and local database
+server/.dev.vars
+server/.wrangler
+.wrangler
