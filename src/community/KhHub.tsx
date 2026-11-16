@@ -19,7 +19,7 @@ const NODES: Node[] = [
   { label: 'נכסים', icon: IconHome, notes: ['נכס חדש שותף בחיפה', 'דירת 4 חדרים עלתה בנתניה', 'בית פרטי שותף בעפולה'] },
   { label: 'קונים', icon: IconBuyer, notes: ['נמצא קונה ל-4 חדרים', 'קונה חדש מחפש בבאר שבע', 'זוג צעיר מחפש בחדרה'] },
   { label: 'שיתופי פעולה', icon: IconDeal, notes: ['נסגרה עסקה ברמת גן', 'שיתוף פעולה חדש באשדוד', 'נסגרה עסקה בפתח תקווה'] },
-  { label: 'הפניות', icon: IconRefer, notes: ['הפניה התקבלה', 'הפניה חדשה מנתניה', 'לקוח הופנה לירושלים'] },
+  { label: 'הפניות', icon: IconRefer, notes: ['הפניה התקבלה', 'הפניה חדשה מנתניה', 'הפניה לירושלים'] },
   { label: 'מתווכים', icon: IconBrokers, notes: ['מתווך חדש הצטרף מאשדוד', 'מתווכת מחדרה הצטרפה', 'שלושה מתווכים הצטרפו היום'] },
   { label: 'ידע ושאלות', icon: IconAsk, notes: ['שאלה חדשה על מס שבח', 'טיפ חדש על הסכם שיתוף', 'נוספה תשובה לשאלה שלך'] },
 ]
@@ -29,7 +29,7 @@ const C = 300
 const R = 228 // 38% of the box: the same ratio the nodes use in CSS
 const angleOf = (i: number) => ((-90 + i * 60) * Math.PI) / 180
 type Pt = { x: number; y: number }
-/** each world's path into the mark: a soft curve, all bent the same way, so the flow reads as one gentle swirl */
+/** each world's path into the mark: a clear, soft curve, all bent the same way, so the flow reads as one living swirl */
 const CURVES = NODES.map((_, i) => {
   const a = angleOf(i)
   const p0 = { x: C + R * Math.cos(a), y: C + R * Math.sin(a) }
@@ -38,7 +38,7 @@ const CURVES = NODES.map((_, i) => {
   const my = (p0.y + p2.y) / 2
   const dx = p2.x - p0.x
   const dy = p2.y - p0.y
-  const k = 0.2
+  const k = 0.44
   const p1 = { x: mx - dy * k, y: my + dx * k }
   return { p0, p1, p2, d: `M${p0.x.toFixed(1)} ${p0.y.toFixed(1)}Q${p1.x.toFixed(1)} ${p1.y.toFixed(1)} ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}` }
 })
@@ -76,6 +76,7 @@ export default function KhHub() {
     let nextPill = 0
     let lastPulse = 0
     let pillId = 0
+    let born = 0
     const noteTurn = NODES.map(() => 0)
     const timers = new Set<number>()
     const later = (fn: () => void, ms: number) => {
@@ -134,7 +135,9 @@ export default function KhHub() {
       // new lights: every world on its own uneven beat, now and then two close together
       for (let n = 0; n < NODES.length; n++) {
         if (now < nextAt[n]) continue
-        dots.push({ g: makeDot(), n, t0: now, dur: rand(1500, 2300) })
+        const g = makeDot()
+        g.setAttribute('class', ++born % 3 === 0 ? 'is-gold' : '')
+        dots.push({ g, n, t0: now, dur: rand(1500, 2300) })
         nextAt[n] = now + (Math.random() < 0.18 ? rand(170, 380) : rand(900, 2900))
       }
       if (now >= nextPill) {
@@ -223,12 +226,23 @@ export default function KhHub() {
                   <stop offset="0.45" stopColor="#34d399" stopOpacity="0.18" />
                   <stop offset="1" stopColor="#34d399" stopOpacity="0" />
                 </radialGradient>
+                {/* each line: mint where it leaves its world, gold as it reaches the mark */}
+                {CURVES.map((c, i) => (
+                  <linearGradient key={i} id={`khh-line-${i}`} gradientUnits="userSpaceOnUse" x1={c.p0.x} y1={c.p0.y} x2={c.p2.x} y2={c.p2.y}>
+                    <stop offset="0" stopColor="#2fcf93" stopOpacity="0.75" />
+                    <stop offset="0.55" stopColor="#5fd9a8" stopOpacity="0.6" />
+                    <stop offset="1" stopColor="#e0a43a" stopOpacity="0.75" />
+                  </linearGradient>
+                ))}
               </defs>
               <circle className="khh-halo" cx={C} cy={C} r="170" fill="url(#khh-glow)" />
               <circle className="khh-orbit" cx={C} cy={C} r={R} />
               <circle className="khh-orbit is-inner" cx={C} cy={C} r="140" />
               {CURVES.map((c, i) => (
-                <path key={i} className="khh-line" d={c.d} />
+                <g key={i}>
+                  <path className="khh-line is-glow" d={c.d} stroke={`url(#khh-line-${i})`} />
+                  <path className="khh-line" d={c.d} stroke={`url(#khh-line-${i})`} />
+                </g>
               ))}
               <circle className="khh-dash" cx={C} cy={C} r="96" />
               <g ref={dotsLayer} className="khh-dots">
@@ -237,7 +251,7 @@ export default function KhHub() {
                     [0.38, 0.72].map((t) => {
                       const p = at(i, t + (i % 2) * 0.08)
                       return (
-                        <g key={`${i}-${t}`} transform={`translate(${p.x.toFixed(1)} ${p.y.toFixed(1)})`}>
+                        <g key={`${i}-${t}`} className={t > 0.5 && i % 2 ? 'is-gold' : undefined} transform={`translate(${p.x.toFixed(1)} ${p.y.toFixed(1)})`}>
                           <circle r="9" className="khh-dot-glow" />
                           <circle r="3.4" className="khh-dot" />
                         </g>

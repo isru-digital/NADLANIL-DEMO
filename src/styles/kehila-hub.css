@@ -1,35 +1,75 @@
-/* "כל העסקאות שלך עוברות כאן": a deep green band in the light page. The mark in the middle, six worlds around it,
-   lights in glowing mint that flow into the mark, and notes with a touch of gold. Same house as the page: its green,
-   its mint, its gold. */
+/* "כל העסקאות שלך עוברות כאן": a light band in the light page (white and a soft mint), the brand's dark green for the
+   title, white worlds with a mint ring and gold icons, and lights in mint and gold with a soft glow. In night mode the
+   band turns deep green, like the rest of the page. */
 .khh {
-  --khh-bg: #04241a;
-  --khh-bg-2: #063a29;
-  --khh-ink: #effbf5;
-  --khh-dim: rgba(225, 245, 236, 0.74);
-  --khh-mint: #5ef2bf;
-  --khh-mint-line: rgba(110, 240, 195, 0.2);
-  --khh-gold: #e8b75a;
-  --khh-gold-soft: rgba(232, 183, 90, 0.34);
+  --khh-bg: linear-gradient(180deg, #ffffff 0%, #f1faf5 38%, #e6f6ee 100%);
+  --khh-glow-a: rgba(94, 230, 180, 0.3);
+  --khh-glow-b: rgba(232, 183, 90, 0.12);
+  --khh-grid: rgba(11, 90, 60, 0.08);
+  --khh-title: var(--khv-green);
+  --khh-text: var(--khv-dim);
+  --khh-note: var(--khv-dim);
+  --khh-label: var(--khv-ink);
+  --khh-kicker-bg: var(--khv-gold-soft);
+  --khh-kicker-ink: var(--khv-gold-ink);
+  --khh-kicker-line: rgba(214, 152, 42, 0.35);
+  --khh-disc: #ffffff;
+  --khh-disc-line: #9fdfc2;
+  --khh-disc-shadow: 0 1px 2px rgba(8, 52, 36, 0.06), 0 12px 26px -12px rgba(8, 82, 54, 0.32);
+  --khh-icon: #b07a14;
+  --khh-warm: rgba(232, 183, 90, 0.26);
+  --khh-orbit: rgba(11, 122, 79, 0.14);
+  --khh-dash: rgba(16, 168, 112, 0.6);
+  --khh-pill: #ffffff;
+  --khh-pill-ink: var(--khv-ink);
+  --khh-pill-line: rgba(214, 152, 42, 0.5);
+  --khh-pill-shadow: 0 10px 26px -12px rgba(8, 82, 54, 0.35);
+  --khh-label-shadow: none;
   position: relative;
   overflow: hidden;
-  padding: clamp(64px, 9vw, 112px) 0 clamp(56px, 8vw, 96px);
+  padding: clamp(64px, 9vw, 112px) 0 clamp(52px, 7vw, 88px);
   background:
-    radial-gradient(60% 55% at 50% 58%, rgba(28, 160, 110, 0.32), transparent 70%),
-    radial-gradient(40% 40% at 85% 10%, rgba(232, 183, 90, 0.08), transparent 70%),
-    linear-gradient(180deg, var(--khh-bg-2), var(--khh-bg) 60%, #031a13);
-  color: var(--khh-ink);
+    radial-gradient(48% 46% at 50% 60%, var(--khh-glow-a), transparent 72%),
+    radial-gradient(36% 36% at 86% 12%, var(--khh-glow-b), transparent 70%),
+    var(--khh-bg);
+  color: var(--khh-label);
   isolation: isolate;
 }
-/* a faint grid of points, so the dark is not flat */
+html[data-mode='night'] .khh {
+  --khh-bg: linear-gradient(180deg, #063a29, #04241a 60%, #031a13);
+  --khh-glow-a: rgba(28, 160, 110, 0.32);
+  --khh-glow-b: rgba(232, 183, 90, 0.08);
+  --khh-grid: rgba(190, 255, 225, 0.09);
+  --khh-title: #ffffff;
+  --khh-text: rgba(225, 245, 236, 0.76);
+  --khh-note: rgba(225, 245, 236, 0.62);
+  --khh-label: #effbf5;
+  --khh-kicker-bg: rgba(232, 183, 90, 0.1);
+  --khh-kicker-ink: #f3cf86;
+  --khh-kicker-line: rgba(232, 183, 90, 0.35);
+  --khh-disc: radial-gradient(circle at 35% 30%, #0c4a34, #062e21);
+  --khh-disc-line: rgba(130, 245, 205, 0.36);
+  --khh-disc-shadow: 0 10px 24px -12px rgba(0, 0, 0, 0.7);
+  --khh-icon: #f0c56e;
+  --khh-warm: rgba(232, 183, 90, 0.2);
+  --khh-orbit: rgba(110, 240, 195, 0.16);
+  --khh-dash: rgba(130, 245, 205, 0.55);
+  --khh-pill: rgba(6, 40, 29, 0.96);
+  --khh-pill-ink: #ffffff;
+  --khh-pill-line: rgba(232, 183, 90, 0.5);
+  --khh-pill-shadow: 0 12px 28px -14px rgba(0, 0, 0, 0.8);
+  --khh-label-shadow: 0 1px 8px rgba(0, 0, 0, 0.5);
+}
+/* a faint grid of points, so the band is not flat */
 .khh::before {
   content: '';
   position: absolute;
   inset: 0;
   z-index: -1;
-  background-image: radial-gradient(rgba(190, 255, 225, 0.09) 1px, transparent 1.4px);
+  background-image: radial-gradient(var(--khh-grid) 1px, transparent 1.4px);
   background-size: 22px 22px;
-  mask-image: radial-gradient(70% 70% at 50% 55%, #000 30%, transparent 80%);
-  -webkit-mask-image: radial-gradient(70% 70% at 50% 55%, #000 30%, transparent 80%);
+  mask-image: radial-gradient(70% 70% at 50% 58%, #000 30%, transparent 80%);
+  -webkit-mask-image: radial-gradient(70% 70% at 50% 58%, #000 30%, transparent 80%);
 }
 .khh-in {
   display: grid;
@@ -47,12 +87,11 @@
 .khh-kicker {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
   padding: 5px 14px;
   border-radius: 99px;
-  border: 1px solid rgba(232, 183, 90, 0.35);
-  background: rgba(232, 183, 90, 0.1);
-  color: #f3cf86;
+  border: 1px solid var(--khh-kicker-line);
+  background: var(--khh-kicker-bg);
+  color: var(--khh-kicker-ink);
   font-family: var(--font-display);
   font-size: 14px;
 }
@@ -61,13 +100,13 @@
   font-family: var(--font-display);
   font-size: clamp(30px, 5.2vw, 54px);
   line-height: 1.08;
-  color: #fff;
+  color: var(--khh-title);
   text-wrap: balance;
 }
 .khh-head p {
   margin: 0;
   max-width: 34em;
-  color: var(--khh-dim);
+  color: var(--khh-text);
   font-size: clamp(16px, 1.6vw, 18px);
   line-height: 1.6;
   text-wrap: balance;
@@ -77,12 +116,14 @@
 .khh-stage {
   position: relative;
   width: min(540px, 100%);
-  margin-top: clamp(28px, 4vw, 48px);
+  margin-top: clamp(30px, 4vw, 52px);
 }
 .khh-ring {
   position: relative;
   width: 100%;
   aspect-ratio: 1;
+  container-type: inline-size;
+  --nh: 6.3%; /* half a world */
 }
 .khh-svg {
   position: absolute;
@@ -93,22 +134,26 @@
 }
 .khh-orbit {
   fill: none;
-  stroke: var(--khh-mint-line);
+  stroke: var(--khh-orbit);
   stroke-width: 1;
 }
 .khh-orbit.is-inner {
-  stroke: rgba(110, 240, 195, 0.08);
   stroke-dasharray: 2 7;
+  opacity: 0.6;
 }
 .khh-line {
   fill: none;
-  stroke: rgba(110, 240, 195, 0.22);
-  stroke-width: 1.2;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+}
+.khh-line.is-glow {
+  stroke-width: 7;
+  opacity: 0.14;
 }
 .khh-dash {
   fill: none;
-  stroke: rgba(130, 245, 205, 0.55);
-  stroke-width: 1.4;
+  stroke: var(--khh-dash);
+  stroke-width: 1.5;
   stroke-dasharray: 3 9;
   stroke-linecap: round;
   transform-box: fill-box;
@@ -121,17 +166,31 @@
   }
 }
 .khh-halo {
-  opacity: 0.75;
+  opacity: 0.8;
 }
+/* the lights: a bright middle, a soft glow around it, so they shine on white too */
 .khh-dot {
-  fill: #d9fff0;
+  fill: #12b981;
+  stroke: #ffffff;
+  stroke-width: 1.2;
 }
 .khh-dot-glow {
-  fill: var(--khh-mint);
+  fill: #34d399;
   opacity: 0.3;
 }
+.khh-dots .is-gold .khh-dot {
+  fill: #e0a43a;
+}
+.khh-dots .is-gold .khh-dot-glow {
+  fill: #f5c66b;
+  opacity: 0.4;
+}
+html[data-mode='night'] .khh-dot {
+  fill: #d9fff0;
+  stroke: none;
+}
 
-/* the mark in the middle */
+/* the mark in the middle: a full round disc, the same language as the six worlds */
 .khh-core {
   position: absolute;
   left: 50%;
@@ -139,29 +198,30 @@
   width: 24%;
   aspect-ratio: 1;
   margin: -12% 0 0 -12%;
+  padding: 6%;
   border-radius: 50%;
   display: grid;
-  place-items: center;
-  background: radial-gradient(circle at 35% 30%, #0f6b49, #06402c 70%);
-  border: 1px solid rgba(140, 250, 210, 0.45);
+  background: var(--khh-disc);
+  border: 1.5px solid var(--khh-disc-line);
   box-shadow:
-    0 0 0 6px rgba(94, 242, 191, 0.06),
-    0 0 42px rgba(94, 242, 191, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+    0 0 0 7px rgba(94, 230, 180, 0.12),
+    0 0 44px rgba(52, 211, 153, 0.35),
+    var(--khh-disc-shadow);
+  z-index: 2;
 }
 .khh .khh-core-mark {
-  width: 44%;
-  height: 44%;
-  border-radius: 28%;
-  background: linear-gradient(150deg, #13a06c, #0b5a3c);
-  box-shadow: 0 6px 18px -6px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 28%, #17a571, #0b5a3c 78%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), inset 0 -6px 14px rgba(0, 40, 26, 0.25);
 }
 .khh .khh-core-mark svg {
-  width: 56%;
-  height: 56%;
+  width: 50%;
+  height: 50%;
 }
 
-/* the six worlds: 38% from the middle, every 60 degrees from the top, clockwise */
+/* the six worlds: placed in the code, 38% from the middle, every 60 degrees from the top, clockwise */
 .khh-node {
   position: absolute;
   width: 12.6%;
@@ -175,26 +235,26 @@
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #0c4a34, #062e21);
-  border: 1px solid rgba(130, 245, 205, 0.32);
-  box-shadow: 0 10px 24px -12px rgba(0, 0, 0, 0.7);
-  color: #e9fff6;
+  background: var(--khh-disc);
+  border: 1.5px solid var(--khh-disc-line);
+  box-shadow: var(--khh-disc-shadow);
+  color: var(--khh-icon);
   transition:
     border-color 0.3s ease,
     box-shadow 0.3s ease;
 }
 .khh .khh-node-disc .khi {
-  width: 48%;
-  height: 48%;
+  width: 50%;
+  height: 50%;
 }
 .khh .khh-node .khi-warm {
-  fill: var(--khh-gold-soft);
+  fill: var(--khh-warm);
 }
 .khh-node.is-live .khh-node-disc {
-  border-color: rgba(232, 183, 90, 0.75);
+  border-color: #d6982a;
   box-shadow:
-    0 0 0 5px rgba(232, 183, 90, 0.1),
-    0 10px 24px -12px rgba(0, 0, 0, 0.7);
+    0 0 0 5px rgba(232, 183, 90, 0.16),
+    var(--khh-disc-shadow);
 }
 .khh-node-label {
   position: absolute;
@@ -204,8 +264,8 @@
   white-space: nowrap;
   font-family: var(--font-display);
   font-size: 15px;
-  color: var(--khh-ink);
-  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.5);
+  color: var(--khh-label);
+  text-shadow: var(--khh-label-shadow);
 }
 /* the top world's name sits above it, out of the lines' way */
 .khh-node.is-0 .khh-node-label {
@@ -246,7 +306,7 @@
   }
 }
 
-/* ---------------------------------------------------------------- the notes */
+/* ---------------------------------------------------------------- the notes, each pinned to its world */
 .khh-pills {
   position: absolute;
   inset: 0;
@@ -254,22 +314,21 @@
   pointer-events: none;
 }
 .khh-pill {
+  --tail: 10px;
   position: absolute;
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  width: max-content;
   max-width: 230px;
   padding: 7px 14px 7px 10px;
   border-radius: 99px;
-  background: rgba(6, 40, 29, 0.88);
-  border: 1px solid rgba(232, 183, 90, 0.42);
-  box-shadow: 0 12px 28px -14px rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  color: #fff;
+  background: var(--khh-pill);
+  border: 1px solid var(--khh-pill-line);
+  box-shadow: var(--khh-pill-shadow);
+  color: var(--khh-pill-ink);
   font-size: 14px;
   line-height: 1.3;
-  white-space: nowrap;
   animation: khh-pill-in 0.34s cubic-bezier(0.2, 0.8, 0.3, 1) both;
 }
 .khh-pill.is-out {
@@ -282,7 +341,7 @@
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: var(--khh-gold);
+  background: #e0a43a;
   color: #3d2800;
 }
 .khh-pill i svg {
@@ -290,70 +349,137 @@
   height: 13px;
   stroke-width: 3;
 }
+/* the tail: a small corner of the note that points at its world */
+.khh-pill::after {
+  content: '';
+  position: absolute;
+  width: var(--tail);
+  height: var(--tail);
+  background: var(--khh-pill);
+  border: 1px solid var(--khh-pill-line);
+  border-top-color: transparent;
+  border-left-color: transparent;
+}
 @keyframes khh-pill-in {
   from {
     opacity: 0;
-    transform: translateY(8px) scale(0.92);
+    scale: 0.9;
   }
   to {
     opacity: 1;
-    transform: none;
+    scale: 1;
   }
 }
 @keyframes khh-pill-out {
   to {
     opacity: 0;
-    transform: translateY(-6px) scale(0.96);
+    scale: 0.95;
   }
 }
 
-/* wide screens: each note next to its world, on the outer side, clear of the circles */
+/* wide screens: each note right beside its world, on the outer side, its tail touching the world */
 @media (min-width: 981px) {
   .khh-pill {
     translate: 0 -50%;
+    white-space: nowrap;
+  }
+  .khh-pill::after {
+    top: calc(50% - var(--tail) / 2);
   }
   .khh-pill.is-0 {
     top: 12%;
-    left: 58%;
+    left: calc(50% + 6.3% + 12px);
   }
   .khh-pill.is-1 {
     top: 31%;
-    left: 90%;
+    left: calc(82.9% + 6.3% + 12px);
   }
   .khh-pill.is-2 {
     top: 69%;
-    left: 90%;
+    left: calc(82.9% + 6.3% + 12px);
   }
   .khh-pill.is-3 {
     top: 88%;
-    right: 58%;
+    right: calc(50% + 6.3% + 12px);
   }
   .khh-pill.is-4 {
     top: 69%;
-    right: 90%;
+    right: calc(82.9% + 6.3% + 12px);
   }
   .khh-pill.is-5 {
     top: 31%;
-    right: 90%;
+    right: calc(82.9% + 6.3% + 12px);
+  }
+  /* the tail on the side that faces the world */
+  .khh-pill.is-0::after,
+  .khh-pill.is-1::after,
+  .khh-pill.is-2::after {
+    left: calc(var(--tail) / -2 - 0.5px);
+    transform: rotate(135deg);
+  }
+  .khh-pill.is-3::after,
+  .khh-pill.is-4::after,
+  .khh-pill.is-5::after {
+    right: calc(var(--tail) / -2 - 0.5px);
+    transform: rotate(-45deg);
   }
 }
 
-/* phones and tablets: the notes get a lane above and below the circle, so they never sit on a world */
+/* phones and tablets: each note just above or below its world, its tail pointing at the world's middle */
 @media (max-width: 980px) {
   .khh-stage {
-    width: min(520px, 100%);
-    padding: 54px 0;
+    width: min(500px, 100%);
+    padding: 20px 0 26px;
   }
-  .khh-pill.is-top {
-    top: -50px;
+  .khh-pill {
+    max-width: 44cqi;
+    border-radius: 16px;
   }
-  .khh-pill.is-bottom {
-    bottom: -50px;
+  /* the tail points at the world: sideways for the top one, up or down for the rest */
+  .khh-pill.is-0::after {
+    top: calc(50% - var(--tail) / 2);
+    left: calc(var(--tail) / -2 - 0.5px);
+    transform: rotate(135deg);
   }
-  .khh-pill.is-0,
+  .khh-pill.is-2::after,
+  .khh-pill.is-4::after {
+    top: calc(var(--tail) / -2 - 0.5px);
+    transform: rotate(-135deg);
+  }
+  .khh-pill.is-1::after,
+  .khh-pill.is-3::after,
+  .khh-pill.is-5::after {
+    bottom: calc(var(--tail) / -2 - 0.5px);
+    transform: rotate(45deg);
+  }
+  /* top world: the note beside it, on the open top row */
+  .khh-pill.is-0 {
+    top: 12%;
+    left: calc(50% + var(--nh) + 12px);
+    translate: 0 -50%;
+    max-width: calc(50cqi - var(--nh) - 14px);
+  }
+  /* bottom world: the note just over it, between it and the mark */
   .khh-pill.is-3 {
+    bottom: calc(12% + var(--nh) + 10px);
     left: 50%;
     translate: -50% 0;
+    max-width: 48cqi;
+  }
+  .khh-pill.is-3::after {
+    left: calc(50% - var(--tail) / 2);
+  }
+  /* the upper side worlds: the note over them, at the edge */
+  .khh-pill.is-1,
+  .khh-pill.is-5 {
+    bottom: calc(69% + var(--nh) + 10px);
+    max-width: 38cqi;
+  }
+  /* the lower side worlds: the note under their name */
+  .khh-pill.is-2,
+  .khh-pill.is-4 {
+    top: calc(69% + var(--nh) + 34px);
+    max-width: 38cqi;
   }
   .khh-pill.is-1,
   .khh-pill.is-2 {
@@ -363,14 +489,26 @@
   .khh-pill.is-5 {
     left: 0;
   }
+  /* the side worlds sit 17.1% in from the edge: the tail sits right over (or under) the world's middle */
+  .khh-pill.is-1::after,
+  .khh-pill.is-2::after {
+    right: calc(17.1cqi - var(--tail) / 2);
+  }
+  .khh-pill.is-4::after,
+  .khh-pill.is-5::after {
+    left: calc(17.1cqi - var(--tail) / 2);
+  }
 }
 @media (max-width: 560px) {
   .khh-node {
     width: 15%;
   }
+  .khh-ring {
+    --nh: 7.5%;
+  }
   .khh-core {
-    width: 26%;
-    margin: -13% 0 0 -13%;
+    width: 25%;
+    margin: -12.5% 0 0 -12.5%;
   }
   .khh-node-label {
     font-size: 13px;
@@ -381,15 +519,20 @@
   }
   .khh-pill {
     font-size: 13px;
-    padding: 6px 12px 6px 8px;
-    max-width: 62%;
+    gap: 6px;
+    padding: 6px 10px 6px 7px;
+  }
+  .khh-pill i {
+    width: 18px;
+    height: 18px;
   }
 }
 
+/* small but readable: the faint ink of the page, never lighter */
 .khh-note {
-  margin-top: 18px;
-  color: rgba(225, 245, 236, 0.5);
-  font-size: 12.5px;
+  margin-top: 16px;
+  color: var(--khh-note);
+  font-size: 13px;
 }
 
 /* less motion: a still picture, nothing turns, nothing pops */

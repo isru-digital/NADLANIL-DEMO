@@ -40,7 +40,45 @@ for (const [tag, vp] of [
       onScreen: hub ? hub.getBoundingClientRect().top < innerHeight * 0.8 : null,
     }
   })
+  const look = await page.evaluate(() => {
+    const lum = (c) => {
+      const [r, g, b] = c.match(/[\d.]+/g).slice(0, 3).map((v) => {
+        v = v / 255
+        return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4
+      })
+      return 0.2126 * r + 0.7152 * g + 0.0722 * b
+    }
+    const hub = document.querySelector('[data-hub]')
+    const disc = getComputedStyle(document.querySelector('.khh-node-disc'))
+    const note = getComputedStyle(document.querySelector('.khh-note')).color
+    // the band's light floor near the note is about #e6f6ee
+    const floor = lum('rgb(230, 246, 238)')
+    const contrast = (floor + 0.05) / (lum(note) + 0.05)
+    return {
+      title: getComputedStyle(hub.querySelector('h2')).color,
+      titleDark: lum(getComputedStyle(hub.querySelector('h2')).color) < 0.1,
+      disc: disc.backgroundColor,
+      icon: disc.color,
+      note,
+      contrast: Math.round(contrast * 10) / 10,
+      noteSize: parseFloat(getComputedStyle(document.querySelector('.khh-note')).fontSize),
+      bgDark: getComputedStyle(hub).backgroundImage.includes('rgb(4, 36, 26)'),
+    }
+  })
+  check(`${tag}: light band (dark green title, white worlds, gold icons)`, look.titleDark && look.disc === 'rgb(255, 255, 255)' && look.icon === 'rgb(176, 122, 20)' && !look.bgDark, look)
+  check(`${tag}: the "sample" line is small and readable (contrast 4.5 and up)`, look.contrast >= 4.5 && look.noteSize <= 13.5 && look.noteSize >= 12.5, look)
   check(`${tag}: the band comes right after the head, with its heading`, before.afterHead && before.heading === 'כל העסקאות שלך עוברות כאן', before)
+  const bend = await page.evaluate(() =>
+    [...document.querySelectorAll('.khh-line:not(.is-glow)')].map((p) => {
+      const L = p.getTotalLength()
+      const a = p.getPointAtLength(0)
+      const b = p.getPointAtLength(L)
+      const m = p.getPointAtLength(L / 2)
+      // how far the curve's middle stands off the straight line, in the 600 box
+      return Math.round(Math.abs((b.x - a.x) * (a.y - m.y) - (a.x - m.x) * (b.y - a.y)) / Math.hypot(b.x - a.x, b.y - a.y))
+    }),
+  )
+  check(`${tag}: six clearly curved lines (the middle stands 30 or more off the straight line)`, bend.length === 6 && bend.every((d) => d >= 30), bend)
   check(`${tag}: the mark in the middle and the six worlds, in order`, before.mark && JSON.stringify(before.labels) === JSON.stringify(LABELS), before.labels)
   if (!before.onScreen) check(`${tag}: nothing moves before the band is on screen`, before.dots === 0 && !before.awake, before)
 
@@ -52,6 +90,7 @@ for (const [tag, vp] of [
   let clash = []
   let spill = []
   let pulses = 0
+  let far = []
   for (let k = 0; k < 36; k++) {
     await wait(250)
     const s = await page.evaluate(() => {
@@ -63,11 +102,23 @@ for (const [tag, vp] of [
       for (const p of pills) for (const w of worlds) if (hit(box(p), box(w))) clash.push(`${p.textContent} on ${w.textContent || 'the mark'}`)
       for (let i = 0; i < pills.length; i++) for (let j = i + 1; j < pills.length; j++) if (hit(box(pills[i]), box(pills[j]))) clash.push('two notes meet')
       const spill = pills.filter((p) => box(p).left < 0 || box(p).right > innerWidth).map((p) => p.textContent)
+      // how far is each note from its own world (gap between the two boxes, 0 when they touch)
+      const far = pills
+        .map((p) => {
+          const a = box(p)
+          const w = box(document.querySelector(`.khh-node.is-${p.dataset.pill} .khh-node-disc`))
+          const gx = Math.max(0, w.left - a.right, a.left - w.right)
+          const gy = Math.max(0, w.top - a.bottom, a.top - w.bottom)
+          const tail = getComputedStyle(p, '::after').content !== 'none'
+          return { t: p.textContent, gap: Math.round(Math.hypot(gx, gy)), tail }
+        })
+        .filter((x) => x.gap > 48 || !x.tail)
       return {
         dots: document.querySelectorAll('.khh-dots g').length,
         pills: pills.map((p) => p.textContent),
         clash,
         spill,
+        far,
         pulse: document.querySelector('.khh-core').getAnimations().length,
       }
     })
@@ -76,6 +127,7 @@ for (const [tag, vp] of [
     s.pills.forEach((p) => seenPills.add(p))
     clash.push(...s.clash)
     spill.push(...s.spill)
+    far.push(...s.far)
     pulses += s.pulse ? 1 : 0
   }
   check(`${tag}: lights flow into the mark once the band is on screen`, maxDots >= 4, { maxDots })
@@ -83,6 +135,7 @@ for (const [tag, vp] of [
   check(`${tag}: notes pop up, at most two at a time`, seenPills.size >= 3 && maxPills <= 2, { seen: [...seenPills], maxPills })
   check(`${tag}: a note never covers a world, the mark or another note`, clash.length === 0, [...new Set(clash)].slice(0, 6))
   check(`${tag}: a note never leaves the screen`, spill.length === 0, [...new Set(spill)])
+  check(`${tag}: every note sits right by its own world, with a tail pointing at it`, far.length === 0, far.slice(0, 4))
   const fit = await page.evaluate(() => ({
     wide: document.documentElement.scrollWidth - document.documentElement.clientWidth,
     label: Math.min(...[...document.querySelectorAll('.khh-node-label')].map((l) => parseFloat(getComputedStyle(l).fontSize))),
@@ -144,8 +197,12 @@ for (const [tag, vp] of [
   await page.goto(green + '/kehila', { waitUntil: 'networkidle0' })
   await page.evaluate(() => document.querySelector('[data-hub] .khh-stage').scrollIntoView({ block: 'center' }))
   await wait(3500)
-  const wide = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
-  check('night: the band shows and nothing spills', wide <= 1, { wide })
+  const n = await page.evaluate(() => ({
+    wide: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    dark: getComputedStyle(document.querySelector('[data-hub]')).backgroundImage.includes('rgb(4, 36, 26)'),
+    title: getComputedStyle(document.querySelector('[data-hub] h2')).color,
+  }))
+  check('night: the band turns deep green, white title, nothing spills', n.wide <= 1 && n.dark && n.title === 'rgb(255, 255, 255)', n)
   await page.screenshot({ path: `${out}/night.png` })
   await page.close()
 }
@@ -158,6 +215,9 @@ if (process.env.RECORD !== '0') {
   ]) {
     const page = await browser.newPage()
     await page.setViewport(vp)
+    // the day look (the night check before left night mode on)
+    await page.goto(green + '/', { waitUntil: 'load' })
+    await page.evaluate(() => localStorage.setItem('nadlanup-mode-v1', JSON.stringify({ mode: 'day', until: Date.now() + 9e9 })))
     await page.goto(green + '/kehila', { waitUntil: 'networkidle0' })
     await page.evaluate((s) => document.querySelector('[data-hub] ' + s).scrollIntoView({ block: 'center' }), sel)
     await wait(300)
