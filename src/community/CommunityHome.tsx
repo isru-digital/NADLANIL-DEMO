@@ -10,6 +10,7 @@ import CommunityBrand from './CommunityBrand'
 import { hasAccess } from '../auth/session'
 import OfficePitch from './OfficePitch'
 import { KhBackdrop, KhCollage, KhNow } from './KhHero'
+import KhHub from './KhHub'
 import { IconBuyer, IconChatIn, IconCrm, IconDeal, IconFeed, IconFolder, IconHome, IconIndex, IconPage } from './KhIcons'
 import { asset } from '../config'
 import '../styles/join-green.css'
@@ -108,6 +109,8 @@ export default function CommunityHome() {
           <KhCollage />
         </div>
       </section>
+
+      <KhHub />
 
       <section className="jo-section khv-pillars-wrap">
         <div className="jo-in">

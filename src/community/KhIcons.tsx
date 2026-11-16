@@ -103,3 +103,35 @@ export const IconPin = (p: P) => (
     <circle cx="16" cy="14" r="3" />
   </Svg>
 )
+/** a referral: a client passed from one broker to another, an arrow from one card to the other */
+export const IconRefer = (p: P) => (
+  <Svg {...p}>
+    <Warm cx={22} cy={21} r={7} />
+    <circle cx="9" cy="9.5" r="3.6" />
+    <path d="M3.5 21c.5-4 2.6-6.2 5.5-6.2 1.5 0 2.8.6 3.7 1.7" />
+    <path d="M15 8.5h9.5m0 0-3-3m3 3-3 3" />
+    <circle cx="23" cy="20" r="3.4" />
+    <path d="M17.6 28c.5-3.4 2.6-5.2 5.4-5.2s4.9 1.8 5.4 5.2" />
+  </Svg>
+)
+/** the brokers: three people, side by side */
+export const IconBrokers = (p: P) => (
+  <Svg {...p}>
+    <Warm cx={16} cy={12} r={7} />
+    <circle cx="16" cy="11" r="4" />
+    <path d="M8.5 26c.7-4.8 3.6-7.4 7.5-7.4s6.8 2.6 7.5 7.4" />
+    <circle cx="7" cy="13.5" r="2.8" />
+    <path d="M2.8 23.5c.4-2.8 1.9-4.6 4.2-4.6" />
+    <circle cx="25" cy="13.5" r="2.8" />
+    <path d="M29.2 23.5c-.4-2.8-1.9-4.6-4.2-4.6" />
+  </Svg>
+)
+/** knowledge and questions: a bubble with a question mark */
+export const IconAsk = (p: P) => (
+  <Svg {...p}>
+    <Warm cx={21} cy={11} r={7} />
+    <path d="M5 9.5A4.5 4.5 0 0 1 9.5 5h13A4.5 4.5 0 0 1 27 9.5v8a4.5 4.5 0 0 1-4.5 4.5H14l-6 5v-5.2A4.5 4.5 0 0 1 5 17.5z" />
+    <path d="M13.4 10.6a2.8 2.8 0 1 1 3.9 2.6c-.8.4-1.3 1-1.3 1.9v.4" />
+    <path d="M16 18.3v.1" />
+  </Svg>
+)
