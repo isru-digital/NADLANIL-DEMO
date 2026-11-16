@@ -17,8 +17,9 @@ const seed = new Set([...crmItems.map((x) => x.id), ...commercialSeedIds])
 const pending = new Set<string>()
 
 /**
- * What the community sees of a property: the property itself and a fixed line. The owner's name, the owner's phone
- * and the broker's internal note are not read here at all.
+ * What the community sees of a property: the property itself and a fixed line. The owner's name, the owner's phone,
+ * the broker's internal note and the exact address (street and house number) are not read here at all: the area is
+ * the city and the neighbourhood.
  */
 const postOf = (item: CrmItem, authorId: string): CommunityItem => ({
   id: `m-${item.id}-${Date.now()}`,
@@ -35,7 +36,7 @@ const postOf = (item: CrmItem, authorId: string): CommunityItem => ({
   // an office or a business property has no rooms: its size goes next to its area
   property: isCommercial(item)
     ? { area: item.sqm ? `${item.area} · ${item.sqm} מ"ר` : item.area, rooms: '', price: item.price, split: 'חלוקת עמלה שווה', showPrice: true }
-    : { area: item.area, rooms: item.rooms, price: item.price, split: 'חלוקת עמלה שווה', showPrice: true },
+    : { area: item.area, rooms: item.rooms, price: item.price, split: 'חלוקת עמלה שווה', showPrice: true, parking: item.parking, renewal: item.renewal || undefined },
   fresh: true,
 })
 

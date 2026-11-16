@@ -20,8 +20,17 @@ const fields = (page) =>
   page.evaluate(() => {
     const m = document.querySelector('.modal')
     if (!m) return null
-    const inputs = [...m.querySelectorAll('.ga-row .input')].map((i) => i.value)
-    return { kind: m.querySelector('.ga-fields .chip[aria-pressed="true"]')?.textContent.trim(), city: inputs[0], rooms: inputs[1], price: inputs[2], extras: [...m.querySelectorAll('.ga-fields .field:last-child .chip[aria-pressed="true"]')].map((c) => c.textContent.trim()) }
+    // the form is big buttons now: the city and the rooms are the pressed buttons, the price is the one box
+    const pressed = (sel) => m.querySelector(`${sel}[aria-pressed="true"]`)
+    return {
+      kind: m.querySelector('.ga-fields .ga-pick.is-big[aria-pressed="true"]')?.textContent.trim(),
+      city: pressed('[data-city]')?.dataset.city,
+      rooms: pressed('[data-rooms]')?.dataset.rooms,
+      price: m.querySelector('[data-f="price"]')?.value,
+      extras: [...m.querySelectorAll('.ga-fields .field:last-child .ga-pick[aria-pressed="true"]')].map((c) => c.textContent.trim()),
+      // the CRM card asks for parking as a number; "חניה" in a message is one space there
+      parking: m.querySelector('[data-parking][aria-checked="true"]')?.dataset.parking,
+    }
   })
 const modalFits = (page) =>
   page.evaluate(() => {
@@ -64,7 +73,7 @@ for (const [label, vp, phone] of [
   await clickText(page, '.ga-paste .btn', 'למלא מההודעה')
   await wait(500)
   let f = await fields(page)
-  check(`${tag}: the card can be filled from a WhatsApp message (city, rooms, price, extras)`, f?.kind === 'נכס' && f.city === 'פתח תקווה' && f.rooms === '4' && f.price === '2650000' && ['מרפסת שמש', 'חניה', 'מעלית', 'משופצת'].every((x) => f.extras.includes(x)), JSON.stringify(f))
+  check(`${tag}: the card can be filled from a WhatsApp message (city, rooms, price, extras)`, f?.kind === 'נכס' && f.city === 'פתח תקווה' && f.rooms === '4' && f.price === '2650000' && ['מרפסת שמש', 'מעלית', 'משופצת'].every((x) => f.extras.includes(x)) && f.parking === '1', JSON.stringify(f))
   await shot('1-new-card')
   await clickText(page, '.ga-go', 'הוספה ל-CRM')
   await wait(1200)

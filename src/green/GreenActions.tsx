@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, ClipboardPaste, Home, Info, MessageSquareText, Search, Send, ShieldCheck, Sparkles, UserRound } from 'lucide-react'
+import { ArrowLeft, Check, ClipboardPaste, Home, Info, Lock, MessageSquareText, RotateCcw, Save, Search, Send, ShieldCheck, Sparkles, UserRound } from 'lucide-react'
 import { CURRENT_BROKER_ID } from '../config'
 import { brokerById, formatPriceShort } from '../data/demo'
 import type { CommunityItem, CrmItem } from '../data/demo'
@@ -20,38 +20,128 @@ import '../styles/green-actions.css'
  * The pop-ups of the actions that work in the browser in the green version: a new CRM card, sharing a post with
  * the community, and "מוואטסאפ למערכת". Everything stays in this browser; nothing is sent anywhere.
  */
-type Draft = { kind: 'property' | 'request'; city: string; rooms: string; price: string; extras: string[]; category: PropCategory; sqm: string }
-const emptyDraft: Draft = { kind: 'property', city: 'פתח תקווה', rooms: '4', price: '', extras: [], category: 'home', sqm: '' }
-const toDraft = (p: Parsed): Draft => ({ kind: p.kind, city: p.city || 'פתח תקווה', rooms: p.rooms ? String(p.rooms) : '', price: p.price ? String(p.price) : '', extras: p.extras, category: 'home', sqm: '' })
+type Draft = {
+  kind: 'property' | 'request'
+  city: string
+  rooms: string
+  price: string
+  extras: string[]
+  category: PropCategory
+  sqm: string
+  /** the exact address: the neighbourhood is published with the city, the street and number stay in the CRM */
+  hood: string
+  street: string
+  houseNo: string
+  /** parking spaces: null = not chosen yet, 3 = three or more */
+  parking: number | null
+  renewal: boolean
+}
+const emptyDraft: Draft = { kind: 'property', city: 'פתח תקווה', rooms: '4', price: '', extras: [], category: 'home', sqm: '', hood: '', street: '', houseNo: '', parking: null, renewal: false }
+const toDraft = (p: Parsed): Draft => ({ ...emptyDraft, kind: p.kind, city: p.city || 'פתח תקווה', rooms: p.rooms ? String(p.rooms) : '', price: p.price ? String(p.price) : '', extras: p.extras })
 const num = (s: string) => Number(s.replace(/[^\d.]/g, '')) || 0
+/** a message pasted into the CRM card: "חניה" becomes one parking space, since the card asks for a number */
+const toCard = (p: Parsed): Draft => {
+  const d = toDraft(p)
+  return d.extras.includes('חניה') ? { ...d, parking: 1, extras: d.extras.filter((x) => x !== 'חניה') } : d
+}
+
+/** The new card is kept as a draft in this browser while it is filled, so nothing is lost if the window closes. */
+const DRAFT_KEY = 'nadlanup-crm-draft-v1'
+type Saved = { card: Draft; client: string; photos: string[]; at: number }
+const readDraft = (): Saved | null => {
+  try {
+    const d = JSON.parse(localStorage.getItem(DRAFT_KEY) ?? 'null') as Saved | null
+    return d && d.card ? { ...d, client: d.client ?? '', card: { ...emptyDraft, ...d.card }, photos: d.photos ?? [] } : null
+  } catch {
+    return null
+  }
+}
+const writeDraft = (d: Saved) => {
+  try {
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(d))
+    return true
+  } catch {
+    // photos can be too big for the browser's storage: keep the words at least
+    try {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({ ...d, photos: [] }))
+      return true
+    } catch {
+      return false
+    }
+  }
+}
+export const clearCrmDraft = () => {
+  try {
+    localStorage.removeItem(DRAFT_KEY)
+  } catch {
+    /* nothing to clear */
+  }
+}
+const isEmpty = (d: Draft, client: string, photos: string[]) => !client.trim() && !photos.length && JSON.stringify(d) === JSON.stringify(emptyDraft)
+
+/** rooms as big buttons: the usual sizes, and "6+" for six and more */
+const ROOMS = ['1.5', '2', '2.5', '3', '3.5', '4', '4.5', '5', '5.5', '6+']
+const PARKING: [number, string][] = [
+  [0, 'אין'],
+  [1, '1'],
+  [2, '2'],
+  [3, '3+'],
+]
+/** the cities shown first, before "עוד ערים" */
+const FIRST_CITIES = ['תל אביב', 'רמת גן', 'פתח תקווה', 'חיפה', 'ירושלים', 'באר שבע', 'נתניה', 'ראשון לציון']
+
+function CityPick({ city, onPick }: { city: string; onPick: (c: string) => void }) {
+  const { myCities } = useStore()
+  const [all, setAll] = useState(false)
+  const first = [...new Set([city, ...myCities, ...FIRST_CITIES])].filter((c) => knownCities.includes(c)).slice(0, 9)
+  const shown = all ? [...knownCities].sort((a, b) => a.localeCompare(b, 'he')) : first
+  return (
+    <div className="field" data-f="city">
+      <span className="field-label">עיר</span>
+      <div className="ga-picks" role="group" aria-label="עיר">
+        {shown.map((c) => (
+          <button key={c} type="button" className="ga-pick" aria-pressed={city === c} onClick={() => onPick(c)} data-city={c}>
+            {c}
+          </button>
+        ))}
+        <button type="button" className="ga-pick is-more" aria-expanded={all} onClick={() => setAll(!all)} data-act="more-cities">
+          {all ? 'פחות ערים' : 'עוד ערים'}
+        </button>
+      </div>
+    </div>
+  )
+}
 
 /** The fields a property or a request is made of; shared by the CRM card and the WhatsApp confirmation. */
-function Fields({ draft, set, kinds, categories = false }: { draft: Draft; set: (d: Partial<Draft>) => void; kinds: [string, string]; categories?: boolean }) {
+function Fields({ draft, set, kinds, categories = false, full = false }: { draft: Draft; set: (d: Partial<Draft>) => void; kinds: [string, string]; categories?: boolean; full?: boolean }) {
   // an office or a business property is measured in square metres and has its own list of extras
   const commercial = categories && draft.kind === 'property' && draft.category !== 'home'
-  const extras = commercial ? commercialExtras : allExtras
+  const property = draft.kind === 'property'
+  // the CRM card asks for parking as a number, so "חניה" leaves the list of extras there
+  const extras = (commercial ? commercialExtras : allExtras).filter((x) => !(full && property && x === 'חניה'))
+  const roomsOn = (r: string) => (r === '6+' ? num(draft.rooms) >= 6 : draft.rooms === r)
   return (
     <div className="ga-fields">
       <div className="field">
         <span className="field-label">מה זה?</span>
-        <div className="chip-row">
-          <button type="button" className="chip" aria-pressed={draft.kind === 'property'} onClick={() => set({ kind: 'property' })}>
+        <div className="ga-picks is-two" role="group" aria-label="מה זה">
+          <button type="button" className="ga-pick is-big" aria-pressed={property} onClick={() => set({ kind: 'property' })}>
             <Home /> {kinds[0]}
           </button>
-          <button type="button" className="chip" aria-pressed={draft.kind === 'request'} onClick={() => set({ kind: 'request' })}>
+          <button type="button" className="ga-pick is-big" aria-pressed={!property} onClick={() => set({ kind: 'request' })}>
             <Search /> {kinds[1]}
           </button>
         </div>
       </div>
-      {categories && draft.kind === 'property' && (
+      {categories && property && (
         <div className="field" data-f="category">
           <span className="field-label">קטגוריה</span>
-          <div className="chip-row">
+          <div className="ga-picks" role="group" aria-label="קטגוריה">
             {CATEGORIES.map((c) => (
               <button
                 key={c.id}
                 type="button"
-                className="chip"
+                className="ga-pick"
                 aria-pressed={draft.category === c.id}
                 data-cat={c.id}
                 onClick={() => {
@@ -66,39 +156,89 @@ function Fields({ draft, set, kinds, categories = false }: { draft: Draft; set: 
           </div>
         </div>
       )}
-      <div className="ga-row">
+
+      <CityPick city={draft.city} onPick={(city) => set({ city })} />
+
+      {full && property && (
+        <fieldset className="ga-address" data-f="address">
+          <legend className="field-label">הכתובת</legend>
+          <div className="ga-address-row">
+            <label className="field is-hood">
+              <span className="field-sub">שכונה</span>
+              <input className="input" value={draft.hood} onChange={(e) => set({ hood: e.target.value })} placeholder="לדוגמה: נווה שאנן" autoComplete="off" enterKeyHint="next" data-f="hood" />
+            </label>
+            <label className="field is-street">
+              <span className="field-sub">רחוב</span>
+              <input className="input" value={draft.street} onChange={(e) => set({ street: e.target.value })} placeholder="לדוגמה: הרצל" autoComplete="off" enterKeyHint="next" data-f="street" />
+            </label>
+            <label className="field is-no">
+              <span className="field-sub">מספר</span>
+              <input className="input num" inputMode="numeric" value={draft.houseNo} onChange={(e) => set({ houseNo: e.target.value })} placeholder="12" autoComplete="off" enterKeyHint="next" data-f="house" />
+            </label>
+          </div>
+          <p className="ga-private">
+            <Lock /> הרחוב ומספר הבית נשארים אצלכם. בקהילה, בכרטיס ובדף הנכס מופיעות רק העיר והשכונה.
+          </p>
+        </fieldset>
+      )}
+
+      {commercial ? (
         <label className="field">
-          <span className="field-label">עיר</span>
-          <select className="input" value={draft.city} onChange={(e) => set({ city: e.target.value })}>
-            {knownCities.map((c) => (
-              <option key={c}>{c}</option>
+          <span className="field-label">שטח, במ"ר</span>
+          <input className="input" inputMode="numeric" value={draft.sqm} onChange={(e) => set({ sqm: e.target.value })} placeholder="120" data-f="sqm" />
+        </label>
+      ) : (
+        <div className="field" data-f="rooms">
+          <span className="field-label">חדרים</span>
+          <div className="ga-picks is-rooms" role="group" aria-label="חדרים">
+            {ROOMS.map((r) => (
+              <button key={r} type="button" className="ga-pick num" aria-pressed={roomsOn(r)} onClick={() => set({ rooms: r === '6+' ? '6' : r })} data-rooms={r}>
+                <bdi dir="ltr">{r}</bdi>
+              </button>
             ))}
-          </select>
-        </label>
-        {commercial ? (
-          <label className="field">
-            <span className="field-label">שטח, במ"ר</span>
-            <input className="input" inputMode="numeric" value={draft.sqm} onChange={(e) => set({ sqm: e.target.value })} placeholder="120" data-f="sqm" />
-          </label>
-        ) : (
-          <label className="field">
-            <span className="field-label">חדרים</span>
-            <input className="input" inputMode="decimal" value={draft.rooms} onChange={(e) => set({ rooms: e.target.value })} placeholder="4" />
-          </label>
-        )}
-        <label className="field">
-          <span className="field-label">{draft.kind === 'property' ? 'מחיר, בשקלים' : 'תקציב, בשקלים'}</span>
-          <input className="input" inputMode="numeric" value={draft.price} onChange={(e) => set({ price: e.target.value })} placeholder="2650000" />
-        </label>
-      </div>
+          </div>
+        </div>
+      )}
+
+      <label className="field">
+        <span className="field-label">{property ? 'מחיר, בשקלים' : 'תקציב, בשקלים'}</span>
+        <input className="input num" inputMode="numeric" value={draft.price} onChange={(e) => set({ price: e.target.value })} placeholder="2650000" data-f="price" />
+        {num(draft.price) > 0 && <small className="ga-price-say">{formatPriceShort(num(draft.price))}</small>}
+      </label>
+
+      {full && property && (
+        <div className="field" data-f="parking">
+          <span className="field-label">חניה</span>
+          <div className="ga-seg" role="radiogroup" aria-label="מספר חניות">
+            {PARKING.map(([n, label]) => (
+              <button key={n} type="button" role="radio" aria-checked={draft.parking === n} className="ga-seg-btn num" onClick={() => set({ parking: n })} data-parking={n}>
+                <bdi dir="ltr">{label}</bdi>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {full && property && (
+        <button type="button" role="switch" aria-checked={draft.renewal} className="ga-renew" onClick={() => set({ renewal: !draft.renewal })} data-f="renewal">
+          <span className="ga-renew-box" aria-hidden>
+            {draft.renewal && <Check />}
+          </span>
+          <span className="ga-renew-text">
+            <b>מיועד להתחדשות עירונית</b>
+            <small>תמ"א 38 או פינוי בינוי. יופיע כתגית בכרטיס ובדף הנכס.</small>
+          </span>
+        </button>
+      )}
+
       <div className="field">
         <span className="field-label">תוספות</span>
-        <div className="chip-row">
+        <div className="ga-picks" role="group" aria-label="תוספות">
           {extras.map((x) => (
             <button
               key={x}
               type="button"
-              className="chip"
+              className="ga-pick"
               aria-pressed={draft.extras.includes(x)}
               onClick={() => set({ extras: draft.extras.includes(x) ? draft.extras.filter((e) => e !== x) : [...draft.extras, x] })}
             >
@@ -134,11 +274,17 @@ export default function GreenActions() {
   // ---- sharing a post
   const [words, setWords] = useState('')
 
+  // the draft of the new card: restored when the card opens, saved a moment after every change
+  const [restored, setRestored] = useState(false)
+  const [savedAt, setSavedAt] = useState<number | null>(null)
   useEffect(() => {
     if (!ask) return
-    setCard(emptyDraft)
-    setClient('')
-    setPhotos([])
+    const d = ask.kind === 'card' ? readDraft() : null
+    setCard(d?.card ?? emptyDraft)
+    setClient(d?.client ?? '')
+    setPhotos(d?.photos ?? [])
+    setRestored(!!d)
+    setSavedAt(d?.at ?? null)
     setPaste('')
     setPasting(false)
     setWa('')
@@ -147,6 +293,24 @@ export default function GreenActions() {
     setWords('')
   }, [ask])
 
+  useEffect(() => {
+    if (ask?.kind !== 'card') return
+    const t = window.setTimeout(() => {
+      if (isEmpty(card, client, photos)) return
+      const at = Date.now()
+      if (writeDraft({ card, client, photos, at })) setSavedAt(at)
+    }, 450)
+    return () => window.clearTimeout(t)
+  }, [ask, card, client, photos])
+  const freshCard = () => {
+    clearCrmDraft()
+    setCard(emptyDraft)
+    setClient('')
+    setPhotos([])
+    setRestored(false)
+    setSavedAt(null)
+  }
+
   const saveCard = () => {
     const rooms = num(card.rooms)
     const commercial = card.kind === 'property' && card.category !== 'home'
@@ -154,8 +318,18 @@ export default function GreenActions() {
       id: `n${Date.now()}`,
       kind: card.kind === 'property' ? 'property' : 'client',
       title: commercial ? commercialTitle(num(card.sqm), card.city) : titleOf(card.kind, rooms || null, card.city),
-      area: card.city,
+      // the area is the city and the neighbourhood: this is what the community sees
+      area: card.kind === 'property' && card.hood.trim() ? `${card.city} - ${card.hood.trim()}` : card.city,
       city: card.city,
+      ...(card.kind === 'property'
+        ? {
+            neighborhood: card.hood.trim() || undefined,
+            street: card.street.trim() || undefined,
+            houseNo: card.houseNo.trim() || undefined,
+            parking: card.parking ?? undefined,
+            renewal: card.renewal || undefined,
+          }
+        : {}),
       rooms: commercial ? '-' : card.rooms || '-',
       sqm: commercial ? num(card.sqm) || undefined : undefined,
       category: card.kind === 'property' ? card.category : undefined,
@@ -170,6 +344,7 @@ export default function GreenActions() {
       search: card.kind === 'request' ? { cities: [card.city], roomsMin: Math.floor(rooms) || 1, roomsMax: Math.ceil(rooms) || 6, budget: num(card.price), wants: card.extras } : undefined,
     }
     addCrm(item)
+    clearCrmDraft()
     // a client who is looking also joins the clients table (the board holds properties only)
     if (item.kind === 'client') clientActions.add({ name: item.client, type: 'buyer', phone: '', about: item.title, cities: [item.city], rooms: Math.round(rooms) || 0, sum: item.price, crmId: item.id })
     close()
@@ -222,6 +397,15 @@ export default function GreenActions() {
       {/* ------------------------------------------------------------ a new CRM card */}
       <Modal open={ask?.kind === 'card'} onClose={close} title="כרטיס חדש ב-CRM" subtitle="הכרטיס נשמר בלוח שלך.">
         <div className="modal-body ga">
+          <div className="ga-draft" data-draft={savedAt ? 'saved' : 'idle'} aria-live="polite">
+            <Save />
+            <span>{restored ? 'המשכנו מהטיוטה ששמרתם' : savedAt ? 'הטיוטה נשמרה אוטומטית' : 'הטיוטה נשמרת אוטומטית בזמן שממלאים'}</span>
+            {(restored || savedAt) && (
+              <button type="button" onClick={freshCard} data-act="fresh-card">
+                <RotateCcw /> להתחיל מחדש
+              </button>
+            )}
+          </div>
           {pasting ? (
             <div className="ga-paste">
               <label className="field">
@@ -237,7 +421,7 @@ export default function GreenActions() {
                   className="btn btn-gold btn-sm"
                   disabled={!paste.trim()}
                   onClick={() => {
-                    setCard(toDraft(parseWhatsapp(paste)))
+                    setCard(toCard(parseWhatsapp(paste)))
                     setPasting(false)
                     toast('הפרטים מולאו מההודעה. בדקו ושמרו')
                   }}
@@ -251,7 +435,7 @@ export default function GreenActions() {
               <ClipboardPaste /> למלא מהודעת וואטסאפ
             </button>
           )}
-          <Fields draft={card} set={(d) => setCard((c) => ({ ...c, ...d }))} kinds={['נכס', 'לקוח שמחפש']} categories />
+          <Fields draft={card} set={(d) => setCard((c) => ({ ...c, ...d }))} kinds={['נכס', 'לקוח שמחפש']} categories full />
           {card.kind === 'property' && <PhotoPicker photos={photos} onChange={setPhotos} />}
           <label className="field">
             <span className="field-label">{card.kind === 'property' ? 'שם בעל הנכס' : 'שם הלקוח'} (נשאר אצלכם, לא מתפרסם)</span>

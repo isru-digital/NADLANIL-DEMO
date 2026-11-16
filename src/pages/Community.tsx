@@ -37,8 +37,8 @@ import '../styles/property.css'
 type View = TopicId | 'all'
 
 /** The filters of properties and of buyers: city, rooms, price and sale or rent. Empty means "all". */
-type Filter = { city: string; rooms: string; price: string; deal: '' | 'sale' | 'rent' }
-const NO_FILTER: Filter = { city: '', rooms: '', price: '', deal: '' }
+type Filter = { city: string; rooms: string; price: string; deal: '' | 'sale' | 'rent'; renewal: boolean }
+const NO_FILTER: Filter = { city: '', rooms: '', price: '', deal: '', renewal: false }
 const SALE_PRICES = [1500000, 2000000, 2500000, 3000000, 4000000, 6000000, 10000000]
 const RENT_PRICES = [4000, 6000, 8000, 10000]
 const ROOMS = ['2', '3', '4', '5']
@@ -49,6 +49,7 @@ function passes(it: CommunityItem, f: Filter) {
     const p = it.property
     const rooms = parseFloat(p.rooms)
     if (f.city && it.city !== f.city) return false
+    if (f.renewal && !p.renewal) return false
     if (f.deal && (p.deal ?? 'sale') !== f.deal) return false
     if (f.rooms && (f.rooms === '5' ? rooms < 5 : Math.floor(rooms) !== Number(f.rooms))) return false
     // a price is a sale price unless "השכרה" is chosen, so a rent never passes a sale price
@@ -575,7 +576,7 @@ export default function Community() {
 function FilterBar({ kind, filter, onChange, count, cities }: { kind: 'properties' | 'buyers'; filter: Filter; onChange: (f: Filter) => void; count: number; cities: string[] }) {
   const set = (patch: Partial<Filter>) => onChange({ ...filter, ...patch })
   const prices = filter.deal === 'rent' ? RENT_PRICES : SALE_PRICES
-  const on = filter.city || filter.rooms || filter.price || filter.deal
+  const on = filter.city || filter.rooms || filter.price || filter.deal || filter.renewal
   return (
     <section className="flt" aria-label={kind === 'properties' ? 'סינון נכסים' : 'סינון קונים'} data-filters={kind}>
       <label>
@@ -624,6 +625,14 @@ function FilterBar({ kind, filter, onChange, count, cities }: { kind: 'propertie
           </button>
         ))}
       </div>
+      {kind === 'properties' && (
+        <button type="button" className="flt-renew" aria-pressed={filter.renewal} data-filter="renewal" onClick={() => set({ renewal: !filter.renewal })}>
+          <span className="flt-box" aria-hidden>
+            {filter.renewal && <Check />}
+          </span>
+          התחדשות עירונית בלבד
+        </button>
+      )}
       <div className="flt-foot" aria-live="polite">
         <span>
           <b className="num" data-count>

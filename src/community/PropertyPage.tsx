@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import { BedDouble, Building, Car, Check, ChevronLeft, ChevronRight, Handshake, Layers, MapPin, MessageCircle, Ruler, Tag, UserRoundSearch } from 'lucide-react'
+import { BedDouble, Building, Car, Check, ChevronLeft, ChevronRight, Handshake, Layers, Lock, MapPin, MessageCircle, Ruler, Tag, UserRoundSearch } from 'lucide-react'
 import { CURRENT_BROKER_ID, asset } from '../config'
 import { brokerById, formatPrice } from '../data/demo'
 import type { CommunityItem } from '../data/demo'
@@ -19,7 +19,7 @@ export const priceText = (p: NonNullable<CommunityItem['property']>) => (p.deal 
  */
 export default function PropertyPage() {
   const { id } = useParams()
-  const { items, interested, toggleInterested, toast } = useStore()
+  const { items, crm, interested, toggleInterested, toast } = useStore()
   const item = items.find((it) => it.id === id && it.property)
   const [shown, setShown] = useState(0)
   const photos = item ? (item.property!.images?.length ? item.property!.images : item.image ? [item.image] : []) : []
@@ -56,11 +56,14 @@ export default function PropertyPage() {
   const coop = !!interested[item.id]
   const buyer = !!interested[`buyer:${item.id}`]
   const rent = p.deal === 'rent'
+  // the exact address lives in the CRM of the broker who put the property in, and only that broker sees it here
+  const own = mine && item.sourceId ? crm.find((c) => c.id === item.sourceId) : undefined
+  const exact = own?.street ? `${own.street}${own.houseNo ? ` ${own.houseNo}` : ''}${own.neighborhood ? `, ${own.neighborhood}` : ''}, ${own.city}` : null
   const facts = [
     { icon: BedDouble, label: 'חדרים', value: p.rooms },
     { icon: Ruler, label: 'שטח', value: p.sqm ? `${p.sqm} מ"ר` : 'לא צוין' },
     { icon: Layers, label: 'קומה', value: p.floor ?? 'לא צוין' },
-    { icon: Car, label: 'חניה', value: p.parking == null ? 'לא צוין' : p.parking === 0 ? 'אין' : p.parking === 1 ? 'חניה אחת' : `${p.parking} חניות` },
+    { icon: Car, label: 'חניה', value: p.parking == null ? 'לא צוין' : p.parking === 0 ? 'אין' : p.parking === 1 ? 'חניה אחת' : p.parking >= 3 ? '3 חניות ומעלה' : `${p.parking} חניות` },
     { icon: Building, label: 'מעלית', value: p.elevator == null ? 'לא צוין' : p.elevator ? 'יש' : 'אין' },
     { icon: Tag, label: 'עסקה', value: rent ? 'השכרה' : 'מכירה' },
   ]
@@ -121,7 +124,18 @@ export default function PropertyPage() {
           <div className="pp-price">
             <strong className="num">{priceText(p)}</strong>
             {p.kind && <span className="tag">{p.kind}</span>}
+            {p.renewal && (
+              <span className="tag pp-renew" data-renewal>
+                התחדשות עירונית
+              </span>
+            )}
           </div>
+          {exact && (
+            <p className="pp-exact" data-exact>
+              <Lock /> <span>הכתובת המדויקת: <b>{exact}</b></span>
+              <small>רק אתם רואים אותה. בקהילה מופיעות רק העיר והשכונה.</small>
+            </p>
+          )}
 
           <dl className="pp-facts">
             {facts.map((f) => (

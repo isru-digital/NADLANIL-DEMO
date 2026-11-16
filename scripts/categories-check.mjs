@@ -18,20 +18,20 @@ const check = (name, ok, detail = '') => {
 }
 const board = (page) =>
   page.evaluate(() => ({
-    chips: [...document.querySelectorAll('.crm-cats .ct-chip')].map((c) => c.textContent.trim()),
+    chips: [...document.querySelectorAll('.crm-cats .ct-chip[data-cat]')].map((c) => c.textContent.trim()),
     on: document.querySelector('.crm-cats .ct-chip.is-on')?.textContent.trim(),
     cards: [...document.querySelectorAll('.kan-card')].map((c) => ({ title: c.querySelector('h3')?.textContent.trim(), tag: c.querySelector('.kan-top .tag')?.textContent.trim(), meta: c.querySelector('.kan-meta')?.textContent.replace(/\s+/g, ' ').trim() })),
     ov: document.documentElement.scrollWidth - document.documentElement.clientWidth,
   }))
 const form = (page) =>
   page.evaluate(() => ({
-    cats: [...document.querySelectorAll('[data-f="category"] .chip')].map((c) => `${c.textContent.trim()}${c.getAttribute('aria-pressed') === 'true' ? '*' : ''}`),
-    labels: [...document.querySelectorAll('.ga-row .field-label')].map((l) => l.textContent.trim()),
-    extras: [...document.querySelectorAll('.ga-fields > .field:last-child .chip')].map((c) => c.textContent.trim()),
+    cats: [...document.querySelectorAll('[data-f="category"] .ga-pick')].map((c) => `${c.textContent.trim()}${c.getAttribute('aria-pressed') === 'true' ? '*' : ''}`),
+    labels: [...document.querySelectorAll('.ga-fields > .field > .field-label')].map((l) => l.textContent.trim()).filter((t) => ['עיר', 'חדרים', 'שטח, במ"ר', 'מחיר, בשקלים'].includes(t)),
+    extras: [...document.querySelectorAll('.ga-fields > .field:last-child .ga-pick')].map((c) => c.textContent.trim()),
     photos: !!document.querySelector('.ga-photos'),
   }))
 const pickCat = async (page, id) => {
-  await page.evaluate((c) => document.querySelector(`[data-f="category"] .chip[data-cat="${c}"]`).click(), id)
+  await page.evaluate((c) => document.querySelector(`[data-f="category"] .ga-pick[data-cat="${c}"]`).click(), id)
   await wait(350)
 }
 
@@ -83,9 +83,9 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
   await page.screenshot({ path: `${out}/${d}-3-form-office.png` })
 
   await page.type('[data-f="sqm"]', '85')
-  await page.evaluate(() => document.querySelectorAll('.ga-row input')[1]?.focus())
+  await page.evaluate(() => document.querySelector('[data-f="price"]')?.focus())
   await page.keyboard.type('1400000')
-  await page.evaluate(() => [...document.querySelectorAll('.ga-fields > .field:last-child .chip')].filter((c) => ['חניה', 'מעלית'].includes(c.textContent.trim())).forEach((c) => c.click()))
+  await page.evaluate(() => { document.querySelector('[data-parking="1"]')?.click(); [...document.querySelectorAll('.ga-fields > .field:last-child .ga-pick')].filter((c) => ['מעלית'].includes(c.textContent.trim())).forEach((c) => c.click()) })
   await page.evaluate(() => [...document.querySelectorAll('.ga-go')].find((x) => x.textContent.includes('הוספה ל-CRM')).click())
   await wait(1700)
   b = await board(page)

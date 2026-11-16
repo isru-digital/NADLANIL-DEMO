@@ -41,6 +41,15 @@ export type CrmItem = {
   floor?: string
   /** city used for community filtering and matching */
   city: string
+  /** the exact address: street and house number stay with the broker who put the property in; never published */
+  street?: string
+  houseNo?: string
+  /** the neighbourhood: published with the city */
+  neighborhood?: string
+  /** how many parking spaces (0 = none, 3 = three or more) */
+  parking?: number
+  /** marked for urban renewal (תמ"א 38 or פינוי בינוי) */
+  renewal?: boolean
   /** clients only: what the buyer is looking for (never includes name or phone) */
   search?: SearchSpec
 }
@@ -602,9 +611,11 @@ export type PropertyInfo = {
   kind?: string
   sqm?: number
   floor?: string
-  /** how many parking spaces (0 = none) */
+  /** how many parking spaces (0 = none, 3 = three or more) */
   parking?: number
   elevator?: boolean
+  /** marked for urban renewal: a small tag on the card and the page, and a filter */
+  renewal?: boolean
   /** every photo, the first one is the post's `image` */
   images?: string[]
   /** what stands out: a safe room, a balcony, a storage room... */
@@ -697,7 +708,7 @@ function moreItems(): CommunityItem[] {
       { area: 'חיפה - נווה שאנן', rooms: '4', price: 1690000, kind: 'דירה', sqm: 98, floor: '3 מתוך 6', parking: 1, elevator: true, images: [img('il-haifa-carmel'), img('il-ramat-gan-living'), img('il-kitchen'), img('il-bedroom')], extra: ['ממ"ד', 'מרפסת 10 מ"ר', 'מחסן'] },
       [{ authorId: 'b18', time: 'לפני 10 דקות', body: 'יש לי זוג מהטכניון שמחפש בדיוק באזור. מדברת איתך היום.' }]),
     home('p9', 'b15', 'תל אביב', 'לפני 40 דקות', 'להשכרה: 2 חדרים משופצים בלב העיר', 'בניין ישן ומטופח, ריצוף מקורי ותריסי עץ. מתאים לזוג או לשוכר אחד. כניסה מיידית.', 5,
-      { area: 'תל אביב - לב העיר', rooms: '2', price: 6900, deal: 'rent', kind: 'דירה להשכרה', sqm: 52, floor: '2 מתוך 3', parking: 0, elevator: false, images: [img('il-tlv-rental'), img('il-bathroom')], extra: ['משופצת', 'מזגן בכל חדר', 'מרוהטת חלקית'] }),
+      { area: 'תל אביב - לב העיר', rooms: '2', price: 6900, deal: 'rent', kind: 'דירה להשכרה', sqm: 52, floor: '2 מתוך 3', parking: 0, elevator: false, renewal: true, images: [img('il-tlv-rental'), img('il-bathroom')], extra: ['משופצת', 'מזגן בכל חדר', 'מרוהטת חלקית'] }),
     home('p2', 'b9', 'באר שבע', 'לפני שעה', 'דירת 5 חדרים ברמות, קומה גבוהה', 'בניין חדש יחסית, ממ"ד ושתי חניות. מתאים למשפחה או למשקיע שרוצה תשואה יציבה.', 6,
       { area: 'באר שבע - רמות', rooms: '5', price: 1850000, kind: 'דירה', sqm: 125, floor: '7 מתוך 9', parking: 2, elevator: true, images: [img('il-beersheva'), img('il-kitchen'), img('il-mamad-kids'), img('il-bathroom')], extra: ['ממ"ד', 'שתי חניות', 'מרפסת שמש'] }),
     home('p3', 'b11', 'אשדוד', 'לפני שעתיים', 'דירת 4 חדרים במגדל ליד הים', 'חמש דקות הליכה לחוף, נוף חלקי לים ולובי מטופח.', 12,
@@ -721,7 +732,7 @@ function moreItems(): CommunityItem[] {
     home('p11', 'b16', 'באר שבע', 'לפני יומיים', 'להשכרה: 3 חדרים ליד האוניברסיטה', 'שלושה חדרי שינה שווים, מתאים לסטודנטים. משכיר עם ניסיון ושקט.', 3,
       { area: 'באר שבע - שכונה ד\'', rooms: '3', price: 3600, deal: 'rent', kind: 'דירה להשכרה', sqm: 75, floor: '2 מתוך 4', parking: 1, elevator: false, images: [img('il-beersheva'), img('il-bedroom'), img('il-bathroom')], extra: ['מרוהטת', 'קרוב לאוניברסיטה', 'מזגנים'] }),
     home('p12', 'b6', 'ראשון לציון', 'לפני 3 ימים', 'דירת 3 חדרים לקונים ראשונים', 'בניין שקט בלי מעלית, קומה שנייה. מחיר נכון לאזור, והבעלים רוצים לסגור מהר.', 13,
-      { area: 'ראשון לציון - רמז', rooms: '3', price: 1980000, kind: 'דירה', sqm: 80, floor: '2 מתוך 4', parking: 1, elevator: false, images: [img('prop-09'), img('il-kitchen'), img('il-bedroom')], extra: ['משופצת', 'חניה', 'מחסן'] },
+      { area: 'ראשון לציון - רמז', rooms: '3', price: 1980000, kind: 'דירה', sqm: 80, floor: '2 מתוך 4', parking: 1, elevator: false, renewal: true, images: [img('prop-09'), img('il-kitchen'), img('il-bedroom')], extra: ['משופצת', 'חניה', 'מחסן'] },
       [{ authorId: 'b25', time: 'לפני 3 ימים', body: 'שלחתי לזוג שלי. הם מבקשים סיור ביום ראשון.' }]),
     home('p13', 'b17', 'תל אביב', 'לפני 4 ימים', 'פנטהאוז 5 חדרים בצפון הישן', 'מרפסת גג של 60 מ"ר ונוף פתוח לים ולעיר. ללקוחות רציניים, דרך מתווך מלווה.', 19,
       { area: 'תל אביב - הצפון הישן', rooms: '5', price: 8900000, kind: 'פנטהאוז', sqm: 170, floor: '8 מתוך 8', parking: 2, elevator: true, images: [img('prop-01'), img('prop-07'), img('prop-06')], extra: ['מרפסת גג 60 מ"ר', 'שתי חניות', 'מחסן'] },

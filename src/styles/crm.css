@@ -507,3 +507,19 @@
     order: -1;
   }
 }
+
+/* the exact address on the broker's own card: private, with a lock */
+.kan-address {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+.kan-address svg {
+  flex: none;
+  width: 13px;
+  height: 13px;
+  color: var(--gold-soft);
+}

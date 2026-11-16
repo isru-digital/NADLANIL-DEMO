@@ -335,3 +335,258 @@ html[data-mode='night'] .ga-photo-err {
   font-size: 13px;
   color: var(--text-dim);
 }
+
+/* ---- the CRM card, phone first: big buttons to tap instead of lists, the address, parking, renewal, the draft */
+.ga-picks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.ga-pick {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 48px;
+  min-width: 48px;
+  padding: 0 16px;
+  border-radius: 14px;
+  border: 1.5px solid var(--line);
+  background: var(--surface);
+  font-family: var(--font-display);
+  font-size: 15.5px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition:
+    background-color var(--t) var(--ease),
+    border-color var(--t) var(--ease),
+    color var(--t) var(--ease),
+    transform var(--t-fast) var(--ease);
+}
+.ga-pick:hover {
+  border-color: var(--line-strong);
+}
+.ga-pick:active {
+  transform: scale(0.96);
+}
+.ga-pick:focus-visible,
+.ga-seg-btn:focus-visible,
+.ga-renew:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+.ga-pick[aria-pressed='true'] {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: var(--on-accent);
+}
+.ga-pick svg {
+  width: 18px;
+  height: 18px;
+}
+.ga-picks.is-two {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+.ga-pick.is-big {
+  min-height: 56px;
+  font-size: 16.5px;
+}
+.ga-pick.is-more {
+  border-style: dashed;
+  color: var(--gold-soft);
+  background: rgb(var(--g) / 0.06);
+}
+.ga-picks.is-rooms {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+}
+.ga-picks.is-rooms .ga-pick {
+  padding: 0;
+}
+.field-sub {
+  font-size: 13px;
+  color: var(--text-dim);
+}
+.ga-address {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgb(var(--g) / 0.04);
+  min-width: 0;
+}
+.ga-address legend {
+  padding: 0 6px;
+}
+.ga-address-row {
+  display: grid;
+  grid-template-columns: 1.1fr 1.3fr 0.6fr;
+  gap: 8px;
+}
+.ga-address .input {
+  min-height: 48px;
+  font-size: 16px; /* 16 and up: no zoom on a phone */
+}
+.ga-private {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+.ga-private svg {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  margin-top: 3px;
+  color: var(--gold-soft);
+}
+.ga .input {
+  font-size: 16px;
+}
+.ga-price-say {
+  font-size: 13px;
+  color: var(--gold-soft);
+  font-weight: 600;
+}
+.ga-seg {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  padding: 4px;
+  gap: 4px;
+  border-radius: 16px;
+  border: 1.5px solid var(--line);
+  background: var(--surface);
+}
+.ga-seg-btn {
+  min-height: 48px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-dim);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition:
+    background-color var(--t) var(--ease),
+    color var(--t) var(--ease);
+}
+.ga-seg-btn[aria-checked='true'] {
+  background: var(--gold);
+  color: var(--on-accent);
+  box-shadow: 0 4px 12px -6px rgb(var(--g) / 0.8);
+}
+.ga-renew {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 64px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1.5px solid var(--line);
+  background: var(--surface);
+  text-align: start;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition:
+    border-color var(--t) var(--ease),
+    background-color var(--t) var(--ease);
+}
+.ga-renew[aria-checked='true'] {
+  border-color: var(--gold);
+  background: rgb(var(--g) / 0.1);
+}
+.ga-renew-box {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  border: 2px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--on-accent);
+}
+.ga-renew[aria-checked='true'] .ga-renew-box {
+  border-color: var(--gold);
+  background: var(--gold);
+}
+.ga-renew-box svg {
+  width: 17px;
+  height: 17px;
+  stroke-width: 3;
+}
+.ga-renew-text {
+  display: grid;
+  gap: 2px;
+}
+.ga-renew-text b {
+  font-family: var(--font-display);
+  font-size: 16px;
+  color: var(--text);
+}
+.ga-renew-text small {
+  font-size: 13px;
+  color: var(--text-dim);
+}
+/* the draft: a quiet line at the top of the card */
+.ga-draft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 6px 12px;
+  border-radius: 12px;
+  background: rgb(var(--g) / 0.06);
+  font-size: 13.5px;
+  color: var(--text-dim);
+}
+.ga-draft > svg {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  color: var(--gold-soft);
+}
+.ga-draft[data-draft='saved'] > svg {
+  color: var(--success);
+}
+.ga-draft button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-inline-start: auto;
+  min-height: 32px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  font: inherit;
+  font-weight: 700;
+  color: var(--gold-soft);
+  cursor: pointer;
+}
+.ga-draft button svg {
+  width: 14px;
+  height: 14px;
+}
+@media (max-width: 560px) {
+  .ga-address-row {
+    grid-template-columns: 1fr 0.42fr;
+  }
+  .ga-address-row .is-hood {
+    grid-column: 1 / -1;
+  }
+  .ga-pick {
+    padding: 0 14px;
+  }
+}

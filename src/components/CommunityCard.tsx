@@ -261,6 +261,11 @@ export default function CommunityCard({
                 <MapPin />
                 {item.property.area}
                 {item.property.deal === 'rent' && <em className="fb-deal">להשכרה</em>}
+                {item.property.renewal && (
+                  <em className="fb-renew" data-renewal>
+                    התחדשות עירונית
+                  </em>
+                )}
               </span>
               {preview ? (
                 <h3>{item.title}</h3>

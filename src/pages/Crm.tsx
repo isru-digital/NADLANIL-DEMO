@@ -30,6 +30,7 @@ import { EASE, Modal, PageHead, Photo } from '../components/ui'
 import CommunityCard from '../components/CommunityCard'
 import '../styles/crm.css'
 import '../styles/crm-publish.css'
+import '../styles/property.css'
 
 type Kind = 'all' | 'property' | 'client'
 
@@ -43,7 +44,8 @@ const draftFor = (item: CrmItem, topicId: TopicId, authorId: string): CommunityI
       title: item.title,
       body: 'נכס בבלעדיות אצלי. פתוח לשיתוף פעולה עם מתווך שיש לו קונה מתאים.',
       image: item.image,
-      property: { area: item.area, rooms: item.rooms, price: item.price, split: 'חלוקת עמלה שווה', showPrice: true },
+      // city and neighbourhood only: the street and the house number stay in the CRM
+      property: { area: item.area, rooms: item.rooms, price: item.price, split: 'חלוקת עמלה שווה', showPrice: true, parking: item.parking, renewal: item.renewal || undefined },
     }
   }
   if (topicId === 'seeking' && item.search) {
@@ -144,8 +146,11 @@ export default function Crm() {
   const cats = crmSlots.categories
   const catOf = crmSlots.categoryOf
   const [cat, setCat] = useState('all')
+  // properties marked for urban renewal, on their own
+  const [renewalOnly, setRenewalOnly] = useState(false)
   const ofKind = kind === 'all' ? crm : crm.filter((c) => c.kind === kind)
-  const items = cats && catOf && cat !== 'all' ? ofKind.filter((c) => c.kind !== 'property' || catOf(c) === cat) : ofKind
+  const ofCat = cats && catOf && cat !== 'all' ? ofKind.filter((c) => c.kind !== 'property' || catOf(c) === cat) : ofKind
+  const items = renewalOnly ? ofCat.filter((c) => c.kind === 'property' && c.renewal) : ofCat
 
   const onDrop = (status: CrmStatus) => (e: DragEvent) => {
     e.preventDefault()
@@ -247,6 +252,10 @@ export default function Crm() {
               <b className="num">{c.id === 'all' ? ofKind.length : ofKind.filter((x) => catOf(x) === c.id).length}</b>
             </button>
           ))}
+          <button className={`ct-chip crm-renew${renewalOnly ? ' is-on' : ''}`} aria-pressed={renewalOnly} data-filter="renewal" onClick={() => setRenewalOnly(!renewalOnly)}>
+            התחדשות עירונית
+            <b className="num">{ofCat.filter((x) => x.kind === 'property' && x.renewal).length}</b>
+          </button>
         </div>
       )}
 
@@ -336,6 +345,21 @@ export default function Crm() {
                               )}
                             </div>
                             <h3>{it.title}</h3>
+                            {it.renewal && (
+                              <span className="kan-renew" data-renewal>
+                                התחדשות עירונית
+                              </span>
+                            )}
+                            {it.street && (
+                              <p className="kan-address" data-exact title="רק אתם רואים את הכתובת המדויקת">
+                                <Lock />
+                                <span>
+                                  {it.street}
+                                  {it.houseNo && ` ${it.houseNo}`}
+                                  {it.neighborhood && `, ${it.neighborhood}`}
+                                </span>
+                              </p>
+                            )}
                             <div className="kan-meta">
                               <span>
                                 <MapPin />
