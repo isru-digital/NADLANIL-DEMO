@@ -43,13 +43,13 @@ for (const [label, vp] of [
   // 1. the one-time clean start
   await page.goto(green + '/', { waitUntil: 'load' })
   await page.evaluate((a) => {
-    localStorage.removeItem('nadlanup-clean-start-1')
+    localStorage.removeItem('nadlanup-clean-start-2')
     localStorage.setItem('nadlanup-agent-v1', a)
     localStorage.setItem('brokers-demo-state-v5', JSON.stringify({ onboarded: true }))
   }, leftovers.agent)
   await page.reload({ waitUntil: 'load' })
   await wait(1200)
-  let k = await page.evaluate(() => ({ agent: localStorage.getItem('nadlanup-agent-v1'), flag: localStorage.getItem('nadlanup-clean-start-1') }))
+  let k = await page.evaluate(() => ({ agent: localStorage.getItem('nadlanup-agent-v1'), flag: localStorage.getItem('nadlanup-clean-start-2') }))
   check(`${tag}: the first visit after the update removes the old test session`, (k.agent === null || JSON.parse(k.agent).stage === 'locked') && k.flag === '1', JSON.stringify({ stage: k.agent && JSON.parse(k.agent).stage, flag: k.flag }))
   await page.goto(green + '/app/agent', { waitUntil: 'load' })
   await wait(1400)

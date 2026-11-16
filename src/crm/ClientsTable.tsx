@@ -230,7 +230,7 @@ export default function ClientsTable({ onPublish }: { onPublish: (item: CrmItem)
         {shown.length === 0 && <p className="ct-empty">אין לקוחות שמתאימים לחיפוש או לסינון.</p>}
       </div>
       <p className="ct-demo">
-        <b className="num">{shown.length}</b> לקוחות מוצגים. נתוני דמו: השמות, הטלפונים והסכומים מומצאים.
+        <b className="num">{shown.length}</b> לקוחות מוצגים.
       </p>
 
       <Details
@@ -252,7 +252,7 @@ export default function ClientsTable({ onPublish }: { onPublish: (item: CrmItem)
             : undefined
         }
       />
-      <Matches client={matching} onClose={closeMatch} onAsk={() => toast('בדמו ההודעה לא נשלחת. במערכת האמיתית נפתחת שיחה עם המתווך.')} />
+      <Matches client={matching} onClose={closeMatch} onAsk={() => toast('הפנייה נשלחה למתווך')} />
       <NewClient
         open={adding}
         onClose={closeAdd}
@@ -484,7 +484,7 @@ function Matches({ client, onClose, onAsk }: { client: Client | null; onClose: (
             </article>
           )
         })}
-        <p className="ct-demo">התאמות מהקהילה, נתוני דמו. פרטי הלקוח שלך לא נחשפים למתווך השני.</p>
+        <p className="ct-demo">התאמות מהקהילה. פרטי הלקוח שלך לא נחשפים למתווך השני.</p>
       </div>
     </Modal>
   )

@@ -4,6 +4,7 @@ import { RotateCcw } from 'lucide-react'
 import { Modal } from './ui'
 import { useStore } from '../store'
 import { extraResets } from '../config/navExtras'
+import { useMember } from '../config/member'
 import '../styles/demo-reset.css'
 
 /**
@@ -16,6 +17,7 @@ export default function DemoReset() {
   const { pathname } = useLocation()
   const { reset, toast } = useStore()
   const [open, setOpen] = useState(false)
+  const { isOffice } = useMember()
 
   const restart = () => {
     reset()
@@ -29,6 +31,8 @@ export default function DemoReset() {
 
   // the page a property's owner opens is not part of the demo's tour
   if (/^\/o\//.test(pathname)) return null
+  // inside the app a community member sees a live community, not the demo's controls
+  if (!isOffice && /^\/app(\/|$)/.test(pathname)) return null
 
   return (
     <>

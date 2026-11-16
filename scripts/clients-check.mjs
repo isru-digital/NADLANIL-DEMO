@@ -117,7 +117,8 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
   await page.evaluate(() => document.querySelector('tr[data-id="k1"] [data-act="match"]').click())
   await wait(700)
   st = await page.evaluate(() => ({ title: document.querySelector('.modal h2, .modal-title')?.textContent.trim() ?? '', n: document.querySelectorAll('.ct-m').length, demo: document.querySelector('.ct-matches .ct-demo')?.textContent ?? '', det: !!document.querySelector('.ct-det') }))
-  check(`${d} "נכסים מתאימים" opens matches from the community for a buyer, marked as demo data`, st.title.includes('נכסים מתאימים') && st.n >= 2 && st.demo.includes('נתוני דמו') && !st.det, JSON.stringify(st))
+  // 16.11.2026: "נתוני דמו" lives only in the small line at the foot of the page, not inside the cards
+  check(`${d} "נכסים מתאימים" opens matches from the community for a buyer, with no demo mark inside`, st.title.includes('נכסים מתאימים') && st.n >= 2 && st.demo.includes('התאמות מהקהילה') && !st.demo.includes('נתוני דמו') && !st.det, JSON.stringify(st))
   await shot('3-matches-buyer')
   await closeModal(page)
   await page.evaluate(() => document.querySelector('tr[data-id="k2"] [data-act="match"]').click())

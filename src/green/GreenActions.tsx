@@ -220,7 +220,7 @@ export default function GreenActions() {
   return (
     <>
       {/* ------------------------------------------------------------ a new CRM card */}
-      <Modal open={ask?.kind === 'card'} onClose={close} title="כרטיס חדש ב-CRM" subtitle="נשמר בדמו, בדפדפן הזה בלבד.">
+      <Modal open={ask?.kind === 'card'} onClose={close} title="כרטיס חדש ב-CRM" subtitle="הכרטיס נשמר בלוח שלך.">
         <div className="modal-body ga">
           {pasting ? (
             <div className="ga-paste">

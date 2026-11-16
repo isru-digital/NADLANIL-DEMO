@@ -55,7 +55,6 @@ export default function FeedMasthead({ items, view, onView }: { items: Community
         <span className="mast-live">
           <i aria-hidden /> {fresh > 0 ? `${fresh} חדשים עכשיו` : 'מתעדכן כל הזמן'}
         </span>
-        <span className="mast-demo">נתוני דמו</span>
       </div>
 
       <p className="mast-name">

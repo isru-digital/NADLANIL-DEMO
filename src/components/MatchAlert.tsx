@@ -46,12 +46,12 @@ export default function MatchAlert() {
             </button>
           </div>
           <div className="match-body">
-            <Avatar src={brokerById(matchAlert.brokerId).avatar} name="" size={42} ring />
+            <Avatar src={brokerById(matchAlert.brokerId).avatar} name={brokerById(matchAlert.brokerId).avatar ? '' : brokerById(matchAlert.brokerId).name} size={42} ring />
             <p>{matchAlert.text}</p>
           </div>
           {nameSlots.MatchNote && <nameSlots.MatchNote />}
           <div className="match-foot">
-            <small>{matchAlert.kind === 'incoming' ? 'הדמיה בדמו של פרסום ממתווך אחר' : 'נתוני דמו'}</small>
+            <small>{matchAlert.kind === 'incoming' ? 'פורסם עכשיו בקהילה' : 'התאמה מהקהילה'}</small>
             <button
               className="btn btn-gold btn-sm"
               onClick={() => {

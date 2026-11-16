@@ -4,7 +4,7 @@
  * should. It must be the FIRST import of the green entry, because the agent store reads the browser's storage the
  * moment it is loaded. To clean every browser again later, change the number in FLAG.
  */
-const FLAG = 'nadlanup-clean-start-1'
+const FLAG = 'nadlanup-clean-start-2'
 const KEYS = ['brokers-demo-state-v5', 'nadlanup-agent-v1']
 
 try {

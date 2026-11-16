@@ -13,7 +13,7 @@ import DayNightSwitch from './components/DayNightSwitch'
 import { PLATFORM_NAME } from './config'
 import { COMMUNITY_HOME, COMMUNITY_JOIN } from './config/community'
 import CommunityHome from './community/CommunityHome'
-import { AppIndex, OfficeOnly, ShellBrand, UpgradeBanner, useCommunityNav } from './community/CommunityShell'
+import { AppIndex, DemoFoot, OfficeOnly, ShellBrand, UpgradeBanner, useCommunityNav, useQuietShell } from './community/CommunityShell'
 import HomeGreen from './pages/HomeGreen'
 import AgentArea from './agent/AgentArea'
 import AgentPage from './agent/AgentPage'
@@ -35,6 +35,7 @@ import { memberActions } from './config/member'
 import { agentActions } from './agent/useAgent'
 import { registerActions, registerCommunity, registerCrm, registerLab, registerNames, registerNav, registerReset, registerShell } from './config/navExtras'
 import ClientsTable from './crm/ClientsTable'
+import PropertyPage from './community/PropertyPage'
 import SignUp from './auth/SignUp'
 import Admin from './auth/Admin'
 import { AppGuard, DemoStart, Enter, Login } from './auth/Access'
@@ -86,6 +87,8 @@ registerShell({ bar: MemberBar, badge: MemberBadge, lab: TieredLab })
 // the community under its own name: its name at the top for a community member, no dashboard and two locked lines
 // in the menu, and a strip that leads to the office's page
 registerShell({ useNav: useCommunityNav, brand: ShellBrand, banner: UpgradeBanner })
+// a community member sees a live community: no beta lab, demo tags or reset inside; one small demo line at the foot
+registerShell({ useQuiet: useQuietShell, foot: DemoFoot })
 registerLab({
   Chip: LabChip,
   Badge: LabBadge,
@@ -115,6 +118,7 @@ start(<HomeGreen />, {
       <Route path="agent" element={<AgentArea />} />
       <Route path="office" element={<OfficeHub />} />
       <Route path="office/:id" element={<OfficeScreen />} />
+      <Route path="property/:id" element={<PropertyPage />} />
     </>
   ),
   routes: (

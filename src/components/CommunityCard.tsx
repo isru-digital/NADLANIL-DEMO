@@ -29,6 +29,7 @@ import { reactionById, reactions, topicReactions } from '../config/reactions'
 import type { ReactionId } from '../config/reactions'
 import { REFERRAL_DISCLAIMER, topicById } from '../config/topics'
 import { brokerById, formatPrice, roomsLabel } from '../data/demo'
+import { priceText } from '../community/PropertyPage'
 import type { Comment, CommunityItem } from '../data/demo'
 import { useStore } from '../store'
 import { actionSlots, nameSlots } from '../config/navExtras'
@@ -36,6 +37,7 @@ import { Avatar, EASE, Photo } from './ui'
 import '../styles/community.css'
 import '../styles/feed.css'
 import '../styles/topics.css'
+import '../styles/property.css'
 
 /**
  * One community post, Facebook-style. The same component renders the feed and the
@@ -199,7 +201,7 @@ export default function CommunityCard({
                     [
                       [Bookmark, 'שמירת הפוסט', 'הפוסט נשמר אצלך'],
                       [Link2, 'העתקת קישור', 'הקישור הועתק'],
-                      [Flag, 'דיווח למנהלי הקהילה', 'בדמו הדיווח אינו נשלח'],
+                      [Flag, 'דיווח למנהלי הקהילה', 'הדיווח התקבל, תודה'],
                     ] as const
                   ).map(([Icon, label, message]) => (
                     <button
@@ -240,14 +242,33 @@ export default function CommunityCard({
       {/* ------------------------------------------------ property (שת"פ) */}
       {item.property && (
         <div className="fb-embed fb-prop">
-          {item.image && <Photo src={item.image} alt={item.title ?? ''} ratio="16 / 9" className="fb-media" eager={preview} />}
+          {(() => {
+            // a property shared in the community has a page of its own: its photos and every detail
+            const inner = (
+              <>
+                {item.image && <Photo src={item.image} alt={item.title ?? ''} ratio="16 / 9" className="fb-media" eager={preview} />}
+              </>
+            )
+            return preview ? inner : (
+              <Link to={`/app/property/${item.id}`} className="fb-prop-link" aria-label={`לדף הנכס: ${item.title}`} data-open-property={item.id}>
+                {inner}
+              </Link>
+            )
+          })()}
           <div className="fb-embed-body">
             <div className="fb-embed-main">
               <span className="fb-embed-kicker">
                 <MapPin />
                 {item.property.area}
+                {item.property.deal === 'rent' && <em className="fb-deal">להשכרה</em>}
               </span>
-              <h3>{item.title}</h3>
+              {preview ? (
+                <h3>{item.title}</h3>
+              ) : (
+                <Link to={`/app/property/${item.id}`} className="fb-prop-link">
+                  <h3>{item.title}</h3>
+                </Link>
+              )}
               <div className="fb-facts">
                 {item.property.rooms && (
                   <span>
@@ -255,12 +276,22 @@ export default function CommunityCard({
                     <span className="num">{item.property.rooms}</span> חדרים
                   </span>
                 )}
-                {item.property.showPrice !== false && <strong className="num">{formatPrice(item.property.price)}</strong>}
+                {item.property.sqm && (
+                  <span>
+                    <span className="num">{item.property.sqm}</span> מ"ר
+                  </span>
+                )}
+                {item.property.showPrice !== false && <strong className="num">{priceText(item.property)}</strong>}
                 <span className="fb-split">
                   <Handshake />
                   {item.property.split}
                 </span>
               </div>
+              {!preview && (item.property.images?.length ?? 0) > 0 && (
+                <Link to={`/app/property/${item.id}`} className="fb-more">
+                  לכל הפרטים ו-{item.property.images!.length} תמונות <ChevronLeft />
+                </Link>
+              )}
             </div>
             {cta}
           </div>
@@ -290,7 +321,13 @@ export default function CommunityCard({
               <li>
                 <Wallet />
                 עד <span className="num">{formatPrice(item.search.budget)}</span>
+                {item.search.deal === 'rent' && ' לחודש'}
               </li>
+              {item.search.deal === 'rent' && (
+                <li>
+                  <em className="fb-deal">שכירות</em>
+                </li>
+              )}
             </ul>
             {item.search.wants.length > 0 && (
               <div className="ci-wants">
@@ -426,7 +463,7 @@ export default function CommunityCard({
               <MessageCircle />
               תגובה
             </button>
-            <button className="fb-action" data-act="share" onClick={() => (actionSlots.share ? actionSlots.share(item) : toast('בדמו השיתוף אינו פעיל'))}>
+            <button className="fb-action" data-act="share" onClick={() => (actionSlots.share ? actionSlots.share(item) : toast('הקישור הועתק'))}>
               <Share2 />
               שיתוף
             </button>

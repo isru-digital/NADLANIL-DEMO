@@ -32,8 +32,39 @@ import { Avatar, EASE, Modal } from '../components/ui'
 import CommunityCard from '../components/CommunityCard'
 import '../styles/community.css'
 import '../styles/feed.css'
+import '../styles/property.css'
 
 type View = TopicId | 'all'
+
+/** The filters of properties and of buyers: city, rooms, price and sale or rent. Empty means "all". */
+type Filter = { city: string; rooms: string; price: string; deal: '' | 'sale' | 'rent' }
+const NO_FILTER: Filter = { city: '', rooms: '', price: '', deal: '' }
+const SALE_PRICES = [1500000, 2000000, 2500000, 3000000, 4000000, 6000000, 10000000]
+const RENT_PRICES = [4000, 6000, 8000, 10000]
+const ROOMS = ['2', '3', '4', '5']
+
+/** does a property or a buyer's search pass the filter? */
+function passes(it: CommunityItem, f: Filter) {
+  if (it.property) {
+    const p = it.property
+    const rooms = parseFloat(p.rooms)
+    if (f.city && it.city !== f.city) return false
+    if (f.deal && (p.deal ?? 'sale') !== f.deal) return false
+    if (f.rooms && (f.rooms === '5' ? rooms < 5 : Math.floor(rooms) !== Number(f.rooms))) return false
+    // a price is a sale price unless "השכרה" is chosen, so a rent never passes a sale price
+    if (f.price && ((p.deal ?? 'sale') !== (f.deal || 'sale') || p.price > Number(f.price))) return false
+    return true
+  }
+  if (it.search) {
+    const s = it.search
+    if (f.city && !s.cities.includes(f.city)) return false
+    if (f.deal && (s.deal ?? 'sale') !== f.deal) return false
+    if (f.rooms && (f.rooms === '5' ? s.roomsMax < 5 : Number(f.rooms) < s.roomsMin || Number(f.rooms) > s.roomsMax)) return false
+    if (f.price && ((s.deal ?? 'sale') !== (f.deal || 'sale') || s.budget > Number(f.price))) return false
+    return true
+  }
+  return true
+}
 
 const demoPhotos = ['img/win-01.webp', 'img/prop-07.webp', 'img/prop-05.webp', 'img/prop-01.webp']
 
@@ -48,6 +79,10 @@ export default function Community() {
   const focusId = params.get('item')
 
   const [query, setQuery] = useState('')
+  const [filter, setFilter] = useState<Filter>(NO_FILTER)
+  const filterable = view === 'coop' || view === 'seeking'
+  // properties and buyers have their own filters: moving between them starts clean
+  useEffect(() => setFilter(NO_FILTER), [view])
   const [citiesOpen, setCitiesOpen] = useState(false)
   const [noticesOpen, setNoticesOpen] = useState(false)
   const [composer, setComposer] = useState<{ topicId: TopicId; photo?: boolean } | null>(null)
@@ -69,6 +104,7 @@ export default function Community() {
   const visible = scoped.filter(
     (it) =>
       (view === 'all' || it.topicId === view) &&
+      (!filterable || passes(it, filter)) &&
       (!q ||
         [it.title ?? '', it.body, it.city, brokerById(it.authorId).name, it.property?.area ?? '', ...(it.search?.wants ?? [])].some((v) =>
           v.includes(q),
@@ -252,13 +288,23 @@ export default function Community() {
                   <button key={s.id} className="story" onClick={() => setStory(i)} aria-label={`עדכון מאת ${b.name}`}>
                     <img src={asset(s.image!)} alt="" loading="lazy" />
                     <span className="story-face">
-                      <Avatar src={b.avatar} name="" size={36} ring />
+                      <Avatar src={b.avatar} name={b.avatar ? '' : b.name} size={36} ring />
                     </span>
                     <strong>{b.name}</strong>
                   </button>
                 )
               })}
             </div>
+          )}
+
+          {filterable && (
+            <FilterBar
+              kind={view === 'coop' ? 'properties' : 'buyers'}
+              filter={filter}
+              onChange={setFilter}
+              count={visible.length}
+              cities={[...new Set(items.filter((it) => it.topicId === view).flatMap((it) => (it.search ? it.search.cities : [it.city])))].sort((a, b) => a.localeCompare(b, 'he'))}
+            />
           )}
 
           {(!topic || topic.compose) && (
@@ -429,7 +475,7 @@ export default function Community() {
                 .slice(0, 6)
                 .map((b) => (
                   <li key={b.id}>
-                    <button onClick={() => toast(`בדמו לא נפתח צ'אט עם ${b.name}`)}>
+                    <button onClick={() => toast(`הצ'אט עם ${b.name} ייפתח בקרוב`)}>
                       <span className="online-face">
                         <Avatar src={b.avatar} name={b.name} size={34} />
                         <i aria-hidden />
@@ -444,7 +490,6 @@ export default function Community() {
             </ul>
           </section>
 
-          <p className="fbx-foot">נתוני דמו · כל הפוסטים, השמות והנכסים מומצאים</p>
         </aside>
       </div>
 
@@ -526,6 +571,75 @@ export default function Community() {
 }
 
 /* ============================================================ small parts */
+
+function FilterBar({ kind, filter, onChange, count, cities }: { kind: 'properties' | 'buyers'; filter: Filter; onChange: (f: Filter) => void; count: number; cities: string[] }) {
+  const set = (patch: Partial<Filter>) => onChange({ ...filter, ...patch })
+  const prices = filter.deal === 'rent' ? RENT_PRICES : SALE_PRICES
+  const on = filter.city || filter.rooms || filter.price || filter.deal
+  return (
+    <section className="flt" aria-label={kind === 'properties' ? 'סינון נכסים' : 'סינון קונים'} data-filters={kind}>
+      <label>
+        <span>עיר</span>
+        <select value={filter.city} onChange={(e) => set({ city: e.target.value })} data-filter="city">
+          <option value="">כל הערים</option>
+          {cities.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label>
+        <span>חדרים</span>
+        <select value={filter.rooms} onChange={(e) => set({ rooms: e.target.value })} data-filter="rooms">
+          <option value="">הכול</option>
+          {ROOMS.map((r) => (
+            <option key={r} value={r}>
+              {r === '5' ? '5 ומעלה' : r}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label>
+        <span>{filter.deal === 'rent' ? 'שכירות עד' : kind === 'buyers' ? 'תקציב עד' : 'מחיר עד'}</span>
+        <select value={filter.price} onChange={(e) => set({ price: e.target.value })} data-filter="price">
+          <option value="">כל מחיר</option>
+          {prices.map((p) => (
+            <option key={p} value={p}>
+              {filter.deal === 'rent' ? `${p.toLocaleString('he-IL')} ₪ לחודש` : formatPriceShort(p)}
+            </option>
+          ))}
+        </select>
+      </label>
+      <div className="flt-deal" role="group" aria-label="מכירה או השכרה">
+        {(
+          [
+            ['', 'הכול'],
+            ['sale', 'מכירה'],
+            ['rent', 'השכרה'],
+          ] as const
+        ).map(([v, label]) => (
+          <button key={v} type="button" aria-pressed={filter.deal === v} data-deal={v || 'all'} onClick={() => set({ deal: v, price: '' })}>
+            {label}
+          </button>
+        ))}
+      </div>
+      <div className="flt-foot" aria-live="polite">
+        <span>
+          <b className="num" data-count>
+            {count}
+          </b>{' '}
+          {kind === 'properties' ? 'נכסים' : 'קונים מחפשים'}
+        </span>
+        {on && (
+          <button type="button" onClick={() => onChange(NO_FILTER)}>
+            ניקוי סינון
+          </button>
+        )}
+      </div>
+    </section>
+  )
+}
 
 function RailButton({
   active,
@@ -664,7 +778,7 @@ function ComposerModal({
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.26, ease: EASE }}
             >
-              <span>בדמו בוחרים מתוך תמונות לדוגמה</span>
+              <span>בחירת תמונה</span>
               <div>
                 {demoPhotos.map((p) => (
                   <button

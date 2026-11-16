@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useState } from 'react'
-import { Link, NavLink, useLocation, useOutlet } from 'react-router-dom'
-import { AnimatePresence, motion } from 'framer-motion'
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import {
   FolderOpen,
   Home,
@@ -42,16 +42,6 @@ const subActive = (to: string, pathname: string, search: string) => {
   return pathname === path && (new URLSearchParams(query).get('v') ?? '') === (new URLSearchParams(search).get('v') ?? '')
 }
 
-/**
- * Keeps rendering the route it was mounted with. Without this the exiting page
- * would already show the next route, and its exit animation would never finish.
- */
-function FrozenOutlet() {
-  const outlet = useOutlet()
-  const [frozen] = useState(outlet)
-  return frozen
-}
-
 export default function AppShell() {
   const all: NavItem[] = [...baseNav, ...extraNav]
   // the green version may change the menu for the member who is looking (see config/navExtras)
@@ -66,6 +56,9 @@ export default function AppShell() {
   const Lab = shellSlots.lab ?? BetaLab
   const Brand = shellSlots.brand
   const Banner = shellSlots.banner
+  const Foot = shellSlots.foot
+  // a community member sees the product, not the demo's workshop: no beta lab, no demo tags, no reset here
+  const quiet = shellSlots.useQuiet ? shellSlots.useQuiet() : false
 
   useEffect(() => {
     setMoreOpen(false)
@@ -134,6 +127,7 @@ export default function AppShell() {
           ))}
         </nav>
 
+        {!quiet && (
         <div className="side-lab">
           <span className="side-lab-title">
             מעבדת בטא
@@ -155,6 +149,7 @@ export default function AppShell() {
             <span>כל הכלים ({labItems.length})</span>
           </button>
         </div>
+        )}
 
         <div className="sidebar-foot">
           <div className="side-principle">
@@ -176,13 +171,15 @@ export default function AppShell() {
               {Badge && <Badge />}
             </div>
           </div>
-          <div className="side-demo">
-            <DemoTag />
-            <button className="side-reset" onClick={resetDemo}>
-              <RotateCcw />
-              איפוס
-            </button>
-          </div>
+          {!quiet && (
+            <div className="side-demo">
+              <DemoTag />
+              <button className="side-reset" onClick={resetDemo}>
+                <RotateCcw />
+                איפוס
+              </button>
+            </div>
+          )}
         </div>
       </aside>
 
@@ -197,7 +194,7 @@ export default function AppShell() {
             </Link>
           )}
         </div>
-        <DemoTag />
+        {!quiet && <DemoTag />}
         {Bar && (
           <div className="topbar-bar">
             <Bar />
@@ -211,17 +208,16 @@ export default function AppShell() {
           {Bar && <Bar />}
         </div>
         {Banner && <Banner />}
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.div
-            key={location.pathname}
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.28, ease: EASE }}
-          >
-            <FrozenOutlet />
-          </motion.div>
-        </AnimatePresence>
+        <motion.div
+          key={location.pathname}
+          className="main-page"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.24, ease: EASE }}
+        >
+          <Outlet />
+        </motion.div>
+        {Foot && <Foot />}
       </main>
 
       <nav className="bottom-nav" aria-label="ניווט ראשי">
@@ -258,6 +254,7 @@ export default function AppShell() {
               )}
             </Link>
           ))}
+          {!quiet && (
           <button
             className="more-link"
             onClick={() => {
@@ -272,14 +269,17 @@ export default function AppShell() {
               בטא
             </em>
           </button>
+          )}
           <Link to="/" className="more-link">
             <Home />
             <span>דף הבית</span>
           </Link>
-          <button className="more-link" onClick={resetDemo}>
-            <RotateCcw />
-            <span>איפוס נתוני הדמו</span>
-          </button>
+          {!quiet && (
+            <button className="more-link" onClick={resetDemo}>
+              <RotateCcw />
+              <span>איפוס נתוני הדמו</span>
+            </button>
+          )}
         </div>
       </Modal>
     </div>

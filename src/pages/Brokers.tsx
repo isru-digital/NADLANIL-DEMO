@@ -7,8 +7,10 @@ import { brokers, regions, specialties } from '../data/demo'
 import type { Broker } from '../data/demo'
 import { useStore } from '../store'
 import { nameSlots } from '../config/navExtras'
-import { EASE, Modal, PageHead } from '../components/ui'
+import { EASE, Modal, PageHead, iniColor, initialsOf } from '../components/ui'
+import type { CSSProperties } from 'react'
 import '../styles/brokers.css'
+import '../styles/property.css'
 import '../styles/community.css'
 
 export default function Brokers() {
@@ -118,8 +120,13 @@ export default function Brokers() {
               exit={{ opacity: 0, scale: 0.94 }}
               transition={{ duration: 0.45, delay: Math.min(i, 8) * 0.035, ease: EASE }}
             >
-              <button className="broker-face" onClick={() => setProfile(b)} aria-label={`פרופיל של ${b.name}`}>
-                <img src={asset(b.avatar)} alt={b.name} loading="lazy" decoding="async" />
+              <button
+                className={`broker-face${b.avatar ? '' : ' is-initials'}`}
+                style={b.avatar ? undefined : ({ '--ini': iniColor(b.name) } as CSSProperties)}
+                onClick={() => setProfile(b)}
+                aria-label={`פרופיל של ${b.name}`}
+              >
+                {b.avatar ? <img src={asset(b.avatar)} alt={b.name} loading="lazy" decoding="async" /> : <b aria-hidden>{initialsOf(b.name)}</b>}
                 {b.years > 0 && <span className="broker-years num">{b.years} שנות ניסיון</span>}
                 <span className="broker-over">
                   <strong>{b.name}</strong>
@@ -163,7 +170,13 @@ export default function Brokers() {
         {profile && (
           <div className="modal-body profile">
             <div className="profile-top">
-              <img src={asset(profile.avatar)} alt={profile.name} />
+              {profile.avatar ? (
+                <img src={asset(profile.avatar)} alt={profile.name} />
+              ) : (
+                <span className="profile-ini" style={{ '--ini': iniColor(profile.name) } as CSSProperties} aria-hidden>
+                  {initialsOf(profile.name)}
+                </span>
+              )}
               <ul>
                 <li>
                   <span>אזור פעילות</span>
@@ -208,7 +221,7 @@ export default function Brokers() {
                 <button
                   className="btn btn-ghost"
                   onClick={() => {
-                    toast('בדמו ההודעות אינן נשלחות באמת')
+                    toast(`הצ'אט עם ${profile.name} ייפתח בקרוב`)
                     setProfile(null)
                   }}
                 >

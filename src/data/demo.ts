@@ -49,8 +49,10 @@ export type SearchSpec = {
   cities: string[]
   roomsMin: number
   roomsMax: number
+  /** the most the buyer pays, or the most rent a month when `deal` is 'rent' */
   budget: number
   wants: string[]
+  deal?: 'sale' | 'rent'
 }
 
 export type Testimonial = { id: string; name: string; role: string; body: string }
@@ -93,19 +95,22 @@ export const specialties = [
   'דירות חדשות',
   'תושבי חוץ',
   'התחדשות עירונית',
+  'השכרות',
+  'דירות יד שנייה',
+  'קונים ראשונים',
 ]
 
 export const brokers: Broker[] = [
   {
     id: 'b1',
     name: 'מאיה לנדאו',
-    title: 'מתווכת נדל"ן יוקרה',
-    area: 'תל אביב',
+    title: 'מתווכת דירות יד שנייה',
+    area: 'תל אביב ורמת גן',
     region: 'תל אביב והמרכז',
-    specialties: ['יוקרה', 'תושבי חוץ'],
+    specialties: ['משפחות', 'דירות יד שנייה', 'השקעות'],
     avatar: img('broker-01'),
     years: 11,
-    bio: 'מלווה קונים ומוכרים בצפון הישן ובלב תל אביב. מאמינה בליווי אישי, בשקיפות מלאה ובהיכרות עמוקה עם כל רחוב.',
+    bio: 'מלווה משפחות ומשקיעים בתל אביב וברמת גן, בעיקר בדירות של 3 ו-4 חדרים. אוהבת עסקאות פשוטות, מחיר אמיתי ושיחה פתוחה עם שני הצדדים.',
   },
   {
     id: 'b2',
@@ -206,6 +211,22 @@ export const brokers: Broker[] = [
     years: 14,
     bio: 'מתמחה בדירות גן ובדירות משפחה במודיעין ובסביבה. מאמינה שהתאמה נכונה חוסכת לכולם זמן וכסף.',
   },
+  // ---- more brokers from all over the country (16.11.2026). Invented names; no photo means initials are shown.
+  { id: 'b11', name: 'רועי אזולאי', title: 'מתווך דירות יד שנייה', area: 'אשדוד', region: 'הדרום', specialties: ['משפחות', 'דירות יד שנייה'], avatar: '', years: 12, bio: 'מכיר את אשדוד רובע אחרי רובע. רוב הלקוחות שלו משפרי דיור ומשפחות צעירות שמחפשות קרוב לים.' },
+  { id: 'b12', name: 'ענבל גולן', title: 'מתווכת למשפרי דיור', area: 'פתח תקווה', region: 'תל אביב והמרכז', specialties: ['משפחות', 'דירות חדשות'], avatar: '', years: 8, bio: 'עובדת באם המושבות, בכפר גנים ובמרכז העיר. מלווה משפחות שעוברות מדירה קטנה לגדולה, כולל מכירה וקנייה במקביל.' },
+  { id: 'b13', name: 'משה דהן', title: 'מתווך בתים פרטיים', area: 'חדרה', region: 'השרון', specialties: ['בתים פרטיים', 'משפחות'], avatar: '', years: 19, bio: 'כמעט עשרים שנה בחדרה ובסביבה. בתים פרטיים, דו משפחתיים ומגרשים, ומשפחות שעוברות מהמרכז צפונה.' },
+  { id: 'b14', name: 'סיגל אברג\'יל', title: 'מתווכת בעמק יזרעאל', area: 'עפולה', region: 'חיפה והצפון', specialties: ['בתים פרטיים', 'קונים ראשונים'], avatar: '', years: 10, bio: 'עפולה, עפולה עילית והיישובים בעמק. הרבה קונים ראשונים ומשפחות צעירות, ותמיד בלי לחץ.' },
+  { id: 'b15', name: 'נדב שושן', title: 'מתווך השכרות', area: 'תל אביב', region: 'תל אביב והמרכז', specialties: ['השכרות'], avatar: '', years: 4, bio: 'השכרות בלב תל אביב ובפלורנטין. דירות קטנות, שותפים וסטודנטים, ומשכירים שרוצים שקט.' },
+  { id: 'b16', name: 'אסף לוי', title: 'מתווך השכרות והשקעות', area: 'באר שבע', region: 'הדרום', specialties: ['השכרות', 'השקעות'], avatar: '', years: 6, bio: 'דירות להשקעה ולהשכרה ליד האוניברסיטה ובשכונות החדשות. מלווה גם משקיעים מהמרכז מול השוכרים.' },
+  { id: 'b17', name: 'קרן וייס', title: 'מתווכת דירות פרימיום', area: 'תל אביב', region: 'תל אביב והמרכז', specialties: ['יוקרה'], avatar: '', years: 15, bio: 'פנטהאוזים ודירות גג בצפון הישן. עובדת עם מעט לקוחות בכל פעם, בדיסקרטיות.' },
+  { id: 'b18', name: 'יעל ברק', title: 'מתווכת השכרות ומשפחות', area: 'חיפה', region: 'חיפה והצפון', specialties: ['השכרות', 'משפחות'], avatar: '', years: 5, bio: 'נווה שאנן, אחוזה והדר. השכרות לסטודנטים של הטכניון ודירות משפחה על הכרמל.' },
+  { id: 'b19', name: 'אבי מלכה', title: 'מתווך דירות חדשות', area: 'אשדוד', region: 'הדרום', specialties: ['דירות חדשות', 'התחדשות עירונית'], avatar: '', years: 17, bio: 'פרויקטים חדשים ותמ"א באשדוד ובאשקלון. יודע לקרוא חוזה של קבלן ולהסביר אותו בפשטות.' },
+  { id: 'b20', name: 'מיטל כהן', title: 'מתווכת השכרות', area: 'תל אביב', region: 'תל אביב והמרכז', specialties: ['השכרות', 'תושבי חוץ'], avatar: '', years: 7, bio: 'השכרות לטווח ארוך בצפון תל אביב, לעובדי הייטק ולמשפחות שחוזרות מחו"ל.' },
+  { id: 'b21', name: 'דוד אוחנה', title: 'מתווך דירות יד שנייה', area: 'חולון', region: 'תל אביב והמרכז', specialties: ['דירות יד שנייה', 'משפחות'], avatar: '', years: 21, bio: 'ותיק בחולון ובבת ים. דירות של 3 ו-4 חדרים, ירושות, ומשפחות שגדלו מהדירה.' },
+  { id: 'b22', name: 'רינת פרץ', title: 'מתווכת דירות למשפחות', area: 'כפר סבא', region: 'השרון', specialties: ['משפחות', 'דירות חדשות'], avatar: '', years: 9, bio: 'כפר סבא והוד השרון. משפחות עם ילדים, קרבה לבתי ספר ולפארקים, ותהליך מסודר מההתחלה עד הסוף.' },
+  { id: 'b23', name: 'עמית נגר', title: 'מתווך נכסים מסחריים', area: 'ראשון לציון', region: 'השפלה', specialties: ['השקעות'], avatar: '', years: 11, bio: 'משרדים, חנויות ומבני תעשייה קלה בראשון לציון ובחולון. גם דירות להשקעה למי שמתחיל.' },
+  { id: 'b24', name: 'לימור חדד', title: 'מתווכת בגליל המערבי', area: 'נהריה', region: 'חיפה והצפון', specialties: ['משפחות', 'בתים פרטיים'], avatar: '', years: 13, bio: 'נהריה והיישובים בגליל המערבי. משפחות שעוברות צפונה ומחפשות שקט, ים ובית עם חצר.' },
+  { id: 'b25', name: 'עידו רוזנברג', title: 'מתווך לקונים ראשונים', area: 'מודיעין', region: 'ירושלים והסביבה', specialties: ['קונים ראשונים', 'משפחות'], avatar: '', years: 3, bio: 'מלווה קונים ראשונים במודיעין ובסביבה. מסביר משכנתה, היטלים ומסים בלי מילים מסובכות.' },
 ]
 
 export const brokerById = (id: string) => brokers.find((b) => b.id === id) ?? brokers[0]
@@ -416,7 +437,7 @@ export const templates: Template[] = [
 
 export const aiBioText = [
   'אני מאיה, 11 שנים בתל אביב, רוב הזמן בצפון הישן. אני מכירה כל בניין ברחוב, והלקוחות שלי יודעים שאפשר להתקשר גם בערב. ספרו לי מה אתם מחפשים ואני אחזור אליכם עוד היום.',
-  'פנטהאוזים, דירות גג ונכסים שלא תמיד עולים לאתרים. אני עובדת עם כמה לקוחות בכל פעם, ויודעת מי מחפש מה לפני שהמודעה יוצאת. 11 שנים בתל אביב.',
+  'דירות של 3 ו-4 חדרים בתל אביב וברמת גן, למשפחות ולמשקיעים. אני עובדת עם כמה לקוחות בכל פעם, ויודעת מי מחפש מה לפני שהמודעה יוצאת. 11 שנים בשטח.',
   'מאיה, מתווכת בתל אביב. מחפשים דירה? תגידו לי תקציב ואזור, ואחזור עם שלוש אפשרויות. מוכרים? נדבר על מחיר אמיתי.',
 ]
 
@@ -458,8 +479,8 @@ export type BuilderState = {
 
 export const builderDefaults: BuilderState = {
   name: 'מאיה לנדאו',
-  title: 'מתווכת נדל"ן יוקרה',
-  area: 'תל אביב',
+  title: 'מתווכת דירות יד שנייה',
+  area: 'תל אביב ורמת גן',
   tagline: 'הבית הבא שלכם מתחיל בשיחה טובה.',
   bio: brokers[0].bio,
   years: 11,
@@ -559,9 +580,36 @@ export const cities = [
   'חיפה',
   'ראשון לציון',
   'באר שבע',
+  'פתח תקווה',
+  'אשדוד',
+  'חדרה',
+  'עפולה',
+  'חולון',
+  'כפר סבא',
+  'נהריה',
 ]
 
 export type Comment = { authorId: string; body: string; time: string; replies?: Comment[] }
+
+/** A property shared in the community. `price` is the asking price, or the monthly rent when `deal` is 'rent'. */
+export type PropertyInfo = {
+  area: string
+  rooms: string
+  price: number
+  split: string
+  showPrice?: boolean
+  deal?: 'sale' | 'rent'
+  kind?: string
+  sqm?: number
+  floor?: string
+  /** how many parking spaces (0 = none) */
+  parking?: number
+  elevator?: boolean
+  /** every photo, the first one is the post's `image` */
+  images?: string[]
+  /** what stands out: a safe room, a balcony, a storage room... */
+  extra?: string[]
+}
 
 export type CommunityItem = {
   id: string
@@ -575,7 +623,7 @@ export type CommunityItem = {
   comments: Comment[]
   image?: string
   /** topic "נכסים לשיתוף פעולה" */
-  property?: { area: string; rooms: string; price: number; split: string; showPrice?: boolean }
+  property?: PropertyInfo
   /** topic "מחפש לקונה": a saved search, never a client name */
   search?: SearchSpec
   /** topic "הפניות בין מתווכים" */
@@ -596,7 +644,126 @@ export type Notice = {
   itemId: string
 }
 
-export const communityItems: CommunityItem[] = [
+// ---------------------------------------------------------- more of the community (16.11.2026)
+// Invented content from all over the country: properties for sale and for rent, buyers, referrals, questions and
+// closed deals. Prices are sensible for each city. Nothing here is a real person, office or property.
+
+const SPLIT = 'חלוקת עמלה שווה'
+
+/** minutes ago of a time written in words, so the feed shows the newest first */
+export function ageOf(time: string): number {
+  if (time === 'עכשיו') return 0
+  const n = (re: RegExp) => Number(time.match(re)?.[1] ?? 1)
+  if (/דקות/.test(time)) return n(/(\d+)/)
+  if (time === 'לפני שעה') return 60
+  if (time === 'לפני שעתיים') return 120
+  if (/שעות/.test(time)) return n(/(\d+)/) * 60
+  if (time === 'הבוקר') return 300
+  if (time === 'אתמול') return 1440
+  if (time === 'לפני יומיים') return 2880
+  if (/ימים/.test(time)) return n(/(\d+)/) * 1440
+  return 1440 * 9
+}
+
+const home = (
+  id: string,
+  authorId: string,
+  city: string,
+  time: string,
+  title: string,
+  body: string,
+  likes: number,
+  property: Omit<PropertyInfo, 'split'> & { split?: string },
+  comments: Comment[] = [],
+): CommunityItem => ({ id, topicId: 'coop', authorId, city, time, title, body, likes, comments, image: property.images?.[0], property: { split: SPLIT, deal: 'sale', ...property } })
+
+const buyer = (id: string, authorId: string, city: string, time: string, title: string, body: string, likes: number, search: SearchSpec, comments: Comment[] = []): CommunityItem => ({
+  id,
+  topicId: 'seeking',
+  authorId,
+  city,
+  time,
+  title,
+  body,
+  likes,
+  comments,
+  search: { deal: 'sale', ...search },
+})
+
+function moreItems(): CommunityItem[] {
+  return [
+    // ------------------------------------------------------------ properties
+    home('p1', 'b4', 'חיפה', 'לפני 25 דקות', 'דירת 4 חדרים בנווה שאנן עם נוף למפרץ', 'בניין מטופח עם מעלית, מרפסת ונוף פתוח למפרץ. פנויה בעוד חודשיים.', 8,
+      { area: 'חיפה - נווה שאנן', rooms: '4', price: 1690000, kind: 'דירה', sqm: 98, floor: '3 מתוך 6', parking: 1, elevator: true, images: [img('il-haifa-carmel'), img('il-ramat-gan-living'), img('il-kitchen'), img('il-bedroom')], extra: ['ממ"ד', 'מרפסת 10 מ"ר', 'מחסן'] },
+      [{ authorId: 'b18', time: 'לפני 10 דקות', body: 'יש לי זוג מהטכניון שמחפש בדיוק באזור. מדברת איתך היום.' }]),
+    home('p9', 'b15', 'תל אביב', 'לפני 40 דקות', 'להשכרה: 2 חדרים משופצים בלב העיר', 'בניין ישן ומטופח, ריצוף מקורי ותריסי עץ. מתאים לזוג או לשוכר אחד. כניסה מיידית.', 5,
+      { area: 'תל אביב - לב העיר', rooms: '2', price: 6900, deal: 'rent', kind: 'דירה להשכרה', sqm: 52, floor: '2 מתוך 3', parking: 0, elevator: false, images: [img('il-tlv-rental'), img('il-bathroom')], extra: ['משופצת', 'מזגן בכל חדר', 'מרוהטת חלקית'] }),
+    home('p2', 'b9', 'באר שבע', 'לפני שעה', 'דירת 5 חדרים ברמות, קומה גבוהה', 'בניין חדש יחסית, ממ"ד ושתי חניות. מתאים למשפחה או למשקיע שרוצה תשואה יציבה.', 6,
+      { area: 'באר שבע - רמות', rooms: '5', price: 1850000, kind: 'דירה', sqm: 125, floor: '7 מתוך 9', parking: 2, elevator: true, images: [img('il-beersheva'), img('il-kitchen'), img('il-mamad-kids'), img('il-bathroom')], extra: ['ממ"ד', 'שתי חניות', 'מרפסת שמש'] }),
+    home('p3', 'b11', 'אשדוד', 'לפני שעתיים', 'דירת 4 חדרים במגדל ליד הים', 'חמש דקות הליכה לחוף, נוף חלקי לים ולובי מטופח.', 12,
+      { area: 'אשדוד - רובע י"א', rooms: '4', price: 2450000, kind: 'דירה במגדל', sqm: 110, floor: '12 מתוך 20', parking: 1, elevator: true, images: [img('il-ashdod'), img('il-ramat-gan-living'), img('il-bedroom'), img('il-bathroom')], extra: ['נוף לים', 'ממ"ד', 'מחסן'] },
+      [{ authorId: 'b19', time: 'לפני שעה', body: 'מכיר את הבניין, מתוחזק מצוין. יש לי משפחה שמחפשת שם.' }]),
+    home('p4', 'b12', 'פתח תקווה', 'לפני 3 שעות', 'דירת 5 חדרים חדשה באם המושבות', 'מפתח בעוד חודש. מטבח חדש, שתי חניות ומחסן, מרפסת לנוף פתוח.', 9,
+      { area: 'פתח תקווה - אם המושבות', rooms: '5', price: 3250000, kind: 'דירה חדשה', sqm: 130, floor: '9 מתוך 16', parking: 2, elevator: true, images: [img('il-petah-tikva'), img('il-kitchen'), img('il-mamad-kids'), img('il-bathroom')], extra: ['שתי חניות', 'מחסן', 'מרפסת 14 מ"ר'] }),
+    home('p5', 'b7', 'נתניה', 'לפני 4 שעות', 'דירת 4 חדרים עם נוף לים בעיר ימים', 'קומה גבוהה, מרפסת מול השקיעה. הבעלים גמישים במועד הכניסה.', 15,
+      { area: 'נתניה - עיר ימים', rooms: '4', price: 3390000, kind: 'דירה', sqm: 112, floor: '14 מתוך 18', parking: 1, elevator: true, images: [img('il-netanya-balcony'), img('prop-05'), img('il-bedroom'), img('il-kitchen')], extra: ['נוף לים', 'מרפסת 12 מ"ר', 'ממ"ד'] },
+      [{ authorId: 'b1', time: 'לפני 3 שעות', body: 'יש לי זוג שחוזר מחו"ל וזה בדיוק בשבילם. מתקשרת אלייך.' }]),
+    home('p10', 'b8', 'רמת גן', 'לפני 5 שעות', 'להשכרה: 4 חדרים ליד הבורסה', 'דירה מוארת עם מרפסת שמש, מעלית וחניה. מתאים למשפחה או לזוג שעובד מהבית.', 4,
+      { area: 'רמת גן - הבורסה', rooms: '4', price: 8200, deal: 'rent', kind: 'דירה להשכרה', sqm: 100, floor: '5 מתוך 8', parking: 1, elevator: true, images: [img('il-ramat-gan-living'), img('il-kitchen'), img('il-bedroom')], extra: ['מרפסת שמש', 'ממ"ד', 'מחסן'] }),
+    home('p6', 'b13', 'חדרה', 'הבוקר', 'בית פרטי 6 חדרים עם גינה', 'בית של שתי קומות על מגרש של 400 מ"ר, ברחוב שקט וקרוב לבתי ספר. מוכרים כי הילדים גדלו.', 11,
+      { area: 'חדרה - בית אליעזר', rooms: '6', price: 3100000, kind: 'בית פרטי', sqm: 190, floor: 'שתי קומות, מגרש 400 מ"ר', parking: 2, elevator: false, images: [img('il-hadera-house'), img('il-garden'), img('il-kitchen'), img('il-bedroom')], extra: ['גינה', 'מרתף', 'שתי חניות'] },
+      [{ authorId: 'b22', time: 'לפני שעתיים', body: 'מחיר טוב לבית בגודל הזה. יש לי משפחה מכפר סבא שמחפשת לעבור צפונה.' }]),
+    home('p7', 'b14', 'עפולה', 'אתמול', 'דו משפחתי 5 חדרים עם נוף לעמק', 'בית חדש יחסית בעפולה עילית, חצר קדמית ונוף לגלבוע. מתאים לקונים ראשונים שרוצים בית.', 7,
+      { area: 'עפולה - עפולה עילית', rooms: '5', price: 2150000, kind: 'דו משפחתי', sqm: 160, floor: 'שתי קומות', parking: 2, elevator: false, images: [img('il-afula-cottage'), img('il-ramat-gan-living'), img('il-mamad-kids'), img('il-bathroom')], extra: ['חצר', 'נוף לעמק', 'ממ"ד'] }),
+    home('p8', 'b10', 'מודיעין', 'אתמול', 'דירת גן 5 חדרים עם גינה של 80 מ"ר', 'כניסה פרטית לגינה, פרגולה ומקום לילדים. קרוב לבית ספר ולפארק.', 10,
+      { area: 'מודיעין - מוריה', rooms: '5', price: 3650000, kind: 'דירת גן', sqm: 128, floor: 'קרקע, גינה 80 מ"ר', parking: 2, elevator: true, images: [img('il-modiin-building'), img('il-garden'), img('il-kitchen'), img('il-mamad-kids')], extra: ['גינה 80 מ"ר', 'פרגולה', 'ממ"ד'] },
+      [{ authorId: 'b25', time: 'אתמול', body: 'יש לי זוג קונים ראשונים שזה מעל התקציב שלהם, אבל שווה להם לראות.' }]),
+    home('p11', 'b16', 'באר שבע', 'לפני יומיים', 'להשכרה: 3 חדרים ליד האוניברסיטה', 'שלושה חדרי שינה שווים, מתאים לסטודנטים. משכיר עם ניסיון ושקט.', 3,
+      { area: 'באר שבע - שכונה ד\'', rooms: '3', price: 3600, deal: 'rent', kind: 'דירה להשכרה', sqm: 75, floor: '2 מתוך 4', parking: 1, elevator: false, images: [img('il-beersheva'), img('il-bedroom'), img('il-bathroom')], extra: ['מרוהטת', 'קרוב לאוניברסיטה', 'מזגנים'] }),
+    home('p12', 'b6', 'ראשון לציון', 'לפני 3 ימים', 'דירת 3 חדרים לקונים ראשונים', 'בניין שקט בלי מעלית, קומה שנייה. מחיר נכון לאזור, והבעלים רוצים לסגור מהר.', 13,
+      { area: 'ראשון לציון - רמז', rooms: '3', price: 1980000, kind: 'דירה', sqm: 80, floor: '2 מתוך 4', parking: 1, elevator: false, images: [img('prop-09'), img('il-kitchen'), img('il-bedroom')], extra: ['משופצת', 'חניה', 'מחסן'] },
+      [{ authorId: 'b25', time: 'לפני 3 ימים', body: 'שלחתי לזוג שלי. הם מבקשים סיור ביום ראשון.' }]),
+    home('p13', 'b17', 'תל אביב', 'לפני 4 ימים', 'פנטהאוז 5 חדרים בצפון הישן', 'מרפסת גג של 60 מ"ר ונוף פתוח לים ולעיר. ללקוחות רציניים, דרך מתווך מלווה.', 19,
+      { area: 'תל אביב - הצפון הישן', rooms: '5', price: 8900000, kind: 'פנטהאוז', sqm: 170, floor: '8 מתוך 8', parking: 2, elevator: true, images: [img('prop-01'), img('prop-07'), img('prop-06')], extra: ['מרפסת גג 60 מ"ר', 'שתי חניות', 'מחסן'] },
+      [{ authorId: 'b2', time: 'לפני 4 ימים', body: 'יש לי לקוח שמחפש בדיוק את זה. חוזר אלייך עד הערב.' }]),
+
+    // ------------------------------------------------------------ buyers
+    buyer('s1', 'b12', 'פתח תקווה', 'לפני 50 דקות', 'זוג צעיר מחפש 3 עד 4 חדרים', 'אישור עקרוני למשכנתה ביד. חשוב להם מעלית וחניה, גמישים על הקומה.', 3,
+      { cities: ['פתח תקווה'], roomsMin: 3, roomsMax: 4, budget: 2400000, wants: ['מעלית', 'חניה'] }),
+    buyer('s2', 'b16', 'באר שבע', 'לפני 3 שעות', 'משקיע מהמרכז מחפש דירה להשכרה', 'מחפש נכס מושכר או קל להשכרה, קרוב לאוניברסיטה או לבית החולים.', 5,
+      { cities: ['באר שבע'], roomsMin: 3, roomsMax: 4, budget: 1300000, wants: ['מושכרת', 'קרוב לאוניברסיטה'] }),
+    buyer('s3', 'b18', 'חיפה', 'הבוקר', 'סטודנטית מחפשת 2 חדרים להשכרה', 'מתחילה תואר שני בטכניון. מחפשת דירה שקטה, אפשר גם קטנה.', 2,
+      { cities: ['חיפה'], roomsMin: 2, roomsMax: 2, budget: 3200, wants: ['קרוב לטכניון', 'מרוהטת'], deal: 'rent' }),
+    buyer('s6', 'b20', 'תל אביב', 'לפני 6 שעות', 'זוג מחפש 3 חדרים להשכרה', 'עוברים בחודש הבא. מעדיפים את צפון העיר, חוזה לשנתיים.', 3,
+      { cities: ['תל אביב'], roomsMin: 3, roomsMax: 3, budget: 9000, wants: ['מעלית', 'חניה', 'חוזה לשנתיים'], deal: 'rent' }),
+    buyer('s4', 'b19', 'אשדוד', 'אתמול', 'משפחה מחפשת 5 חדרים קרוב לים', 'עוברים מירושלים. חשוב להם בית ספר בהליכה וממ"ד.', 6,
+      { cities: ['אשדוד'], roomsMin: 5, roomsMax: 5, budget: 2700000, wants: ['ממ"ד', 'קרוב לים', 'בית ספר בהליכה'] },
+      [{ authorId: 'b11', time: 'אתמול', body: 'יש לי משהו ברובע י"א שיכול להתאים. שולח לך בפרטי.' }]),
+    buyer('s5', 'b14', 'עפולה', 'לפני יומיים', 'קונים ראשונים מחפשים בית בעמק', 'זוג עם תינוק, רוצים חצר ושקט. מוכנים לשפץ.', 4,
+      { cities: ['עפולה'], roomsMin: 4, roomsMax: 5, budget: 2300000, wants: ['חצר', 'צמוד קרקע'] }),
+    buyer('s7', 'b13', 'חדרה', 'לפני 3 ימים', 'משפחה מחפשת 4 חדרים בחדרה או בנתניה', 'עוברים מהמרכז בגלל העבודה. מחליטים מהר כשמשהו מתאים.', 2,
+      { cities: ['חדרה', 'נתניה'], roomsMin: 4, roomsMax: 4, budget: 2200000, wants: ['ממ"ד', 'חניה'] }),
+
+    // ------------------------------------------------------------ referrals between brokers
+    { id: 'r1', topicId: 'referrals', authorId: 'b24', city: 'נהריה', time: 'לפני שעתיים', title: 'זוג מנהריה מחפש על הכרמל', body: 'זוג שמוכר אצלי בנהריה ומחפש 4 חדרים על הכרמל, קרוב לנכדים. מי בחיפה לוקח?', likes: 4, comments: [{ authorId: 'b4', time: 'לפני שעה', body: 'אני על הכרמל, אשמח. שולח לך הודעה.' }], referral: { side: 'buyer', toCity: 'חיפה', terms: REFERRAL_TERMS } },
+    { id: 'r2', topicId: 'referrals', authorId: 'b21', city: 'חולון', time: 'אתמול', title: 'יורשים דירה בבאר שבע', body: 'לקוחות שלי מחולון ירשו 3 חדרים בבאר שבע ורוצים למכור. מחפש מתווך שמכיר את השכונה.', likes: 3, comments: [{ authorId: 'b9', time: 'אתמול', body: 'אני בבאר שבע ומכיר טוב. מתקשר אליך.' }], referral: { side: 'seller', toCity: 'באר שבע', terms: REFERRAL_TERMS } },
+    { id: 'r3', topicId: 'referrals', authorId: 'b22', city: 'כפר סבא', time: 'לפני 4 ימים', title: 'משפחה מכפר סבא עוברת לאשדוד', body: 'משפחה של לקוחות ותיקים עוברת דרומה. 5 חדרים, תקציב מסודר. מי באשדוד?', likes: 5, comments: [{ authorId: 'b19', time: 'לפני 4 ימים', body: 'אני באשדוד, נשמח לעזור להם.' }], referral: { side: 'buyer', toCity: 'אשדוד', terms: REFERRAL_TERMS } },
+
+    // ------------------------------------------------------------ questions, posts and closed deals
+    { id: 'q1', topicId: 'knowledge', authorId: 'b25', city: 'מודיעין', time: 'לפני 35 דקות', body: 'קונה שאל אותי היום על מס רכישה בדירה שנייה. מה אתם אומרים ללקוח במשפט אחד, לפני שאתם שולחים אותו לרואה חשבון?', likes: 9, comments: [{ authorId: 'b8', time: 'לפני 20 דקות', body: 'אני אומר לו שעל דירה נוספת יש מס כבר מהשקל הראשון, ושהחישוב המדויק אצל רואה החשבון. לא נכנס למספרים.', replies: [{ authorId: 'b25', time: 'לפני 15 דקות', body: 'תודה, בדיוק מה שהייתי צריך.' }] }] },
+    { id: 'q2', topicId: 'wins', authorId: 'b11', city: 'אשדוד', time: 'לפני שעתיים', body: 'שיתוף פעולה ראשון שלי מהקהילה: הנכס של אבי, הקונה שלי. נחתם היום באשדוד. ככה זה צריך לעבוד.', likes: 41, image: img('il-ashdod'), comments: [{ authorId: 'b19', time: 'לפני שעה', body: 'תענוג. מחכה לבאה.' }, { authorId: 'b12', time: 'לפני שעה', body: 'מזל טוב לשניכם.' }] },
+    { id: 'q3', topicId: 'posts', authorId: 'b14', city: 'עפולה', time: 'לפני 5 שעות', body: 'שבוע עמוס בעמק: ארבעה זוגות צעירים שמחפשים בית עם חצר. מי שיש לו נכס צמוד קרקע בעפולה או בסביבה, דברו איתי.', likes: 8, comments: [{ authorId: 'b24', time: 'לפני 4 שעות', body: 'יש לי משהו בנהריה, רחוק קצת. אם הם גמישים, תגידי.' }] },
+    { id: 'q4', topicId: 'knowledge', authorId: 'b15', city: 'תל אביב', time: 'אתמול', body: 'משכיר רוצה שלושה ערבים, והשוכר מסרב. מה אתם מציעים כפשרה?', likes: 12, comments: [{ authorId: 'b20', time: 'אתמול', body: 'ערבות בנקאית בגובה חודשיים ושטר חוב. לרוב שני הצדדים מסכימים.' }, { authorId: 'b16', time: 'אתמול', body: 'אצלי זה ערב אחד ושטר. בבאר שבע משכירים פחות מתעקשים.' }] },
+    { id: 'q5', topicId: 'wins', authorId: 'b9', city: 'באר שבע', time: 'לפני יומיים', body: 'נסגרה עסקה ברמות, הפניה מהקהילה. המוכרים מהמרכז, אני בשטח. תודה לדוד על ההפניה.', likes: 27, image: img('il-beersheva'), comments: [{ authorId: 'b21', time: 'לפני יומיים', body: 'שמח שזה הסתדר. הם מאוד מרוצים.' }] },
+    { id: 'q6', topicId: 'posts', authorId: 'b18', city: 'חיפה', time: 'לפני יומיים', body: 'טיפ קטן להשכרות לסטודנטים: מצלמים כל חדר שינה בנפרד וכותבים את הגודל. פחות שאלות ויותר סיורים.', likes: 18, comments: [] },
+    { id: 'q7', topicId: 'knowledge', authorId: 'b22', city: 'כפר סבא', time: 'לפני 3 ימים', body: 'מוכר מבקש להוריד את דמי התיווך אחרי שהבאתי קונה. איך אתם מדברים על זה בלי לפגוע ביחסים?', likes: 22, comments: [{ authorId: 'b5', time: 'לפני 3 ימים', body: 'מזכירה בעדינות מה סיכמנו בהזמנה החתומה, ואם יש סיבה אמיתית מדברים על משהו קטן אחרי החתימה.' }, { authorId: 'b21', time: 'לפני 3 ימים', body: 'בגלל זה אני מחתים על הזמנה לפני כל סיור. חוסך שיחות כאלה.' }] },
+    { id: 'q8', topicId: 'posts', authorId: 'b23', city: 'ראשון לציון', time: 'לפני 5 ימים', body: 'מישהו כאן עובד עם נכסים מסחריים? יש לי חנות קטנה בראשון לציון להשכרה, ואשמח לחלוק עמלה עם מי שמביא שוכר.', likes: 6, comments: [{ authorId: 'b6', time: 'לפני 5 ימים', body: 'אני בראשון, מכיר כמה עסקים שמחפשים. נדבר.' }] },
+    { id: 'q9', topicId: 'wins', authorId: 'b25', city: 'מודיעין', time: 'לפני 6 ימים', body: 'העסקה הראשונה שלי כמתווך עצמאי. זוג קונים ראשונים במודיעין, והילה עזרה לי עם החוזה. תודה לקהילה.', likes: 58, comments: [{ authorId: 'b10', time: 'לפני 6 ימים', body: 'גאה בך. זו רק ההתחלה.' }, { authorId: 'b1', time: 'לפני 6 ימים', body: 'מזל טוב, עידו.' }] },
+  ]
+}
+
+
+export const communityItems: CommunityItem[] = (<CommunityItem[]>[
   {
     id: 'k1',
     topicId: 'seeking',
@@ -638,7 +805,7 @@ export const communityItems: CommunityItem[] = [
     likes: 11,
     comments: [{ authorId: 'b10', time: 'לפני שעה', body: 'יש לי זוג שמחפש בדיוק באזור. מתקשרת אלייך.' }],
     image: img('prop-03'),
-    property: { area: 'ירושלים - רחביה', rooms: '4', price: 6900000, split: 'חלוקת עמלה שווה' },
+    property: { area: 'ירושלים - רחביה', rooms: '4', price: 6900000, split: 'חלוקת עמלה שווה', deal: 'sale', kind: 'דירת אבן', sqm: 110, floor: '2 מתוך 4', parking: 0, elevator: false, images: [img('prop-03'), img('il-kitchen'), img('il-bedroom'), img('il-bathroom')], extra: ['תקרות גבוהות', 'חלונות קשת', 'מחסן'] },
   },
   {
     id: 'k4',
@@ -720,7 +887,7 @@ export const communityItems: CommunityItem[] = [
     likes: 9,
     comments: [],
     image: img('prop-06'),
-    property: { area: 'רמת גן - מתחם הבורסה', rooms: '5', price: 5350000, split: 'חלוקת עמלה שווה' },
+    property: { area: 'רמת גן - מתחם הבורסה', rooms: '5', price: 5350000, split: 'חלוקת עמלה שווה', deal: 'sale', kind: 'דירה במגדל', sqm: 128, floor: '18 מתוך 32', parking: 2, elevator: true, images: [img('prop-06'), img('il-ramat-gan-living'), img('il-bedroom'), img('il-bathroom')], extra: ['שתי חניות', 'מחסן', 'מרפסת 14 מ"ר'] },
   },
   {
     id: 'k10',
@@ -805,7 +972,9 @@ export const communityItems: CommunityItem[] = [
     likes: 12,
     comments: [{ authorId: 'b7', time: 'לפני 4 ימים', body: 'ראיתי, נראה מצוין. באיזו תבנית בחרת?' }],
   },
-]
+  ...moreItems(),
+]).sort((a, b) => ageOf(a.time) - ageOf(b.time))
+
 
 export const notices: Notice[] = [
   {

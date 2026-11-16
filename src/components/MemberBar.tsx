@@ -24,6 +24,10 @@ export default function MemberBar() {
   const [open, setOpen] = useState(false)
   const paid = labItems.filter((x) => PAID_IDS.includes(x.id))
 
+  // a community member sees the community, not the demo's controls: no wallet of credits and no view switch here
+  // (the view switch lives in the small line at the foot of the page). A signed-in broker sees who is signed in.
+  if (!isOffice) return demo ? null : <AccountChip />
+
   return (
     <div className="mb">
       {isOffice ? (

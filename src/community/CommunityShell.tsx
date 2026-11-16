@@ -2,6 +2,8 @@ import type { ReactElement } from 'react'
 import { Link, Navigate, useLocation } from 'react-router-dom'
 import { ArrowLeft, BadgeCheck, Check, Home, Lock, UserRound } from 'lucide-react'
 import { useMember } from '../config/member'
+import { useStore } from '../store'
+import { demo } from '../auth/session'
 import { COMMUNITY_FEED, COMMUNITY_HOME, COMMUNITY_NAME, OFFICE_ONLY, OFFICE_PAGE, UPGRADE_LABEL } from '../config/community'
 import type { ShellNav } from '../config/navExtras'
 import { Logo } from '../components/ui'
@@ -66,19 +68,53 @@ export function UpgradeBanner() {
   const { pathname } = useLocation()
   // the office's own screens and the locked tools already carry this call
   if (isOffice || /^\/app\/(office|builder|folder|agent)/.test(pathname)) return null
+  // a small, quiet strip: one line, never louder than the screen under it
   return (
-    <Link to={OFFICE_PAGE} className="upb">
-      <i aria-hidden>
-        <BadgeCheck />
-      </i>
+    <Link to={OFFICE_PAGE} className="upb is-slim">
+      <BadgeCheck aria-hidden />
       <span>
         <b>{UPGRADE_LABEL}</b>
-        <small>0% עמלה למשרד, 100% עמלה למתווך. דף נחיתה, פולדר דיגיטלי וכל הכלים המתקדמים כלולים.</small>
+        <small>0% עמלה למשרד, 100% עמלה למתווך</small>
       </span>
       <em>
-        לדף המשרד <ArrowLeft />
+        לפרטים <ArrowLeft />
       </em>
     </Link>
+  )
+}
+
+/** A community member sees the product, not the demo's workshop (see AppShell). */
+export function useQuietShell() {
+  return !useMember().isOffice
+}
+
+/**
+ * The one line that says this is a demo: small, at the very bottom of every screen inside the app, never inside
+ * the feed or a card. In the presentation it also holds the way to the office member's view.
+ */
+export function DemoFoot() {
+  const { member, setMember } = useMember()
+  const { toast } = useStore()
+  const next = member === 'office' ? 'community' : 'office'
+  return (
+    <p className="demo-foot" data-foot>
+      <span>נתוני דמו: השמות, הנכסים והמחירים מומצאים</span>
+      {demo && (
+        <>
+          <i aria-hidden>·</i>
+          <button
+            type="button"
+            data-v={next}
+            onClick={() => {
+              setMember(next)
+              toast(next === 'office' ? 'תצוגת חבר משרד' : 'תצוגת חבר קהילה')
+            }}
+          >
+            {next === 'office' ? 'תצוגת חבר משרד' : 'תצוגת חבר קהילה'}
+          </button>
+        </>
+      )}
+    </p>
   )
 }
 
@@ -124,7 +160,6 @@ export function OfficeOnly({ id, children }: { id: 'builder' | 'folder'; childre
               להשוואת המסלולים
             </Link>
           </div>
-          <small>בדמו אפשר לעבור לתצוגת "חבר משרד" במתג שלמעלה ולראות את המסך.</small>
         </div>
         <div className="of-ghost" aria-hidden>
           <span className="of-ghost-lock">

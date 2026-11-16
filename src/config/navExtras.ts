@@ -43,6 +43,10 @@ export const shellSlots: {
   brand?: ComponentType<{ place: 'side' | 'top' }>
   /** a strip above every screen inside the app */
   banner?: ComponentType
+  /** true for the member who should see a clean product: no beta lab, no demo tags, no reset (the community) */
+  useQuiet?: () => boolean
+  /** one small line at the very bottom of every screen inside the app */
+  foot?: ComponentType
 } = {}
 export function registerShell(slots: typeof shellSlots) {
   Object.assign(shellSlots, slots)

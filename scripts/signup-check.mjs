@@ -217,8 +217,10 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
   await page.goto(green + '/demo', { waitUntil: 'load' })
   await page.waitForFunction(() => location.pathname.endsWith('/app/community') || location.pathname.endsWith('/app'), { timeout: 20000 })
   await wait(2000)
-  const demoView = await page.evaluate(() => ({ sw: !!document.querySelector('.ms'), maya: document.body.innerText.includes('מאיה לנדאו'), reset: !!document.querySelector('.dreset') }))
-  check(`${d} the demo link opens the open demo: the example user, the view switch, the "start again" tab`, demoView.sw && demoView.maya && demoView.reset, JSON.stringify(demoView))
+  // 16.11.2026: inside, the community looks live: no switch and no "start again" tab; the way to the office member's
+  // view is in the small demo line at the foot of the page
+  const demoView = await page.evaluate(() => ({ foot: !!document.querySelector('[data-foot] [data-v="office"]'), maya: document.body.innerText.includes('מאיה לנדאו'), sw: !!document.querySelector('.ms'), reset: !!document.querySelector('.dreset') }))
+  check(`${d} the demo link opens the open demo: the example user, and the office member's view from the line at the foot`, demoView.foot && demoView.maya && !demoView.sw && !demoView.reset, JSON.stringify(demoView))
   await page.goto(green + '/app/crm?v=properties', { waitUntil: 'load' })
   await wait(1500)
   check(`${d} ... with the example user's own properties, and without the broker's`, await page.evaluate(() => document.querySelectorAll('.kan-card').length >= 6 && !document.body.innerText.includes(' בפתח תקווה') ))
