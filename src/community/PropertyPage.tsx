@@ -8,6 +8,7 @@ import type { CommunityItem } from '../data/demo'
 import { useStore } from '../store'
 import { nameSlots } from '../config/navExtras'
 import { Avatar, EASE } from '../components/ui'
+import { IconHome } from './KhIcons'
 import '../styles/property.css'
 
 /** The price as it is said: an asking price, or a monthly rent. */
@@ -75,6 +76,16 @@ export default function PropertyPage() {
         {/* ---------------------------------------------------------- the photos */}
         <section className="pp-gallery" aria-label={`תמונות של ${item.title}`}>
           <div className="pp-main">
+            {/* no photos yet: a picture of its own, in the community's colours, with a house and the city */}
+            {photos.length === 0 && (
+              <div className="pp-nophoto" data-nophoto role="img" aria-label={`עדיין אין תמונות לנכס ב${item.city}`}>
+                <span className="pp-nophoto-ring" aria-hidden>
+                  <IconHome />
+                </span>
+                <strong>{item.city}</strong>
+                <small>עדיין אין תמונות לנכס הזה</small>
+              </div>
+            )}
             <AnimatePresence initial={false} mode="popLayout">
               {photos[shown] && (
                 <motion.img

@@ -163,15 +163,22 @@ for (const [tag, vp] of [
     renewal: !!document.querySelector('.pp [data-renewal]'),
     parking: document.querySelector('[data-fact="חניה"] dd')?.textContent,
     area: document.querySelector('.pp-area')?.textContent,
+    noPhoto: (() => {
+      const n = document.querySelector('[data-nophoto]')
+      if (!n) return null
+      const r = n.getBoundingClientRect()
+      return { text: n.textContent, icon: !!n.querySelector('svg'), h: Math.round(r.height), img: !!document.querySelector('.pp-main img') }
+    })(),
   }))
+  check(`${tag}: a property with no photos gets a picture of its own: a house and the city, not an empty frame`, mine.noPhoto && mine.noPhoto.icon && /חיפה/.test(mine.noPhoto.text) && mine.noPhoto.h > 150 && !mine.noPhoto.img, mine.noPhoto)
   check(`${tag}: my own property page shows me the exact address (marked "רק אתם רואים"), the tag and "2 חניות"`, /סמטת הכרמים 12, נווה שאנן, חיפה/.test(mine.exact ?? '') && /רק אתם/.test(mine.exact ?? '') && mine.renewal && mine.parking === '2 חניות', mine)
   await page.screenshot({ path: `${out}/${tag}-my-property.png` })
 
   // ---- another broker's property marked for renewal: the tag, and no address
   await page.goto(green + '/app/property/p12', { waitUntil: 'networkidle0' })
   await wait(700)
-  const other = await page.evaluate(() => ({ exact: !!document.querySelector('[data-exact]'), renewal: !!document.querySelector('.pp [data-renewal]'), area: document.querySelector('.pp-area')?.textContent }))
-  check(`${tag}: another broker's property page: the tag, the city and neighbourhood, no exact address`, !other.exact && other.renewal && /ראשון לציון - רמז/.test(other.area ?? ''), other)
+  const other = await page.evaluate(() => ({ nophoto: !!document.querySelector('[data-nophoto]'), exact: !!document.querySelector('[data-exact]'), renewal: !!document.querySelector('.pp [data-renewal]'), area: document.querySelector('.pp-area')?.textContent }))
+  check(`${tag}: another broker's property page: the tag, the city and neighbourhood, no exact address (and its own photos)`, !other.nophoto && !other.exact && other.renewal && /ראשון לציון - רמז/.test(other.area ?? ''), other)
   await page.screenshot({ path: `${out}/${tag}-other-property.png` })
 
   const wide = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)

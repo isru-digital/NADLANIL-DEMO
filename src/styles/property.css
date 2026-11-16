@@ -571,3 +571,93 @@ html[data-mode='night'] .kan-renew {
   height: 14px;
   stroke-width: 3;
 }
+
+/* a property with no photos yet: a picture of its own, mint and white with the brand's green and a touch of gold */
+.pp-nophoto {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 10px;
+  padding: 20px;
+  text-align: center;
+  background:
+    radial-gradient(60% 55% at 50% 42%, rgba(94, 230, 180, 0.32), transparent 72%),
+    radial-gradient(40% 40% at 88% 10%, rgba(232, 183, 90, 0.16), transparent 70%),
+    linear-gradient(160deg, #ffffff, #eaf7f0 55%, #d9f1e5);
+  isolation: isolate;
+}
+/* a faint grid of points, and a soft skyline of roofs along the bottom */
+.pp-nophoto::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image: radial-gradient(rgba(11, 90, 60, 0.1) 1px, transparent 1.4px);
+  background-size: 18px 18px;
+  mask-image: radial-gradient(75% 70% at 50% 45%, #000 30%, transparent 85%);
+  -webkit-mask-image: radial-gradient(75% 70% at 50% 45%, #000 30%, transparent 85%);
+}
+.pp-nophoto::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  height: 26%;
+  z-index: -1;
+  background: rgba(11, 122, 79, 0.07);
+  clip-path: polygon(0 100%, 0 62%, 8% 62%, 8% 40%, 16% 26%, 24% 40%, 24% 56%, 34% 56%, 34% 30%, 44% 30%, 44% 50%, 54% 50%, 54% 18%, 62% 6%, 70% 18%, 70% 48%, 80% 48%, 80% 34%, 92% 34%, 92% 58%, 100% 58%, 100% 100%);
+}
+.pp-nophoto-ring {
+  display: grid;
+  place-items: center;
+  width: clamp(76px, 22%, 112px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1.5px solid #9fdfc2;
+  box-shadow:
+    0 0 0 8px rgba(94, 230, 180, 0.14),
+    0 16px 34px -16px rgba(8, 82, 54, 0.45);
+  color: #b07a14;
+}
+.pp-nophoto-ring .khi {
+  width: 52%;
+  height: 52%;
+}
+.pp-nophoto-ring .khi-warm {
+  fill: rgba(232, 183, 90, 0.3);
+}
+.pp-nophoto strong {
+  font-family: var(--font-display);
+  font-size: clamp(24px, 3.4vw, 34px);
+  line-height: 1.1;
+  color: #0b5a3c;
+}
+.pp-nophoto small {
+  font-size: 14px;
+  color: #3b574b;
+}
+html[data-mode='night'] .pp-nophoto {
+  background:
+    radial-gradient(60% 55% at 50% 42%, rgba(28, 160, 110, 0.34), transparent 72%),
+    radial-gradient(40% 40% at 88% 10%, rgba(232, 183, 90, 0.1), transparent 70%),
+    linear-gradient(160deg, #0b3527, #072a1e 60%, #05201a);
+}
+html[data-mode='night'] .pp-nophoto::before {
+  background-image: radial-gradient(rgba(190, 255, 225, 0.1) 1px, transparent 1.4px);
+}
+html[data-mode='night'] .pp-nophoto::after {
+  background: rgba(110, 240, 195, 0.07);
+}
+html[data-mode='night'] .pp-nophoto-ring {
+  background: radial-gradient(circle at 35% 30%, #0c4a34, #062e21);
+  border-color: rgba(130, 245, 205, 0.36);
+  color: #f0c56e;
+}
+html[data-mode='night'] .pp-nophoto strong {
+  color: #ffffff;
+}
+html[data-mode='night'] .pp-nophoto small {
+  color: rgba(225, 245, 236, 0.76);
+}

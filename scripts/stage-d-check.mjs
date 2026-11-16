@@ -102,7 +102,11 @@ for (const [label, vp, phone] of [
   check(`${tag}: the shared post enters the feed, in the visitor's name`, st.n === posts + 1 && st.first.includes('מאיה לנדאו') && st.first.includes('שווה לראות') && st.first.includes('שיתוף של פוסט מאת') && (await toast(page)).includes('השיתוף פורסם'), st.first.slice(0, 120))
   await shot('4-shared')
 
-  // ---- 3. from WhatsApp to the system
+  // ---- 3. from WhatsApp to the system: the tool lives in the beta lab, which the office view has (a community
+  // member's screens have no lab since 16.11.2026), so this part walks the office view
+  await page.evaluate(() => localStorage.setItem('nadlanup-member-v1', 'office'))
+  await go('/app/community')
+  check(`${tag}: the office view has the beta lab`, await page.evaluate((p) => (p ? !!document.querySelector('.bottom-link') : !!document.querySelector('.side-lab-link.is-all')), phone))
   if (phone) {
     await clickText(page, '.bottom-link', 'עוד')
     await wait(600)
