@@ -29,9 +29,15 @@ export type MemberInfo = {
 export type StaffInfo = { name: string; email: string; approver: boolean }
 export type Session = { token: string; member: MemberInfo | null; staff: StaffInfo | null }
 
-/** The server. On this computer it is the local copy in test mode; anywhere else, the real one. */
-export const API: string =
-  (import.meta.env.VITE_API_URL as string | undefined) ?? (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? 'http://localhost:8787' : 'https://nadlanup-api.isru.workers.dev')
+/**
+ * The server. On this computer it is the local copy in test mode; anywhere else, the real one, at its Pages address.
+ * Some Israeli providers cannot look up *.workers.dev names at all (16.11.2026: the DNS times out), so the Pages
+ * address comes first and the Worker's own address is only a fallback when the first cannot be reached.
+ */
+const LOCAL = /^(localhost|127\.0\.0\.1)$/.test(location.hostname)
+const FIXED = import.meta.env.VITE_API_URL as string | undefined
+export const API: string = FIXED ?? (LOCAL ? 'http://localhost:8787' : 'https://nadlanup-api.pages.dev')
+const BACKUP: string | null = FIXED || LOCAL ? null : 'https://nadlanup-api.isru.workers.dev'
 
 const KEY = 'nadlanup-session-v1'
 const DEMO = 'nadlanup-demo-v1'
@@ -116,12 +122,15 @@ export type Reply<T> = { ok: boolean; status: number; data: T & { error?: string
 /** One call to the server. A failure to reach it comes back as status 0, never as an exception. */
 export async function call<T = Record<string, unknown>>(path: string, opts: { method?: string; body?: unknown; token?: string } = {}): Promise<Reply<T>> {
   const token = opts.token ?? read()?.token
-  try {
-    const res = await fetch(API + path, {
+  const send = (base: string) =>
+    fetch(base + path, {
       method: opts.method ?? 'GET',
       headers: { ...(opts.body !== undefined ? { 'content-type': 'application/json' } : {}), ...(token ? { authorization: `Bearer ${token}` } : {}) },
       body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
     })
+  try {
+    // the second address only when the first could not be reached at all (no answer, not an error answer)
+    const res = await send(API).catch((e) => (BACKUP ? send(BACKUP) : Promise.reject(e)))
     const data = (await res.json().catch(() => ({}))) as Reply<T>['data']
     return { ok: res.ok, status: res.status, data }
   } catch {
