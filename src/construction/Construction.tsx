@@ -16,8 +16,8 @@ export default function Construction() {
           <i />
         </span>
       </div>
-      <small className="uc-foot">
-        <bdi dir="ltr">NadlanUP</bdi> · מתווכים לעסקאות
+      <small className="uc-foot" data-owner>
+        © 2026 <bdi dir="ltr">ISRU-E</bdi> · כל הזכויות שמורות
       </small>
     </main>
   )
