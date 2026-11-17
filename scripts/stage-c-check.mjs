@@ -49,15 +49,10 @@ for (const [label, vp, phone] of [
     await clickText(page, '.side-link', 'המשרד שלי')
   }
   await wait(1300)
-  let st = await page.evaluate(() => ({
-    path: location.pathname,
-    cards: document.querySelectorAll('.of-card').length,
-    locked: document.querySelectorAll('.of-card.is-locked').length,
-    chips: [...new Set([...document.querySelectorAll('.of-chip')].map((c) => c.textContent.trim()))],
-    banner: document.querySelector('.of-banner')?.textContent ?? '',
-    cta: document.querySelector('.of-banner-cta a')?.getAttribute('href') ?? '',
-  }))
-  check(`${tag}: community member: nine cards, all closed and marked "בלעדי למשרד", with the way to the comparison`, st.path.endsWith('/app/office') && st.cards === 9 && st.locked === 9 && st.chips.join() === 'בלעדי למשרד' && st.banner.includes('כחבר קהילה') && st.cta.endsWith('/upgrade'), JSON.stringify(st))
+  // since 17.11.2026 a community member gets the office's page here (office-story-check), not the locked list
+  const story = await page.evaluate(() => ({ path: location.pathname, story: !!document.querySelector('[data-office-story]'), cards: document.querySelectorAll('.of-card').length }))
+  check(`${tag}: community member: "המשרד" opens the office's page, not the locked list`, story.path.endsWith('/app/office') && story.story && story.cards === 0, JSON.stringify(story))
+  let st
   check(`${tag}: no sideways overflow on the hub`, (await overflow(page)) <= 1)
   await shot('1-hub-community')
 

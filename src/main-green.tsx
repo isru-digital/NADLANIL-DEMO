@@ -19,6 +19,7 @@ import AgentArea from './agent/AgentArea'
 import AgentPage from './agent/AgentPage'
 import JoinChoice from './join/JoinChoice'
 import JoinOffice from './join/JoinOffice'
+import OfficeStory from './office/OfficeStory'
 import DemoReset from './components/DemoReset'
 import { MemberBadge } from './components/MemberSwitch'
 import MemberBar from './components/MemberBar'
@@ -138,6 +139,8 @@ start(<HomeGreen />, {
       {/* the link for presentations: the open demo, with the example user */}
       <Route path="/demo" element={<DemoStart />} />
       <Route path="/join/office" element={<JoinOffice />} />
+      {/* the office's page on its own, for the community's public page (inside the app it is "המשרד") */}
+      <Route path="/office" element={<OfficeStory standalone />} />
       <Route path="/agent/:slug" element={<AgentPage />} />
       <Route path="/about" element={<About />} />
       <Route path="/upgrade" element={<Upgrade />} />

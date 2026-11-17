@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, Building2, UserRound } from 'lucide-react'
 import { PLATFORM_NAME } from '../config'
-import { OFFICE_PAGE, UPGRADE_LABEL } from '../config/community'
+import { OFFICE_STORY, UPGRADE_LABEL } from '../config/community'
 import { OFFICE_FEE } from '../config/office'
 import '../styles/office-pitch.css'
 
@@ -67,7 +67,7 @@ export default function OfficePitch() {
         </h2>
         <p>משרד תיווך ארצי. דף נחיתה, פולדר דיגיטלי וכל הכלים המתקדמים כלולים.</p>
         <div className="kp-cta">
-          <Link to={OFFICE_PAGE} className="kp-btn" data-act="office-pitch">
+          <Link to={OFFICE_STORY} className="kp-btn" data-act="office-pitch">
             <span>{UPGRADE_LABEL}</span>
             <ArrowLeft />
           </Link>

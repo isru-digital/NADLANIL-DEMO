@@ -18,6 +18,8 @@ export const COMMUNITY_FEED = '/app/community'
 
 /** The one call that leads from the community to the office's page. */
 export const UPGRADE_LABEL = `שדרג למשרד ${PLATFORM_NAME}`
-export const OFFICE_PAGE = '/join/office'
+/** Inside the app the office's page is "המשרד" itself; outside it (the community's public page) the same page stands alone. */
+export const OFFICE_PAGE = '/app/office'
+export const OFFICE_STORY = '/office'
 /** What a community member reads on the landing page builder and the digital folder. */
 export const OFFICE_ONLY = 'זמין לחברי המשרד'

@@ -8,6 +8,7 @@ import { planById, usePick } from '../config/pricing'
 import { EASE } from '../components/ui'
 import { extraById, extras } from './officeData'
 import type { Extra } from './officeData'
+import OfficeStory from './OfficeStory'
 import { AssistantScreen, BadgeScreen, BenefitsScreen, DealScreen, GrowthScreen, LeadsScreen, PitchScreen, ReportScreen } from './OfficeScreens'
 import '../styles/office.css'
 
@@ -18,6 +19,8 @@ import '../styles/office.css'
 export function OfficeHub() {
   const { isOffice } = useMember()
   const plan = planById(usePick().plan)
+  // a community member gets the office's story, not a list of locked tools (Itzik, 17.11.2026)
+  if (!isOffice) return <OfficeStory />
   return (
     <div className="of">
       <header className="of-head">

@@ -55,7 +55,7 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
   check(`${d} entry page: the description, word for word`, t.includes('הקהילה החינמית שמחברת בין מתווכים מכל הארץ, לשיתוף נכסים, איתור קונים, התייעצויות ויצירת הזדמנויות עסקיות.'))
   check(`${d} entry page: its own name, not the office's logo, and its own tab title`, !hero.office && hero.title.startsWith(NAME), hero.title)
   check(`${d} entry page: the landing page and the folder are marked "זמין לחברי המשרד"`, (t.match(/זמין לחברי המשרד/g) ?? []).length === 2)
-  check(`${d} entry page: a way to the office's page ("שדרג למשרד NadlanUP")`, await page.evaluate(() => [...document.querySelectorAll('a')].some((a) => a.textContent.includes('שדרג למשרד NadlanUP') && a.pathname.endsWith('/join/office'))))
+  check(`${d} entry page: a way to the office's page ("שדרג למשרד NadlanUP")`, await page.evaluate(() => [...document.querySelectorAll('a')].some((a) => a.textContent.includes('שדרג למשרד NadlanUP') && a.pathname.endsWith('/office'))))
   check(`${d} entry page: nothing scrolls sideways`, (await overflow(page)) <= 1)
   await shot(page, `${d}-1-entry`)
   await page.screenshot({ path: `${out}/${d}-1-entry-full.png`, fullPage: true })
@@ -89,7 +89,7 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
   await shot(page, `${d}-2-feed`)
   await page.evaluate(() => document.querySelector('.upb')?.click())
   await wait(1700)
-  check(`${d} the strip leads to the office's page`, (await path(page)) === '/join/office', await path(page))
+  check(`${d} the strip leads to the office's page`, (await path(page)) === '/app/office', await path(page))
   check(`${d} the office's page shows the fee from 549`, (await text(page)).includes('החל מ-549 ₪ + מע"מ לחודש'))
 
   // ---- 4. the two tools that belong to the office
@@ -103,7 +103,7 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
       real: !!document.querySelector('.builder, .bld, .folder, .lp'),
     }))
     check(`${d} /app/${id} is closed to a community member, with "זמין לחברי המשרד"`, s.tag === 'זמין לחברי המשרד' && s.h1 === title && !s.real, JSON.stringify(s))
-    check(`${d} /app/${id}: its button is "שדרג למשרד NadlanUP" and leads to the office's page`, s.cta.some((c) => c.startsWith('שדרג למשרד NadlanUP') && c.endsWith('>/join/office')), s.cta.join(' , '))
+    check(`${d} /app/${id}: its button is "שדרג למשרד NadlanUP" and leads to the office's page`, s.cta.some((c) => c.startsWith('שדרג למשרד NadlanUP') && c.endsWith('>/app/office')), s.cta.join(' , '))
     check(`${d} /app/${id}: nothing scrolls sideways`, (await overflow(page)) <= 1)
     await shot(page, `${d}-3-locked-${id}`)
   }

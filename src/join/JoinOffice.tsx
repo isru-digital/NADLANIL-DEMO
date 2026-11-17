@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { animate, motion } from 'framer-motion'
 import { ArrowLeft, BadgeCheck, Building2, Calculator, Check, Gem, LoaderCircle, Lock, Plus, ShieldCheck, Sparkles, Users, Wallet, X } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -166,6 +166,17 @@ export default function JoinOffice() {
     navigate('/app/agent')
   }
   const cta = () => (joined ? navigate('/app/agent') : (setAgree(false), setPay('open')))
+  // "אני רוצה להצטרף" on the office's page comes here with ?join=1: the joining opens at once
+  const [params, setParams] = useSearchParams()
+  useEffect(() => {
+    if (params.get('join') !== '1') return
+    setParams({}, { replace: true })
+    if (!joined) {
+      setAgree(false)
+      setPay('open')
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <div className="jo">
