@@ -168,12 +168,26 @@ for (const t of ['12:00', '22:00']) {
   for (const path of ['/', '/app', '/app/community', '/join/office', '/upgrade', '/app/office']) {
     await page.goto(green + path, { waitUntil: 'load' })
     await wait(1300)
+    // inside the app, on a phone, the switch is a small button in the top bar (17.11.2026: the float hid the cards);
+    // on the other pages it is still the float in the corner
     const s = await page.evaluate(() => {
-      const r = document.querySelector('.dn')?.getBoundingClientRect()
+      const inApp = location.pathname.includes('/app')
+      const el = inApp ? document.querySelector('.dn-compact') : document.querySelector('.dn')
+      const r = el?.getBoundingClientRect()
       const nav = document.querySelector('.bottom-nav')?.getBoundingClientRect()
-      return { ov: document.documentElement.scrollWidth - document.documentElement.clientWidth, in: !!r && r.left >= 0 && r.right <= innerWidth && r.bottom <= innerHeight, clear: !nav || nav.height === 0 || r.bottom <= nav.top + 1, h: r ? Math.round(document.querySelector('.dn button').getBoundingClientRect().height) : 0 }
+      const bar = document.querySelector('.topbar')?.getBoundingClientRect()
+      const float = document.querySelector('.dn')
+      return {
+        inApp,
+        ov: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        in: !!r && r.width > 0 && r.left >= 0 && r.right <= innerWidth && r.bottom <= innerHeight,
+        clear: !nav || nav.height === 0 || (r && r.bottom <= nav.top + 1),
+        inBar: !inApp || (!!bar && !!r && r.top >= bar.top - 1 && r.bottom <= bar.bottom + 1),
+        floatHidden: !inApp || !float || getComputedStyle(float).display === 'none',
+        h: r ? Math.round(inApp ? r.height : document.querySelector('.dn button').getBoundingClientRect().height) : 0,
+      }
     })
-    check(`phone, ${t}, ${path}: the switch is on screen, clear of the bottom menu, and nothing scrolls sideways`, s.ov <= 1 && s.in && s.clear && s.h >= 36, JSON.stringify(s))
+    check(`phone, ${t}, ${path}: the switch is on screen (inside the app: in the top bar, no float over the content), and nothing scrolls sideways`, s.ov <= 1 && s.in && s.clear && s.inBar && s.floatHidden && s.h >= 36, JSON.stringify(s))
   }
   await page.screenshot({ path: `${out}/dn-phone-${t === '12:00' ? 'day' : 'night'}.png` })
   await page.close()

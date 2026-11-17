@@ -155,7 +155,8 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
   check(`${d} properties pulled from Yad2 are published too, each with its owner link`, st.every(Boolean), JSON.stringify(st))
   await page.goto(green + '/app/community?topic=coop', { waitUntil: 'load' })
   await wait(1800)
-  st = await page.evaluate(() => ({ a: document.body.innerText.includes('דירת 3 חדרים בקומה שנייה'), b: document.body.innerText.includes('דירת 5 חדרים עם מחסן'), internal: document.body.innerText.includes('נמשך מיד 2'), once: [...document.querySelectorAll('.fb.ci, .ci')].filter((c) => c.textContent.includes('דירת 4 חדרים בפתח תקווה')).length }))
+  // read the posts' own titles (a card still sliding in may not be in the page's visible text yet)
+  st = await page.evaluate(() => ({ a: [...document.querySelectorAll('.fb.ci h3')].some((h) => h.textContent.includes('דירת 3 חדרים בקומה שנייה')), b: [...document.querySelectorAll('.fb.ci h3')].some((h) => h.textContent.includes('דירת 5 חדרים עם מחסן')), internal: document.body.innerText.includes('נמשך מיד 2'), once: [...document.querySelectorAll('.fb.ci, .ci')].filter((c) => c.textContent.includes('דירת 4 חדרים בפתח תקווה')).length }))
   check(`${d} ... and they are in the community, without the internal note, each property once`, st.a && st.b && !st.internal && st.once >= 1 && st.once <= 2, JSON.stringify(st))
   check(`${d} nothing scrolls sideways in the feed`, (await overflow(page)) <= 1)
 

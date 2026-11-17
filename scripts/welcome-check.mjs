@@ -97,6 +97,32 @@ for (const [tag, vp] of [
   check(`${tag}: short lines on what sharing brings, along the page, with no numbers`, w.values.length >= 2 && w.values.every((v) => !/\d/.test(v)), w.values)
   check(`${tag}: no sideways scroll`, w.wide <= 1, w.wide)
   await page.screenshot({ path: `${out}/${tag}-1-welcome.png` })
+
+  // ---- nothing floats over the cards; on a phone the day / night switch is a small button in the top bar
+  const cover = await page.evaluate(() => {
+    const hit = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom
+    const cards = [...document.querySelectorAll('[data-intent]')].map((c) => c.getBoundingClientRect())
+    const floats = [...document.querySelectorAll('.dn, .dn-compact')].filter((e) => getComputedStyle(e).display !== 'none' && getComputedStyle(e).position === 'fixed').map((e) => e.getBoundingClientRect())
+    const compact = document.querySelector('.dn-compact')
+    return {
+      covered: floats.some((f) => cards.some((c) => hit(f, c))),
+      compact: !!compact && getComputedStyle(compact).display !== 'none',
+      tagline: [...document.querySelectorAll('.side-principle > div')].map((d) => d.textContent.replace(/\s+/g, ' ').trim()),
+      old: document.body.innerText.includes('גזירות'),
+    }
+  })
+  check(`${tag}: nothing floats over the four cards`, !cover.covered, cover)
+  if (tag === 'phone') {
+    const before = await page.evaluate(() => document.documentElement.dataset.mode)
+    await page.click('.dn-compact')
+    await wait(400)
+    const after = await page.evaluate(() => document.documentElement.dataset.mode)
+    check(`phone: the small button in the top bar switches between light and dark`, cover.compact && before !== after, { before, after })
+    await page.click('.dn-compact')
+    await wait(300)
+  } else {
+    check(`desktop: the profile card says "0% עמלה למשרד" (no "גזירות")`, cover.tagline.some((t) => t.replace(/\s/g, '') === '0%עמלהלמשרד') && !cover.old, cover.tagline)
+  }
   await page.evaluate(() => document.querySelector('.feed-value')?.scrollIntoView({ block: 'center' }))
   await wait(400)
   await page.screenshot({ path: `${out}/${tag}-2-value-line.png` })

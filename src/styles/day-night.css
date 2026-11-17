@@ -71,9 +71,46 @@ html[data-theme='green'] {
   justify-content: center;
   color: var(--gold-soft) !important;
 }
+/* on a phone inside the app the float hid the content: there the switch is one small round button in the top bar */
+.dn-compact {
+  display: none;
+}
 @media (max-width: 980px) {
   .dn.on-app {
-    inset-block-end: calc(80px + env(safe-area-inset-bottom));
+    display: none;
+  }
+  .dn-compact {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 40px;
+    height: 40px;
+    margin-inline-start: auto;
+    border-radius: 50%;
+    border: 1px solid var(--line-strong);
+    background: color-mix(in srgb, var(--card) 92%, transparent);
+    color: #b07a14;
+    cursor: pointer;
+    touch-action: manipulation;
+    transition:
+      background-color var(--t) var(--ease),
+      transform var(--t-fast) var(--ease);
+  }
+  .dn-compact:active {
+    transform: scale(0.94);
+  }
+  .dn-compact:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
+  }
+  .dn-compact svg {
+    width: 19px;
+    height: 19px;
+  }
+  .dn-compact[data-mode='night'] {
+    color: #dbe7ff;
+    background: linear-gradient(135deg, #1c2f52, #0d1a33);
+    border-color: transparent;
   }
 }
 

@@ -47,6 +47,8 @@ export const shellSlots: {
   useQuiet?: () => boolean
   /** one small line at the very bottom of every screen inside the app */
   foot?: ComponentType
+  /** a small control at the end of the phone's top bar (the day / night toggle) */
+  topEnd?: ComponentType
 } = {}
 export function registerShell(slots: typeof shellSlots) {
   Object.assign(shellSlots, slots)

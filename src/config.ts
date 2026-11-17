@@ -5,6 +5,8 @@ export const PLATFORM_NAME = 'NadlanUP'
 
 /** The two-part slogan shown under the name. Each part starts with its number. */
 export const PLATFORM_TAGLINE = ['100% גב קהילתי', '0% גזירות בעמלה']
+/** the two lines on the profile card at the foot of the side menu (Itzik 17.11.2026: "0% עמלה למשרד") */
+export const SIDE_TAGLINE = ['100% גב קהילתי', '0% עמלה למשרד']
 
 /** Resolve a file in /public against the deployed base path. A full address (a photo held in the browser, a web link) is left as it is. */
 export const asset = (path: string) => (/^(data:|blob:|https?:)/.test(path) ? path : `${import.meta.env.BASE_URL}${path.replace(/^\//, '')}`)

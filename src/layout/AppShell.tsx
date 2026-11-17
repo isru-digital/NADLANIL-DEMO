@@ -14,7 +14,7 @@ import {
   RotateCcw,
   Users,
 } from 'lucide-react'
-import { CURRENT_BROKER_ID, PLATFORM_TAGLINE } from '../config'
+import { CURRENT_BROKER_ID, SIDE_TAGLINE } from '../config'
 import { extraNav, extraResets, shellSlots } from '../config/navExtras'
 import type { ShellNav } from '../config/navExtras'
 import { brokerById } from '../data/demo'
@@ -57,6 +57,7 @@ export default function AppShell() {
   const Brand = shellSlots.brand
   const Banner = shellSlots.banner
   const Foot = shellSlots.foot
+  const TopEnd = shellSlots.topEnd
   // a community member sees the product, not the demo's workshop: no beta lab, no demo tags, no reset here
   const quiet = shellSlots.useQuiet ? shellSlots.useQuiet() : false
 
@@ -153,7 +154,7 @@ export default function AppShell() {
 
         <div className="sidebar-foot">
           <div className="side-principle">
-            {PLATFORM_TAGLINE.map((part) => {
+            {SIDE_TAGLINE.map((part) => {
               const [num, ...rest] = part.split(' ')
               return (
                 <div key={part}>
@@ -195,6 +196,7 @@ export default function AppShell() {
           )}
         </div>
         {!quiet && <DemoTag />}
+        {TopEnd && <TopEnd />}
         {Bar && (
           <div className="topbar-bar">
             <Bar />

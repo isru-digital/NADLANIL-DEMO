@@ -9,7 +9,7 @@ import { Route } from 'react-router-dom'
 import { BadgeCheck, Building2 } from 'lucide-react'
 import { start } from './bootstrap'
 import { dayNight } from './config/dayNight'
-import DayNightSwitch from './components/DayNightSwitch'
+import DayNightSwitch, { DayNightCompact } from './components/DayNightSwitch'
 import { PLATFORM_NAME } from './config'
 import { COMMUNITY_HOME, COMMUNITY_JOIN } from './config/community'
 import CommunityHome from './community/CommunityHome'
@@ -91,6 +91,8 @@ registerShell({ bar: MemberBar, badge: MemberBadge, lab: TieredLab })
 registerShell({ useNav: useCommunityNav, brand: ShellBrand, banner: UpgradeBanner })
 // a community member sees a live community: no beta lab, demo tags or reset inside; one small demo line at the foot
 registerShell({ useQuiet: useQuietShell, foot: DemoFoot })
+// on a phone inside the app, the day / night switch is a small button in the top bar, not a float over the content
+registerShell({ topEnd: DayNightCompact })
 registerLab({
   Chip: LabChip,
   Badge: LabBadge,
