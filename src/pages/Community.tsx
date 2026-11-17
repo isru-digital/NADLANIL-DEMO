@@ -32,7 +32,9 @@ import { useStore } from '../store'
 import { actionSlots, communitySlots } from '../config/navExtras'
 import { Avatar, EASE, Modal } from '../components/ui'
 import CommunityCard from '../components/CommunityCard'
-import { BuyerPicker, PropertyPicker } from '../community/PublishPickers'
+import { BuyerPicker, PropertyPicker, ReferralSheet } from '../community/PublishPickers'
+import { VALUE_LINES } from '../community/FeedWelcome'
+import type { Intent } from '../community/FeedWelcome'
 import '../styles/community.css'
 import '../styles/feed.css'
 import '../styles/property.css'
@@ -151,7 +153,9 @@ export default function Community() {
 
   const toggleCity = (c: string) => setMyCities(myCities.includes(c) ? myCities.filter((x) => x !== c) : [...myCities, c])
   // sharing a property or a buyer: pick from the CRM, or add a new one (saved in the CRM and published)
-  const [pick, setPick] = useState<'property' | 'buyer' | 'new-buyer' | null>(null)
+  const [pick, setPick] = useState<'property' | 'buyer' | 'new-buyer' | 'referral' | null>(null)
+  // the four cards of the welcome: each goes straight to its action
+  const onIntent = (i: Intent) => (i === 'property' ? setPick('property') : i === 'buyer' ? setPick('buyer') : i === 'referral' ? setPick('referral') : openComposer('knowledge'))
   const newProperty = () => (actionSlots.newCard ? actionSlots.newCard() : setPick('property'))
   const openComposer = (topicId?: TopicId, photo?: boolean) =>
     setComposer({ topicId: topicId ?? (topic?.compose ? topic.id : 'posts'), photo })
@@ -182,7 +186,7 @@ export default function Community() {
 
   return (
     <div className="fbx-page">
-      {communitySlots.Top && <communitySlots.Top items={scoped} view={view} onView={setView as (v: never) => void} />}
+      {communitySlots.Top && <communitySlots.Top items={scoped} view={view} onView={setView as (v: never) => void} onIntent={onIntent} />}
       {/* -------------------------------------------------------- top bar */}
       <header className="fbx-top">
         <h1>קהילה</h1>
@@ -390,7 +394,7 @@ export default function Community() {
 
           <div className="ci-list">
             <AnimatePresence initial={false}>
-              {visible.map((it) => (
+              {visible.flatMap((it, i) => [
                 <motion.div
                   key={it.id}
                   className="ci-wrap"
@@ -400,8 +404,16 @@ export default function Community() {
                   transition={{ duration: 0.5, ease: EASE }}
                 >
                   <CommunityCard item={it} match={matchFor(it)} />
-                </motion.div>
-              ))}
+                </motion.div>,
+                // now and then, between the posts, one short line on what sharing brings
+                ...(communitySlots.Top && i % 5 === 2 && i < visible.length - 1
+                  ? [
+                      <p key={`v-${i}`} className="feed-value" data-value>
+                        {VALUE_LINES[Math.floor(i / 5) % VALUE_LINES.length]}
+                      </p>,
+                    ]
+                  : []),
+              ])}
             </AnimatePresence>
             {visible.length === 0 && (
               <div className="empty fb">
@@ -531,6 +543,7 @@ export default function Community() {
         onPickProperty={() => setPick('property')}
       />
       <PropertyPicker open={pick === 'property'} onClose={() => setPick(null)} />
+      <ReferralSheet open={pick === 'referral'} onClose={() => setPick(null)} />
       <BuyerPicker open={pick === 'buyer' || pick === 'new-buyer'} startNew={pick === 'new-buyer'} onClose={() => setPick(null)} />
 
       {/* ------------------------------------------------- cities picker */}

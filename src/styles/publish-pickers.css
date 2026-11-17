@@ -248,3 +248,86 @@
     height: 50px;
   }
 }
+
+/* the referral sheet */
+.rf-seg {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 16px;
+  border: 1.5px solid var(--line);
+  background: var(--card);
+}
+.rf-seg button {
+  min-height: 48px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+.rf-seg button[aria-checked='true'] {
+  background: linear-gradient(135deg, #0a7a4f, #12a36c);
+  color: #fff;
+}
+.rf-field {
+  display: grid;
+  gap: 7px;
+}
+.rf-label {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+.rf-picks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.rf-pick {
+  min-height: 46px;
+  padding: 0 16px;
+  border-radius: 14px;
+  border: 1.5px solid var(--line);
+  background: var(--card);
+  font-family: var(--font-display);
+  font-size: 15.5px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+}
+.rf-pick[aria-pressed='true'] {
+  border-color: transparent;
+  background: linear-gradient(135deg, #0a7a4f, #12a36c);
+  color: #fff;
+}
+.rf-pick.is-more {
+  border-style: dashed;
+  color: #0a7a4f;
+  background: transparent;
+}
+.rf-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.rf .input,
+.rf .textarea {
+  font-size: 16px;
+}
+.rf .input {
+  min-height: 48px;
+}
+.rf-go {
+  justify-content: center;
+}
+@media (max-width: 560px) {
+  .rf-row {
+    grid-template-columns: 1fr;
+  }
+}

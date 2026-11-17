@@ -1,5 +1,7 @@
-// The community feed's front page (green version): the nameplate, the day's figures that are also filters, the
-// running line, and that nothing breaks on a narrow phone, at night or with reduced motion.
+// The community feed's top (green version, since 17.11.2026 a personal welcome in place of the paper's nameplate and
+// figures): a room is a filter (one tap shows that topic, a second goes back), the posts keep their own shapes, the
+// welcome reads well at night, stands still with reduced motion, and nothing breaks on a narrow phone.
+// The welcome's own words, cards and actions are checked in welcome-check.mjs.
 // Usage: node scripts/feed-check.mjs [outDir]     (BASE_GREEN overrides the address)
 import puppeteer from 'puppeteer-core'
 import { mkdirSync } from 'node:fs'
@@ -9,6 +11,7 @@ const out = process.argv[2] ?? '_shots/feed'
 mkdirSync(out, { recursive: true })
 const browser = await puppeteer.launch({ executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: 'new', args: ['--hide-scrollbars'] })
 const wait = (ms) => new Promise((r) => setTimeout(r, ms))
+const PREVIEW = '6d5eaaca072bf02f647051d8688d1337a4ab7a6cb92a2a8b3924cf91fda89e8b'
 const results = []
 const check = (name, ok, detail = '') => {
   const line = `${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? '  [' + detail + ']' : ''}`
@@ -21,61 +24,67 @@ const state = (page) =>
       const [r, g, b] = c.match(/[\d.]+/g).map(Number)
       return Math.round(0.2126 * r + 0.7152 * g + 0.0722 * b)
     }
-    const name = document.querySelector('.mast-name')
+    const hello = document.querySelector('[data-greeting]')
+    const wl = document.querySelector('[data-welcome]')
     return {
       path: location.pathname.replace(/^\/NADLANIL-DEMO(\/green)?/, '') + location.search,
-      name: name?.textContent.replace(/\s+/g, ' ').trim(),
-      font: name ? getComputedStyle(name).fontFamily.split(',')[0].replace(/["']/g, '') : '',
-      size: name ? Math.round(parseFloat(getComputedStyle(name).fontSize)) : 0,
-      motto: [...document.querySelectorAll('.mast-motto span')].map((s) => s.textContent.trim()).join('|'),
-      figs: [...document.querySelectorAll('.mast-fig')].map((f) => ({ id: f.dataset.topic, n: Number(f.querySelector('b').textContent), label: f.querySelector('span').textContent.trim(), on: f.classList.contains('is-on'), h: Math.round(f.getBoundingClientRect().height) })),
+      hello: !!hello,
+      rooms: [...document.querySelectorAll('[data-room]')].map((r) => ({ id: r.dataset.room, on: r.getAttribute('aria-pressed') === 'true' })),
       rail: Object.fromEntries([...document.querySelectorAll('.comm-rail .rail-btn')].map((b) => [b.querySelector('.rail-label')?.textContent.trim(), Number(b.querySelector('.rail-count')?.textContent)])),
-      ticker: document.querySelectorAll('.mast-ticker span').length,
-      tickerAnim: getComputedStyle(document.querySelector('.mast-ticker-track') ?? document.body).animationName,
       h1: document.querySelector('.fbx-top h1')?.textContent.trim(),
       h1Seen: (document.querySelector('.fbx-top h1')?.getBoundingClientRect().width ?? 0) > 2,
       cards: document.querySelectorAll('.fb.ci').length,
       topics: [...new Set([...document.querySelectorAll('.fb.ci .fb-topic')].map((t) => t.textContent.trim()))],
       ov: document.documentElement.scrollWidth - document.documentElement.clientWidth,
-      nameLum: name ? lum(getComputedStyle(name).color) : 0,
-      paperLum: lum(getComputedStyle(document.querySelector('.mast')).backgroundColor),
+      helloLum: hello ? lum(getComputedStyle(hello).color) : 0,
+      paperLum: wl ? lum(getComputedStyle(wl).backgroundColor) : 0,
+      anim: wl ? getComputedStyle(wl).animationName : '',
       meLink: (document.querySelector('.me-card .me-link')?.getBoundingClientRect().width ?? 0) > 0,
+      fits: (() => {
+        const r = wl?.getBoundingClientRect()
+        return !!r && r.left >= 0 && r.right <= innerWidth + 1
+      })(),
     }
   })
 
 for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name: 'phone', vp: { width: 390, height: 844, isMobile: true, hasTouch: true } }]) {
   const d = dev.name
   const page = await browser.newPage()
-  await page.evaluateOnNewDocument(() => { try { localStorage.setItem('nadlanup-demo-v1', '1') } catch {} }) // the community is closed to visitors: these checks walk the open demo
+  await page.evaluateOnNewDocument((h) => {
+    try {
+      localStorage.setItem('nadlanup-demo-v1', '1')
+      localStorage.setItem('nadlanup-preview-v1', h)
+    } catch {}
+  }, PREVIEW)
   const errors = []
   page.on('pageerror', (e) => errors.push(String(e)))
   await page.setViewport(dev.vp)
   await page.goto(green + '/', { waitUntil: 'load' })
-  await page.evaluate(() => {
+  await page.evaluate((h) => {
     localStorage.clear()
+    localStorage.setItem('nadlanup-demo-v1', '1')
+    localStorage.setItem('nadlanup-preview-v1', h)
     localStorage.setItem('nadlanup-mode-v1', JSON.stringify({ mode: 'day', until: Date.now() + 9e9 }))
-  })
+  }, PREVIEW)
   await page.goto(green + '/app/community', { waitUntil: 'load' })
-  await wait(2200)
+  await wait(2000)
   let s = await state(page)
-  check(`${d} the feed opens with the community's name as a nameplate, in the serif face, large`, s.name === 'מתווכים לעסקאות' && s.font === 'Frank Ruhl Libre' && s.size >= (d === 'phone' ? 42 : 80) && s.motto === 'נכסים|קונים|שיתופי פעולה', JSON.stringify({ n: s.name, f: s.font, s: s.size }))
+  check(`${d} the feed opens with the welcome and the rooms`, s.hello && s.rooms.length === 5 && s.rooms[0].on, JSON.stringify(s.rooms))
   check(`${d} the old plain title stays for screen readers, out of sight`, s.h1 === 'קהילה' && !s.h1Seen)
-  check(`${d} four figures, each counted from the feed itself (equal to the topics list)`, s.figs.length === 4 && s.figs[0].n === s.rail['נכסים לשיתוף פעולה'] && s.figs[1].n === s.rail['מחפש לקונה'] && s.figs[2].n === s.rail['הפניות בין מתווכים'] && s.figs[3].n === s.rail['עסקאות שנסגרו והצלחות'] && s.figs.every((f) => f.h >= 76), JSON.stringify(s.figs.map((f) => f.n)))
-  check(`${d} a running line of what is new`, s.ticker >= 12 && s.tickerAnim === 'mast-run', `${s.ticker} ${s.tickerAnim}`)
   check(`${d} nothing scrolls sideways`, s.ov <= 1, `${s.ov}px`)
   check(`${d} a community member's card does not lead to the landing page (it belongs to the office)`, !s.meLink || d === 'phone')
   await page.screenshot({ path: `${out}/${d}-1-front.png` })
 
-  // a figure is a filter
-  await page.evaluate(() => document.querySelector('.mast-fig[data-topic="seeking"]').click())
+  // a room is a filter
+  await page.evaluate(() => document.querySelector('[data-room="seeking"]').click())
   await wait(1100)
   s = await state(page)
-  check(`${d} a click on a figure shows that topic only`, s.path === '/app/community?topic=seeking' && s.figs[1].on && s.cards === s.figs[1].n && s.topics.join() === 'מחפש לקונה', JSON.stringify({ p: s.path, c: s.cards, t: s.topics }))
+  check(`${d} a tap on a room shows that topic only`, s.path === '/app/community?topic=seeking' && s.rooms.find((r) => r.id === 'seeking').on && s.cards === s.rail['מחפש לקונה'] && s.topics.join() === 'מחפש לקונה', JSON.stringify({ p: s.path, c: s.cards, t: s.topics }))
   await page.screenshot({ path: `${out}/${d}-2-filtered.png` })
-  await page.evaluate(() => document.querySelector('.mast-fig[data-topic="seeking"]').click())
+  await page.evaluate(() => document.querySelector('[data-room="seeking"]').click())
   await wait(1100)
   s = await state(page)
-  check(`${d} a second click goes back to every topic`, s.path === '/app/community' && !s.figs[1].on && s.topics.length > 2)
+  check(`${d} a second tap goes back to every topic`, s.path === '/app/community' && !s.rooms.find((r) => r.id === 'seeking').on && s.topics.length > 2)
 
   // the cards speak in their own shapes
   const shapes = await page.evaluate(() => {
@@ -90,15 +99,15 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
   await page.reload({ waitUntil: 'load' })
   await wait(2000)
   s = await state(page)
-  check(`${d} at night the nameplate is light on a dark page`, s.nameLum > 190 && s.paperLum < 60, `${s.nameLum} on ${s.paperLum}`)
+  check(`${d} at night the hello is light on a dark welcome`, s.helloLum > 190 && s.paperLum < 60, `${s.helloLum} on ${s.paperLum}`)
   await page.screenshot({ path: `${out}/${d}-3-night.png` })
 
-  // reduced motion: the running line stands still
+  // reduced motion: the welcome stands still
   await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }])
   await page.reload({ waitUntil: 'load' })
-  await wait(1600)
+  await wait(1400)
   s = await state(page)
-  check(`${d} with reduced motion the running line stands still, and the figures are there at once`, s.tickerAnim === 'none' && s.figs.every((f, i) => f.n === [s.rail['נכסים לשיתוף פעולה'], s.rail['מחפש לקונה'], s.rail['הפניות בין מתווכים'], s.rail['עסקאות שנסגרו והצלחות']][i]), s.tickerAnim)
+  check(`${d} with reduced motion the welcome does not move`, s.anim === 'none', s.anim)
   await page.emulateMediaFeatures([])
 
   check(`${d} no page errors`, errors.length === 0, errors.slice(0, 2).join(' | '))
@@ -108,13 +117,17 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
 // a narrow phone
 {
   const page = await browser.newPage()
-  await page.evaluateOnNewDocument(() => { try { localStorage.setItem('nadlanup-demo-v1', '1') } catch {} }) // the community is closed to visitors: these checks walk the open demo
+  await page.evaluateOnNewDocument((h) => {
+    try {
+      localStorage.setItem('nadlanup-demo-v1', '1')
+      localStorage.setItem('nadlanup-preview-v1', h)
+    } catch {}
+  }, PREVIEW)
   await page.setViewport({ width: 360, height: 740, isMobile: true, hasTouch: true })
   await page.goto(green + '/app/community', { waitUntil: 'load' })
   await wait(2000)
   const s = await state(page)
-  const fits = await page.evaluate(() => { const r = document.querySelector('.mast-name').getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth })
-  check('360px: the nameplate fits, nothing scrolls sideways', s.ov <= 1 && fits, `${s.ov}px`)
+  check('360px: the welcome fits, nothing scrolls sideways', s.ov <= 1 && s.fits, `${s.ov}px`)
   await page.close()
 }
 

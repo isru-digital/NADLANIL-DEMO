@@ -123,7 +123,7 @@ export function registerCrm(slots: typeof crmSlots) {
  * filters). With nothing registered the feed starts with its plain title, as it always did.
  */
 export const communitySlots: {
-  Top?: ComponentType<{ items: import('../data/demo').CommunityItem[]; view: string; onView: (v: never) => void }>
+  Top?: ComponentType<{ items: import('../data/demo').CommunityItem[]; view: string; onView: (v: never) => void; onIntent?: (i: 'property' | 'buyer' | 'referral' | 'learn') => void }>
 } = {}
 export function registerCommunity(slots: typeof communitySlots) {
   Object.assign(communitySlots, slots)

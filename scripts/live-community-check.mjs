@@ -63,9 +63,10 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
   await shot('1-feed')
 
   // ---------------------------------------------------------------- 2. the content
-  const counts = await page.evaluate(() => Object.fromEntries([...document.querySelectorAll('.mast-fig')].map((b) => [b.dataset.topic, Number(b.querySelector('b').textContent)])))
+  // counted from the feed's own data (the figures that were on top gave way to the welcome, 17.11.2026)
+  const counts = await page.evaluate(() => { const it = JSON.parse(localStorage.getItem('brokers-demo-state-v5') ?? '{}').items ?? []; return Object.fromEntries(['coop', 'seeking', 'referrals'].map((t) => [t, it.filter((x) => x.topicId === t).length])) })
   await wait(900)
-  const counts2 = await page.evaluate(() => Object.fromEntries([...document.querySelectorAll('.mast-fig')].map((b) => [b.dataset.topic, Number(b.querySelector('b').textContent)])))
+  const counts2 = await page.evaluate(() => { const it = JSON.parse(localStorage.getItem('brokers-demo-state-v5') ?? '{}').items ?? []; return Object.fromEntries(['coop', 'seeking', 'referrals'].map((t) => [t, it.filter((x) => x.topicId === t).length])) })
   check(`${d} 15 properties, 11 buyers, 5 referrals in the feed`, counts2.coop === 15 && counts2.seeking === 11 && counts2.referrals === 5, JSON.stringify([counts, counts2]))
   const feed = await page.evaluate(() => ({ cities: [...new Set([...document.querySelectorAll('.ci .fb-city')].map((x) => x.textContent.trim()))], cards: document.querySelectorAll('.ci').length, times: [...document.querySelectorAll('.ci .fb-meta > span:first-child')].map((x) => x.textContent) }))
   check(`${d} posts from all over: Haifa, Beer Sheva, Ashdod, Petah Tikva, Netanya, Hadera, Afula`, ['חיפה', 'באר שבע', 'אשדוד', 'פתח תקווה', 'נתניה', 'חדרה', 'עפולה'].every((c) => feed.cities.includes(c)) && feed.cards >= 40, JSON.stringify(feed.cities))

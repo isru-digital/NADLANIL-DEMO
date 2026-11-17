@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { BedDouble, Check, ChevronLeft, Home, MapPin, Plus, Search, UserRound } from 'lucide-react'
 import { CURRENT_BROKER_ID, asset } from '../config'
+import { REFERRAL_TERMS } from '../config/topics'
+import { knownCities } from '../green/whatsapp'
 import { actionSlots } from '../config/navExtras'
 import { formatPriceShort, roomsLabel } from '../data/demo'
 import type { CommunityItem, CrmItem, SearchSpec } from '../data/demo'
@@ -207,5 +209,112 @@ export function BuyerPicker({ open, onClose, startNew = false }: { open: boolean
         searchOnly
       />
     </>
+  )
+}
+
+/* ============================================================ a referral to a broker in another city */
+
+const REF_CITIES = ['ירושלים', 'חיפה', 'באר שבע', 'אשדוד', 'נתניה', 'פתח תקווה', 'ראשון לציון', 'תל אביב', 'רמת גן']
+
+/**
+ * "יש לי מוכר בעיר אחרת": where the property (or the search) is, a line about it, and the client's name and phone
+ * for the broker's own CRM. The community gets the city and the line only; the name and the phone stay in the CRM.
+ */
+export function ReferralSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { addItem, toast } = useStore()
+  const navigate = useNavigate()
+  const [side, setSide] = useState<'seller' | 'buyer'>('seller')
+  const [city, setCity] = useState('')
+  const [all, setAll] = useState(false)
+  const [what, setWhat] = useState('')
+  const [name, setName] = useState('')
+  const [phone, setPhone] = useState('')
+  const [err, setErr] = useState('')
+  useEffect(() => {
+    if (!open) return
+    setSide('seller')
+    setCity('')
+    setAll(false)
+    setWhat('')
+    setName('')
+    setPhone('')
+    setErr('')
+  }, [open])
+  const list = all ? [...knownCities].sort((a, b) => a.localeCompare(b, 'he')) : [...new Set([...(city ? [city] : []), ...REF_CITIES])]
+  const send = () => {
+    if (!city) return setErr('בוחרים את העיר שבה צריך מתווך.')
+    const seller = side === 'seller'
+    const title = seller ? `מוכר עם נכס ב${city}: מחפש מתווך מקומי` : `קונה שמחפש ב${city}: מחפש מתווך מקומי`
+    const id = `r-${Date.now()}`
+    const kid = clientActions.add({ name: name.trim() || (seller ? `מוכר ב${city}` : `קונה ב${city}`), type: seller ? 'seller' : 'buyer', phone: phone.trim(), about: `${title}${what.trim() ? `. ${what.trim()}` : ''}`, cities: [city] })
+    addItem(
+      {
+        id,
+        topicId: 'referrals',
+        authorId: CURRENT_BROKER_ID,
+        city,
+        time: 'עכשיו',
+        likes: 0,
+        comments: [],
+        fresh: true,
+        title,
+        body: what.trim() || (seller ? 'לקוח שלי רוצה למכור נכס בעיר שאני לא עובד בה. מחפש מתווך מקומי שייקח את זה.' : 'לקוח שלי מחפש נכס בעיר שאני לא עובד בה. מחפש מתווך מקומי שילווה אותו.'),
+        referral: { side: seller ? 'seller' : 'buyer', toCity: city, terms: REFERRAL_TERMS },
+      },
+      clientKey(kid),
+    )
+    onClose()
+    toast('ההפניה פורסמה ונשמרה ב-CRM')
+    navigate(`/app/community?topic=referrals&item=${id}`)
+  }
+  return (
+    <Modal open={open} onClose={onClose} title="מתווך בעיר אחרת" subtitle="מפרסמים הפניה, ומתווך מקומי לוקח את הלקוח. שם וטלפון לא מתפרסמים.">
+      <div className="modal-body pk rf" data-picker="referral">
+        <div className="rf-seg" role="radiogroup" aria-label="מי הלקוח">
+          <button type="button" role="radio" aria-checked={side === 'seller'} onClick={() => setSide('seller')} data-side="seller">
+            מוכר
+          </button>
+          <button type="button" role="radio" aria-checked={side === 'buyer'} onClick={() => setSide('buyer')} data-side="buyer">
+            קונה
+          </button>
+        </div>
+        <div className="rf-field">
+          <span className="rf-label">באיזו עיר צריך מתווך?</span>
+          <div className="rf-picks">
+            {list.map((c) => (
+              <button key={c} type="button" className="rf-pick" aria-pressed={city === c} onClick={() => setCity(c)} data-city={c}>
+                {c}
+              </button>
+            ))}
+            <button type="button" className="rf-pick is-more" aria-expanded={all} onClick={() => setAll(!all)}>
+              {all ? 'פחות ערים' : 'עוד ערים'}
+            </button>
+          </div>
+        </div>
+        <label className="rf-field">
+          <span className="rf-label">במשפט אחד (לא חובה)</span>
+          <textarea className="textarea" rows={2} value={what} onChange={(e) => setWhat(e.target.value)} placeholder={side === 'seller' ? 'לדוגמה: 3 חדרים, יורשים שרוצים למכור מהר' : 'לדוגמה: זוג מחפש 4 חדרים, תקציב מסודר'} data-f="what" />
+        </label>
+        <div className="rf-row">
+          <label className="rf-field">
+            <span className="rf-label">שם הלקוח (נשאר אצלכם)</span>
+            <input className="input" value={name} onChange={(e) => setName(e.target.value)} autoComplete="off" data-f="name" />
+          </label>
+          <label className="rf-field">
+            <span className="rf-label">טלפון (נשאר אצלכם)</span>
+            <input className="input ltr num" type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="off" data-f="phone" />
+          </label>
+        </div>
+        {err && (
+          <em className="ct-err" role="alert">
+            {err}
+          </em>
+        )}
+        <p className="pk-note">{REFERRAL_TERMS}. הלקוח נשמר גם ב-CRM שלכם.</p>
+        <button type="button" className="btn btn-gold btn-lg rf-go" onClick={send} data-act="send-referral">
+          פרסום ההפניה
+        </button>
+      </div>
+    </Modal>
   )
 }

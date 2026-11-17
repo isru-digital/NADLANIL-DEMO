@@ -41,7 +41,7 @@ import Admin from './auth/Admin'
 import { AppGuard, DemoStart, Enter, Login } from './auth/Access'
 import { demo } from './auth/session'
 import { pickActions } from './config/pricing'
-import FeedMasthead from './community/FeedMasthead'
+import FeedWelcome from './community/FeedWelcome'
 import { CATEGORIES, CommercialSeed, categoryOf } from './crm/categories'
 import OwnerPage from './owner/OwnerPage'
 import { AutoPublish, AutoPublishNote, OwnerLinkButton } from './owner/OwnerPublish'
@@ -76,8 +76,8 @@ registerCrm({
     property: { title: 'נכסים', subtitle: 'כל הנכסים שלך במקום אחד. כל נכס חדש מתפרסם אוטומטית בקהילה.' },
   },
 })
-// the feed opens like the front page of a daily paper of deals: a nameplate, and the day's figures as filters
-registerCommunity({ Top: FeedMasthead as never })
+// the feed opens with a personal hello, four cards for what a broker came to do, and the four rooms (17.11.2026)
+registerCommunity({ Top: FeedWelcome as never })
 // every property put in the CRM goes up to the community by itself; a published card carries the link for its owner
 registerCrm({ AutoBar: AutoPublishNote, CardExtra: OwnerLinkButton })
 // a property is a private home, an office or a business property: picked when it is opened, shown and filtered on the board
