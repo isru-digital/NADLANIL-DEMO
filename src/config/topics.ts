@@ -43,7 +43,8 @@ export const topics: Topic[] = [
   },
   {
     id: 'referrals',
-    name: 'הפניות בין מתווכים',
+    // one name everywhere (Itzik 17.11.2026): the room is "מתווך בעיר אחרת"
+    name: 'מתווך בעיר אחרת',
     short: 'הפניה',
     description: 'מעבירים קונה או מוכר למתווך שמכיר את העיר האחרת.',
     icon: Repeat2,

@@ -51,18 +51,25 @@ const fresh = async (vp, iso) => {
   return page
 }
 
-// ---- the hello changes with the hour (Israel, November: UTC+2)
-for (const [iso, hello] of [
-  ['2026-11-17T06:00:00Z', 'בוקר טוב'],
-  ['2026-11-17T11:30:00Z', 'צהריים טובים'],
-  ['2026-11-17T17:00:00Z', 'ערב טוב'],
-  ['2026-11-17T21:30:00Z', 'לילה טוב'],
+// ---- the hello changes with the hour, by Israel's clock, exactly at the edges Itzik set (November: UTC+2)
+for (const [il, iso, hello] of [
+  ['04:59', '2026-11-17T02:59:00Z', 'לילה טוב'],
+  ['05:00', '2026-11-17T03:00:00Z', 'בוקר טוב'],
+  ['11:59', '2026-11-17T09:59:00Z', 'בוקר טוב'],
+  ['12:00', '2026-11-17T10:00:00Z', 'צהריים טובים'],
+  ['17:59', '2026-11-17T15:59:00Z', 'צהריים טובים'],
+  ['18:00', '2026-11-17T16:00:00Z', 'ערב טוב'],
+  ['21:59', '2026-11-17T19:59:00Z', 'ערב טוב'],
+  ['22:00', '2026-11-17T20:00:00Z', 'לילה טוב'],
 ]) {
   const page = await fresh({ width: 1280, height: 860 }, iso)
   await page.goto(green + '/app/community', { waitUntil: 'networkidle0' })
-  await wait(500)
-  const g = await page.evaluate(() => document.querySelector('[data-greeting]')?.textContent.trim())
-  check(`at ${iso.slice(11, 16)} UTC the hello is "${hello}, מאיה"`, (g ?? '').startsWith(`${hello}, מאיה`), g)
+  await wait(400)
+  const g = await page.evaluate(() => {
+    const h = document.querySelector('[data-greeting]')
+    return { text: h?.textContent.trim(), icon: !!h?.querySelector('.wl-time svg'), emoji: /\p{Extended_Pictographic}/u.test(h?.textContent ?? '') }
+  })
+  check(`${il} in Israel: "${hello}, מאיה", with a small icon and no emoji`, g.text === `${hello}, מאיה` && g.icon && !g.emoji, g)
   await page.close()
 }
 
@@ -134,6 +141,18 @@ for (const [tag, vp] of [
   })
   check(`${tag}: the referral is published in "הפניות" for באר שבע, and the seller is saved in the CRM`, !!ref.it && ref.it.side === 'seller' && /באר שבע/.test(ref.it.title) && ref.cl?.type === 'seller' && /topic=referrals/.test(ref.url) && /נשמרה ב-CRM/.test(ref.toast ?? ''), ref)
   check(`${tag}: the referral carries no name and no phone`, !!ref.it && !ref.it.json.includes('יוסי') && !ref.it.json.includes('0190'), ref.it?.title)
+
+  // ---- the referrals room has one name everywhere: "מתווך בעיר אחרת"
+  await page.goto(green + '/app/community?topic=referrals', { waitUntil: 'networkidle0' })
+  await wait(900)
+  const names = await page.evaluate(() => ({
+    room: document.querySelector('[data-room="referrals"]')?.textContent.trim(),
+    head: document.querySelector('.topic-head h2')?.textContent.trim(),
+    rail: [...document.querySelectorAll('.comm-rail .rail-label, .rail-label')].map((x) => x.textContent.trim()).filter((t) => /הפני|בעיר אחרת/.test(t)),
+    posts: [...new Set([...document.querySelectorAll('.fb.ci .fb-topic')].map((t) => t.textContent.trim()))],
+    old: /הפניות בין מתווכים/.test(document.body.innerText),
+  }))
+  check(`${tag}: the referrals room is called "מתווך בעיר אחרת" everywhere (rooms, title, list, posts)`, names.room === 'מתווך בעיר אחרת' && names.head === 'מתווך בעיר אחרת' && names.posts.join() === 'מתווך בעיר אחרת' && names.rail.every((t) => t === 'מתווך בעיר אחרת') && !names.old, names)
 
   // ---- a room is one tap
   await page.goto(green + '/app/community', { waitUntil: 'networkidle0' })

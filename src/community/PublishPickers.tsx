@@ -264,7 +264,7 @@ export function ReferralSheet({ open, onClose }: { open: boolean; onClose: () =>
       clientKey(kid),
     )
     onClose()
-    toast('ההפניה פורסמה ונשמרה ב-CRM')
+    toast('ההפניה פורסמה במתווך בעיר אחרת ונשמרה ב-CRM')
     navigate(`/app/community?topic=referrals&item=${id}`)
   }
   return (

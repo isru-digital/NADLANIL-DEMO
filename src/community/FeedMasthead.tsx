@@ -15,7 +15,7 @@ type View = 'all' | TopicId
 const FIGURES: { id: TopicId; label: string }[] = [
   { id: 'coop', label: 'נכסים לשיתוף פעולה' },
   { id: 'seeking', label: 'מחפשים לקונה' },
-  { id: 'referrals', label: 'הפניות בין מתווכים' },
+  { id: 'referrals', label: 'מתווך בעיר אחרת' },
   { id: 'wins', label: 'עסקאות שנסגרו' },
 ]
 

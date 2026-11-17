@@ -50,10 +50,32 @@
   color: var(--text);
   text-wrap: balance;
 }
-.wl-wave {
-  display: inline-block;
-  transform-origin: 70% 80%;
-  animation: wl-wave 1.6s ease-in-out 0.4s 2;
+/* the time of day: a small, quiet icon in a soft circle, in the site's line style */
+.wl-hello {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.wl-time {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: clamp(38px, 4.4vw, 46px);
+  height: clamp(38px, 4.4vw, 46px);
+  border-radius: 50%;
+  background: rgba(232, 183, 90, 0.16);
+  border: 1px solid rgba(214, 152, 42, 0.32);
+  color: #b07a14;
+}
+.wl-time svg {
+  width: 55%;
+  height: 55%;
+  stroke-width: 1.8;
+}
+.wl-hello[data-part='night'] .wl-time {
+  background: rgba(16, 163, 108, 0.12);
+  border-color: rgba(10, 122, 79, 0.3);
+  color: var(--wl-green);
 }
 .wl-ask {
   margin: -6px 0 4px;
@@ -250,24 +272,9 @@
     opacity: 0.35;
   }
 }
-@keyframes wl-wave {
-  0%,
-  100% {
-    transform: rotate(0);
-  }
-  20%,
-  60% {
-    transform: rotate(14deg);
-  }
-  40%,
-  80% {
-    transform: rotate(-8deg);
-  }
-}
 @media (prefers-reduced-motion: reduce) {
   .wl,
   .wl-card,
-  .wl-wave,
   .wl-live i {
     animation: none;
   }

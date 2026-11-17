@@ -637,7 +637,7 @@ export type CommunityItem = {
   property?: PropertyInfo
   /** topic "מחפש לקונה": a saved search, never a client name */
   search?: SearchSpec
-  /** topic "הפניות בין מתווכים" */
+  /** topic "מתווך בעיר אחרת" (referrals) */
   referral?: { side: 'buyer' | 'seller'; toCity: string; terms: string }
   /** CRM item this message was created from */
   sourceId?: string

@@ -1,5 +1,5 @@
 import type { ReactElement } from 'react'
-import { ArrowLeft, LayoutGrid } from 'lucide-react'
+import { ArrowLeft, LayoutGrid, Moon, Sun, Sunrise, Sunset } from 'lucide-react'
 import { CURRENT_BROKER_ID } from '../config'
 import type { TopicId } from '../config/topics'
 import { brokerById } from '../data/demo'
@@ -18,13 +18,19 @@ export type Intent = 'property' | 'buyer' | 'referral' | 'learn'
 type View = 'all' | TopicId
 type Icon = (p: { className?: string }) => ReactElement
 
-/** the hello of the hour, in Israel's own day */
+/**
+ * The hello of the hour, by Israel's clock (Itzik 17.11.2026, exactly):
+ * 05:00-11:59 בוקר טוב, 12:00-17:59 צהריים טובים, 18:00-21:59 ערב טוב, 22:00-04:59 לילה טוב.
+ * With it, a small quiet icon of the time of day, in the site's own line style (no emoji).
+ */
 export function greetingOf(hour: number) {
-  if (hour >= 5 && hour < 12) return 'בוקר טוב'
-  if (hour >= 12 && hour < 17) return 'צהריים טובים'
-  if (hour >= 17 && hour < 21) return 'ערב טוב'
-  return 'לילה טוב'
+  if (hour >= 5 && hour <= 11) return { text: 'בוקר טוב', icon: Sunrise, part: 'morning' }
+  if (hour >= 12 && hour <= 17) return { text: 'צהריים טובים', icon: Sun, part: 'noon' }
+  if (hour >= 18 && hour <= 21) return { text: 'ערב טוב', icon: Sunset, part: 'evening' }
+  return { text: 'לילה טוב', icon: Moon, part: 'night' }
 }
+/** the hour now in Israel, 0 to 23, whatever the visitor's own clock says */
+export const israelHour = (d = new Date()) => Number(d.toLocaleString('en-US', { hour: 'numeric', hour12: false, timeZone: 'Asia/Jerusalem' })) % 24
 
 const INTENTS: { id: Intent; icon: Icon; title: string; line: string }[] = [
   { id: 'property', icon: IconHome, title: 'יש לי נכס ואני רוצה לשתף אותו עם מתווכים', line: 'הנכס נחשף למתווכים שיש להם קונים' },
@@ -45,7 +51,7 @@ export default function FeedWelcome({ items, view, onView, onIntent }: { items: 
   const me = brokerById(CURRENT_BROKER_ID)
   const first = me.name.split(' ')[0]
   const now = new Date()
-  const hour = Number(now.toLocaleString('en-US', { hour: 'numeric', hour12: false, timeZone: 'Asia/Jerusalem' })) % 24
+  const hello = greetingOf(israelHour(now))
   const today = now.toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Asia/Jerusalem' })
   const fresh = items.filter((it) => it.fresh).length
 
@@ -70,8 +76,11 @@ export default function FeedWelcome({ items, view, onView, onIntent }: { items: 
           </span>
         )}
       </div>
-      <h1 className="wl-hello" data-greeting>
-        {greetingOf(hour)}, {first} <span className="wl-wave" aria-hidden>👋</span>
+      <h1 className="wl-hello" data-greeting data-part={hello.part}>
+        <span className="wl-time" aria-hidden>
+          <hello.icon />
+        </span>
+        {hello.text}, {first}
       </h1>
       <p className="wl-ask">מה רוצים לעשות היום?</p>
 

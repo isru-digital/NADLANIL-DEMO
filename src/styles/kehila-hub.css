@@ -545,3 +545,14 @@ html[data-mode='night'] .khh-dot {
     animation: none;
   }
 }
+
+/* "מתווך בעיר אחרת" is the longest name: on a phone it sits on two short lines under its world, so the notes beside
+   the lower worlds never meet it */
+@media (max-width: 980px) {
+  .khh-node.is-3 .khh-node-label {
+    width: 21cqi;
+    white-space: normal;
+    text-align: center;
+    line-height: 1.15;
+  }
+}

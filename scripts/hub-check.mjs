@@ -16,7 +16,7 @@ const check = (name, ok, info) => {
   console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${ok || info === undefined ? '' : '  [' + JSON.stringify(info) + ']'}`)
 }
 
-const LABELS = ['נכסים', 'קונים', 'שיתופי פעולה', 'הפניות', 'מתווכים', 'ידע ושאלות']
+const LABELS = ['נכסים', 'קונים', 'שיתופי פעולה', 'מתווך בעיר אחרת', 'מתווכים', 'ידע ושאלות']
 
 for (const [tag, vp] of [
   ['desktop', { width: 1440, height: 900 }],
