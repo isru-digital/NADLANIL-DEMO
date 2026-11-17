@@ -36,6 +36,8 @@ import { BuyerPicker, PropertyPicker, ReferralSheet } from '../community/Publish
 import BrokerFinder from '../community/BrokerFinder'
 import { VALUE_LINES } from '../community/FeedWelcome'
 import type { Intent } from '../community/FeedWelcome'
+import { isMutual, matchUi } from '../community/match'
+import '../styles/match.css'
 import '../styles/community.css'
 import '../styles/feed.css'
 import '../styles/property.css'
@@ -744,7 +746,7 @@ function NoticeList({ notices, onPick, large }: { notices: NoticeT[]; onPick: (n
   return (
     <ul className={`notice-list${large ? ' notice-list-lg' : ''}`}>
       {notices.map((n) => (
-        <li key={n.id} className={n.read ? '' : 'is-unread'}>
+        <li key={n.id} className={`${n.read ? '' : 'is-unread'}${n.pair ? ' has-pair' : ''}`}>
           <button onClick={() => onPick(n)}>
             <span className={`notice-icon kind-${n.kind}`}>{n.kind === 'match' ? <Sparkles /> : n.kind === 'interest' ? <UserRound /> : <MessageCircle />}</span>
             <span className="notice-main">
@@ -756,6 +758,11 @@ function NoticeList({ notices, onPick, large }: { notices: NoticeT[]; onPick: (n
               <time>{n.time}</time>
             </span>
           </button>
+          {n.pair && (
+            <button type="button" className="notice-yes" onClick={() => matchUi.answer(n.pair!)} data-act="notice-have">
+              {isMutual(n.pair.mine, n.pair.theirs) ? "לצ'אט" : 'יש לי'}
+            </button>
+          )}
         </li>
       ))}
     </ul>

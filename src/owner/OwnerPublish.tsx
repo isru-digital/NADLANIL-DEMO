@@ -35,7 +35,7 @@ export const postOf = (item: CrmItem, authorId: string): CommunityItem => ({
   image: item.image,
   // an office or a business property has no rooms: its size goes next to its area
   property: isCommercial(item)
-    ? { area: item.sqm ? `${item.area} · ${item.sqm} מ"ר` : item.area, rooms: '', price: item.price, split: 'חלוקת עמלה שווה', showPrice: true }
+    ? { area: item.sqm ? `${item.area} · ${item.sqm} מ"ר` : item.area, rooms: '', price: item.price, split: 'חלוקת עמלה שווה', showPrice: true, kind: 'משרדי/עסקי', parking: item.parking }
     : { area: item.area, rooms: item.rooms, price: item.price, split: 'חלוקת עמלה שווה', showPrice: true, parking: item.parking, renewal: item.renewal || undefined },
   fresh: true,
 })

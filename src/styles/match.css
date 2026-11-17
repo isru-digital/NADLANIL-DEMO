@@ -1,0 +1,892 @@
+/* The match moment: a deep green glass over the page, two light cards that meet, a ring that fills with how well
+   they fit, then the cards to swipe. One touch of gold for the score and the celebration. Light cards by day,
+   the page's own night tokens at night. */
+.mm {
+  --mm-green: #0a7a4f;
+  --mm-green-2: #12a36c;
+  --mm-mint: #5ee6b4;
+  --mm-gold: #e8b75a;
+  --mm-ink: #f3fbf7;
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: grid;
+  place-items: center;
+  padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+  background:
+    radial-gradient(60% 50% at 50% 38%, rgba(18, 163, 108, 0.34), transparent 70%),
+    radial-gradient(40% 40% at 50% 70%, rgba(232, 183, 90, 0.14), transparent 70%),
+    rgba(4, 30, 21, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(10px);
+  color: var(--mm-ink);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.mm.is-leaving {
+  opacity: 0 !important;
+  pointer-events: none;
+  transition: opacity 0.16s ease-in;
+}
+body.has-match {
+  overflow: hidden;
+}
+body.has-match .dn,
+body.has-match .dn-compact {
+  visibility: hidden;
+}
+.mm-close {
+  position: fixed;
+  inset-block-start: max(14px, env(safe-area-inset-top));
+  inset-inline-start: 14px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+.mm-close:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+.mm-close:focus-visible,
+.mm-btn:focus-visible,
+.mm .btn:focus-visible {
+  outline: 2px solid var(--mm-gold);
+  outline-offset: 3px;
+}
+.mm-close svg {
+  width: 22px;
+  height: 22px;
+}
+.mm-stage {
+  display: grid;
+  justify-items: center;
+  gap: 18px;
+  width: min(560px, 100%);
+  text-align: center;
+}
+
+/* ---------------------------------------------------------------- two cards meet */
+.mm-meet {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 300px;
+}
+.mm-meet-card {
+  position: absolute;
+  width: 196px;
+}
+.mm-meet-card.is-mine {
+  z-index: 1;
+}
+.mm-mini {
+  display: grid;
+  gap: 4px;
+  padding: 10px 10px 14px;
+  border-radius: 20px;
+  background: var(--card);
+  color: var(--text);
+  text-align: start;
+  box-shadow: 0 30px 60px -24px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+.mm-mini b {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: 14.5px;
+  line-height: 1.3;
+}
+.mm-mini small {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12.5px;
+  color: var(--text-dim);
+}
+.mm-mini small svg {
+  width: 13px;
+  height: 13px;
+  flex: none;
+}
+.mm-mini strong {
+  font-size: 15px;
+  color: var(--mm-green);
+}
+.mm-mini-tag {
+  justify-self: start;
+  margin-top: 4px;
+  padding: 2px 9px;
+  border-radius: 99px;
+  background: rgba(16, 163, 108, 0.12);
+  color: var(--mm-green);
+  font-size: 11.5px;
+  font-weight: 700;
+}
+.mm-thumb {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  border-radius: 14px;
+  object-fit: cover;
+  background: linear-gradient(150deg, #dff5ea, #bfe9d4);
+  color: var(--mm-green);
+}
+.mm-thumb.is-buyer {
+  background: linear-gradient(150deg, #0a6b46, #12a36c);
+  color: #fff;
+}
+.mm-thumb svg {
+  width: 34px;
+  height: 34px;
+  stroke-width: 1.6;
+}
+.mm-meet-score {
+  position: absolute;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  translate: 0 -64px;
+  border-radius: 50%;
+  background: #062a1d;
+  box-shadow: 0 0 0 6px rgba(232, 183, 90, 0.18), 0 14px 40px -10px rgba(232, 183, 90, 0.7);
+}
+.mm-burst {
+  position: absolute;
+  width: 240px;
+  height: 240px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(232, 183, 90, 0.5), transparent 62%);
+  opacity: 0;
+  animation: mm-burst 1.2s 0.55s ease-out both;
+}
+.mm-radar {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+.mm-radar i {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(94, 230, 180, 0.45);
+  animation: mm-radar 2.4s ease-out infinite;
+}
+.mm-radar i:nth-child(2) {
+  animation-delay: 0.8s;
+}
+.mm-radar i:nth-child(3) {
+  animation-delay: 1.6s;
+}
+
+/* ---------------------------------------------------------------- the words */
+.mm-copy {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+}
+.mm-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--mm-mint);
+}
+.mm-eyebrow svg {
+  width: 16px;
+  height: 16px;
+}
+.mm-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(32px, 6vw, 46px);
+  font-weight: 800;
+  line-height: 1.08;
+  color: #fff;
+  text-wrap: balance;
+}
+.mm-sub {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  max-width: 30em;
+  margin: 0;
+  font-size: 16.5px;
+  line-height: 1.5;
+  color: rgba(243, 251, 247, 0.82);
+}
+.mm-sub svg {
+  width: 18px;
+  height: 18px;
+  color: var(--mm-gold);
+  flex: none;
+}
+.mm-faces {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.mm-faces li {
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+}
+.mm-faces b {
+  font-size: 12.5px;
+  color: var(--mm-gold);
+}
+.mm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+.mm .btn-ghost,
+.mm-mutual .btn-ghost {
+  color: inherit;
+  border-color: rgba(255, 255, 255, 0.25);
+}
+.mm-go {
+  min-height: 52px;
+  padding-inline: 28px;
+  font-size: 16.5px;
+}
+
+/* ---------------------------------------------------------------- the ring */
+.mm-ring {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+.mm-ring svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.mm-ring-bg {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.16);
+  stroke-width: 6;
+}
+.mm-ring-fg {
+  fill: none;
+  stroke: var(--mm-mint, #5ee6b4);
+  stroke-width: 6;
+  stroke-linecap: round;
+}
+.mm-ring.is-high .mm-ring-fg {
+  stroke: var(--mm-gold, #e8b75a);
+}
+.mm-ring b {
+  position: relative;
+  font-size: 17px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.01em;
+}
+
+/* ---------------------------------------------------------------- the cards to swipe */
+.mm-stage.is-deck {
+  gap: 14px;
+  width: min(420px, 100%);
+}
+.mm-count {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: rgba(243, 251, 247, 0.75);
+}
+.mm-deck {
+  position: relative;
+  display: grid;
+  width: 100%;
+  height: min(540px, calc(100dvh - 250px));
+  min-height: 420px;
+}
+.mm-card {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-rows: minmax(150px, 42%) 1fr;
+  border-radius: 26px;
+  background: var(--card);
+  color: var(--text);
+  text-align: start;
+  overflow: hidden;
+  box-shadow: 0 40px 80px -30px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: pan-y;
+}
+.mm-card.is-top {
+  cursor: grab;
+}
+.mm-card.is-top:active {
+  cursor: grabbing;
+}
+.mm-card.is-back {
+  pointer-events: none;
+  filter: brightness(0.94);
+}
+.mm-card-top {
+  position: relative;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(150deg, #dff5ea, #bfe9d4);
+  color: var(--mm-green);
+}
+.mm-card-top.is-buyer {
+  background:
+    radial-gradient(60% 80% at 80% 10%, rgba(94, 230, 180, 0.4), transparent 70%),
+    linear-gradient(150deg, #0a5e3e, #12a36c);
+  color: #fff;
+}
+.mm-card-top img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+.mm-card-top::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(4, 30, 21, 0.55), transparent 55%);
+  pointer-events: none;
+}
+.mm-card-sign svg {
+  width: 56px;
+  height: 56px;
+  stroke-width: 1.4;
+}
+.mm-card-kind {
+  position: absolute;
+  z-index: 1;
+  inset-block-end: 12px;
+  inset-inline-start: 14px;
+  padding: 4px 12px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #064a31;
+  font-size: 12.5px;
+  font-weight: 800;
+}
+.mm-card-ring {
+  position: absolute;
+  z-index: 1;
+  inset-block-start: 12px;
+  inset-inline-end: 12px;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 6px 6px 5px;
+  border-radius: 20px;
+  background: rgba(4, 30, 21, 0.78);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.mm-card-ring small {
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.85);
+}
+.mm-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 18px 18px;
+  min-height: 0;
+  overflow: hidden;
+}
+.mm-card-body h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.25;
+  color: var(--text);
+}
+.mm-card-place {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+  font-size: 15px;
+  color: var(--text-dim);
+}
+.mm-card-place svg {
+  width: 16px;
+  height: 16px;
+  color: var(--mm-green);
+}
+.mm-card-facts {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin: 0;
+  font-size: 15px;
+  color: var(--text);
+}
+.mm-card-facts strong {
+  font-size: 21px;
+  font-weight: 800;
+  color: var(--mm-green);
+}
+.mm-reasons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.mm-reasons li {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 99px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.mm-reasons li.is-ok {
+  background: rgba(16, 163, 108, 0.12);
+  color: #075c3b;
+}
+.mm-reasons li.is-off {
+  background: rgba(120, 120, 120, 0.1);
+  color: var(--text-dim);
+}
+.mm-reasons svg {
+  width: 14px;
+  height: 14px;
+}
+.mm-card-who {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.mm-card-who span {
+  display: grid;
+}
+.mm-card-who b {
+  font-size: 15px;
+  color: var(--text);
+}
+.mm-card-who small {
+  font-size: 13px;
+  color: var(--text-dim);
+}
+.mm-stamp {
+  position: absolute;
+  z-index: 3;
+  inset-block-start: 22px;
+  padding: 6px 14px;
+  border-radius: 12px;
+  border: 3px solid currentColor;
+  background: rgba(255, 255, 255, 0.9);
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+  pointer-events: none;
+}
+.mm-stamp.is-yes {
+  left: 18px;
+  color: #0a7a4f;
+  transform: rotate(10deg);
+}
+.mm-stamp.is-no {
+  right: 18px;
+  color: #8a4b4b;
+  transform: rotate(-10deg);
+}
+
+.mm-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  width: 100%;
+}
+.mm-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 56px;
+  border-radius: 99px;
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 800;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition:
+    transform 0.12s ease,
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+.mm-btn:active {
+  transform: scale(0.96);
+}
+.mm-btn svg {
+  width: 21px;
+  height: 21px;
+}
+.mm-btn.is-yes {
+  border: 0;
+  background: linear-gradient(135deg, var(--mm-green), var(--mm-green-2));
+  color: #fff;
+  box-shadow: 0 14px 30px -14px rgba(18, 163, 108, 0.9);
+}
+.mm-btn.is-yes svg {
+  fill: rgba(255, 255, 255, 0.25);
+}
+.mm-btn.is-no {
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
+.mm-btn.is-no:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+.mm-hint {
+  margin: -2px 0 0;
+  font-size: 13.5px;
+  color: rgba(243, 251, 247, 0.7);
+}
+.mm-demo {
+  margin: 0;
+  max-width: 34em;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: rgba(243, 251, 247, 0.62);
+}
+.mm .notice-demo {
+  background: rgba(232, 183, 90, 0.22);
+  color: var(--mm-gold);
+}
+.mm-done-ico {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--mm-green), var(--mm-green-2));
+  box-shadow: 0 0 0 8px rgba(94, 230, 180, 0.12);
+}
+.mm-done-ico svg {
+  width: 34px;
+  height: 34px;
+  stroke-width: 3;
+}
+
+/* ---------------------------------------------------------------- "יש התאמה!" */
+.mm-mutual-wrap {
+  position: fixed;
+  inset: 0;
+  z-index: 1150;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(4, 30, 21, 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+.mm-mutual {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  width: min(380px, 100%);
+  padding: 26px 22px 22px;
+  border-radius: 28px;
+  background:
+    radial-gradient(70% 60% at 50% 0%, rgba(232, 183, 90, 0.3), transparent 70%),
+    linear-gradient(160deg, #0a5e3e, #0c8a58);
+  color: #fff;
+  text-align: center;
+  box-shadow: 0 40px 90px -30px rgba(0, 0, 0, 0.8);
+}
+.mm-mutual-faces {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 86px;
+}
+.mm-mutual-faces > span {
+  border-radius: 50%;
+  box-shadow: 0 0 0 4px #0b7a4f;
+}
+.mm-mutual-heart {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  margin-inline: -14px;
+  border-radius: 50%;
+  background: var(--mm-gold, #e8b75a);
+  color: #4a2f00;
+  box-shadow: 0 6px 18px -4px rgba(232, 183, 90, 0.8);
+}
+.mm-mutual-heart svg {
+  width: 20px;
+  height: 20px;
+  fill: currentColor;
+}
+.mm-mutual-title {
+  margin: 4px 0 0;
+  font-family: var(--font-display);
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+.mm-mutual p {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.88);
+}
+.mm-mutual b {
+  color: #ffd98c;
+}
+.mm-mutual-bar {
+  width: 70%;
+  height: 4px;
+  margin-top: 4px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.18);
+  overflow: hidden;
+}
+.mm-mutual-bar i {
+  display: block;
+  height: 100%;
+  background: #ffd98c;
+  transform-origin: right;
+  animation: mm-fill 3.2s linear both;
+}
+.mm-mutual .btn-gold {
+  background: #fff;
+  color: #064a31;
+}
+.mm-mutual .btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* ---------------------------------------------------------------- the notice in the site */
+.mm-notice {
+  position: fixed;
+  z-index: 1090;
+  inset-block-end: max(18px, env(safe-area-inset-bottom));
+  left: 50%;
+  translate: -50% 0;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  width: min(520px, calc(100vw - 24px));
+  padding: 14px;
+  border-radius: 22px;
+  border: 1px solid rgba(10, 122, 79, 0.25);
+  background: var(--card);
+  color: var(--text);
+  box-shadow: 0 30px 70px -24px rgba(4, 40, 26, 0.6);
+}
+.mm-notice-ico {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #0a7a4f, #12a36c);
+  color: #fff;
+}
+.mm-notice-ico svg {
+  width: 22px;
+  height: 22px;
+  animation: mm-ring-bell 1.2s 0.3s ease-in-out 2;
+  transform-origin: 50% 10%;
+}
+.mm-notice-main {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.mm-notice-main b {
+  font-family: var(--font-display);
+  font-size: 16.5px;
+  font-weight: 800;
+  line-height: 1.3;
+}
+.mm-notice-who {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  font-size: 13.5px;
+  color: var(--text-dim);
+}
+.mm-notice .mm-ring-bg {
+  stroke: rgba(10, 122, 79, 0.14);
+}
+.mm-notice .mm-ring-fg {
+  stroke: #12a36c;
+}
+.mm-notice .mm-ring.is-high .mm-ring-fg {
+  stroke: #d6982a;
+}
+.mm-notice .mm-ring b {
+  font-size: 13.5px;
+  color: var(--text);
+}
+.mm-notice-acts {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 8px;
+}
+.mm-notice-acts .btn {
+  justify-content: center;
+  min-height: 48px;
+  font-size: 16px;
+}
+
+/* a notice in the list that can be answered at once */
+.notice-list li.has-pair {
+  display: grid;
+  gap: 4px;
+}
+.notice-yes {
+  justify-self: start;
+  margin-inline-start: 56px;
+  margin-bottom: 6px;
+  min-height: 40px !important;
+  padding: 0 18px !important;
+  width: auto !important;
+  border-radius: 99px !important;
+  background: linear-gradient(135deg, #0a7a4f, #12a36c) !important;
+  color: #fff !important;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+@keyframes mm-burst {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.5);
+  }
+}
+@keyframes mm-radar {
+  from {
+    opacity: 0.9;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.6);
+  }
+}
+@keyframes mm-fill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+@keyframes mm-ring-bell {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  20% {
+    transform: rotate(14deg);
+  }
+  40% {
+    transform: rotate(-12deg);
+  }
+  60% {
+    transform: rotate(8deg);
+  }
+  80% {
+    transform: rotate(-4deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mm-burst,
+  .mm-radar i,
+  .mm-mutual-bar i,
+  .mm-notice-ico svg {
+    animation: none;
+  }
+  .mm-burst {
+    opacity: 0;
+  }
+}
+
+/* a phone: the meeting smaller, the deck taller, the buttons at the thumb */
+@media (max-width: 560px) {
+  .mm {
+    align-items: start;
+    padding-top: max(64px, calc(env(safe-area-inset-top) + 56px));
+  }
+  .mm-meet {
+    height: 250px;
+  }
+  .mm-meet-card {
+    width: 150px;
+  }
+  .mm-meet-score {
+    translate: 0 -52px;
+  }
+  .mm-mini b {
+    font-size: 13px;
+  }
+  .mm-deck {
+    height: calc(100dvh - 270px);
+    min-height: 380px;
+  }
+  .mm-card-body h3 {
+    font-size: 18px;
+  }
+  .mm-notice {
+    inset-block-end: max(12px, env(safe-area-inset-bottom));
+  }
+}

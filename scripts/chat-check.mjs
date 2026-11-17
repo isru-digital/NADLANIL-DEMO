@@ -121,7 +121,10 @@ for (const [tag, vp, phone] of process.env.RECORD === 'only' ? [] : [
   await page.waitForSelector('[data-picker="property"]', { visible: true })
   const first = await page.evaluate(() => [...document.querySelectorAll('[data-picker="property"] .pk-row')].find((r) => !r.disabled)?.dataset.pick)
   await tap(page, `[data-picker="property"] [data-pick="${first}"]`)
-  await wait(1200)
+  // the match screen comes up first (scripts/match-check.mjs covers it): closed here
+  await page.waitForSelector('[data-match-screen]', { visible: true, timeout: 4000 }).catch(() => {})
+  await tap(page, '[data-act="close-match"]').catch(() => {})
+  await wait(900)
   const before = await page.evaluate(() => Number(document.querySelector('.bell-count')?.textContent ?? 0))
   await wait(7600)
   const bell = await page.evaluate(() => ({ n: Number(document.querySelector('.bell-count')?.textContent ?? 0), toast: document.querySelector('.toast')?.textContent }))

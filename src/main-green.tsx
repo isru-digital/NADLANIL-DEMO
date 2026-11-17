@@ -45,7 +45,7 @@ import FeedWelcome from './community/FeedWelcome'
 import { CATEGORIES, CommercialSeed, categoryOf } from './crm/categories'
 import OwnerPage from './owner/OwnerPage'
 import { AutoPublish, AutoPublishNote, OwnerLinkButton } from './owner/OwnerPublish'
-import OwnerAlerts from './community/OwnerAlerts'
+import MatchMoment from './community/MatchMoment'
 import { OWNER_PATH, ownerActions } from './owner/ownerLink'
 import { clientActions } from './crm/clients'
 import './styles/lite.css'
@@ -157,8 +157,8 @@ start(<HomeGreen />, {
     <>
       <GreenActions />
       <AutoPublish />
-      {/* the other side of "יש לי קונה לנכס": in the demo, another broker reacts to a property I shared */}
-      {demo && <OwnerAlerts />}
+      {/* the match moment: what fits a property or a buyer I share; in the demo the other broker's side is played */}
+      <MatchMoment sim={demo} />
       {/* the demo's own example data and its start-again tab are not for a real broker's area */}
       {demo && <CommercialSeed />}
       {demo && import.meta.env.VITE_DEMO_RESET !== 'false' ? <DemoReset /> : null}

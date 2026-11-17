@@ -124,6 +124,10 @@ for (const [tag, vp] of [
   // ---- save
   await click('.ga-go')
   await wait(900)
+  // the new property goes up to the community, and the match screen comes up (scripts/match-check.mjs): closed here
+  await page.waitForSelector('[data-match-screen]', { visible: true, timeout: 3000 }).catch(() => {})
+  await page.$eval('[data-act="close-match"]', (b) => b.click()).catch(() => {})
+  await wait(500)
   const after = await page.evaluate(() => ({ draft: localStorage.getItem('nadlanup-crm-draft-v1') }))
   check(`${tag}: saving the card clears the draft`, after.draft === null, after)
   const owner = await page.evaluate(() => ({ btn: [...document.querySelectorAll('[data-act="owner-link"]')].map((b) => b.textContent.trim()), any: document.body.innerText.includes('קישור לבעל הנכס') }))

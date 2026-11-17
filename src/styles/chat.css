@@ -230,7 +230,7 @@ html[data-mode='night'] .cw {
 }
 .cw-compose {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap: 8px;
   padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
   border-top: 1px solid var(--line);
@@ -239,8 +239,11 @@ html[data-mode='night'] .cw {
   flex: 1;
   min-width: 0;
   min-height: 44px;
-  padding: 0 16px;
-  border-radius: 99px;
+  max-height: 124px;
+  padding: 10px 16px;
+  border-radius: 22px;
+  resize: none;
+  line-height: 1.45;
   border: 1px solid var(--line);
   background: var(--surface);
   font: inherit;
@@ -432,4 +435,14 @@ body.has-chat .dn {
 .cw-prop-price {
   font-weight: 700;
   color: #0a7a4f !important;
+}
+
+.cw-prop-ph.is-buyer {
+  display: grid;
+  place-items: center;
+  color: #0a7a4f;
+}
+.cw-prop-ph.is-buyer svg {
+  width: 20px;
+  height: 20px;
 }

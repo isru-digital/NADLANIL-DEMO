@@ -32,7 +32,7 @@ export function buyerPost(cl: Client, authorId: string): CommunityItem {
   const rent = cl.type === 'renter'
   const roomsMin = cl.roomsMin ?? Math.max(1, cl.rooms || 3)
   const roomsMax = cl.roomsMax ?? Math.max(roomsMin, cl.rooms || 4)
-  const search: SearchSpec = { cities: cl.cities, roomsMin, roomsMax, budget: cl.sum, wants: cl.must ?? [], deal: rent ? 'rent' : 'sale' }
+  const search: SearchSpec = { cities: cl.cities, roomsMin, roomsMax, budget: cl.sum, wants: cl.must ?? [], deal: rent ? 'rent' : 'sale', neighborhoods: cl.neighborhoods, kinds: cl.kinds, budgetMin: cl.budgetMin }
   const where = cl.cities.length ? ` ב${cl.cities.join(' או ב')}` : ''
   const hoods = cl.neighborhoods?.length ? `שכונות: ${cl.neighborhoods.join(', ')}. ` : ''
   return {

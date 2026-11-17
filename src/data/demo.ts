@@ -62,6 +62,10 @@ export type SearchSpec = {
   budget: number
   wants: string[]
   deal?: 'sale' | 'rent'
+  /** a full search (17.11.2026): the neighbourhoods, the kinds of home and the least the buyer pays */
+  neighborhoods?: string[]
+  kinds?: string[]
+  budgetMin?: number
 }
 
 export type Testimonial = { id: string; name: string; role: string; body: string }
@@ -655,6 +659,8 @@ export type Notice = {
   itemId: string
   /** a demo simulation (another broker's reaction): marked as an example where it is shown */
   demo?: boolean
+  /** a match the broker can answer from the notice ("יש לי"): my post and the other broker's */
+  pair?: { mine: string; theirs: string }
 }
 
 /**
@@ -798,6 +804,55 @@ export const communityItems: CommunityItem[] = (<CommunityItem[]>[
     likes: 4,
     comments: [],
     search: { cities: ['גבעתיים', 'רמת גן'], roomsMin: 4, roomsMax: 4, budget: 3800000, wants: ['מעלית', 'חניה', 'מרפסת שמש'] },
+  },
+  // more buyers for the match moment (17.11.2026): invented, like every post of the demo
+  {
+    id: 'k21',
+    topicId: 'seeking',
+    authorId: 'b17',
+    city: 'תל אביב',
+    time: 'לפני 40 דקות',
+    title: 'משקיע מחפש פנטהאוז בצפון הישן',
+    body: 'שכונה: הצפון הישן. 5 חדרים ומעלה, נוף פתוח. מוכן לסגור מהר על הנכס הנכון.',
+    likes: 6,
+    comments: [],
+    search: { deal: 'sale', cities: ['תל אביב'], neighborhoods: ['הצפון הישן'], roomsMin: 5, roomsMax: 6, budget: 9800000, wants: ['מעלית', 'חניה'] },
+  },
+  {
+    id: 'k22',
+    topicId: 'seeking',
+    authorId: 'b5',
+    city: 'תל אביב',
+    time: 'לפני שעתיים',
+    title: 'זוג שחוזר מחו"ל מחפש 4.5 עד 5 חדרים',
+    body: 'רוצים לגור בתל אביב, קרוב לים. ממ"ד חשוב להם.',
+    likes: 3,
+    comments: [],
+    search: { deal: 'sale', cities: ['תל אביב'], roomsMin: 4.5, roomsMax: 5, budget: 9200000, wants: ['ממ"ד'] },
+  },
+  {
+    id: 'k23',
+    topicId: 'seeking',
+    authorId: 'b3',
+    city: 'תל אביב',
+    time: 'לפני 3 שעות',
+    title: 'לקוח מירושלים מחפש 4 חדרים בלב העיר',
+    body: 'שכונה: לב העיר. עובר לתל אביב בקיץ, מחפש בניין עם מעלית וחניה.',
+    likes: 2,
+    comments: [],
+    search: { deal: 'sale', cities: ['תל אביב'], neighborhoods: ['לב העיר'], roomsMin: 4, roomsMax: 4, budget: 9000000, wants: ['חניה', 'מעלית'] },
+  },
+  {
+    id: 'k24',
+    topicId: 'seeking',
+    authorId: 'b6',
+    city: 'גבעתיים',
+    time: 'לפני 5 שעות',
+    title: 'משפחה מחפשת 4 עד 5 חדרים בגבעתיים',
+    body: 'שני ילדים, צריכים ממ"ד ומעלית. גמישים בקומה.',
+    likes: 5,
+    comments: [],
+    search: { deal: 'sale', cities: ['גבעתיים'], roomsMin: 4, roomsMax: 5, budget: 3700000, wants: ['מעלית', 'ממ"ד'] },
   },
   {
     id: 'k2',

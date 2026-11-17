@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { createPortal } from 'react-dom'
-import { CheckCheck, Send, X } from 'lucide-react'
+import { CheckCheck, Search, Send, X } from 'lucide-react'
 import { asset } from '../config'
-import { brokerById } from '../data/demo'
+import { brokerById, formatPriceShort, roomsLabel } from '../data/demo'
 import type { CommunityItem } from '../data/demo'
 import { Avatar } from '../components/ui'
 import { priceText } from './PropertyPage'
@@ -38,15 +38,25 @@ const REPLIES = [
   'נשמע טוב. מתי נוח לדבר בטלפון כמה דקות?',
   'אפשר לתאם סיור כבר השבוע. אילו ימים נוחים לך?',
 ]
+// a talk about the other broker's buyer, not a property
+const QUICK_BUYER = ['הקונה עדיין מחפש?', 'יש לי נכס שמתאים לו', 'אפשר לדבר היום?']
+const REPLIES_BUYER = [
+  'היי! כן, הקונה עדיין מחפש. אפשר לראות תמונות של הנכס?',
+  'נראה מתאים. מתי אפשר לתאם סיור?',
+  'מעולה. נדבר בטלפון ונסגור את חלוקת העמלה.',
+]
 
-export default function ChatWindow({ item, open, onClose }: { item: CommunityItem; open: boolean; onClose: () => void }) {
+export default function ChatWindow({ item, open, onClose, opener }: { item: CommunityItem; open: boolean; onClose: () => void; opener?: string }) {
   const broker = brokerById(item.authorId)
   const first = broker.name.split(' ')[0]
   const [msgs, setMsgs] = useState<Msg[]>(() => load()[item.id] ?? [])
-  const [text, setText] = useState('')
+  // a ready first line (a match opens the chat with one), left in the box to send or change
+  const [text, setText] = useState(() => (opener && !(load()[item.id] ?? []).length ? opener : ''))
   const [typing, setTyping] = useState(false)
+  const buyer = !item.property && !!item.search
+  const replies = buyer ? REPLIES_BUYER : REPLIES
   const list = useRef<HTMLDivElement>(null)
-  const input = useRef<HTMLInputElement>(null)
+  const input = useRef<HTMLTextAreaElement>(null)
   const timers = useRef<number[]>([])
 
   useEffect(() => () => timers.current.forEach((t) => clearTimeout(t)), [])
@@ -84,7 +94,7 @@ export default function ChatWindow({ item, open, onClose }: { item: CommunityIte
     later(() => setTyping(true), 1800)
     later(() => {
       setTyping(false)
-      setMsgs((m) => [...m, { id: `r${Date.now()}`, from: 'them', text: REPLIES[m.filter((x) => x.from === 'them').length % REPLIES.length], at: Date.now() }])
+      setMsgs((m) => [...m, { id: `r${Date.now()}`, from: 'them', text: replies[m.filter((x) => x.from === 'them').length % replies.length], at: Date.now() }])
     }, 3600)
   }
   const submit = (e: FormEvent) => {
@@ -117,15 +127,29 @@ export default function ChatWindow({ item, open, onClose }: { item: CommunityIte
           </span>
         </div>
       )}
+      {!p && item.search && (
+        <div className="cw-prop" data-chat-property>
+          <span className="cw-prop-ph is-buyer" aria-hidden>
+            <Search />
+          </span>
+          <span>
+            <b>{item.title}</b>
+            <small>
+              {roomsLabel(item.search)} · {item.search.cities.join(', ')}
+            </small>
+            <small className="cw-prop-price num">עד {formatPriceShort(item.search.budget)}</small>
+          </span>
+        </div>
+      )}
       <div className="cw-list" ref={list} aria-live="polite">
         <p className="cw-note">בדמו התשובות של המתווך נשלחות אוטומטית</p>
         {msgs.length === 0 && (
           <div className="cw-start">
             <Avatar src={broker.avatar} name={broker.name} size={64} />
             <b>{broker.name}</b>
-            <small>כותבים ל{first} על הנכס, או בוחרים משפט מוכן:</small>
+            <small>כותבים ל{first} על {buyer ? 'הקונה' : 'הנכס'}, או בוחרים משפט מוכן:</small>
             <div className="cw-quick">
-              {QUICK.map((q) => (
+              {(buyer ? QUICK_BUYER : QUICK).map((q) => (
                 <button key={q} type="button" onClick={() => send(q)} data-quick={q}>
                   {q}
                 </button>
@@ -171,7 +195,24 @@ export default function ChatWindow({ item, open, onClose }: { item: CommunityIte
         )}
       </div>
       <form className="cw-compose" onSubmit={submit}>
-        <input ref={input} className="cw-input" value={text} onChange={(e) => setText(e.target.value)} placeholder={`הודעה ל${first}`} aria-label="הודעה" enterKeyHint="send" data-f="chat-input" />
+        {/* grows with a longer line (a match's ready first line), Enter sends, Shift+Enter is a new line */}
+        <textarea
+          ref={input}
+          className="cw-input"
+          rows={Math.min(4, Math.max(1, Math.ceil(text.length / 34)))}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
+              e.preventDefault()
+              send(text)
+            }
+          }}
+          placeholder={`הודעה ל${first}`}
+          aria-label="הודעה"
+          enterKeyHint="send"
+          data-f="chat-input"
+        />
         <button type="submit" className="cw-send" disabled={!text.trim()} aria-label="שליחה" data-act="send-chat">
           <Send />
         </button>
