@@ -27,11 +27,14 @@ for (const [tag, vp] of [
   await page.evaluateOnNewDocument(() => {
     try {
       localStorage.setItem('nadlanup-demo-v1', '1')
+      // while the live site is under construction: the preview key's hash (public in src/config/construction.ts)
+      localStorage.setItem('nadlanup-preview-v1', '6d5eaaca072bf02f647051d8688d1337a4ab7a6cb92a2a8b3924cf91fda89e8b')
     } catch {}
   })
   await page.goto(green + '/', { waitUntil: 'load' })
   await page.evaluate(() => {
     localStorage.clear()
+    localStorage.setItem('nadlanup-preview-v1', '6d5eaaca072bf02f647051d8688d1337a4ab7a6cb92a2a8b3924cf91fda89e8b')
     // the day look for the pictures (the night look is checked by the other checks)
     localStorage.setItem('nadlanup-mode-v1', JSON.stringify({ mode: 'day', until: Date.now() + 9e9 }))
   })
