@@ -220,7 +220,7 @@ const REF_CITIES = ['ירושלים', 'חיפה', 'באר שבע', 'אשדוד',
  * "יש לי מוכר בעיר אחרת": where the property (or the search) is, a line about it, and the client's name and phone
  * for the broker's own CRM. The community gets the city and the line only; the name and the phone stay in the CRM.
  */
-export function ReferralSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function ReferralSheet({ open, onClose, initialCity = '' }: { open: boolean; onClose: () => void; initialCity?: string }) {
   const { addItem, toast } = useStore()
   const navigate = useNavigate()
   const [side, setSide] = useState<'seller' | 'buyer'>('seller')
@@ -233,13 +233,13 @@ export function ReferralSheet({ open, onClose }: { open: boolean; onClose: () =>
   useEffect(() => {
     if (!open) return
     setSide('seller')
-    setCity('')
+    setCity(initialCity)
     setAll(false)
     setWhat('')
     setName('')
     setPhone('')
     setErr('')
-  }, [open])
+  }, [open, initialCity])
   const list = all ? [...knownCities].sort((a, b) => a.localeCompare(b, 'he')) : [...new Set([...(city ? [city] : []), ...REF_CITIES])]
   const send = () => {
     if (!city) return setErr('בוחרים את העיר שבה צריך מתווך.')

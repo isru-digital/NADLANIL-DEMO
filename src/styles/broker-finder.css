@@ -1,0 +1,301 @@
+/* "מציאת מתווך בעיר אחרת": a city search, the brokers who work there, and one button per broker. Phone first. */
+.bf {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 18px;
+  padding: clamp(16px, 2.2vw, 24px);
+  border-radius: 22px;
+  border: 1px solid var(--line);
+  background:
+    radial-gradient(60% 80% at 100% 0%, rgba(94, 230, 180, 0.14), transparent 70%),
+    var(--card);
+}
+.bf-head h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(22px, 3vw, 28px);
+  font-weight: 800;
+  color: var(--text);
+}
+.bf-head p {
+  margin: 4px 0 0;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text-dim);
+}
+.bf-search {
+  position: relative;
+  display: grid;
+  gap: 10px;
+}
+.bf-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 54px;
+  padding: 0 14px;
+  border-radius: 16px;
+  border: 1.5px solid var(--line-strong);
+  background: var(--card);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.bf-box:focus-within {
+  border-color: #0a7a4f;
+  box-shadow: 0 0 0 4px rgba(16, 163, 108, 0.14);
+}
+.bf-box > svg {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  color: #0a7a4f;
+}
+.bf-input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  outline: none;
+  font: inherit;
+  font-size: 17px;
+  color: var(--text);
+}
+.bf-clear {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+.bf-clear svg {
+  width: 18px;
+  height: 18px;
+}
+.bf-suggest {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  box-shadow: 0 16px 34px -20px rgba(8, 52, 36, 0.45);
+}
+.bf-suggest button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 48px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  text-align: start;
+  cursor: pointer;
+}
+.bf-suggest button:hover,
+.bf-suggest button:focus-visible {
+  background: rgba(16, 163, 108, 0.08);
+  outline: none;
+}
+.bf-suggest svg {
+  width: 17px;
+  height: 17px;
+  color: #0a7a4f;
+}
+.bf-suggest small {
+  margin-inline-start: auto;
+  font-family: var(--font-body, inherit);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-dim);
+}
+.bf-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.bf-chip {
+  min-height: 42px;
+  padding: 0 14px;
+  border-radius: 99px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  font-family: var(--font-display);
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--text);
+  cursor: pointer;
+}
+.bf-chip:hover {
+  border-color: rgba(10, 122, 79, 0.45);
+}
+
+.bf-count {
+  margin: 4px 0 8px;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-dim);
+}
+.bf-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.bf-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background: var(--card);
+}
+.bf-who {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.bf-who > b {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-display);
+  font-size: 17px;
+  color: var(--text);
+}
+.bf-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+.bf-specs {
+  font-size: 13.5px;
+  color: var(--text-dim);
+}
+.bf-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin-top: 2px;
+  font-size: 13.5px;
+  color: var(--text-dim);
+}
+.bf-facts > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.bf-facts svg {
+  width: 14px;
+  height: 14px;
+  color: #b07a14;
+}
+.bf-facts b {
+  color: var(--text);
+}
+.bf-go {
+  min-height: 46px;
+  white-space: nowrap;
+}
+.bf-go svg {
+  width: 17px;
+  height: 17px;
+}
+.bf-sent {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 99px;
+  background: rgba(16, 163, 108, 0.1);
+  color: #0a7a4f;
+  font-family: var(--font-display);
+  font-size: 14.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.bf-sent svg {
+  width: 16px;
+  height: 16px;
+}
+
+.bf-empty {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 24px 16px;
+  border-radius: 18px;
+  border: 1px dashed rgba(10, 122, 79, 0.4);
+  background: rgba(16, 163, 108, 0.05);
+  text-align: center;
+}
+.bf-empty-ico {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(232, 183, 90, 0.16);
+  border: 1px solid rgba(214, 152, 42, 0.32);
+  color: #b07a14;
+}
+.bf-empty-ico svg {
+  width: 24px;
+  height: 24px;
+}
+.bf-empty b {
+  font-family: var(--font-display);
+  font-size: 18px;
+  color: var(--text);
+}
+.bf-empty small {
+  font-size: 14px;
+  color: var(--text-dim);
+}
+.bf-empty .btn {
+  margin-top: 4px;
+  min-height: 46px;
+}
+
+.bf-form {
+  display: grid;
+  gap: 14px;
+}
+.bf-form .textarea,
+.bf-form .input {
+  font-size: 16px;
+}
+.bf-form .input {
+  min-height: 48px;
+}
+.bf-fee-note {
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+@media (max-width: 640px) {
+  .bf-row {
+    grid-template-columns: auto 1fr;
+  }
+  .bf-go,
+  .bf-sent {
+    grid-column: 1 / -1;
+    justify-content: center;
+    width: 100%;
+  }
+}

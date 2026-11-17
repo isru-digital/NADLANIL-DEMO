@@ -33,6 +33,7 @@ import { actionSlots, communitySlots } from '../config/navExtras'
 import { Avatar, EASE, Modal } from '../components/ui'
 import CommunityCard from '../components/CommunityCard'
 import { BuyerPicker, PropertyPicker, ReferralSheet } from '../community/PublishPickers'
+import BrokerFinder from '../community/BrokerFinder'
 import { VALUE_LINES } from '../community/FeedWelcome'
 import type { Intent } from '../community/FeedWelcome'
 import '../styles/community.css'
@@ -154,8 +155,9 @@ export default function Community() {
   const toggleCity = (c: string) => setMyCities(myCities.includes(c) ? myCities.filter((x) => x !== c) : [...myCities, c])
   // sharing a property or a buyer: pick from the CRM, or add a new one (saved in the CRM and published)
   const [pick, setPick] = useState<'property' | 'buyer' | 'new-buyer' | 'referral' | null>(null)
+  const [refCity, setRefCity] = useState('')
   // the four cards of the welcome: each goes straight to its action
-  const onIntent = (i: Intent) => (i === 'property' ? setPick('property') : i === 'buyer' ? setPick('buyer') : i === 'referral' ? setPick('referral') : openComposer('knowledge'))
+  const onIntent = (i: Intent) => (i === 'property' ? setPick('property') : i === 'buyer' ? setPick('buyer') : i === 'referral' ? (setRefCity(''), setPick('referral')) : openComposer('knowledge'))
   const newProperty = () => (actionSlots.newCard ? actionSlots.newCard() : setPick('property'))
   const openComposer = (topicId?: TopicId, photo?: boolean) =>
     setComposer({ topicId: topicId ?? (topic?.compose ? topic.id : 'posts'), photo })
@@ -261,7 +263,16 @@ export default function Community() {
 
         {/* ------------------------------------------------------ feed */}
         <div className="comm-feed">
-          {topic && (
+          {/* "מציאת מתווך בעיר אחרת": the referrals room opens with a search of brokers by city */}
+          {topic?.id === 'referrals' && communitySlots.Top && (
+            <BrokerFinder
+              onOpenReferral={(c) => {
+                setRefCity(c ?? '')
+                setPick('referral')
+              }}
+            />
+          )}
+          {topic && !(topic.id === 'referrals' && communitySlots.Top) && (
             <section className={`fb topic-head tone-${topic.tone}`}>
               <span className="topic-head-icon">
                 <topic.icon />
@@ -543,7 +554,7 @@ export default function Community() {
         onPickProperty={() => setPick('property')}
       />
       <PropertyPicker open={pick === 'property'} onClose={() => setPick(null)} />
-      <ReferralSheet open={pick === 'referral'} onClose={() => setPick(null)} />
+      <ReferralSheet open={pick === 'referral'} initialCity={refCity} onClose={() => setPick(null)} />
       <BuyerPicker open={pick === 'buyer' || pick === 'new-buyer'} startNew={pick === 'new-buyer'} onClose={() => setPick(null)} />
 
       {/* ------------------------------------------------- cities picker */}

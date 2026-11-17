@@ -173,12 +173,13 @@ for (const [tag, vp] of [
   await wait(900)
   const names = await page.evaluate(() => ({
     room: document.querySelector('[data-room="referrals"]')?.textContent.trim(),
-    head: document.querySelector('.topic-head h2')?.textContent.trim(),
+    // the room's page opens with the finder, titled "מציאת מתווך בעיר אחרת" (17.11.2026)
+    head: document.querySelector('[data-finder] h2, .topic-head h2')?.textContent.trim(),
     rail: [...document.querySelectorAll('.comm-rail .rail-label, .rail-label')].map((x) => x.textContent.trim()).filter((t) => /הפני|בעיר אחרת/.test(t)),
     posts: [...new Set([...document.querySelectorAll('.fb.ci .fb-topic')].map((t) => t.textContent.trim()))],
     old: /הפניות בין מתווכים/.test(document.body.innerText),
   }))
-  check(`${tag}: the referrals room is called "מתווך בעיר אחרת" everywhere (rooms, title, list, posts)`, names.room === 'מתווך בעיר אחרת' && names.head === 'מתווך בעיר אחרת' && names.posts.join() === 'מתווך בעיר אחרת' && names.rail.every((t) => t === 'מתווך בעיר אחרת') && !names.old, names)
+  check(`${tag}: the referrals room is called "מתווך בעיר אחרת" everywhere (rooms, list, posts), its page "מציאת מתווך בעיר אחרת"`, names.room === 'מתווך בעיר אחרת' && names.head === 'מציאת מתווך בעיר אחרת' && names.posts.join() === 'מתווך בעיר אחרת' && names.rail.every((t) => t === 'מתווך בעיר אחרת') && !names.old, names)
 
   // ---- a room is one tap
   await page.goto(green + '/app/community', { waitUntil: 'networkidle0' })
