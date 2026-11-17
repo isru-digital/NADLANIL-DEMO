@@ -1,0 +1,250 @@
+/* Sharing from the CRM in as few taps as possible: a "new" row on top, then my properties (a small photo each) or my
+   buyers. One tap on a row shares it. */
+.pk {
+  display: grid;
+  gap: 12px;
+}
+.pk-new {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 68px;
+  padding: 10px 14px;
+  border-radius: 18px;
+  border: 1.5px dashed rgba(10, 122, 79, 0.5);
+  background: rgba(16, 163, 108, 0.07);
+  text-align: start;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition:
+    background-color var(--t) var(--ease),
+    transform var(--t-fast) var(--ease);
+}
+.pk-new:hover {
+  background: rgba(16, 163, 108, 0.12);
+}
+.pk-new:active {
+  transform: scale(0.98);
+}
+.pk-new-ico {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #0a7a4f, #12a36c);
+  color: #fff;
+}
+.pk-new-ico svg {
+  width: 22px;
+  height: 22px;
+}
+.pk-new b {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 17px;
+  color: var(--text);
+}
+.pk-new small {
+  font-size: 13.5px;
+  color: var(--text-dim);
+}
+.pk-go {
+  width: 20px;
+  height: 20px;
+  color: var(--text-dim);
+}
+.pk-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0 0;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text-dim);
+}
+.pk-title b {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 99px;
+  background: rgba(10, 122, 79, 0.12);
+  color: #0a7a4f;
+  font-size: 12.5px;
+}
+.pk-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.pk-row {
+  display: grid;
+  grid-template-columns: 64px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 76px;
+  padding: 8px;
+  padding-inline-end: 12px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  text-align: start;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition:
+    border-color var(--t) var(--ease),
+    box-shadow var(--t) var(--ease),
+    transform var(--t-fast) var(--ease);
+}
+.pk-row:hover {
+  border-color: rgba(10, 122, 79, 0.45);
+  box-shadow: 0 8px 20px -14px rgba(8, 82, 54, 0.45);
+}
+.pk-row:active {
+  transform: scale(0.985);
+}
+.pk-row:focus-visible,
+.pk-new:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+.pk-row.is-done {
+  cursor: default;
+  opacity: 0.62;
+}
+.pk-thumb {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 56px;
+  overflow: hidden;
+  border-radius: 12px;
+  background: linear-gradient(160deg, #eaf7f0, #d9f1e5);
+  color: #b07a14;
+}
+.pk-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.pk-thumb svg {
+  width: 24px;
+  height: 24px;
+}
+.pk-thumb.is-person {
+  width: 56px;
+  border-radius: 50%;
+  color: #0a7a4f;
+}
+.pk-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.pk-text b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-display);
+  font-size: 15.5px;
+  color: var(--text);
+}
+.pk-text b em {
+  font-style: normal;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+.pk-text small {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+.pk-text small svg {
+  flex: none;
+  width: 13px;
+  height: 13px;
+}
+.pk-text strong {
+  font-size: 14px;
+  color: #0a7a4f;
+}
+.pk-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 99px;
+  background: linear-gradient(135deg, #0a7a4f, #12a36c);
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.pk-row.is-done .pk-state {
+  background: transparent;
+  color: var(--text-dim);
+}
+.pk-state svg {
+  width: 15px;
+  height: 15px;
+}
+.pk-empty,
+.pk-note {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--text-dim);
+}
+
+/* the topic's two actions: pick from mine, or add a new one. Their own row under the topic's name: side by side on a
+   wide screen, one under the other on a phone, so the long label is never cut. */
+.topic-head:has(.topic-acts) {
+  flex-wrap: wrap;
+}
+.topic-head > .topic-acts {
+  flex: 1 1 100%;
+  display: flex;
+  gap: 8px;
+}
+.topic-acts .btn {
+  flex: 1 1 0;
+  justify-content: center;
+  min-height: 46px;
+  white-space: normal;
+  text-align: center;
+}
+/* the main action takes the larger share, so its longer label fits on one line */
+.topic-acts .btn-gold {
+  flex-grow: 1.8;
+}
+@media (max-width: 640px) {
+  .topic-head > .topic-acts {
+    flex-direction: column;
+  }
+  .topic-acts .btn {
+    flex: 1 1 auto;
+    width: 100%;
+  }
+  .pk-row {
+    grid-template-columns: 56px 1fr auto;
+  }
+  .pk-thumb {
+    width: 56px;
+    height: 50px;
+  }
+}

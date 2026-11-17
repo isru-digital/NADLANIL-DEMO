@@ -9,6 +9,7 @@ import {
   ChevronLeft,
   ChevronRight,
   HelpCircle,
+  Home,
   ImagePlus,
   LayoutGrid,
   MapPin,
@@ -19,6 +20,7 @@ import {
   Share2,
   Sparkles,
   Trophy,
+  UserRound,
   X,
 } from 'lucide-react'
 import { CURRENT_BROKER_ID, asset } from '../config'
@@ -27,9 +29,10 @@ import type { TopicId } from '../config/topics'
 import { brokerById, brokers, cities, fitsSearch, formatPriceShort, roomsLabel } from '../data/demo'
 import type { CommunityItem } from '../data/demo'
 import { useStore } from '../store'
-import { communitySlots } from '../config/navExtras'
+import { actionSlots, communitySlots } from '../config/navExtras'
 import { Avatar, EASE, Modal } from '../components/ui'
 import CommunityCard from '../components/CommunityCard'
+import { BuyerPicker, PropertyPicker } from '../community/PublishPickers'
 import '../styles/community.css'
 import '../styles/feed.css'
 import '../styles/property.css'
@@ -147,6 +150,9 @@ export default function Community() {
   }, [focusId, view])
 
   const toggleCity = (c: string) => setMyCities(myCities.includes(c) ? myCities.filter((x) => x !== c) : [...myCities, c])
+  // sharing a property or a buyer: pick from the CRM, or add a new one (saved in the CRM and published)
+  const [pick, setPick] = useState<'property' | 'buyer' | 'new-buyer' | null>(null)
+  const newProperty = () => (actionSlots.newCard ? actionSlots.newCard() : setPick('property'))
   const openComposer = (topicId?: TopicId, photo?: boolean) =>
     setComposer({ topicId: topicId ?? (topic?.compose ? topic.id : 'posts'), photo })
 
@@ -265,6 +271,28 @@ export default function Community() {
                   <Plus />
                   פוסט חדש
                 </button>
+              ) : topic.id === 'coop' ? (
+                <div className="topic-acts">
+                  <button className="btn btn-gold btn-sm" onClick={() => setPick('property')} data-act="pick-property">
+                    <Home />
+                    בחירה מהנכסים הקיימים שלי
+                  </button>
+                  <button className="btn btn-ghost btn-sm" onClick={newProperty} data-act="add-property">
+                    <Plus />
+                    נכס חדש
+                  </button>
+                </div>
+              ) : topic.id === 'seeking' ? (
+                <div className="topic-acts">
+                  <button className="btn btn-gold btn-sm" onClick={() => setPick('buyer')} data-act="pick-buyer">
+                    <UserRound />
+                    בחירת קונה מה-CRM
+                  </button>
+                  <button className="btn btn-ghost btn-sm" onClick={() => setPick('new-buyer')} data-act="add-buyer">
+                    <Plus />
+                    קונה חדש
+                  </button>
+                </div>
               ) : (
                 <Link to="/app/crm" className="btn btn-gold btn-sm">
                   <Share2 />
@@ -329,10 +357,10 @@ export default function Community() {
                   <Trophy style={{ color: '#e6cd92' }} />
                   עסקה שנסגרה
                 </button>
-                <Link to="/app/crm">
+                <button onClick={() => setPick('property')} data-act="quick-property">
                   <Share2 style={{ color: '#c3b1f4' }} />
-                  נכס מה-CRM
-                </Link>
+                  נכס לשיתוף
+                </button>
               </div>
             </section>
           )}
@@ -451,10 +479,10 @@ export default function Community() {
                 ))}
               </ul>
             )}
-            <Link to="/app/crm" className="me-link">
-              פרסום בקשה מה-CRM
+            <button type="button" className="me-link" onClick={() => setPick('buyer')} data-act="side-buyer">
+              פרסום קונה בקהילה
               <ChevronLeft />
-            </Link>
+            </button>
           </section>
 
           <section className="fb side-card">
@@ -500,7 +528,10 @@ export default function Community() {
         onClose={() => setComposer(null)}
         onPublish={publish}
         hasCrmProperties={crm.some((c) => c.kind === 'property')}
+        onPickProperty={() => setPick('property')}
       />
+      <PropertyPicker open={pick === 'property'} onClose={() => setPick(null)} />
+      <BuyerPicker open={pick === 'buyer' || pick === 'new-buyer'} startNew={pick === 'new-buyer'} onClose={() => setPick(null)} />
 
       {/* ------------------------------------------------- cities picker */}
       <Modal
@@ -711,11 +742,13 @@ function ComposerModal({
   onClose,
   onPublish,
   hasCrmProperties,
+  onPickProperty,
 }: {
   state: { topicId: TopicId; photo?: boolean } | null
   onClose: () => void
   onPublish: (topicId: TopicId, body: string, image?: string) => void
   hasCrmProperties: boolean
+  onPickProperty: () => void
 }) {
   const me = brokerById(CURRENT_BROKER_ID)
   const composeTopics = topics.filter((t) => t.compose)
@@ -817,9 +850,17 @@ function ComposerModal({
             <ImagePlus style={{ color: '#74d3a8' }} />
           </button>
           {hasCrmProperties && (
-            <Link to="/app/crm" aria-label="נכס מה-CRM" title="נכס מה-CRM">
+            <button
+              type="button"
+              aria-label="שיתוף נכס מהנכסים שלי"
+              title="שיתוף נכס מהנכסים שלי"
+              onClick={() => {
+                onClose()
+                onPickProperty()
+              }}
+            >
               <Share2 style={{ color: '#c3b1f4' }} />
-            </Link>
+            </button>
           )}
         </div>
 

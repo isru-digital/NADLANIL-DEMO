@@ -21,7 +21,7 @@ const pending = new Set<string>()
  * the broker's internal note and the exact address (street and house number) are not read here at all: the area is
  * the city and the neighbourhood.
  */
-const postOf = (item: CrmItem, authorId: string): CommunityItem => ({
+export const postOf = (item: CrmItem, authorId: string): CommunityItem => ({
   id: `m-${item.id}-${Date.now()}`,
   topicId: 'coop',
   authorId,

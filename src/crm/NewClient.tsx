@@ -39,7 +39,7 @@ export function aboutOf(p: { rent: boolean; cities: string[]; hoods: string[]; r
   return `${p.rent ? 'מחפש לשכור' : 'מחפש לקנות'} ${roomsText(p.roomsMin, p.roomsMax)}${where ? ` ב${where}` : ''}, ${budget}`
 }
 
-export default function NewClient({ open, onClose, isOffice, onAdd }: { open: boolean; onClose: () => void; isOffice: boolean; onAdd: (p: NewClientInput) => void }) {
+export default function NewClient({ open, onClose, isOffice, onAdd, searchOnly = false }: { open: boolean; onClose: () => void; isOffice: boolean; onAdd: (p: NewClientInput) => void; searchOnly?: boolean }) {
   const { myCities } = useStore()
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
@@ -155,7 +155,7 @@ export default function NewClient({ open, onClose, isOffice, onAdd }: { open: bo
           <div className="ct-field">
             <span className="ct-label">סוג</span>
             <div className="ct-stage" role="radiogroup" aria-label="סוג">
-              {TYPES.filter((t) => isOffice || !t.office).map((t) => (
+              {TYPES.filter((t) => (isOffice || !t.office) && (!searchOnly || t.id === 'buyer' || t.id === 'renter')).map((t) => (
                 <button key={t.id} type="button" role="radio" aria-checked={type === t.id} className={type === t.id ? 'is-on' : ''} onClick={() => pickType(t.id)} data-type={t.id}>
                   {t.one}
                 </button>

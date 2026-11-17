@@ -11,6 +11,7 @@ import type { GreenAsk } from './ui'
 import { allExtras, knownCities, parseWhatsapp, sampleMessage, sampleRequest, titleOf } from './whatsapp'
 import type { Parsed } from './whatsapp'
 import { clientActions } from '../crm/clients'
+import { clientKey } from '../community/PublishPickers'
 import PhotoPicker from './PhotoPicker'
 import { CATEGORIES, commercialExtras, commercialTitle } from '../crm/categories'
 import type { PropCategory } from '../crm/categories'
@@ -373,10 +374,30 @@ export default function GreenActions() {
             body: waDraft.extras.length ? `חשוב לקונה: ${waDraft.extras.join(', ')}.` : 'פרטים נוספים אצלי.',
             search: { cities: [waDraft.city], roomsMin: Math.floor(rooms) || 1, roomsMax: Math.ceil(rooms) || 6, budget: price, wants: waDraft.extras },
           }
-    addItem(item)
+    // what goes up to the community is kept in the broker's CRM too: a property on the board, a buyer in the table
+    if (waDraft.kind === 'property') {
+      const card: CrmItem = {
+        id: `c-${id}`,
+        kind: 'property',
+        title: item.title ?? titleOf('property', rooms || null, waDraft.city),
+        area: waDraft.city,
+        city: waDraft.city,
+        rooms: waDraft.rooms || '-',
+        price,
+        status: 'new',
+        client: 'בעל הנכס',
+        note: waDraft.extras.join(', '),
+        updated: 'נוסף עכשיו',
+      }
+      addCrm(card)
+      addItem(item, card.id)
+    } else {
+      const kid = clientActions.add({ name: 'לקוח מוואטסאפ', type: 'buyer', phone: '', about: item.title ?? '', cities: [waDraft.city], rooms: Math.round(rooms) || 0, sum: price, roomsMin: Math.floor(rooms) || 1, roomsMax: Math.ceil(rooms) || 6, must: waDraft.extras })
+      addItem(item, clientKey(kid))
+    }
     close()
     greenUi.published()
-    toast(waDraft.kind === 'property' ? 'הנכס פורסם בקהילה' : 'הבקשה פורסמה בקהילה')
+    toast(waDraft.kind === 'property' ? 'הנכס פורסם בקהילה ונשמר ב-CRM' : 'הבקשה פורסמה בקהילה ונשמרה ב-CRM')
     navigate(`/app/community?topic=${item.topicId}&item=${id}`)
   }
 
