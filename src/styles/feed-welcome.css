@@ -317,3 +317,17 @@
     min-height: 44px;
   }
 }
+
+/* a notice that is a demo simulation (another broker's reaction): marked as an example */
+.notice-demo {
+  display: inline-flex;
+  margin-inline-start: 6px;
+  padding: 1px 7px;
+  border-radius: 99px;
+  background: rgba(232, 183, 90, 0.2);
+  color: #7f5205;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 700;
+  vertical-align: 2px;
+}

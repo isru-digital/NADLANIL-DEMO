@@ -746,9 +746,12 @@ function NoticeList({ notices, onPick, large }: { notices: NoticeT[]; onPick: (n
       {notices.map((n) => (
         <li key={n.id} className={n.read ? '' : 'is-unread'}>
           <button onClick={() => onPick(n)}>
-            <span className={`notice-icon kind-${n.kind}`}>{n.kind === 'match' ? <Sparkles /> : <MessageCircle />}</span>
+            <span className={`notice-icon kind-${n.kind}`}>{n.kind === 'match' ? <Sparkles /> : n.kind === 'interest' ? <UserRound /> : <MessageCircle />}</span>
             <span className="notice-main">
-              <strong>{n.title}</strong>
+              <strong>
+                {n.title}
+                {n.demo && <em className="notice-demo">דוגמה</em>}
+              </strong>
               <span>{n.text}</span>
               <time>{n.time}</time>
             </span>

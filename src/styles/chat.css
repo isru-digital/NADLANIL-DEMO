@@ -1,0 +1,435 @@
+/* The chat with a property's broker, in the shape of a messenger: a small window at the bottom corner on a computer,
+   the whole screen on a phone. My bubbles in the brand's green at the end of the line, theirs in soft grey at the
+   start; the time inside the bubble; "נקרא" under my last message; the property's small photo at the top. */
+.cw {
+  --cw-me: linear-gradient(135deg, #0a7a4f, #12a36c);
+  --cw-them: rgba(10, 70, 48, 0.07);
+  position: fixed;
+  inset-block-end: 0;
+  inset-inline-end: 24px;
+  z-index: 1200;
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  width: 360px;
+  height: min(540px, calc(100vh - 80px));
+  border-radius: 18px 18px 0 0;
+  border: 1px solid var(--line);
+  border-bottom: 0;
+  background: var(--card);
+  box-shadow: 0 -2px 6px rgba(8, 52, 36, 0.06), 0 24px 60px -20px rgba(8, 52, 36, 0.45);
+  overflow: hidden;
+  animation: cw-in 0.26s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+html[data-mode='night'] .cw {
+  --cw-them: rgba(222, 244, 234, 0.08);
+}
+.cw-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  background: linear-gradient(135deg, rgba(16, 163, 108, 0.1), transparent);
+}
+.cw-who {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+}
+.cw-who b {
+  font-family: var(--font-display);
+  font-size: 15.5px;
+  color: var(--text);
+}
+.cw-who small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12.5px;
+  color: var(--text-dim);
+}
+.cw-close {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+.cw-close:hover {
+  background: rgba(10, 70, 48, 0.07);
+}
+.cw-close svg {
+  width: 20px;
+  height: 20px;
+}
+.cw-prop {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+.cw-prop img,
+.cw-prop-ph {
+  flex: none;
+  width: 46px;
+  height: 40px;
+  border-radius: 9px;
+  object-fit: cover;
+  background: linear-gradient(160deg, #eaf7f0, #d9f1e5);
+}
+.cw-prop span {
+  display: grid;
+  min-width: 0;
+}
+.cw-prop b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13.5px;
+  color: var(--text);
+}
+.cw-prop small {
+  font-size: 12.5px;
+  color: var(--text-dim);
+}
+.cw-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.cw-note {
+  margin: 0 auto 8px;
+  font-size: 11.5px;
+  color: var(--text-dim);
+  text-align: center;
+}
+.cw-start {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  margin: auto 0;
+  padding: 12px 4px;
+  text-align: center;
+}
+.cw-start b {
+  font-family: var(--font-display);
+  font-size: 16px;
+  color: var(--text);
+}
+.cw-start small {
+  font-size: 13.5px;
+  color: var(--text-dim);
+}
+.cw-quick {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+.cw-quick button {
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: 99px;
+  border: 1px solid rgba(10, 122, 79, 0.4);
+  background: transparent;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #0a7a4f;
+  cursor: pointer;
+}
+.cw-quick button:hover {
+  background: rgba(16, 163, 108, 0.08);
+}
+/* a row: their face at the start, my bubbles at the end of the line */
+.cw-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.cw-row.is-me {
+  flex-direction: row-reverse;
+}
+.cw-row.is-tail {
+  margin-bottom: 8px;
+}
+.cw-face {
+  flex: none;
+  width: 28px;
+}
+.cw-bubble {
+  display: grid;
+  gap: 2px;
+  max-width: 78%;
+  padding: 8px 12px 6px;
+  border-radius: 18px;
+  font-size: 15px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  animation: cw-pop 0.22s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+.cw-row.is-me .cw-bubble {
+  background: var(--cw-me);
+  color: #fff;
+  border-end-end-radius: 6px;
+}
+.cw-row.is-them .cw-bubble {
+  background: var(--cw-them);
+  color: var(--text);
+  border-end-start-radius: 6px;
+}
+.cw-bubble time {
+  justify-self: end;
+  font-size: 11px;
+  opacity: 0.72;
+}
+.cw-read {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex-basis: 100%;
+  justify-content: flex-end;
+  font-size: 11.5px;
+  color: var(--text-dim);
+}
+.cw-read[data-read='yes'] {
+  color: #0a7a4f;
+}
+.cw-read svg {
+  width: 14px;
+  height: 14px;
+}
+.cw-typing {
+  display: inline-flex;
+  flex-direction: row;
+  gap: 4px;
+  padding: 12px 14px;
+}
+.cw-typing i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--text-dim);
+  animation: cw-dot 1.1s ease-in-out infinite;
+}
+.cw-typing i:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.cw-typing i:nth-child(3) {
+  animation-delay: 0.3s;
+}
+.cw-compose {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--line);
+}
+.cw-input {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 99px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  font: inherit;
+  font-size: 16px;
+  color: var(--text);
+  outline: none;
+}
+.cw-input:focus {
+  border-color: #0a7a4f;
+}
+.cw-send {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--cw-me);
+  color: #fff;
+  cursor: pointer;
+}
+.cw-send:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.cw-send svg {
+  width: 19px;
+  height: 19px;
+  transform: scaleX(-1); /* the paper plane points the way the line is read */
+}
+@keyframes cw-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes cw-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes cw-dot {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cw,
+  .cw-bubble,
+  .cw-typing i {
+    animation: none;
+  }
+}
+/* a phone: the whole screen */
+@media (max-width: 720px) {
+  .cw {
+    inset: 0;
+    width: auto;
+    height: auto;
+    border-radius: 0;
+    border: 0;
+    padding-top: env(safe-area-inset-top);
+  }
+}
+
+/* "ההודעה נשלחה!" */
+.pp-sent {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  text-align: center;
+}
+.pp-sent-ico {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0a7a4f, #12a36c);
+  color: #fff;
+  box-shadow: 0 10px 24px -10px rgba(10, 122, 79, 0.8);
+}
+.pp-sent-ico svg {
+  width: 28px;
+  height: 28px;
+  stroke-width: 3;
+}
+.pp-sent p {
+  margin: 0;
+  max-width: 30em;
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--text);
+}
+.pp-sent-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  text-align: start;
+}
+.pp-sent-card span {
+  display: grid;
+}
+.pp-sent-card b {
+  font-family: var(--font-display);
+  font-size: 16px;
+  color: var(--text);
+}
+.pp-sent-card bdi {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.02em;
+}
+.pp-call {
+  min-height: 46px;
+}
+.pp-call svg {
+  width: 17px;
+  height: 17px;
+}
+.pp-sent-chat {
+  min-height: 44px;
+}
+/* the one big action on someone else's property */
+.pp-buyer {
+  width: 100%;
+  min-height: 56px;
+  justify-content: center;
+  font-size: 17px;
+}
+.pp-interest {
+  display: grid;
+  gap: 6px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.pp-interest li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14.5px;
+  color: var(--text);
+}
+.pp-interest svg {
+  width: 16px;
+  height: 16px;
+  color: #0a7a4f;
+}
+.notice-demo {
+  display: inline-flex;
+  margin-inline-start: 6px;
+  padding: 1px 7px;
+  border-radius: 99px;
+  background: rgba(232, 183, 90, 0.2);
+  color: #7f5205;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 700;
+  vertical-align: 2px;
+}
+
+body.has-chat .dn {
+  display: none;
+}
+.cw-prop-price {
+  font-weight: 700;
+  color: #0a7a4f !important;
+}

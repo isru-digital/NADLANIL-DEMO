@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import { BedDouble, Building, Car, Check, ChevronLeft, ChevronRight, Handshake, Layers, Lock, MapPin, MessageCircle, Ruler, Tag, UserRoundSearch } from 'lucide-react'
+import { BedDouble, Building, Car, Check, ChevronLeft, ChevronRight, Handshake, Layers, Lock, MapPin, MessageCircle, Phone, Ruler, Tag, UserRoundSearch } from 'lucide-react'
 import { CURRENT_BROKER_ID, asset } from '../config'
-import { brokerById, formatPrice } from '../data/demo'
+import { brokerById, brokerPhone, formatPrice } from '../data/demo'
 import type { CommunityItem } from '../data/demo'
 import { useStore } from '../store'
 import { nameSlots } from '../config/navExtras'
-import { Avatar, EASE } from '../components/ui'
+import { Avatar, EASE, Modal } from '../components/ui'
+import ChatWindow from './ChatWindow'
 import { IconHome } from './KhIcons'
 import '../styles/property.css'
 
@@ -20,7 +21,10 @@ export const priceText = (p: NonNullable<CommunityItem['property']>) => (p.deal 
  */
 export default function PropertyPage() {
   const { id } = useParams()
-  const { items, crm, interested, toggleInterested, toast } = useStore()
+  const { items, crm, interested, toggleInterested, notices } = useStore()
+  // "יש לי קונה לנכס": the window that says it was sent, with the broker's phone; and the chat
+  const [sentOpen, setSentOpen] = useState(false)
+  const [chatOpen, setChatOpen] = useState(false)
   const item = items.find((it) => it.id === id && it.property)
   const [shown, setShown] = useState(0)
   const photos = item ? (item.property!.images?.length ? item.property!.images : item.image ? [item.image] : []) : []
@@ -54,7 +58,6 @@ export default function PropertyPage() {
   const p = item.property!
   const broker = brokerById(item.authorId)
   const mine = item.authorId === CURRENT_BROKER_ID
-  const coop = !!interested[item.id]
   const buyer = !!interested[`buyer:${item.id}`]
   const rent = p.deal === 'rent'
   // the exact address lives in the CRM of the broker who put the property in, and only that broker sees it here
@@ -192,44 +195,80 @@ export default function PropertyPage() {
           </div>
 
           {mine ? (
-            <p className="pp-mine">
-              <Check /> זה נכס שלך. מתווכים שירצו לשתף פעולה יפנו אלייך מכאן.
-            </p>
+            <div className="pp-mine-wrap">
+              <p className="pp-mine">
+                <Check /> זה נכס שלך. מתווך שיש לו קונה ילחץ "יש לי קונה לנכס", ותקבל התראה בפעמון.
+              </p>
+              {notices.some((n) => n.kind === 'interest' && n.itemId === item.id) && (
+                <ul className="pp-interest" data-interest>
+                  {notices
+                    .filter((n) => n.kind === 'interest' && n.itemId === item.id)
+                    .map((n) => (
+                      <li key={n.id}>
+                        <UserRoundSearch /> יש קונה: <b>{n.text.split(' · ')[0]}</b>
+                        {n.demo && <em className="notice-demo">דוגמה</em>}
+                      </li>
+                    ))}
+                </ul>
+              )}
+            </div>
           ) : (
             <div className="pp-actions">
+              {/* one big action: the broker hears at once that there is a buyer (17.11.2026) */}
               <button
                 type="button"
-                className={`btn btn-lg ${coop ? 'btn-ghost is-sent' : 'btn-gold'}`}
-                aria-pressed={coop}
-                data-act="coop"
-                onClick={() => {
-                  toggleInterested(item.id)
-                  if (!coop) toast(`הצעת שיתוף פעולה נשלחה אל ${broker.name}`)
-                }}
-              >
-                {coop ? <Check /> : <Handshake />}
-                {coop ? 'הבקשה לשיתוף פעולה נשלחה' : 'אני רוצה לשתף פעולה'}
-              </button>
-              <button
-                type="button"
-                className={`btn btn-lg ${buyer ? 'btn-ghost is-sent' : 'btn-ghost'}`}
+                className={`btn btn-lg pp-buyer ${buyer ? 'btn-ghost is-sent' : 'btn-gold'}`}
                 aria-pressed={buyer}
                 data-act="buyer"
                 onClick={() => {
-                  toggleInterested(`buyer:${item.id}`)
-                  if (!buyer) toast(`${broker.name} קיבל הודעה שיש לך קונה לנכס`)
+                  if (!buyer) toggleInterested(`buyer:${item.id}`)
+                  setSentOpen(true)
                 }}
               >
                 {buyer ? <Check /> : <UserRoundSearch />}
-                {buyer ? 'עדכנת שיש לך קונה' : 'יש לי קונה'}
+                {buyer ? 'עדכנת שיש לך קונה לנכס' : 'יש לי קונה לנכס'}
               </button>
-              <button type="button" className="pp-chat" onClick={() => toast(`הצ'אט עם ${broker.name} ייפתח בקרוב`)}>
-                <MessageCircle /> שאלה למתווך
+              <button type="button" className="pp-chat" onClick={() => setChatOpen(true)} data-act="open-chat">
+                <MessageCircle /> התחלת צ'אט
               </button>
             </div>
           )}
         </section>
       </div>
+
+      {!mine && (
+        <Modal open={sentOpen} onClose={() => setSentOpen(false)} title="ההודעה נשלחה!">
+          <div className="modal-body pp-sent" data-sent-window>
+            <span className="pp-sent-ico" aria-hidden>
+              <Check />
+            </span>
+            <p>המתווך יודע שיש לך קונה לנכס שלו. אפשר גם ליצור איתו קשר ישירות:</p>
+            <div className="pp-sent-card">
+              <Avatar src={broker.avatar} name={broker.name} size={48} />
+              <span>
+                <b>{broker.name}</b>
+                <bdi dir="ltr" className="num" data-phone>
+                  {brokerPhone(broker)}
+                </bdi>
+              </span>
+              <a className="btn btn-gold pp-call" href={`tel:${brokerPhone(broker).replace(/-/g, '')}`} data-act="call">
+                <Phone /> חיוג
+              </a>
+            </div>
+            <button
+              type="button"
+              className="btn btn-ghost pp-sent-chat"
+              onClick={() => {
+                setSentOpen(false)
+                setChatOpen(true)
+              }}
+            >
+              <MessageCircle /> או צ'אט עם {broker.name.split(' ')[0]}
+            </button>
+          </div>
+        </Modal>
+      )}
+      {!mine && <ChatWindow item={item} open={chatOpen} onClose={() => setChatOpen(false)} />}
     </article>
   )
 }

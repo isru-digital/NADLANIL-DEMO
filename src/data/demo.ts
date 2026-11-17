@@ -653,6 +653,18 @@ export type Notice = {
   read: boolean
   topicId: TopicId
   itemId: string
+  /** a demo simulation (another broker's reaction): marked as an example where it is shown */
+  demo?: boolean
+}
+
+/**
+ * The phone on a broker's profile. The demo's brokers are invented, so are their numbers: the 555 range, which is
+ * not given to real lines.
+ */
+const PHONE_PREFIX = ['050', '052', '053', '054', '055', '058']
+export const brokerPhone = (b: Pick<Broker, 'id'>) => {
+  const n = Number(b.id.replace(/\D/g, '')) || 1
+  return `${PHONE_PREFIX[n % PHONE_PREFIX.length]}-555-02${String(n).padStart(2, '0')}`
 }
 
 // ---------------------------------------------------------- more of the community (16.11.2026)
