@@ -12,6 +12,7 @@ import { useStore } from '../store'
 import { Avatar, Modal } from '../components/ui'
 import { TYPES, clientActions, dateText, dateValue, daysFrom, lastText, matchLabel, matchesFor, sideOf, typeOf, useClients, yad2Demo } from './clients'
 import type { Client, ClientType } from './clients'
+import NewClient from './NewClient'
 import '../styles/clients.css'
 
 /**
@@ -356,6 +357,8 @@ function Details({
           <span className="ct-det-last">עדכון אחרון: {lastText(cl.lastDays)}</span>
         </div>
 
+        {cl.roomsMin != null && <SearchSummary cl={cl} />}
+
         <div className="ct-field">
           <span className="ct-label">שלב</span>
           <div className="ct-stage" role="radiogroup" aria-label="שלב">
@@ -490,60 +493,34 @@ function Matches({ client, onClose, onAsk }: { client: Client | null; onClose: (
   )
 }
 
-function NewClient({ open, onClose, isOffice, onAdd }: { open: boolean; onClose: () => void; isOffice: boolean; onAdd: (p: { name: string; phone: string; type: ClientType }) => void }) {
-  const [name, setName] = useState('')
-  const [phone, setPhone] = useState('')
-  const [type, setType] = useState<ClientType>('buyer')
-  const [err, setErr] = useState('')
-  const submit = (e: FormEvent) => {
-    e.preventDefault()
-    if (name.trim().length < 2) return setErr('צריך שם, לפחות שתי אותיות.')
-    if (phone.replace(/\D/g, '').length < 9) return setErr('מספר הטלפון קצר מדי. למשל: 050-555-0199')
-    onAdd({ name: name.trim(), phone: phone.trim(), type })
-    setName('')
-    setPhone('')
-    setType('buyer')
-    setErr('')
-  }
+/** What a buyer or a renter is looking for, as it was entered in the new client form. */
+function SearchSummary({ cl }: { cl: Client }) {
+  const rent = cl.type === 'renter'
+  const money = (n: number) => (rent ? `${n.toLocaleString('he-IL')} ₪` : formatPriceShort(n))
+  const where = [...cl.cities, ...(cl.neighborhoods ?? [])]
+  const rows: [string, string][] = [
+    ['עסקה', rent ? 'השכרה' : 'קנייה'],
+    [rent ? 'שכירות לחודש' : 'תקציב', `${money(cl.budgetMin ?? 0)} עד ${money(cl.sum)}`],
+    ['איפה', where.length ? where.join(', ') : 'לא צוין'],
+    ['סוג נכס', cl.kinds?.length ? cl.kinds.join(', ') : 'לא צוין'],
+    ['חדרים', cl.roomsMin === cl.roomsMax ? `${cl.roomsMin}` : `${cl.roomsMin} עד ${cl.roomsMax}`],
+    ['חייב שיהיה', cl.must?.length ? cl.must.join(', ') : 'לא צוין'],
+  ]
   return (
-    <Modal open={open} onClose={onClose} title="לקוח חדש" subtitle="שם, טלפון וסוג. את השאר מסמנים אחר כך בחלון הפרטים.">
-      <form onSubmit={submit} noValidate>
-        <div className="modal-body ct-new">
-          <label className="ct-field">
-            <span className="ct-label">שם הלקוח</span>
-            <input className="input" value={name} onChange={(e) => setName(e.target.value)} autoComplete="off" data-f="name" />
-          </label>
-          <label className="ct-field">
-            <span className="ct-label">טלפון</span>
-            <input className="input ltr num" type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="off" data-f="phone" />
-          </label>
-          <div className="ct-field">
-            <span className="ct-label">סוג</span>
-            <div className="ct-stage" role="radiogroup" aria-label="סוג">
-              {TYPES.filter((t) => isOffice || !t.office).map((t) => (
-                <button key={t.id} type="button" role="radio" aria-checked={type === t.id} className={type === t.id ? 'is-on' : ''} onClick={() => setType(t.id)}>
-                  {t.one}
-                </button>
-              ))}
-            </div>
+    <div className="ct-search" data-summary>
+      <span className="ct-label">
+        <Search /> מה הוא מחפש
+      </span>
+      <dl>
+        {rows.map(([k, v]) => (
+          <div key={k}>
+            <dt>{k}</dt>
+            <dd>{v}</dd>
           </div>
-          {err && (
-            <em className="ct-err" role="alert">
-              {err}
-            </em>
-          )}
-        </div>
-        <div className="modal-foot">
-          <button className="btn btn-gold" type="submit">
-            <Plus />
-            הוספת הלקוח
-          </button>
-          <button className="btn btn-quiet" type="button" onClick={onClose}>
-            ביטול
-          </button>
-        </div>
-      </form>
-    </Modal>
+        ))}
+      </dl>
+      {cl.wants && <p className="ct-search-words">{cl.wants}</p>}
+    </div>
   )
 }
 

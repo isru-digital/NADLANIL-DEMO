@@ -34,8 +34,19 @@ export type Client = {
   about: string
   cities: string[]
   rooms: number
-  /** a budget or an asking price; a monthly rent for renters and landlords */
+  /** a budget or an asking price; a monthly rent for renters and landlords (for a search: the most they pay) */
   sum: number
+  /** a buyer's or a renter's full search (the new client form, 17.11.2026): the least they pay */
+  budgetMin?: number
+  neighborhoods?: string[]
+  /** kinds of home: דירה, דירת גן, פנטהאוז... */
+  kinds?: string[]
+  roomsMin?: number
+  roomsMax?: number
+  /** must-haves: חניה, מעלית, ממ"ד, מרפסת */
+  must?: string[]
+  /** what they look for, in their own words */
+  wants?: string
   stage: CrmStatus
   /** days since the last update: 0 is today */
   lastDays: number
@@ -113,7 +124,7 @@ export const clientActions = {
   patch(id: string, p: Partial<Client>) {
     save(list.map((x) => (x.id === id ? { ...x, ...p, lastDays: 0, touched: Date.now() } : x)))
   },
-  add(p: Pick<Client, 'name' | 'type' | 'phone'> & Partial<Pick<Client, 'about' | 'cities' | 'rooms' | 'sum' | 'crmId'>>) {
+  add(p: Pick<Client, 'name' | 'type' | 'phone'> & Partial<Omit<Client, 'id' | 'name' | 'type' | 'phone'>>) {
     const id = `k-${Date.now()}`
     save([c({ about: '', cities: [], rooms: 0, sum: 0, ...p, id, stage: 'new', lastDays: 0, createdDays: 0, touched: Date.now() }), ...list])
     return id
@@ -189,7 +200,11 @@ export function matchesFor(cl: Client): Match[] {
   const pool = cl.type === 'buyer' ? forSale : cl.type === 'renter' ? forRent : cl.type === 'seller' ? buyers : cl.type === 'landlord' ? renters : []
   const wants = sideOf(cl.type) === 'wants'
   return pool
-    .filter((m) => cl.cities.includes(m.city) && Math.abs(m.rooms - cl.rooms) <= 1 && (wants ? m.sum <= cl.sum * 1.05 : m.sum >= cl.sum * 0.9))
+    // a full search has rooms from and to; an older client has one number, give or take one
+    .filter((m) => {
+      const rooms = cl.roomsMin != null && cl.roomsMax != null ? m.rooms >= cl.roomsMin && m.rooms <= cl.roomsMax : Math.abs(m.rooms - cl.rooms) <= 1
+      return cl.cities.includes(m.city) && rooms && (wants ? m.sum <= cl.sum * 1.05 : m.sum >= cl.sum * 0.9)
+    })
     .slice(0, 4)
 }
 

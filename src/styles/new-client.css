@@ -1,0 +1,418 @@
+/* The new client form: a buyer's or a renter's whole search, phone first. Big buttons, one green for "on", the
+   same as the type buttons above it. */
+.nc {
+  --nc-on: linear-gradient(135deg, #0a7a4f, #12a36c);
+  --nc-on-line: #0a7a4f;
+  --nc-soft: rgba(16, 163, 108, 0.08);
+}
+.nc .input,
+.nc .textarea {
+  font-size: 16px; /* 16 and up: no zoom on a phone */
+}
+.nc .input {
+  min-height: 48px;
+}
+.nc-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.nc-search {
+  display: grid;
+  gap: 18px;
+  padding: 16px;
+  border-radius: 20px;
+  border: 1px solid var(--line);
+  background: var(--nc-soft);
+}
+.nc-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text);
+}
+.nc-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 99px;
+  background: #0a7a4f;
+  color: #fff;
+  font-size: 12.5px;
+}
+
+/* buy or rent: two big halves */
+.nc-seg {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 16px;
+  border: 1.5px solid var(--line);
+  background: var(--card);
+}
+.nc-seg button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 50px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  font-family: var(--font-display);
+  font-size: 16.5px;
+  font-weight: 700;
+  color: var(--text-dim);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition:
+    background-color var(--t) var(--ease),
+    color var(--t) var(--ease);
+}
+.nc-seg button svg {
+  width: 18px;
+  height: 18px;
+}
+.nc-seg button[aria-checked='true'] {
+  background: var(--nc-on);
+  color: #fff;
+  box-shadow: 0 6px 16px -8px rgba(10, 122, 79, 0.7);
+}
+
+/* the budget: the two amounts in large figures, and a two-handle slider under them */
+.nc-amounts {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.nc-amounts > span {
+  display: grid;
+  gap: 2px;
+  min-width: 112px;
+  padding: 8px 14px;
+  border-radius: 14px;
+  background: var(--card);
+  border: 1px solid var(--line);
+}
+.nc-amounts small {
+  font-size: 12.5px;
+  color: var(--text-dim);
+}
+.nc-amounts b {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text);
+}
+.nc-amounts > i {
+  width: 14px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--line-strong);
+}
+.nc-amounts em {
+  font-style: normal;
+  font-size: 14px;
+  color: var(--text-dim);
+}
+.nc-range {
+  position: relative;
+  height: 48px;
+  margin: 0 12px;
+}
+.nc-track {
+  position: absolute;
+  inset-inline: 0;
+  top: 50%;
+  height: 8px;
+  margin-top: -4px;
+  border-radius: 8px;
+  background: rgba(10, 122, 79, 0.14);
+}
+.nc-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  inset-inline-start: var(--lo);
+  inset-inline-end: var(--hi);
+  border-radius: 8px;
+  background: var(--nc-on);
+}
+.nc-range input[type='range'] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  background: transparent;
+  pointer-events: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.nc-range input[type='range']::-webkit-slider-runnable-track {
+  height: 48px;
+  background: transparent;
+}
+.nc-range input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 30px;
+  height: 30px;
+  margin-top: 9px;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  background: #0a7a4f;
+  box-shadow: 0 3px 10px rgba(8, 82, 54, 0.4);
+  pointer-events: auto;
+  cursor: grab;
+}
+.nc-range input[type='range']::-moz-range-thumb {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  background: #0a7a4f;
+  box-shadow: 0 3px 10px rgba(8, 82, 54, 0.4);
+  pointer-events: auto;
+  cursor: grab;
+}
+.nc-range input[type='range']::-moz-range-track {
+  background: transparent;
+}
+.nc-range input[type='range']:focus-visible::-webkit-slider-thumb {
+  outline: 3px solid var(--gold);
+  outline-offset: 2px;
+}
+.nc-range input[type='range']:active::-webkit-slider-thumb {
+  cursor: grabbing;
+  transform: scale(1.08);
+}
+
+/* chips to tap: cities, kinds, must-haves */
+.nc-picks,
+.nc-must {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.nc-pick {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 46px;
+  padding: 0 16px;
+  border-radius: 14px;
+  border: 1.5px solid var(--line);
+  background: var(--card);
+  font-family: var(--font-display);
+  font-size: 15.5px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition:
+    background-color var(--t) var(--ease),
+    border-color var(--t) var(--ease),
+    color var(--t) var(--ease),
+    transform var(--t-fast) var(--ease);
+}
+.nc-pick:active {
+  transform: scale(0.96);
+}
+.nc-pick[aria-pressed='true'] {
+  border-color: transparent;
+  background: var(--nc-on);
+  color: #fff;
+}
+.nc-pick.is-more {
+  border-style: dashed;
+  color: #0a7a4f;
+  background: transparent;
+}
+.nc-pick svg {
+  width: 18px;
+  height: 18px;
+}
+.nc-must {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+.nc-pick:focus-visible,
+.nc-seg button:focus-visible,
+.nc-step button:focus-visible,
+.nc-add:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+/* neighbourhoods: a box, a plus, and the ones added as tags */
+.nc-hood {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+.nc-add {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  border: 0;
+  background: var(--nc-on);
+  color: #fff;
+  cursor: pointer;
+}
+.nc-add:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.nc-add svg {
+  width: 20px;
+  height: 20px;
+}
+.nc-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.nc-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 36px;
+  padding-inline: 12px 4px;
+  border-radius: 99px;
+  background: rgba(10, 122, 79, 0.12);
+  color: #0a5a3c;
+  font-weight: 700;
+  font-size: 14.5px;
+}
+.nc-tag button {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.nc-tag button svg {
+  width: 15px;
+  height: 15px;
+}
+
+/* rooms from and to: two steppers */
+.nc-rooms {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.nc-step {
+  display: grid;
+  grid-template-columns: auto 48px 1fr 48px;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 4px 4px 4px;
+  padding-inline-start: 12px;
+  border-radius: 16px;
+  border: 1.5px solid var(--line);
+  background: var(--card);
+}
+.nc-step-label {
+  font-size: 14px;
+  color: var(--text-dim);
+}
+.nc-step b {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+  text-align: center;
+  color: var(--text);
+}
+.nc-step button {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border: 0;
+  border-radius: 12px;
+  background: rgba(10, 122, 79, 0.1);
+  color: #0a7a4f;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.nc-step button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.nc-step button svg {
+  width: 18px;
+  height: 18px;
+}
+
+@media (max-width: 560px) {
+  .nc-row {
+    grid-template-columns: 1fr;
+  }
+  .nc-search {
+    padding: 14px 12px;
+  }
+  .nc-must {
+    grid-template-columns: 1fr 1fr;
+  }
+  .nc-rooms {
+    grid-template-columns: 1fr;
+  }
+  .nc-amounts > span {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+/* the search, as shown in the client's details */
+.ct-search {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: rgba(16, 163, 108, 0.06);
+}
+.ct-search dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 16px;
+  margin: 0;
+}
+.ct-search dt {
+  font-size: 12.5px;
+  color: var(--text-dim);
+}
+.ct-search dd {
+  margin: 0;
+  font-weight: 700;
+  color: var(--text);
+}
+.ct-search-words {
+  margin: 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+  color: var(--text);
+}
+@media (max-width: 560px) {
+  .ct-search dl {
+    grid-template-columns: 1fr;
+  }
+}
+/* the type buttons above the search: as big as the rest */
+.nc .ct-stage button {
+  min-height: 48px;
+}
