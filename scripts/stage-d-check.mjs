@@ -77,14 +77,14 @@ for (const [label, vp, phone] of [
   await shot('1-new-card')
   await clickText(page, '.ga-go', 'הוספה ל-CRM')
   await wait(1200)
-  let st = await page.evaluate(() => ({ n: document.querySelectorAll('.kan-card').length, first: document.querySelector('.kan-col .kan-card h3')?.textContent, text: document.querySelector('.kanban')?.textContent ?? '', modal: !!document.querySelector('.modal') }))
+  let st = await page.evaluate(() => ({ n: document.querySelectorAll('.kan-card').length, first: document.querySelector('.kan-card h3')?.textContent, text: document.querySelector('.kan-flat, .kanban')?.textContent ?? '', modal: !!document.querySelector('.modal') }))
   check(`${tag}: the new card enters the board`, st.n === before + 1 && st.text.includes('דירת 4 חדרים בפתח תקווה') && !st.modal && (await toast(page)).includes('הכרטיס נוסף'), JSON.stringify({ n: st.n, before, first: st.first }))
   await shot('2-card-added')
   await page.reload({ waitUntil: 'load' })
   await wait(1400)
   await page.evaluate(() => [...document.querySelectorAll('.seg .seg-btn')].find((b) => b.textContent.trim() === 'נכסים')?.click())
   await wait(700)
-  check(`${tag}: and it is still there after a reload`, await page.evaluate(() => document.querySelector('.kanban')?.textContent.includes('דירת 4 חדרים בפתח תקווה')))
+  check(`${tag}: and it is still there after a reload`, await page.evaluate(() => document.querySelector('.kan-flat, .kanban')?.textContent.includes('דירת 4 חדרים בפתח תקווה')))
   check(`${tag}: no sideways overflow in the CRM`, (await overflow(page)) <= 1)
 
   // ---- 2. sharing a post

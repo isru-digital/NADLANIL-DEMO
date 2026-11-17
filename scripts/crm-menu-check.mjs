@@ -27,7 +27,7 @@ const state = (page) =>
       title: document.querySelector('.page-head h1')?.textContent.trim(),
       tabs: vis(document.querySelector('.crm-kinds')),
       table: !!document.querySelector('.ct-table'),
-      board: !!document.querySelector('.kanban'),
+      board: !!document.querySelector('.kan-flat, .kanban'), // the properties are one list since 17.11.2026
       overflowX: document.documentElement.scrollWidth - document.documentElement.clientWidth,
     }
   })

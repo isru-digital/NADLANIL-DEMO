@@ -1,17 +1,34 @@
-// Photos in the new CRM card (green version): up to three, each up to 2 MB, a link to TinyPNG, and the photos show
+// Photos in the new CRM card (green version): up to three, each up to 10 MB (since 17.11.2026; made smaller before it
+// is kept), a link to TinyPNG only for a photo over 10 MB, and the photos show
 // on the property's card and in its community post.
 // Usage: node scripts/photos-check.mjs [outDir]     (BASE_GREEN overrides the address)
 import puppeteer from 'puppeteer-core'
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { randomBytes } from 'node:crypto'
+import { execFileSync } from 'node:child_process'
+import { statSync } from 'node:fs'
 
 const green = process.env.BASE_GREEN ?? 'http://localhost:5240/NADLANIL-DEMO/green'
 const out = process.argv[2] ?? '_shots/photos'
 mkdirSync(out, { recursive: true })
-// a file heavier than 2 MB, and a file that is not a picture
+// a file heavier than 10 MB, a real camera-size photo of a few MB, and a file that is not a picture
 const big = resolve(out, 'heavy-photo.jpg')
-writeFileSync(big, randomBytes(Math.round(2.6 * 1024 * 1024)))
+writeFileSync(big, randomBytes(Math.round(10.6 * 1024 * 1024)))
+const camera = resolve(out, 'camera-photo.jpg')
+execFileSync('python', ['-c', `
+from PIL import Image, ImageFilter
+import random
+im = Image.open(r'${resolve('public/img/il-haifa-carmel.webp')}').convert('RGB').resize((4032, 3024), Image.BICUBIC)
+px = im.load()
+random.seed(7)
+for _ in range(900000):
+    x = random.randrange(4032); y = random.randrange(3024)
+    r, g, b = px[x, y]; n = random.randint(-28, 28)
+    px[x, y] = (max(0, min(255, r + n)), max(0, min(255, g + n)), max(0, min(255, b + n)))
+im.save(r'${camera}', 'JPEG', quality=97)
+`])
+const cameraMb = statSync(camera).size / 1024 / 1024
 const text = resolve(out, 'notes.txt')
 writeFileSync(text, 'not a picture')
 const pics = ['hero-flat', 'panel-home', 'panel-keys', 'panel-street'].map((n) => resolve('public/img', `${n}.webp`))
@@ -58,14 +75,26 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
   await wait(800)
 
   let s = await picker(page)
-  check(`${d} the new card has a place for photos: up to 3, up to 2 MB each`, s.there && s.label.includes('עד 3 תמונות') && s.label.includes('עד 2 מגה') && s.n === 0 && s.add, s.label)
-  check(`${d} under it, a link to TinyPNG that opens in a new tab`, s.tiny.href === 'https://tinypng.com/' && s.tiny.target === '_blank' && s.tiny.text.includes('TinyPNG'), JSON.stringify(s.tiny))
+  check(`${d} the new card has a place for photos: up to 3, up to 10 MB each, made smaller by itself`, s.there && s.label.includes('עד 3 תמונות') && s.label.includes('עד 10 מגה') && s.label.includes('מוקטנות אוטומטית') && s.n === 0 && s.add, s.label)
+  check(`${d} no TinyPNG link while nothing is too heavy`, !s.tiny.href, JSON.stringify(s.tiny))
   await page.screenshot({ path: `${out}/${d}-1-empty.png` })
 
   await upload(page, [big])
   s = await picker(page)
-  check(`${d} a photo heavier than 2 MB is not taken, and the note says why`, s.n === 0 && s.err.includes('2.6 מגה') && s.err.includes('המקסימום הוא 2 מגה') && s.err.includes('TinyPNG'), s.err)
+  check(`${d} a photo heavier than 10 MB is not taken, the note says why, and TinyPNG is offered in a new tab`, s.n === 0 && s.err.includes('10.6 מגה') && s.err.includes('המקסימום הוא 10 מגה') && s.tiny.href === 'https://tinypng.com/' && s.tiny.target === '_blank', s.err)
   await page.screenshot({ path: `${out}/${d}-2-too-heavy.png` })
+
+  // a camera photo of a few MB (more than the old 2 MB) is taken, and kept small
+  await upload(page, [camera])
+  await wait(800)
+  s = await picker(page)
+  const kept = await page.evaluate(() => {
+    const img = document.querySelector('.ga-photo img')
+    return img ? { kb: Math.round((img.src.length * 3) / 4 / 1024), w: img.naturalWidth, h: img.naturalHeight, jpeg: img.src.startsWith('data:image/jpeg') } : null
+  })
+  check(`${d} a ${cameraMb.toFixed(1)} MB camera photo is taken and made smaller before it is kept (1080 px at most, under 400 KB)`, cameraMb > 2 && s.n === 1 && !s.err && kept && kept.jpeg && Math.max(kept.w, kept.h) <= 1080 && kept.kb < 400, JSON.stringify({ cameraMb, kept, err: s.err }))
+  await page.evaluate(() => document.querySelector('.ga-photo button')?.click())
+  await wait(300)
 
   await upload(page, [text])
   s = await picker(page)

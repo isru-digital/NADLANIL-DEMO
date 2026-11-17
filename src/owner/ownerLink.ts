@@ -2,7 +2,7 @@ import { useSyncExternalStore } from 'react'
 import type { CrmItem } from '../data/demo'
 
 /**
- * "קישור לבעל הנכס" (green version, Itzik 12.11.2026): once a property is published in the community, the broker
+ * "הוכחת פרסום לבעל הנכס" (was "קישור לבעל הנכס") (green version, Itzik 12.11.2026): once a property is published in the community, the broker
  * gets a link to a small page for the owner: the property was published, when, and how many brokers in the area see
  * it. The broker copies the link and sends it himself. There is no server, so what the page shows travels inside
  * the link: the property only. The owner's name, phone and the broker's notes are never part of it.

@@ -160,6 +160,8 @@ export default function Crm() {
     setOverStage(null)
   }
 
+  // the community's CRM keeps properties without stages (Itzik 17.11.2026: "לא משתמשים בהם"): one list of cards
+  const flat = !!crmSlots.flatProperties && kind === 'property'
   const nextStage = (s: CrmStatus) => crmStages[crmStages.findIndex((x) => x.id === s) + 1]
 
   /** Marking a property as שת"פ: opens the preview, or publishes right away when auto-publish is on. */
@@ -168,6 +170,127 @@ export default function Crm() {
     const alert = publishNow(item, draftFor(item, 'coop', me.id))
     toast('פורסם אוטומטית בנושא "נכסים לשיתוף פעולה"')
     if (alert) window.setTimeout(() => showMatch(alert), 900)
+  }
+
+  /** one property or client card; on a board without stages (green) it has no arrow and does not drag */
+  const cardOf = (it: CrmItem) => {
+    const next = flat ? undefined : nextStage(it.status)
+    const publishedTo = publishedIds[it.id]
+    const isProperty = it.kind === 'property'
+    return (
+      <motion.div
+        key={it.id}
+        layoutId={`crm-${it.id}`}
+        transition={{ type: 'spring', stiffness: 380, damping: 34 }}
+      >
+        <article
+          className={`kan-card${dragId === it.id ? ' is-dragging' : ''}`}
+          draggable={!flat}
+          onDragStart={(e) => {
+            e.dataTransfer.setData('text/plain', it.id)
+            e.dataTransfer.effectAllowed = 'move'
+            setDragId(it.id)
+          }}
+          onDragEnd={() => {
+            setDragId(null)
+            setOverStage(null)
+          }}
+        >
+          {it.image && <Photo src={it.image} alt={it.title} ratio="16 / 8" className="kan-photo" />}
+          <div className="kan-body">
+            <div className="kan-top">
+              <span className={`tag ${isProperty ? 'tag-gold' : 'tag-blue'}`}>
+                {isProperty ? <Home /> : <UserSearch />}
+                {isProperty ? (cats && catOf ? (cats.find((c) => c.id === catOf(it))?.label ?? 'נכס') : 'נכס') : 'לקוח'}
+              </span>
+              {isProperty ? (
+                <button
+                  className={`coop-pill${publishedTo === 'coop' ? ' is-on' : ''}`}
+                  aria-pressed={publishedTo === 'coop'}
+                  disabled={!!publishedTo}
+                  onClick={() => markCoop(it)}
+                  title='סימון שת"פ הופך את הנכס להודעה בנושא "נכסים לשיתוף פעולה"'
+                >
+                  <Handshake />
+                  שת"פ
+                </button>
+              ) : (
+                <span className="kan-updated">{it.updated}</span>
+              )}
+            </div>
+            <h3>{it.title}</h3>
+            {it.renewal && (
+              <span className="kan-renew" data-renewal>
+                התחדשות עירונית
+              </span>
+            )}
+            {it.street && (
+              <p className="kan-address" data-exact title="רק אתם רואים את הכתובת המדויקת">
+                <Lock />
+                <span>
+                  {it.street}
+                  {it.houseNo && ` ${it.houseNo}`}
+                  {it.neighborhood && `, ${it.neighborhood}`}
+                </span>
+              </p>
+            )}
+            <div className="kan-meta">
+              <span>
+                <MapPin />
+                {it.area}
+              </span>
+              {it.category && it.category !== 'home' ? (
+                <span>
+                  <Ruler />
+                  <span className="num">{it.sqm ?? '-'}</span> מ"ר
+                </span>
+              ) : (
+                <span>
+                  <BedDouble />
+                  <span className="num">{it.rooms}</span> חד'
+                </span>
+              )}
+            </div>
+            <div className="kan-price">
+              <span>{isProperty ? 'מחיר' : 'תקציב עד'}</span>
+              <strong className="num">{formatPriceShort(it.price)}</strong>
+            </div>
+            <div className="kan-client">
+              <Lock />
+              <span>{it.client}</span>
+            </div>
+            <p className="kan-note">{it.note}</p>
+            <div className="kan-actions">
+              {publishedTo ? (
+                <Link to={`/app/community?topic=${publishedTo}`} className="tag tag-green kan-published">
+                  <Check />
+                  פורסם בקהילה
+                </Link>
+              ) : (
+                <button
+                  className="btn btn-sm kan-publish"
+                  onClick={() => setPublishing({ item: it, topicId: isProperty ? 'coop' : 'seeking' })}
+                >
+                  <Share2 />
+                  פרסם בקהילה
+                </button>
+              )}
+              {next && (
+                <button
+                  className="icon-btn kan-next"
+                  onClick={() => moveCrm(it.id, next.id)}
+                  aria-label={`העברה לשלב ${next.label}`}
+                  title={`העברה לשלב ${next.label}`}
+                >
+                  <ChevronLeft />
+                </button>
+              )}
+            </div>
+            {crmSlots.CardExtra && <crmSlots.CardExtra item={it} publishedTo={publishedTo} />}
+          </div>
+        </article>
+      </motion.div>
+    )
   }
 
   return (
@@ -259,6 +382,15 @@ export default function Crm() {
         </div>
       )}
 
+      {flat ? (
+        <LayoutGroup>
+          <div className="kan-flat" data-flat>
+            {items.map((it) => cardOf(it))}
+            {items.length === 0 && <div className="kan-empty">אין נכסים להצגה.</div>}
+          </div>
+        </LayoutGroup>
+      ) : (
+      <>
       {/* phone: one stage at a time */}
       <div className="stage-tabs chip-row" role="tablist" aria-label="שלב">
         {crmStages.map((s) => (
@@ -299,125 +431,7 @@ export default function Crm() {
                   <span className="num">{col.length}</span>
                 </header>
                 <div className="kan-list">
-                  {col.map((it) => {
-                    const next = nextStage(it.status)
-                    const publishedTo = publishedIds[it.id]
-                    const isProperty = it.kind === 'property'
-                    return (
-                      <motion.div
-                        key={it.id}
-                        layoutId={`crm-${it.id}`}
-                        transition={{ type: 'spring', stiffness: 380, damping: 34 }}
-                      >
-                        <article
-                          className={`kan-card${dragId === it.id ? ' is-dragging' : ''}`}
-                          draggable
-                          onDragStart={(e) => {
-                            e.dataTransfer.setData('text/plain', it.id)
-                            e.dataTransfer.effectAllowed = 'move'
-                            setDragId(it.id)
-                          }}
-                          onDragEnd={() => {
-                            setDragId(null)
-                            setOverStage(null)
-                          }}
-                        >
-                          {it.image && <Photo src={it.image} alt={it.title} ratio="16 / 8" className="kan-photo" />}
-                          <div className="kan-body">
-                            <div className="kan-top">
-                              <span className={`tag ${isProperty ? 'tag-gold' : 'tag-blue'}`}>
-                                {isProperty ? <Home /> : <UserSearch />}
-                                {isProperty ? (cats && catOf ? (cats.find((c) => c.id === catOf(it))?.label ?? 'נכס') : 'נכס') : 'לקוח'}
-                              </span>
-                              {isProperty ? (
-                                <button
-                                  className={`coop-pill${publishedTo === 'coop' ? ' is-on' : ''}`}
-                                  aria-pressed={publishedTo === 'coop'}
-                                  disabled={!!publishedTo}
-                                  onClick={() => markCoop(it)}
-                                  title='סימון שת"פ הופך את הנכס להודעה בנושא "נכסים לשיתוף פעולה"'
-                                >
-                                  <Handshake />
-                                  שת"פ
-                                </button>
-                              ) : (
-                                <span className="kan-updated">{it.updated}</span>
-                              )}
-                            </div>
-                            <h3>{it.title}</h3>
-                            {it.renewal && (
-                              <span className="kan-renew" data-renewal>
-                                התחדשות עירונית
-                              </span>
-                            )}
-                            {it.street && (
-                              <p className="kan-address" data-exact title="רק אתם רואים את הכתובת המדויקת">
-                                <Lock />
-                                <span>
-                                  {it.street}
-                                  {it.houseNo && ` ${it.houseNo}`}
-                                  {it.neighborhood && `, ${it.neighborhood}`}
-                                </span>
-                              </p>
-                            )}
-                            <div className="kan-meta">
-                              <span>
-                                <MapPin />
-                                {it.area}
-                              </span>
-                              {it.category && it.category !== 'home' ? (
-                                <span>
-                                  <Ruler />
-                                  <span className="num">{it.sqm ?? '-'}</span> מ"ר
-                                </span>
-                              ) : (
-                                <span>
-                                  <BedDouble />
-                                  <span className="num">{it.rooms}</span> חד'
-                                </span>
-                              )}
-                            </div>
-                            <div className="kan-price">
-                              <span>{isProperty ? 'מחיר' : 'תקציב עד'}</span>
-                              <strong className="num">{formatPriceShort(it.price)}</strong>
-                            </div>
-                            <div className="kan-client">
-                              <Lock />
-                              <span>{it.client}</span>
-                            </div>
-                            <p className="kan-note">{it.note}</p>
-                            <div className="kan-actions">
-                              {publishedTo ? (
-                                <Link to={`/app/community?topic=${publishedTo}`} className="tag tag-green kan-published">
-                                  <Check />
-                                  פורסם בקהילה
-                                </Link>
-                              ) : (
-                                <button
-                                  className="btn btn-sm kan-publish"
-                                  onClick={() => setPublishing({ item: it, topicId: isProperty ? 'coop' : 'seeking' })}
-                                >
-                                  <Share2 />
-                                  פרסם בקהילה
-                                </button>
-                              )}
-                              {next && (
-                                <button
-                                  className="icon-btn kan-next"
-                                  onClick={() => moveCrm(it.id, next.id)}
-                                  aria-label={`העברה לשלב ${next.label}`}
-                                  title={`העברה לשלב ${next.label}`}
-                                >
-                                  <ChevronLeft />
-                                </button>
-                              )}
-                            </div>
-                            {crmSlots.CardExtra && <crmSlots.CardExtra item={it} publishedTo={publishedTo} />}
-                          </div>
-                        </article>
-                      </motion.div>
-                    )
-                  })}
+                  {col.map((it) => cardOf(it))}
                   {col.length === 0 && <div className="kan-empty">אין כרטיסים בשלב הזה. אפשר לגרור לכאן.</div>}
                 </div>
               </section>
@@ -426,6 +440,8 @@ export default function Crm() {
         </div>
       </LayoutGroup>
       <p className="kan-hint">טיפ: אפשר לגרור כרטיס בין השלבים, או ללחוץ על החץ כדי לקדם אותו.</p>
+      </>
+      )}
         </>
       )}
 

@@ -128,9 +128,9 @@ function OwnerLink({ item, publishedTo }: { item: CrmItem; publishedTo?: string 
         }}
       >
         <Link2 />
-        קישור לבעל הנכס
+        הוכחת פרסום לבעל הנכס
       </button>
-      <Modal open={open} onClose={close} title="קישור לבעל הנכס" subtitle="עמוד קטן שמראה לבעל הנכס שהנכס פורסם. מעתיקים ושולחים לו בעצמכם.">
+      <Modal open={open} onClose={close} title="הוכחת פרסום לבעל הנכס" subtitle="עמוד קטן שמראה לבעל הנכס שהנכס פורסם. מעתיקים ושולחים לו בעצמכם.">
         <div className="modal-body ol" data-id={item.id}>
           <ul className="ol-facts">
             <li>

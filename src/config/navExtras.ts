@@ -111,6 +111,8 @@ export const crmSlots: {
   categoryOf?: (item: import('../data/demo').CrmItem) => string
   /** an extra line of actions at the bottom of a card on the board */
   CardExtra?: ComponentType<{ item: import('../data/demo').CrmItem; publishedTo?: string }>
+  /** properties on one list, without stages (new, in progress, negotiation...) */
+  flatProperties?: boolean
 } = {}
 export function registerCrm(slots: typeof crmSlots) {
   Object.assign(crmSlots, slots)

@@ -47,6 +47,19 @@ for (const [tag, vp] of [
     await page.waitForSelector('.ga-fields', { visible: true })
     await wait(450)
   }
+  // ---- the properties board: one list, no stages (17.11.2026), and the owner's button by its new name
+  const flatBoard = await page.evaluate(() => ({
+    flat: !!document.querySelector('[data-flat]'),
+    cols: document.querySelectorAll('.kan-col').length,
+    tabs: !!document.querySelector('.stage-tabs'),
+    next: document.querySelectorAll('.kan-next').length,
+    // the stage names as labels (a card's own note may say "סיור", that is not a stage)
+    words: ['בטיפול', 'משא ומתן'].filter((w) => (document.querySelector('main')?.innerText ?? '').includes(w)),
+    cards: document.querySelectorAll('.kan-card').length,
+    owner: [...document.querySelectorAll('[data-act="owner-link"]')].map((b) => b.textContent.trim()),
+  }))
+  check(`${tag}: the properties are one list, with no stages (no "בטיפול", "משא ומתן" or columns)`, flatBoard.flat && flatBoard.cols === 0 && !flatBoard.tabs && flatBoard.next === 0 && flatBoard.words.length === 0 && flatBoard.cards >= 6, flatBoard)
+  await page.screenshot({ path: `${out}/${tag}-board.png` })
   await open()
 
   // ---- big buttons, no lists
@@ -110,6 +123,8 @@ for (const [tag, vp] of [
   await wait(900)
   const after = await page.evaluate(() => ({ draft: localStorage.getItem('nadlanup-crm-draft-v1') }))
   check(`${tag}: saving the card clears the draft`, after.draft === null, after)
+  const owner = await page.evaluate(() => ({ btn: [...document.querySelectorAll('[data-act="owner-link"]')].map((b) => b.textContent.trim()), any: document.body.innerText.includes('קישור לבעל הנכס') }))
+  check(`${tag}: a published property's button is called "הוכחת פרסום לבעל הנכס" (the old name is gone)`, owner.btn.length > 0 && owner.btn.every((t) => t === 'הוכחת פרסום לבעל הנכס') && !owner.any, owner)
   const card = await page.evaluate((street) => {
     const c = [...document.querySelectorAll('.kan-card')].find((k) => k.textContent.includes(street))
     return c ? { address: c.querySelector('[data-exact]')?.textContent, renewal: !!c.querySelector('[data-renewal]'), area: c.querySelector('.kan-meta')?.textContent } : null

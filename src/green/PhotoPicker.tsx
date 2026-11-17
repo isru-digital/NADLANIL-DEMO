@@ -3,15 +3,17 @@ import { ExternalLink, ImagePlus, X } from 'lucide-react'
 import { asset } from '../config'
 
 /**
- * Photos for a property in the new CRM card (green version, Itzik 13.11.2026): up to three, each up to 2 MB, with a
- * link to TinyPNG for making a heavy photo lighter. There is no server: a photo is made smaller in the browser and
- * kept in this browser only, as part of the card.
+ * Photos for a property in the new CRM card (green version, Itzik 13.11.2026): up to three. Since 17.11.2026 a photo
+ * can weigh up to 10 MB (a phone's camera photo fits): it is made smaller in the browser before it is kept (at most
+ * 1080 pixels on its long side, JPEG), so a 6 MB photo is kept at about 0.1 to 0.3 MB and the site stays fast.
+ * There is no server: the photos stay in this browser only, as part of the card.
  */
 export const MAX_PHOTOS = 3
-export const MAX_BYTES = 2 * 1024 * 1024
+export const MAX_MB = 10
+export const MAX_BYTES = MAX_MB * 1024 * 1024
 const TINYPNG = 'https://tinypng.com/'
 /** The longest side a photo is kept at: enough for a card and a post, light enough to stay in the browser. */
-const SIDE = 960
+const SIDE = 1080
 
 /** Reads an image file and returns it smaller, as a JPEG data address. */
 function shrink(file: File): Promise<string> {
@@ -30,7 +32,7 @@ function shrink(file: File): Promise<string> {
       ctx.fillStyle = '#fff'
       ctx.fillRect(0, 0, canvas.width, canvas.height)
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
-      resolve(canvas.toDataURL('image/jpeg', 0.72))
+      resolve(canvas.toDataURL('image/jpeg', 0.74))
     }
     img.onerror = () => {
       URL.revokeObjectURL(url)
@@ -46,6 +48,8 @@ export default function PhotoPicker({ photos, onChange }: { photos: string[]; on
   const input = useRef<HTMLInputElement>(null)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  // TinyPNG is offered only when a photo was too heavy even for 10 MB
+  const [tooBig, setTooBig] = useState(false)
   const full = photos.length >= MAX_PHOTOS
 
   const add = async (files: FileList | null) => {
@@ -53,6 +57,7 @@ export default function PhotoPicker({ photos, onChange }: { photos: string[]; on
     const room = MAX_PHOTOS - photos.length
     const picked = [...files]
     const notes: string[] = []
+    let heavy = false
     if (picked.length > room) notes.push(`אפשר להעלות עד ${MAX_PHOTOS} תמונות. נוספו רק ${room === 1 ? 'אחת' : room}.`)
     const next = [...photos]
     setBusy(true)
@@ -62,7 +67,8 @@ export default function PhotoPicker({ photos, onChange }: { photos: string[]; on
         continue
       }
       if (file.size > MAX_BYTES) {
-        notes.push(`"${file.name}" שוקלת ${mb(file.size)} מגה. המקסימום הוא 2 מגה, אפשר להקטין אותה ב-TinyPNG.`)
+        notes.push(`"${file.name}" שוקלת ${mb(file.size)} מגה. המקסימום הוא ${MAX_MB} מגה, אפשר להקטין אותה ב-TinyPNG.`)
+        heavy = true
         continue
       }
       try {
@@ -73,6 +79,7 @@ export default function PhotoPicker({ photos, onChange }: { photos: string[]; on
     }
     setBusy(false)
     setError(notes.join(' '))
+    setTooBig(heavy)
     onChange(next)
     // the same file can be picked again after it was removed
     if (input.current) input.current.value = ''
@@ -81,7 +88,7 @@ export default function PhotoPicker({ photos, onChange }: { photos: string[]; on
   return (
     <div className="field ga-photos" data-count={photos.length}>
       <span className="field-label">
-        תמונות הנכס <small>עד {MAX_PHOTOS} תמונות, עד 2 מגה לתמונה</small>
+        תמונות הנכס <small>עד {MAX_PHOTOS} תמונות, עד {MAX_MB} מגה לתמונה. מוקטנות אוטומטית לפני השמירה</small>
       </span>
       <div className="ga-photo-grid">
         {photos.map((p, i) => (
@@ -93,6 +100,7 @@ export default function PhotoPicker({ photos, onChange }: { photos: string[]; on
               aria-label={`הסרת תמונה ${i + 1}`}
               onClick={() => {
                 setError('')
+                setTooBig(false)
                 onChange(photos.filter((_, j) => j !== i))
               }}
             >
@@ -113,9 +121,11 @@ export default function PhotoPicker({ photos, onChange }: { photos: string[]; on
           {error}
         </em>
       )}
-      <a className="ga-tiny" href={TINYPNG} target="_blank" rel="noopener noreferrer" data-act="tinypng">
-        תמונה כבדה מדי? אפשר להקטין אותה בחינם ב-TinyPNG <ExternalLink />
-      </a>
+      {tooBig && (
+        <a className="ga-tiny" href={TINYPNG} target="_blank" rel="noopener noreferrer" data-act="tinypng">
+          תמונה כבדה מ-{MAX_MB} מגה? אפשר להקטין אותה בחינם ב-TinyPNG <ExternalLink />
+        </a>
+      )}
     </div>
   )
 }

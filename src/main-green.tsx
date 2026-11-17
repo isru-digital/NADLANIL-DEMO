@@ -73,7 +73,7 @@ registerCrm({
   // each view is a screen of its own, opened from the lines under "CRM" in the side menu
   heads: {
     client: { title: 'לקוחות', subtitle: 'כל הלקוחות בטבלה אחת. התאמות מהקהילה בלחיצה אחת.' },
-    property: { title: 'נכסים', subtitle: 'הנכסים שלך על לוח אחד, לפי שלב. כל נכס חדש מתפרסם אוטומטית בקהילה.' },
+    property: { title: 'נכסים', subtitle: 'כל הנכסים שלך במקום אחד. כל נכס חדש מתפרסם אוטומטית בקהילה.' },
   },
 })
 // the feed opens like the front page of a daily paper of deals: a nameplate, and the day's figures as filters
@@ -82,6 +82,8 @@ registerCommunity({ Top: FeedMasthead as never })
 registerCrm({ AutoBar: AutoPublishNote, CardExtra: OwnerLinkButton })
 // a property is a private home, an office or a business property: picked when it is opened, shown and filtered on the board
 registerCrm({ categories: CATEGORIES.map(({ id, label }) => ({ id, label })), categoryOf })
+// the community's properties have no stages: one list of cards (Itzik 17.11.2026)
+registerCrm({ flatProperties: true })
 // the top bar (the view switch with the wallet or the quota), the office member's mark, and the lab in three layers
 registerShell({ bar: MemberBar, badge: MemberBadge, lab: TieredLab })
 // the community under its own name: its name at the top for a community member, no dashboard and two locked lines

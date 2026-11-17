@@ -1,5 +1,5 @@
 // A property put in the CRM goes up to the community by itself, in its own area, without the owner's name, phone or
-// the broker's notes; a published property gets a "קישור לבעל הנכס" (a small page for the owner); and the shared
+// the broker's notes; a published property gets a "הוכחת פרסום לבעל הנכס" (a small page for the owner); and the shared
 // deal room tool is called "טינדר של הדירות".
 // Usage: node scripts/owner-check.mjs [outDir]     (BASE_GREEN overrides the address)
 import puppeteer from 'puppeteer-core'
@@ -99,7 +99,7 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
     priv: document.querySelector('.ol-private')?.textContent ?? '',
   }))
   const url = st.url
-  check(`${d} "קישור לבעל הנכס" shows the property, the community, the date and a demo number of brokers`, st.title.includes('קישור לבעל הנכס') && st.facts.includes('דירת 4 חדרים בפתח תקווה') && st.facts.includes('קהילת מתווכים לעסקאות') && st.facts.includes(today()) && st.facts.includes('נתון דמו'), st.facts)
+  check(`${d} "הוכחת פרסום לבעל הנכס" shows the property, the community, the date and a demo number of brokers`, st.title.includes('הוכחת פרסום לבעל הנכס') && st.facts.includes('דירת 4 חדרים בפתח תקווה') && st.facts.includes('קהילת מתווכים לעסקאות') && st.facts.includes(today()) && st.facts.includes('נתון דמו'), st.facts)
   check(`${d} the link leads to the owner's page and carries nothing of the owner`, url.includes('/o/p?') && !decodeURIComponent(url).includes(OWNER) && !decodeURIComponent(url).includes('חניה') && st.priv.includes('לא נמצאים בו'), decodeURIComponent(url).slice(0, 160))
   await shot('3-owner-link-window')
   await page.evaluate(() => document.querySelector('[data-act="copy-owner-link"]')?.click())
