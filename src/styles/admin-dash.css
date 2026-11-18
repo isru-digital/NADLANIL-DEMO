@@ -49,64 +49,7 @@ html[data-mode='night'] .ad {
   gap: 14px;
 }
 
-/* the menu of the screen's parts: sticks to the top while scrolling, scrolls inside itself on a phone */
-.dk-nav {
-  position: sticky;
-  top: 8px;
-  z-index: 20;
-  display: flex;
-  gap: 6px;
-  padding: 6px;
-  border-radius: 99px;
-  border: 1px solid var(--line);
-  background: color-mix(in srgb, var(--card) 88%, transparent);
-  backdrop-filter: blur(10px);
-  box-shadow: var(--shadow-1);
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-.dk-nav::-webkit-scrollbar {
-  display: none;
-}
-.dk-nav button {
-  flex: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 40px;
-  padding: 0 14px;
-  border-radius: 99px;
-  font-family: var(--font-display);
-  font-size: 14.5px;
-  font-weight: 700;
-  color: var(--text-dim);
-  text-decoration: none;
-  transition: background-color 0.18s ease, color 0.18s ease;
-}
-.dk-nav button:hover {
-  background: var(--dk-tint);
-  color: var(--text);
-}
-.dk-nav button.is-on {
-  background: linear-gradient(135deg, #0a7a4f, #12a36c);
-  color: #fff;
-}
-.dk-nav button:focus-visible {
-  outline: 2px solid var(--dk-green);
-  outline-offset: 1px;
-}
-.dk-nav b {
-  min-width: 22px;
-  padding: 1px 6px;
-  border-radius: 99px;
-  background: var(--dk-amber);
-  color: #fff;
-  font-size: 12px;
-  text-align: center;
-}
-html[data-mode='night'] .dk-nav b {
-  color: #1d1300;
-}
+/* the menu of the screen's parts is in admin-nav.css (tabs) */
 
 .dk-view {
   display: grid;

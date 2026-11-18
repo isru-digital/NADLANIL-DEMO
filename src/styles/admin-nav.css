@@ -1,197 +1,6 @@
-/* Three ways to show the parts of the approvers' screen (AdminNav.tsx), picked with ?nav=grid|side|tabs.
-   Without ?nav the screen keeps its row of pills (admin-dash.css .dk-nav). Site colours only, day and night. */
+/* The menu of the approvers' screen's parts (AdminNav.tsx): tabs across the top on a computer, a bar at the bottom
+   of the screen on a phone. Site colours only, day and night. */
 
-.ad-body {
-  display: grid;
-  gap: 16px;
-  min-width: 0;
-}
-
-.an-icon {
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  background: var(--dk-tint);
-  color: var(--dk-green);
-  transition: background-color 0.18s ease, color 0.18s ease;
-}
-.an-icon svg {
-  width: 20px;
-  height: 20px;
-}
-.an-text {
-  display: grid;
-  gap: 2px;
-  min-width: 0;
-  text-align: start;
-}
-.an-text strong {
-  font-family: var(--font-display);
-  font-size: 16px;
-  font-weight: 800;
-  color: var(--text);
-}
-.an-text small {
-  font-size: 13px;
-  line-height: 1.4;
-  color: var(--text-dim);
-}
-.an-badge {
-  min-width: 24px;
-  height: 24px;
-  padding: 0 7px;
-  display: inline-grid;
-  place-items: center;
-  border-radius: 99px;
-  background: var(--dk-amber);
-  color: #fff;
-  font-size: 12.5px;
-  font-weight: 800;
-}
-.an-badge.is-wide {
-  padding: 0 10px;
-  white-space: nowrap;
-}
-html[data-mode='night'] .an-badge {
-  color: #1d1300;
-}
-.an-grid button:focus-visible,
-.an-side button:focus-visible,
-.an-tabs button:focus-visible {
-  outline: 2px solid var(--dk-green);
-  outline-offset: 2px;
-}
-.an-grid button,
-.an-side button,
-.an-tabs button {
-  cursor: pointer;
-  touch-action: manipulation;
-}
-
-/* ---------------------------------------------------------------- 1. a grid of cards */
-.an-grid {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 10px;
-}
-.an-card {
-  position: relative;
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
-  gap: 10px;
-  min-height: 96px;
-  padding: 14px;
-  border-radius: 18px;
-  border: 1px solid var(--line);
-  background: var(--card);
-  box-shadow: var(--shadow-1);
-  transition: border-color 0.18s ease, transform 0.18s ease, background-color 0.18s ease;
-}
-.an-card:hover {
-  border-color: color-mix(in srgb, var(--dk-green) 45%, var(--line));
-  transform: translateY(-2px);
-}
-.an-card.is-on {
-  border-color: transparent;
-  background: linear-gradient(135deg, #0a7a4f, #12a36c);
-}
-.an-card.is-on .an-icon {
-  background: rgb(255 255 255 / 0.18);
-  color: #fff;
-}
-.an-card.is-on .an-text strong,
-.an-card.is-on .an-text small {
-  color: #fff;
-}
-.an-card.is-on .an-text small {
-  opacity: 0.88;
-}
-.an-card .an-badge {
-  position: absolute;
-  top: 10px;
-  inset-inline-end: 10px;
-}
-
-/* ---------------------------------------------------------------- 2. a menu at the side */
-.an-side-now {
-  display: none;
-}
-.an-side-list {
-  display: grid;
-  gap: 4px;
-  padding: 10px;
-  border-radius: 20px;
-  border: 1px solid var(--line);
-  background: var(--card);
-  box-shadow: var(--shadow-1);
-}
-.an-side-head {
-  padding: 4px 10px 8px;
-  font-size: 12.5px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  color: var(--text-faint, var(--text-dim));
-}
-.an-side-item {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 10px;
-  min-height: 56px;
-  padding: 8px 10px;
-  border-radius: 14px;
-  transition: background-color 0.18s ease;
-}
-.an-side-item .an-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 11px;
-}
-.an-side-item .an-icon svg {
-  width: 18px;
-  height: 18px;
-}
-.an-side-item .an-text strong {
-  font-size: 15px;
-}
-.an-side-item .an-text small {
-  font-size: 12.5px;
-}
-.an-side-item:hover {
-  background: var(--dk-tint);
-}
-.an-side-item.is-on {
-  background: var(--dk-tint);
-  box-shadow: inset -3px 0 0 var(--dk-green);
-}
-.an-side-item.is-on .an-icon {
-  background: linear-gradient(135deg, #0a7a4f, #12a36c);
-  color: #fff;
-}
-.an-tick {
-  display: none;
-}
-
-@media (min-width: 981px) {
-  .ad.nav-side .ad-main {
-    grid-template-columns: 272px minmax(0, 1fr);
-    column-gap: 24px;
-    align-items: start;
-  }
-  .ad.nav-side .ad-head {
-    grid-column: 1 / -1;
-  }
-  .ad.nav-side .an-side {
-    position: sticky;
-    top: 16px;
-  }
-}
-
-/* ---------------------------------------------------------------- 3. tabs */
 .an-tabs {
   position: sticky;
   top: 0;
@@ -214,6 +23,8 @@ html[data-mode='night'] .an-badge {
   font-size: 15.5px;
   font-weight: 700;
   color: var(--text-dim);
+  cursor: pointer;
+  touch-action: manipulation;
   transition: color 0.18s ease, background-color 0.18s ease;
 }
 .an-tab::after {
@@ -231,6 +42,10 @@ html[data-mode='night'] .an-badge {
   color: var(--text);
   background: var(--dk-tint);
 }
+.an-tab:focus-visible {
+  outline: 2px solid var(--dk-green);
+  outline-offset: 2px;
+}
 .an-tab.is-on {
   color: var(--dk-green);
 }
@@ -246,128 +61,31 @@ html[data-mode='night'] .an-badge {
   width: 20px;
   height: 20px;
 }
-.an-tab-icon .an-badge {
+/* the number of waiting requests, on the icon of "בקשות" */
+.an-badge {
   position: absolute;
   top: -9px;
   inset-inline-start: 12px;
   min-width: 20px;
   height: 20px;
   padding: 0 5px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 99px;
+  background: var(--dk-amber);
+  color: #fff;
   font-size: 11.5px;
+  font-weight: 800;
+}
+html[data-mode='night'] .an-badge {
+  color: #1d1300;
 }
 .an-short {
   display: none;
 }
 
-/* ---------------------------------------------------------------- phone and narrow screens */
-@media (max-width: 980px) {
-  .an-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  /* the side menu turns into one button that says where you are, with the list under it */
-  .an-side {
-    position: sticky;
-    top: 8px;
-    z-index: 25;
-  }
-  .an-side-now {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto auto;
-    align-items: center;
-    gap: 10px;
-    width: 100%;
-    min-height: 60px;
-    padding: 8px 12px 8px 14px;
-    border-radius: 18px;
-    border: 1px solid var(--line);
-    background: color-mix(in srgb, var(--card) 94%, transparent);
-    backdrop-filter: blur(10px);
-    box-shadow: var(--shadow-1);
-  }
-  .an-side-now .an-text small {
-    font-size: 12px;
-  }
-  .an-side-now .an-text strong {
-    font-size: 17px;
-  }
-  .an-chev {
-    width: 20px;
-    height: 20px;
-    color: var(--text-dim);
-    transition: transform 0.2s ease;
-  }
-  .an-side.is-open .an-chev {
-    transform: rotate(180deg);
-  }
-  .an-side-list {
-    position: absolute;
-    inset-inline: 0;
-    top: calc(100% + 8px);
-    box-shadow: 0 24px 48px -18px rgb(0 0 0 / 0.35);
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(-6px);
-    transition: opacity 0.18s ease, transform 0.18s ease, visibility 0s linear 0.18s;
-  }
-  .an-side.is-open .an-side-list {
-    opacity: 1;
-    visibility: visible;
-    transform: none;
-    transition: opacity 0.2s ease, transform 0.2s ease;
-  }
-  .an-side-head {
-    display: none;
-  }
-  .an-side-item.is-on {
-    box-shadow: none;
-  }
-  .an-tick {
-    display: block;
-    width: 18px;
-    height: 18px;
-    color: var(--dk-green);
-  }
-}
-
+/* ---------------------------------------------------------------- phone: a bar at the bottom, all five in reach */
 @media (max-width: 640px) {
-  /* cards: two in a row, the last one across */
-  .an-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
-  }
-  .an-grid .an-card:last-child {
-    grid-column: 1 / -1;
-  }
-  .an-card {
-    grid-template-columns: auto minmax(0, 1fr);
-    gap: 9px;
-    min-height: 0;
-    padding: 10px;
-    border-radius: 16px;
-  }
-  .an-card .an-icon {
-    width: 34px;
-    height: 34px;
-    border-radius: 10px;
-  }
-  .an-card .an-icon svg {
-    width: 17px;
-    height: 17px;
-  }
-  .an-card .an-badge {
-    top: 8px;
-    inset-inline-end: 8px;
-  }
-  .an-card .an-text strong {
-    font-size: 15px;
-  }
-  .an-card .an-text small {
-    font-size: 12px;
-    line-height: 1.35;
-  }
-
-  /* tabs: a bar at the bottom of the screen, all five in reach of a thumb */
   .an-tabs {
     position: fixed;
     top: auto;
@@ -396,12 +114,6 @@ html[data-mode='night'] .an-badge {
     width: 22px;
     height: 22px;
   }
-  .an-tab.is-on .an-tab-icon {
-    color: var(--dk-green);
-  }
-  .an-long {
-    display: inline;
-  }
   .an-tab:has(.an-short) .an-long {
     display: none;
   }
@@ -409,23 +121,17 @@ html[data-mode='night'] .an-badge {
     display: inline;
   }
   /* the page keeps room for the bar, so nothing hides under it */
-  .ad.nav-tabs .ad-main {
+  .ad .ad-main {
     padding-bottom: calc(150px + env(safe-area-inset-bottom));
   }
   /* the day/night switch floats above the bar instead of over it */
-  body:has(.ad.nav-tabs) .dn {
+  body:has(.an-tabs) .dn {
     inset-block-end: calc(76px + env(safe-area-inset-bottom));
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .an-card,
-  .an-tab::after,
-  .an-side-list,
-  .an-chev {
+  .an-tab::after {
     transition: none;
-  }
-  .an-card:hover {
-    transform: none;
   }
 }

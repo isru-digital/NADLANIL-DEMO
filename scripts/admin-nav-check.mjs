@@ -1,7 +1,8 @@
-// The three ways to show the parts of the approvers' screen (?nav=grid|side|tabs), next to today's row of pills, on a
-// computer and on a phone. Against the LOCAL test server (server/, TEST_MODE=1) with the data admin-dash-check.mjs
-// put there; run that one first. Checks that every part is reachable without sliding sideways, that a click opens
-// it, that the phone's tab bar hides nothing, and that the side list closes. Saves screenshots.
+// The menu of the approvers' screen's parts: tabs (Itzik 18.11.2026), on a computer and on a phone, day and night.
+// Against the LOCAL test server (server/, TEST_MODE=1) with the data admin-dash-check.mjs put there; run that one
+// first. Checks that the tabs are the menu with nothing in the address (and that the old ?nav= choices are gone),
+// that all five are seen without sliding sideways, that a click opens each part, that on a phone the bar sits at the
+// bottom, hides nothing and has the day/night switch above it, and that the waiting count is read. Saves screenshots.
 // Usage: node scripts/admin-nav-check.mjs [outDir]
 import puppeteer from 'puppeteer-core'
 import { mkdirSync } from 'node:fs'
@@ -35,11 +36,11 @@ await api('/api/register', { method: 'POST', body: { name: 'גלעד שמש', ph
 
 const browser = await puppeteer.launch({ executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: 'new', args: ['--hide-scrollbars'] })
 const VIEWS = ['overview', 'requests', 'people', 'breakdown', 'tools']
-const STYLES = ['rail', 'grid', 'side', 'tabs']
 const SIZES = { desktop: { width: 1440, height: 900 }, phone: { width: 390, height: 844, deviceScaleFactor: 2, isMobile: true, hasTouch: true } }
 
 for (const [dev, vp] of Object.entries(SIZES)) {
   for (const mode of ['day', 'night']) {
+    const tag = `${dev}${mode === 'night' ? ' night' : ''}`
     const ctx = await browser.createBrowserContext()
     const page = await ctx.newPage()
     const errors = []
@@ -49,77 +50,84 @@ for (const [dev, vp] of Object.entries(SIZES)) {
     await page.evaluate((m) => localStorage.setItem('nadlanup-mode-v1', JSON.stringify({ mode: m, until: Date.now() + 9e9 })), mode)
     await page.goto(await enterLink(), { waitUntil: 'load' })
     await page.waitForFunction(() => location.pathname.endsWith('/kehila/admin'), { timeout: 20000 })
-    for (const style of mode === 'night' ? ['grid', 'side', 'tabs'] : STYLES) {
-      const tag = `${dev}${mode === 'night' ? ' night' : ''} ${style}`
-      await page.goto(`${green}/kehila/admin${style === 'tabs' ? '' : `?nav=${style}`}#overview`, { waitUntil: 'load' })
-      await page.waitForSelector('.dk-kpi[data-kpi]', { timeout: 15000 })
-      await wait(700)
-      const name = `${dev}${mode === 'night' ? '-night' : ''}-${STYLES.indexOf(style)}-${style}`
-      await page.screenshot({ path: `${out}/${name}.png` })
-      if (mode === 'night') continue
-
-      // every part: can it be seen without sliding sideways, and does a click open it
-      const seen = await page.evaluate(() => {
-        const vw = document.documentElement.clientWidth
-        return [...document.querySelectorAll('[data-view]')].map((b) => {
-          const r = b.getBoundingClientRect()
-          return { v: b.dataset.view, inside: r.width === 0 || (r.left >= -1 && r.right <= vw + 1) }
-        })
-      })
-      const sideways = await page.evaluate(() => [...document.querySelectorAll('[role=tablist]')].some((t) => t.scrollWidth > t.clientWidth + 2 && getComputedStyle(t).overflowX !== 'visible'))
-      if (style === 'rail') check(`${tag}: today's row slides sideways on a phone (the problem)`, dev === 'desktop' ? true : sideways, sideways)
-      else check(`${tag}: all five parts are there, none needs sliding sideways`, seen.length === 5 && seen.every((s) => s.inside) && !sideways, { seen, sideways })
-      for (const v of VIEWS) {
-        if (style === 'side' && dev === 'phone') {
-          await page.click('[data-act="nav-open"]')
-          await wait(260)
-          await page.click(`[data-view="${v}"]`)
-        } else await page.evaluate((x) => document.querySelector(`[data-view="${x}"]`).click(), v)
-        await page.waitForFunction((x) => document.querySelector('[data-view-shown]')?.dataset.viewShown === x, { timeout: 4000 }, v).catch(() => {})
-        const shown = await page.evaluate(() => document.querySelector('[data-view-shown]')?.dataset.viewShown)
-        if (shown !== v) check(`${tag}: a click on "${v}" opens it`, false, shown)
-      }
-      check(`${tag}: a click on each part opens it`, true)
-      check(`${tag}: no sideways scroll on the page`, (await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)) <= 1)
-
-      if (style === 'side' && dev === 'phone') {
-        await page.evaluate(() => document.querySelector('[data-view="requests"]').click())
-        await wait(300)
-        await page.click('[data-act="nav-open"]')
-        await wait(320)
-        const open = await page.evaluate(() => ({ exp: document.querySelector('[data-act="nav-open"]').getAttribute('aria-expanded'), vis: getComputedStyle(document.querySelector('.an-side-list')).visibility }))
-        check(`${tag}: the button opens the list of parts`, open.exp === 'true' && open.vis === 'visible', open)
-        await page.screenshot({ path: `${out}/${dev}-2-side-open.png` })
-        await page.keyboard.press('Escape')
-        await wait(300)
-        const closed = await page.evaluate(() => getComputedStyle(document.querySelector('.an-side-list')).visibility)
-        check(`${tag}: Escape closes the list`, closed === 'hidden', closed)
-      }
-      if (style === 'tabs' && dev === 'phone') {
-        await page.evaluate(() => document.querySelector('[data-view="tools"]').click())
-        await wait(400)
-        await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight))
-        await wait(400)
-        const covered = await page.evaluate(() => {
-          const bar = document.querySelector('.an-tabs').getBoundingClientRect()
-          const last = [...document.querySelectorAll('#dk-view *')].filter((e) => e.children.length === 0 && e.getBoundingClientRect().height > 0).at(-1).getBoundingClientRect()
-          return { barTop: Math.round(bar.top), lastBottom: Math.round(last.bottom), h: Math.round(bar.height) }
-        })
-        check(`${tag}: at the very bottom, the bar hides nothing`, covered.lastBottom <= covered.barTop, covered)
-        check(`${tag}: the bar is big enough for a thumb`, covered.h >= 56, covered)
-        await page.screenshot({ path: `${out}/${dev}-3-tabs-bottom.png` })
-      }
-      // one more picture: the requests part, where the work is
-      await page.evaluate(() => window.scrollTo(0, 0))
-      if (style === 'side' && dev === 'phone') {
-        await page.click('[data-act="nav-open"]')
-        await wait(260)
-        await page.click('[data-view="requests"]')
-      } else await page.evaluate(() => document.querySelector('[data-view="requests"]').click())
-      await wait(600)
-      await page.screenshot({ path: `${out}/${name}-requests.png` })
+    await page.goto(`${green}/kehila/admin#overview`, { waitUntil: 'load' })
+    await page.waitForSelector('.dk-kpi[data-kpi]', { timeout: 15000 })
+    await wait(700)
+    await page.screenshot({ path: `${out}/${dev}${mode === 'night' ? '-night' : ''}-tabs.png` })
+    if (mode === 'night') {
+      check(`${tag}: no errors`, errors.length === 0, errors)
+      await ctx.close()
+      continue
     }
-    check(`${dev} ${mode}: no errors on the page`, errors.length === 0, errors)
+
+    const menu = await page.evaluate(() => {
+      const vw = document.documentElement.clientWidth
+      const lists = [...document.querySelectorAll('[role=tablist][aria-label="חלקי המסך"]')]
+      const bar = document.querySelector('.an-tabs')
+      return {
+        lists: lists.length,
+        tabs: !!bar && bar.dataset.nav === 'tabs',
+        old: !!document.querySelector('.dk-nav, .an-grid, .an-side'),
+        labels: [...document.querySelectorAll('.an-tabs [data-view]')].map((b) => b.querySelector('.an-long').textContent),
+        inside: [...document.querySelectorAll('.an-tabs [data-view]')].every((b) => {
+          const r = b.getBoundingClientRect()
+          return r.left >= -1 && r.right <= vw + 1 && r.width > 40
+        }),
+        slides: bar.scrollWidth > bar.clientWidth + 1,
+        badge: (() => {
+          const b = document.querySelector('[data-view="requests"] .an-badge')
+          return b ? { n: b.textContent, label: b.getAttribute('aria-label'), hidden: !!b.closest('[aria-hidden="true"]') } : null
+        })(),
+      }
+    })
+    check(`${tag}: with nothing in the address the menu is the tabs, and only the tabs`, menu.lists === 1 && menu.tabs && !menu.old, menu)
+    check(`${tag}: five tabs in order, all seen, none slides sideways`, menu.labels.join('|') === 'סקירה|בקשות|מתווכים|פילוח|צוות וכלים' && menu.inside && !menu.slides, menu)
+    check(`${tag}: the waiting count is on "בקשות", and a screen reader reads it`, !!menu.badge && Number(menu.badge.n) >= 1 && menu.badge.label === `${menu.badge.n} ממתינות` && !menu.badge.hidden, menu.badge)
+
+    for (const v of VIEWS) {
+      await page.evaluate((x) => document.querySelector(`[data-view="${x}"]`).click(), v)
+      await page.waitForFunction((x) => document.querySelector('[data-view-shown]')?.dataset.viewShown === x, { timeout: 4000 }, v).catch(() => {})
+      const shown = await page.evaluate(() => ({ v: document.querySelector('[data-view-shown]')?.dataset.viewShown, on: document.querySelector('.an-tabs .is-on')?.dataset.view, hash: location.hash }))
+      check(`${tag}: a click on "${v}" opens it, marks its tab and keeps it in the address`, shown.v === v && shown.on === v && shown.hash === `#${v}`, shown)
+    }
+    check(`${tag}: no sideways scroll on the page`, (await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)) <= 1)
+
+    // the old choices in the address change nothing any more
+    for (const old of ['grid', 'side', 'rail']) {
+      await page.goto(`${green}/kehila/admin?nav=${old}#overview`, { waitUntil: 'load' })
+      await page.waitForSelector('.dk-kpi[data-kpi]', { timeout: 15000 })
+      const same = await page.evaluate(() => ({ tabs: !!document.querySelector('.an-tabs'), old: !!document.querySelector('.dk-nav, .an-grid, .an-side') }))
+      check(`${tag}: ?nav=${old} shows the tabs too`, same.tabs && !same.old, same)
+    }
+
+    if (dev === 'phone') {
+      const bar = await page.evaluate(() => {
+        const b = document.querySelector('.an-tabs').getBoundingClientRect()
+        const dn = document.querySelector('.dn')?.getBoundingClientRect()
+        return { pos: getComputedStyle(document.querySelector('.an-tabs')).position, bottom: Math.round(innerHeight - b.bottom), h: Math.round(b.height), top: Math.round(b.top), dnBottom: dn ? Math.round(dn.bottom) : null, short: document.querySelector('[data-view="tools"]').innerText.trim() }
+      })
+      check(`${tag}: the bar sits at the bottom of the screen and is big enough for a thumb`, bar.pos === 'fixed' && bar.bottom === 0 && bar.h >= 56, bar)
+      check(`${tag}: the day/night switch is above the bar, not over it`, bar.dnBottom === null || bar.dnBottom <= bar.top, bar)
+      check(`${tag}: "צוות וכלים" fits as "צוות"`, bar.short === 'צוות', bar.short)
+      await page.evaluate(() => document.querySelector('[data-view="tools"]').click())
+      await wait(400)
+      await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight))
+      await wait(400)
+      const covered = await page.evaluate(() => {
+        const top = document.querySelector('.an-tabs').getBoundingClientRect().top
+        const last = [...document.querySelectorAll('#dk-view *')].filter((e) => e.children.length === 0 && e.getBoundingClientRect().height > 0).at(-1).getBoundingClientRect()
+        return { barTop: Math.round(top), lastBottom: Math.round(last.bottom) }
+      })
+      check(`${tag}: at the very bottom, the bar hides nothing`, covered.lastBottom <= covered.barTop, covered)
+      await page.screenshot({ path: `${out}/${dev}-tabs-bottom.png` })
+    }
+    await page.evaluate(() => {
+      document.querySelector('[data-view="requests"]').click()
+      window.scrollTo(0, 0)
+    })
+    await wait(600)
+    await page.screenshot({ path: `${out}/${dev}-tabs-requests.png` })
+    check(`${tag}: no errors`, errors.length === 0, errors)
     await ctx.close()
   }
 }
