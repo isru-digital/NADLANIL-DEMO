@@ -32,6 +32,8 @@ import { greenUi } from './green/ui'
 import type { CommunityItem } from './data/demo'
 import { FREE_IDS, PAID_IDS, walletActions } from './config/tiers'
 import About from './pages/About'
+import InstallGuide from './pwa/InstallGuide'
+import { startApp } from './pwa/pwa'
 import { memberActions } from './config/member'
 import { agentActions } from './agent/useAgent'
 import { registerActions, registerCommunity, registerCrm, registerLab, registerNames, registerNav, registerReset, registerShell } from './config/navExtras'
@@ -55,6 +57,8 @@ import './styles/theme-green.css'
 document.documentElement.dataset.theme = 'green'
 // light by day, dark in the evening: set before the first paint, so the page never flashes the other mood
 dayNight.apply()
+// the site as an app on the home screen: the Service Worker, and the browser's own offer to install
+startApp()
 
 // "הסוכן שלנו" and joining the office exist only in the green look
 // what only the office gives: its own area, and "הסוכן שלנו" (part of the office)
@@ -143,6 +147,7 @@ start(<HomeGreen />, {
       <Route path="/office" element={<OfficeStory standalone />} />
       <Route path="/agent/:slug" element={<AgentPage />} />
       <Route path="/about" element={<About />} />
+      <Route path="/install" element={<InstallGuide />} />
       <Route path="/upgrade" element={<Upgrade />} />
       <Route path={OWNER_PATH} element={<OwnerPage />} />
     </>

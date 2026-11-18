@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#0B6B49" />
+    <title>אין חיבור לאינטרנט | מתווכים לעסקאות</title>
+    <!-- Shown by the app's Service Worker (sw.js) only when a page is asked for and there is no connection.
+         Everything it needs is inside it, apart from the icon, which the Service Worker keeps. -->
+    <style>
+      :root {
+        --bg: #f3faf6;
+        --card: #ffffff;
+        --text: #0b2a1f;
+        --dim: #3b574b;
+        --line: rgba(10, 70, 48, 0.12);
+        --green: #0b7a4f;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #07130f;
+          --card: #0f231b;
+          --text: #eaf6f0;
+          --dim: #b3cbbf;
+          --line: rgba(222, 244, 234, 0.12);
+          --green: #34d399;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+      }
+      body {
+        min-height: 100dvh;
+        display: grid;
+        place-items: center;
+        padding: max(24px, env(safe-area-inset-top)) 20px max(24px, env(safe-area-inset-bottom));
+        background: radial-gradient(120% 70% at 50% 0%, color-mix(in srgb, var(--green) 14%, transparent), transparent 60%), var(--bg);
+        color: var(--text);
+        font-family: system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
+        text-align: center;
+      }
+      main {
+        width: min(100%, 380px);
+        padding: 32px 24px 26px;
+        border: 1px solid var(--line);
+        border-radius: 28px;
+        background: var(--card);
+        box-shadow: 0 30px 60px -36px rgba(4, 40, 26, 0.45);
+      }
+      img {
+        width: 76px;
+        height: 76px;
+        border-radius: 20px;
+        box-shadow: 0 16px 30px -16px rgba(4, 59, 43, 0.7);
+      }
+      h1 {
+        margin: 18px 0 8px;
+        font-size: 24px;
+        line-height: 1.2;
+        text-wrap: balance;
+      }
+      p {
+        margin: 0 0 22px;
+        color: var(--dim);
+        font-size: 16px;
+        line-height: 1.6;
+      }
+      button {
+        width: 100%;
+        min-height: 50px;
+        border: 0;
+        border-radius: 16px;
+        background: linear-gradient(150deg, #07643f, #0fa46b);
+        color: #fff;
+        font: inherit;
+        font-size: 17px;
+        font-weight: 700;
+        cursor: pointer;
+        touch-action: manipulation;
+      }
+      button:focus-visible {
+        outline: 3px solid var(--green);
+        outline-offset: 3px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <img src="icons/app-192.png" alt="" width="76" height="76" />
+      <h1>אין חיבור לאינטרנט כרגע</h1>
+      <p>ברגע שהחיבור יחזור, הדף ייטען מחדש מעצמו.</p>
+      <button type="button" onclick="location.reload()">לנסות שוב</button>
+    </main>
+    <script>
+      // back online: try again by itself
+      addEventListener('online', function () {
+        location.reload()
+      })
+    </script>
+  </body>
+</html>

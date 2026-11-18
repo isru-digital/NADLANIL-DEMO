@@ -16,7 +16,13 @@
     <meta name="twitter:image" content="%OG_IMAGE%" />
     <meta property="og:type" content="website" />
     <link rel="icon" type="image/png" href="%BASE_URL%%FAVICON%" />
-    <link rel="apple-touch-icon" href="%BASE_URL%%APPLE_ICON%" />
+    <link rel="apple-touch-icon" href="/%APPLE_ICON%" />
+    <!-- the site as an app on the home screen (stage 1 of phone notices): name, icons and colours are in the manifest -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="מתווכים" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

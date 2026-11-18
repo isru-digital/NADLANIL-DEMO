@@ -14,7 +14,7 @@ function themeHtml(green: boolean, base: string): Plugin {
   const map: Record<string, string> = {
     '%ENTRY%': pick('/src/main.tsx', '/src/main-green.tsx'),
     '%FAVICON%': pick('favicon.png', 'favicon-green.png'),
-    '%APPLE_ICON%': pick('apple-touch-icon.png', 'apple-touch-icon-green.png'),
+    '%APPLE_ICON%': pick('apple-touch-icon.png', 'icons/apple-touch-icon-180.png'),
     '%THEME_COLOR%': pick('#0A0F20', '#0B6B49'),
     '%TITLE%': pick('הדבר הבא בעולם המתווכים - דמו', 'NadlanUP | משרד תיווך ארצי - דמו'),
     '%OG_TITLE%': pick('הדבר הבא בעולם המתווכים', 'NadlanUP | משרד תיווך ארצי'),
