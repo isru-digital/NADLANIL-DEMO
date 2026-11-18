@@ -61,11 +61,13 @@
   width: 20px;
   height: 20px;
 }
-/* the number of waiting requests, on the icon of "בקשות" */
+/* the number of waiting requests, on the icon of "בקשות". On a computer the name stands beside the icon, so the
+   count sits on the icon's outer corner, away from the name; a ring in the bar's colour keeps it clear of the icon */
 .an-badge {
   position: absolute;
-  top: -9px;
-  inset-inline-start: 12px;
+  top: -10px;
+  inset-inline-start: -14px;
+  box-shadow: 0 0 0 2px var(--bg, var(--card));
   min-width: 20px;
   height: 20px;
   padding: 0 5px;
@@ -113,6 +115,12 @@ html[data-mode='night'] .an-badge {
   .an-tab-icon svg {
     width: 22px;
     height: 22px;
+  }
+  /* on a phone the name is under the icon, so the count leans to the other side of it, as before */
+  .an-badge {
+    top: -9px;
+    inset-inline-start: 12px;
+    box-shadow: 0 0 0 2px var(--card);
   }
   .an-tab:has(.an-short) .an-long {
     display: none;

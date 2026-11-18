@@ -76,13 +76,20 @@ for (const [dev, vp] of Object.entries(SIZES)) {
         slides: bar.scrollWidth > bar.clientWidth + 1,
         badge: (() => {
           const b = document.querySelector('[data-view="requests"] .an-badge')
-          return b ? { n: b.textContent, label: b.getAttribute('aria-label'), hidden: !!b.closest('[aria-hidden="true"]') } : null
+          if (!b) return null
+          // how far the count stands from the name (negative = it covers the name), and that it stays inside its tab
+          const r = b.getBoundingClientRect()
+          const t = b.closest('[data-view]').querySelector('.an-tab-label').getBoundingClientRect()
+          const tab = b.closest('[data-view]').getBoundingClientRect()
+          const apart = Math.max(t.left - r.right, r.left - t.right, t.top - r.bottom, r.top - t.bottom)
+          return { n: b.textContent, label: b.getAttribute('aria-label'), hidden: !!b.closest('[aria-hidden="true"]'), apart: Math.round(apart), inTab: r.left >= tab.left && r.right <= tab.right && r.top >= tab.top - 1 }
         })(),
       }
     })
     check(`${tag}: with nothing in the address the menu is the tabs, and only the tabs`, menu.lists === 1 && menu.tabs && !menu.old, menu)
     check(`${tag}: five tabs in order, all seen, none slides sideways`, menu.labels.join('|') === 'סקירה|בקשות|מתווכים|פילוח|צוות וכלים' && menu.inside && !menu.slides, menu)
     check(`${tag}: the waiting count is on "בקשות", and a screen reader reads it`, !!menu.badge && Number(menu.badge.n) >= 1 && menu.badge.label === `${menu.badge.n} ממתינות` && !menu.badge.hidden, menu.badge)
+    check(`${tag}: the count does not touch the name "בקשות" and stays inside its tab`, !!menu.badge && menu.badge.apart >= 4 && menu.badge.inTab, menu.badge)
 
     for (const v of VIEWS) {
       await page.evaluate((x) => document.querySelector(`[data-view="${x}"]`).click(), v)
