@@ -5,6 +5,7 @@ import { ArrowLeft, Check, LoaderCircle, Lock, LogOut, MailCheck, ShieldCheck, X
 import { COMMUNITY_HOME, COMMUNITY_JOIN, COMMUNITY_NAME } from '../config/community'
 import CommunityBrand from '../community/CommunityBrand'
 import CodeBoxes from './CodeBoxes'
+import { runningAsApp } from '../pwa/pwa'
 import { asMember, call, demo, go, hasAccess, recheck, session, sessionActions } from './session'
 import type { MemberInfo, StaffInfo } from './session'
 import '../styles/join-green.css'
@@ -279,6 +280,7 @@ export function AppGuard({ children }: { children: ReactElement }) {
     if (session && !demo) recheck()
   }, [])
   if (hasAccess) return children
+  const inApp = runningAsApp()
   return (
     <Frame>
       <section className="au-card au-wait" data-state="locked">
@@ -287,13 +289,27 @@ export function AppGuard({ children }: { children: ReactElement }) {
         </span>
         <h1>הקהילה פתוחה למתווכים שאושרו</h1>
         <p className="au-lead">נרשמים, הצוות שלנו מאשר, ואז מקבלים מייל עם כניסה.</p>
-        <div className="au-actions">
-          <Link to={COMMUNITY_JOIN} className="btn btn-gold btn-lg">
-            הרשמה לקהילה <ArrowLeft />
-          </Link>
-          <Link to="/kehila/login" className="btn btn-ghost btn-lg">
-            כבר אושרתם? כניסה
-          </Link>
+        {/* in the app on a phone's home screen the broker is most likely signed up already: the way in comes first */}
+        <div className="au-actions" data-first={inApp ? 'login' : 'join'}>
+          {inApp ? (
+            <>
+              <Link to="/kehila/login" className="btn btn-gold btn-lg" data-act="to-login">
+                כניסה עם קוד מהמייל <ArrowLeft />
+              </Link>
+              <Link to={COMMUNITY_JOIN} className="btn btn-ghost btn-lg">
+                עוד לא חברים? הרשמה
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link to={COMMUNITY_JOIN} className="btn btn-gold btn-lg">
+                הרשמה לקהילה <ArrowLeft />
+              </Link>
+              <Link to="/kehila/login" className="btn btn-ghost btn-lg" data-act="to-login">
+                כבר אושרתם? כניסה
+              </Link>
+            </>
+          )}
         </div>
       </section>
     </Frame>

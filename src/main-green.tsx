@@ -33,6 +33,7 @@ import type { CommunityItem } from './data/demo'
 import { FREE_IDS, PAID_IDS, walletActions } from './config/tiers'
 import About from './pages/About'
 import InstallGuide from './pwa/InstallGuide'
+import { SignInCard } from './auth/SignInPrompt'
 import { startApp } from './pwa/pwa'
 import { memberActions } from './config/member'
 import { agentActions } from './agent/useAgent'
@@ -99,6 +100,8 @@ registerShell({ useNav: useCommunityNav, brand: ShellBrand, banner: UpgradeBanne
 registerShell({ useQuiet: useQuietShell, foot: DemoFoot })
 // on a phone inside the app, the day / night switch is a small button in the top bar, not a float over the content
 registerShell({ topEnd: DayNightCompact })
+// the way in for whoever is not signed in, in the menu (the app on a phone has no address bar to type it)
+registerShell({ account: SignInCard })
 registerLab({
   Chip: LabChip,
   Badge: LabBadge,

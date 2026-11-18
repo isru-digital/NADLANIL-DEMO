@@ -1,0 +1,227 @@
+/* The way in for whoever is not signed in (auth/SignInPrompt.tsx): one button in the top bar, a card in the menu and
+   at the top of the feed. Site tokens only, so day and night both work. */
+
+/* ---------------------------------------------------------------- the top bar's button */
+.si-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 99px;
+  background: linear-gradient(150deg, var(--deep-b), var(--deep-c));
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 800;
+  white-space: nowrap;
+  box-shadow: 0 10px 22px -12px rgb(4 59 43 / 0.85);
+  touch-action: manipulation;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+html[data-mode='night'] .si-chip {
+  background: linear-gradient(150deg, #0a7a4f, #19b87a);
+}
+.si-chip svg {
+  width: 18px;
+  height: 18px;
+}
+.si-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 26px -12px rgb(4 59 43 / 0.9);
+}
+.si-chip:active {
+  transform: scale(0.97);
+}
+.si-chip:focus-visible,
+.si-card:focus-visible,
+.si-go:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 3px;
+}
+/* on a phone the bar is small: a finger still gets 44px, the look stays slim */
+@media (max-width: 900px) {
+  .si-chip {
+    position: relative;
+    min-height: 36px;
+    padding: 0 13px;
+    font-size: 14.5px;
+  }
+  .si-chip::after {
+    content: '';
+    position: absolute;
+    inset: -4px -2px;
+  }
+}
+
+/* ---------------------------------------------------------------- the card (menu and feed) */
+.si-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  border: 1px solid var(--line-gold);
+  background:
+    radial-gradient(120% 140% at 100% 0%, rgb(var(--g) / 0.16), transparent 60%),
+    var(--card);
+  color: var(--text);
+  text-align: start;
+  box-shadow: 0 16px 30px -24px rgb(4 59 43 / 0.7);
+  touch-action: manipulation;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+a.si-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--gold);
+  box-shadow: 0 20px 34px -22px rgb(4 59 43 / 0.75);
+}
+a.si-card:active {
+  transform: scale(0.985);
+}
+.si-mark {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: linear-gradient(150deg, var(--deep-b), var(--deep-c));
+  color: #fff;
+  box-shadow: 0 10px 20px -12px rgb(4 59 43 / 0.8);
+}
+html[data-mode='night'] .si-mark {
+  background: linear-gradient(150deg, #0a7a4f, #19b87a);
+}
+.si-mark svg {
+  width: 21px;
+  height: 21px;
+}
+.si-words {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.si-words strong {
+  font-family: var(--font-display);
+  font-size: 16.5px;
+  font-weight: 800;
+  line-height: 1.25;
+}
+.si-words span {
+  color: var(--text-dim);
+  font-size: 14px;
+  line-height: 1.45;
+}
+.si-arrow {
+  width: 20px;
+  height: 20px;
+  color: var(--gold);
+  transition: transform 0.2s ease;
+}
+a.si-card:hover .si-arrow {
+  transform: translateX(-3px);
+}
+
+/* in the side menu, above the user's line: narrow, so no arrow and a short line */
+.si-card.is-side {
+  grid-template-columns: 40px minmax(0, 1fr);
+  gap: 10px;
+  margin-bottom: 14px;
+  padding: 12px;
+}
+.si-card.is-side .si-mark {
+  width: 40px;
+  height: 40px;
+  border-radius: 13px;
+}
+.si-card.is-side .si-words span {
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* at the top of "עוד" on a phone */
+.si-card.is-more {
+  margin-bottom: 6px;
+  padding: 14px 16px;
+}
+
+/* at the top of the feed: wider, with its own button */
+.si-card.is-feed {
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+  gap: 14px;
+  margin: 4px 0 18px;
+  padding: 16px 18px;
+  border-radius: 22px;
+}
+.si-card.is-feed .si-mark {
+  width: 48px;
+  height: 48px;
+}
+.si-card.is-feed .si-words strong {
+  font-size: 18px;
+}
+.si-card.is-feed .si-words span {
+  font-size: 15px;
+}
+.si-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 22px;
+  border-radius: 15px;
+  background: linear-gradient(150deg, var(--deep-b), var(--deep-c));
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 16.5px;
+  font-weight: 800;
+  white-space: nowrap;
+  box-shadow: 0 12px 24px -14px rgb(4 59 43 / 0.85);
+  touch-action: manipulation;
+  transition: transform 0.2s ease;
+}
+html[data-mode='night'] .si-go {
+  background: linear-gradient(150deg, #0a7a4f, #19b87a);
+}
+.si-go svg {
+  width: 18px;
+  height: 18px;
+}
+.si-go:hover {
+  transform: translateY(-1px);
+}
+.si-go:active {
+  transform: scale(0.97);
+}
+@media (max-width: 560px) {
+  .si-card.is-feed {
+    grid-template-columns: 44px minmax(0, 1fr);
+    padding: 14px;
+  }
+  .si-card.is-feed .si-mark {
+    width: 44px;
+    height: 44px;
+  }
+  .si-card.is-feed .si-go {
+    grid-column: 1 / -1;
+    justify-content: center;
+    min-height: 50px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .si-chip,
+  .si-card,
+  .si-go,
+  .si-arrow {
+    transition: none;
+  }
+}

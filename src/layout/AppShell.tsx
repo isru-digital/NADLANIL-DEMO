@@ -58,6 +58,7 @@ export default function AppShell() {
   const Banner = shellSlots.banner
   const Foot = shellSlots.foot
   const TopEnd = shellSlots.topEnd
+  const Account = shellSlots.account
   // a community member sees the product, not the demo's workshop: no beta lab, no demo tags, no reset here
   const quiet = shellSlots.useQuiet ? shellSlots.useQuiet() : false
 
@@ -153,6 +154,7 @@ export default function AppShell() {
         )}
 
         <div className="sidebar-foot">
+          {Account && <Account place="side" />}
           <div className="side-principle">
             {SIDE_TAGLINE.map((part) => {
               const [num, ...rest] = part.split(' ')
@@ -244,6 +246,7 @@ export default function AppShell() {
 
       <Modal open={moreOpen} onClose={() => setMoreOpen(false)} title="עוד כלים">
         <div className="modal-body more-sheet">
+          {Account && <Account place="more" />}
           {nav.slice(4).map((item) => (
             <Link key={item.to} to={item.to} className="more-link">
               <item.icon />

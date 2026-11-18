@@ -5,6 +5,7 @@ import type { TopicId } from '../config/topics'
 import { brokerById } from '../data/demo'
 import type { CommunityItem } from '../data/demo'
 import { IconAsk, IconBuyer, IconHome, IconRefer } from './KhIcons'
+import { SignInCard } from '../auth/SignInPrompt'
 // the feed's paper look (serif titles, the price on the photo, the wanted ticket) came with the old masthead: keep it
 import '../styles/feed-paper.css'
 import '../styles/feed-welcome.css'
@@ -68,6 +69,8 @@ export default function FeedWelcome({ items, view, onView, onIntent }: { items: 
           </button>
         ))}
       </nav>
+      {/* whoever is not signed in: the way in, right under the rooms (Itzik 18.11.2026) */}
+      <SignInCard place="feed" />
       <div className="wl-line">
         <span>{today}</span>
         {fresh > 0 && (

@@ -49,6 +49,8 @@ export const shellSlots: {
   foot?: ComponentType
   /** a small control at the end of the phone's top bar (the day / night toggle) */
   topEnd?: ComponentType
+  /** the way in for whoever is not signed in: in the side menu, and at the top of "עוד" on a phone */
+  account?: ComponentType<{ place: 'side' | 'more' }>
 } = {}
 export function registerShell(slots: typeof shellSlots) {
   Object.assign(shellSlots, slots)

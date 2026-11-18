@@ -10,7 +10,8 @@ import { Modal } from './ui'
 import { labItems } from './BetaLab'
 import MemberSwitch from './MemberSwitch'
 import { AccountChip } from '../auth/Access'
-import { demo } from '../auth/session'
+import { SignInChip } from '../auth/SignInPrompt'
+import { demo, session } from '../auth/session'
 import '../styles/tiers.css'
 
 /**
@@ -26,7 +27,8 @@ export default function MemberBar() {
 
   // a community member sees the community, not the demo's controls: no wallet of credits and no view switch here
   // (the view switch lives in the small line at the foot of the page). A signed-in broker sees who is signed in.
-  if (!isOffice) return demo ? null : <AccountChip />
+  // Whoever is not signed in (the presentation, or the app on a phone before signing in) gets "כניסה" here instead.
+  if (!isOffice) return !session ? <SignInChip /> : demo ? null : <AccountChip />
 
   return (
     <div className="mb">
