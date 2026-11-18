@@ -344,8 +344,8 @@ export default function Admin() {
                     <dd>{m.cities.join(', ')}</dd>
                   </div>
                   <div>
-                    <dt>אזורים</dt>
-                    <dd>{m.areas}</dd>
+                    <dt>שכונות ואזורים</dt>
+                    <dd>{m.areas || 'לא צוין'}</dd>
                   </div>
                   <div>
                     <dt>נשלחה</dt>

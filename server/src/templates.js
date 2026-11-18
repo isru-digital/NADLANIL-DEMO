@@ -31,7 +31,7 @@ export const detailRows = (m) => [
   ['מספר רישיון תיווך', m.license],
   ['עובד במשרד או עצמאי', work(m)],
   ['ערים', citiesOf(m)],
-  ['אזורי עבודה', m.areas],
+  ['שכונות ואזורים', m.areas || 'לא צוין'],
 ]
 
 const button = (href, label, solid = true) =>

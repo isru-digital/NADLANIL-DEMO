@@ -42,13 +42,21 @@ await call('/api/test/outbox', { method: 'DELETE' })
 
 // ---------------------------------------------------------------- 1. the form: every field is required
 let r = await call('/api/register', { method: 'POST', body: {} })
-check('an empty form is refused, field by field', r.status === 400 && ['name', 'phone', 'email', 'license', 'work', 'cities', 'areas'].every((f) => r.data.fields?.[f]), JSON.stringify(r.data))
+check('an empty form is refused, field by field (the neighbourhoods are optional)', r.status === 400 && ['name', 'phone', 'email', 'license', 'work', 'cities'].every((f) => r.data.fields?.[f]) && !r.data.fields?.areas, JSON.stringify(r.data))
+r = await call('/api/register', { method: 'POST', body: { ...good, cities: [] } })
+check('no city: refused, the city is required', r.status === 400 && !!r.data.fields.cities)
 r = await call('/api/register', { method: 'POST', body: { ...good, office_name: '' } })
 check('"במשרד" needs the office name', r.status === 400 && !!r.data.fields.office_name)
 r = await call('/api/register', { method: 'POST', body: { ...good, license: 'abc' } })
 check('a licence number is digits', r.status === 400 && !!r.data.fields.license)
 r = await call('/api/register', { method: 'POST', body: good, origin: 'https://evil.example' })
 check('a request from another site is refused', r.status === 403)
+
+// a request with a city and no neighbourhoods is accepted (Itzik 18.11.2026); it is taken back right away
+await freshRate()
+r = await call('/api/register', { method: 'POST', body: { ...good, email: 'no-areas@test.local', areas: '' } })
+check('a city and no neighbourhoods: accepted', r.status === 200 && r.data.ok, JSON.stringify(r.data))
+await call('/api/test/outbox', { method: 'DELETE' })
 
 // ---------------------------------------------------------------- 2. a good request waits for approval
 await freshRate()
@@ -107,7 +115,7 @@ r = await call('/api/admin/members', { token: danaSession })
 check('a broker cannot open the approvers\' screen', r.status === 403)
 r = await call('/api/login', { method: 'POST', body: { email: good.email } })
 const again = await lastTo(good.email)
-check('after approval, asking for a sign-in link sends one', again.subject === 'קישור הכניסה שלך' && again.html.includes('/kehila/enter?t='))
+check('after approval, asking to sign in sends a mail with a 6-digit code and a link', /^\d{6} הוא קוד הכניסה שלך$/.test(again.subject) && again.html.includes('/kehila/enter?t='), again.subject)
 
 // ---------------------------------------------------------------- 6. no: a reason, and a polite e-mail
 await freshRate()

@@ -579,3 +579,15 @@ html[data-mode='night'] .au-code-msg.is-err {
     transition: none;
   }
 }
+
+/* an optional field says so next to its name (the neighbourhoods of the sign-up, Itzik 18.11.2026) */
+.au-opt {
+  margin-inline-start: 6px;
+  padding: 2px 9px;
+  border-radius: 99px;
+  background: rgb(var(--w) / 0.06);
+  color: var(--text-faint);
+  font-size: 12.5px;
+  font-style: normal;
+  font-weight: 700;
+}

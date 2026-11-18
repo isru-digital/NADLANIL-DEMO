@@ -579,8 +579,8 @@ export function MemberDetails({ id, onClose }: { id: string | null; onClose: () 
                 <dd>{m.cities.join(', ')}</dd>
               </div>
               <div>
-                <dt>אזורים</dt>
-                <dd>{m.areas}</dd>
+                <dt>שכונות ואזורים</dt>
+                <dd>{m.areas || 'לא צוין'}</dd>
               </div>
               <div>
                 <dt>נרשם</dt>

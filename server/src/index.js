@@ -177,7 +177,7 @@ async function register(env, request, origin) {
   if (!m.work) errors.work = 'בוחרים: במשרד או עצמאי.'
   if (m.work === 'office' && m.office_name.length < 2) errors.office_name = 'מה שם המשרד?'
   if (m.cities.length === 0) errors.cities = 'בוחרים לפחות עיר אחת.'
-  if (m.areas.length < 2) errors.areas = 'כותבים באילו אזורים אתם עובדים.'
+  // the neighbourhoods are optional (Itzik 18.11.2026); at least one city stays required, above
   if (Object.keys(errors).length) return json({ error: 'חסרים פרטים.', fields: errors }, 400)
   if (m.work === 'solo') m.office_name = ''
 

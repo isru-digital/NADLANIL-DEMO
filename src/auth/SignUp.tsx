@@ -66,7 +66,6 @@ export default function SignUp() {
     if (!work) e.work = 'בוחרים אחת משתי האפשרויות.'
     if (work === 'office' && officeName.trim().length < 2) e.office_name = 'מה שם המשרד?'
     if (cities.length === 0) e.cities = 'בוחרים לפחות עיר אחת.'
-    if (areas.trim().length < 2) e.areas = 'כותבים באילו אזורים או שכונות אתם עובדים.'
     return e
   }
   // an error goes away as soon as its field is put right, without waiting for the next press on the button
@@ -259,11 +258,12 @@ export default function SignUp() {
             </fieldset>
 
             <label className="au-field">
+              {/* the neighbourhoods are optional, the city above is what is required (Itzik 18.11.2026) */}
               <span>
-                אזורי עבודה <b aria-hidden>*</b>
+                שכונות ואזורים <em className="au-opt">רשות</em>
               </span>
-              <input className="input" data-f="areas" value={areas} onChange={(e) => setAreas(e.target.value)} placeholder="שכונות ואזורים, למשל: כפר גנים, אם המושבות" required {...bad('areas')} />
-              {err('areas')}
+              <input className="input" data-f="areas" value={areas} onChange={(e) => setAreas(e.target.value)} placeholder="למשל: כפר גנים, אם המושבות" />
+              <small className="au-hint">אפשר להשאיר ריק ולהוסיף בהמשך.</small>
             </label>
 
             {failure && (
