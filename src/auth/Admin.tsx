@@ -13,6 +13,7 @@ import '../styles/admin.css'
 import '../styles/admin-dash.css'
 import { Breakdown, Decisions, Directory, Engagement, Kpis, MemberDetails, Signups, Timing, Visits } from './AdminDash'
 import type { Stats } from './AdminDash'
+import AdminNav, { navStyle } from './AdminNav'
 
 /**
  * The approvers' screen: what is happening in the community (real numbers from the server), the requests with a yes
@@ -169,7 +170,7 @@ export default function Admin() {
   }
 
   return (
-    <div className="au ad">
+    <div className={`au ad nav-${navStyle()}`}>
       <header className="jc-top">
         <Link to={COMMUNITY_HOME} className="kh-brand" aria-label={COMMUNITY_NAME}>
           <CommunityBrand />
@@ -195,29 +196,9 @@ export default function Admin() {
           </button>
         </div>
 
-        <div className="dk-nav" role="tablist" aria-label="חלקי המסך">
-          {VIEWS.map((x) => (
-            <button
-              key={x.id}
-              type="button"
-              role="tab"
-              id={`dk-tab-${x.id}`}
-              aria-selected={view === x.id}
-              aria-controls="dk-view"
-              className={view === x.id ? 'is-on' : ''}
-              data-view={x.id}
-              onClick={() => go(x.id)}
-            >
-              {x.label}
-              {x.id === 'requests' && count('pending') > 0 && (
-                <b className="num" aria-label={`${count('pending')} ממתינות`}>
-                  {count('pending')}
-                </b>
-              )}
-            </button>
-          ))}
-        </div>
+        <AdminNav parts={VIEWS} view={view} go={go} pending={count('pending')} />
 
+        <div className="ad-body">
         {!mailReady && (
           <p className="ad-warn" data-warn="mail">
             <MailWarning /> המיילים עדיין לא נשלחים: חסרה סיסמת האפליקציה של Gmail בשרת. הבקשות נשמרות, ואפשר לאשר ולדחות מכאן, אבל אף מייל לא יוצא.
@@ -536,6 +517,7 @@ export default function Admin() {
         </div>
         </div>
         )}
+        </div>
         </div>
       </main>
 
