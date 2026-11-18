@@ -291,7 +291,7 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
   const page = await ctx.newPage()
   await page.goto(green + '/', { waitUntil: 'load' })
   await api('/api/login', { method: 'POST', body: { email: 'avi@test.local' } })
-  await page.goto(links((await lastTo('avi@test.local', 'קישור הכניסה')).html).find((l) => l.includes('/kehila/enter')), { waitUntil: 'load' })
+  await page.goto(links((await lastTo('avi@test.local', 'קוד הכניסה')).html).find((l) => l.includes('/kehila/enter')), { waitUntil: 'load' })
   await wait(2500)
   await page.goto(green + '/kehila/admin', { waitUntil: 'load' })
   await wait(1200)

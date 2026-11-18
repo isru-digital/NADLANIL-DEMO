@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent, ReactElement } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { ArrowLeft, LoaderCircle, Lock, LogOut, MailCheck, ShieldCheck, X } from 'lucide-react'
+import { ArrowLeft, Check, LoaderCircle, Lock, LogOut, MailCheck, ShieldCheck, X } from 'lucide-react'
 import { COMMUNITY_HOME, COMMUNITY_JOIN, COMMUNITY_NAME } from '../config/community'
 import CommunityBrand from '../community/CommunityBrand'
+import CodeBoxes from './CodeBoxes'
 import { asMember, call, demo, go, hasAccess, recheck, session, sessionActions } from './session'
 import type { MemberInfo, StaffInfo } from './session'
 import '../styles/join-green.css'
@@ -25,20 +26,32 @@ function Frame({ children, end }: { children: React.ReactNode; end?: React.React
   )
 }
 
-/** Signing in: the broker writes his e-mail and gets a link. No passwords. */
+/**
+ * Signing in: the broker writes his e-mail and gets a mail with a 6-digit code and a link (Itzik 18.11.2026). The code
+ * is typed right here, so signing in works inside the app on a phone's home screen too, where a link from the mail
+ * would open in the browser instead. No passwords.
+ */
+const CODE_MINUTES = 10
+const RESEND_S = 30
+const clock = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
+
 export function Login() {
   const [email, setEmail] = useState('')
   const [state, setState] = useState<'form' | 'busy' | 'sent'>('form')
   const [error, setError] = useState('')
+  const ask = async () => {
+    const r = await call('/api/login', { method: 'POST', body: { email } })
+    return r.ok ? '' : (r.data.error ?? 'משהו השתבש. נסו שוב בעוד רגע.')
+  }
   const submit = async (e: FormEvent) => {
     e.preventDefault()
     setError('')
     if (!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(email.trim())) return setError('כתובת המייל לא נראית תקינה. למשל: name@example.com')
     setState('busy')
-    const r = await call('/api/login', { method: 'POST', body: { email } })
-    if (r.ok) return setState('sent')
+    const err = await ask()
+    if (!err) return setState('sent')
     setState('form')
-    setError(r.data.error ?? 'משהו השתבש. נסו שוב בעוד רגע.')
+    setError(err)
   }
   return (
     <Frame
@@ -49,26 +62,12 @@ export function Login() {
       }
     >
       {state === 'sent' ? (
-        <section className="au-card au-wait" data-state="sent" aria-live="polite">
-          <span className="au-mark">
-            <MailCheck />
-          </span>
-          <h1>בדקו את המייל</h1>
-          <p className="au-lead">
-            אם הכתובת <bdi dir="ltr">{email.trim()}</bdi> רשומה ומאושרת, שלחנו אליה קישור כניסה.
-          </p>
-          <p className="au-note">הקישור בתוקף ל-30 דקות ופועל פעם אחת. לא הגיע? בדקו בתיקיית הספאם, או שהבקשה שלכם עדיין ממתינה לאישור.</p>
-          <div className="au-actions">
-            <button type="button" className="au-link" onClick={() => setState('form')}>
-              לשלוח שוב, או לכתובת אחרת
-            </button>
-          </div>
-        </section>
+        <CodeStep email={email.trim()} resend={ask} other={() => setState('form')} />
       ) : (
         <form className="au-card" onSubmit={submit} noValidate>
           <span className="au-kicker">כניסה לחברים</span>
           <h1>כניסה לקהילה</h1>
-          <p className="au-lead">כותבים את המייל שנרשמתם איתו, ומקבלים קישור כניסה. בלי סיסמה.</p>
+          <p className="au-lead">כותבים את המייל שנרשמתם איתו, ומקבלים קוד כניסה. בלי סיסמה.</p>
           <label className="au-field">
             <span>מייל</span>
             <input className="input ltr" data-f="email" type="email" inputMode="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" autoFocus aria-invalid={!!error} />
@@ -86,7 +85,7 @@ export function Login() {
                 </>
               ) : (
                 <>
-                  שלחו לי קישור כניסה <ArrowLeft />
+                  שלחו לי קוד כניסה <ArrowLeft />
                 </>
               )}
             </button>
@@ -94,6 +93,137 @@ export function Login() {
         </form>
       )}
     </Frame>
+  )
+}
+
+/** The second step: the code from the mail, a clock for how long it lives, and a new code when needed. */
+function CodeStep({ email, resend, other }: { email: string; resend: () => Promise<string>; other: () => void }) {
+  const [code, setCode] = useState('')
+  const [state, setState] = useState<'idle' | 'busy' | 'wrong' | 'ok'>('idle')
+  const [msg, setMsg] = useState('')
+  const [dead, setDead] = useState(false)
+  const [left, setLeft] = useState(CODE_MINUTES * 60)
+  const [again, setAgain] = useState(RESEND_S)
+  const [note, setNote] = useState('')
+
+  // one clock for both: how long the code lives, and the pause before a new code can be asked for
+  useEffect(() => {
+    const t = window.setInterval(() => {
+      setLeft((s) => Math.max(0, s - 1))
+      setAgain((s) => Math.max(0, s - 1))
+    }, 1000)
+    return () => window.clearInterval(t)
+  }, [])
+  useEffect(() => {
+    if (left === 0 && state !== 'ok') {
+      setDead(true)
+      setMsg(`הקוד פג אחרי ${CODE_MINUTES} דקות. בקשו קוד חדש.`)
+    }
+  }, [left, state])
+
+  const check = async (v: string) => {
+    if (state === 'busy' || state === 'ok' || dead) return
+    setState('busy')
+    setMsg('')
+    setNote('')
+    const r = await call<{ token: string; member: MemberInfo | null; staff: StaffInfo | null; error?: string; code?: string }>('/api/session', {
+      method: 'POST',
+      body: { email, code: v },
+      token: '',
+    })
+    if (r.ok) {
+      setState('ok')
+      sessionActions.save({ token: r.data.token, member: r.data.member, staff: r.data.staff })
+      // a moment to see it worked, then in: the app opens as this broker, with his own area
+      window.setTimeout(() => go(r.data.member ? '/app/community' : '/kehila/admin'), 700)
+      return
+    }
+    setState('wrong')
+    setMsg(r.data.error ?? 'הקוד לא נכון. בודקים במייל ומנסים שוב.')
+    if (['locked', 'expired', 'used'].includes(String(r.data.code))) setDead(true)
+    setCode('')
+  }
+  const newCode = async () => {
+    if (again > 0) return
+    setNote('')
+    const err = await resend()
+    if (err) return setMsg(err)
+    setCode('')
+    setDead(false)
+    setState('idle')
+    setMsg('')
+    setLeft(CODE_MINUTES * 60)
+    setAgain(RESEND_S)
+    setNote('שלחנו קוד חדש. הקוד הקודם כבר לא פועל.')
+  }
+
+  return (
+    <section className={`au-card au-code is-${state}`} data-state="sent" aria-live="polite">
+      <span className={`au-mark${state === 'ok' ? ' is-ok' : ''}`}>{state === 'ok' ? <Check /> : <MailCheck />}</span>
+      <h1>{state === 'ok' ? 'נכנסים' : 'הקוד בדרך אליכם'}</h1>
+      <p className="au-lead">
+        {state === 'ok' ? (
+          'הקוד נכון. פותחים את הקהילה שלך.'
+        ) : (
+          <>
+            אם הכתובת <bdi dir="ltr">{email}</bdi> רשומה ומאושרת, שלחנו אליה קוד בן 6 ספרות. מקלידים אותו כאן.
+          </>
+        )}
+      </p>
+
+      <CodeBoxes
+        value={code}
+        onChange={(v) => {
+          setCode(v)
+          // typing again after a wrong code: the boxes calm down, the message stays until the next try
+          if (state === 'wrong' && v) setState('idle')
+        }}
+        onFull={check}
+        state={state}
+        disabled={dead}
+      />
+
+      <em id="cb6-msg" className={`au-code-msg${msg ? ' is-err' : ''}`} role={msg ? 'alert' : undefined} data-msg={msg ? 'error' : note ? 'note' : ''}>
+        {state === 'busy' ? (
+          <>
+            <LoaderCircle className="au-spin" /> בודקים את הקוד
+          </>
+        ) : (
+          msg || note
+        )}
+      </em>
+
+      {state !== 'ok' && (
+        <div className="au-code-row">
+          <span className="au-code-clock" data-clock>
+            {dead ? (
+              'הקוד הזה כבר לא פועל'
+            ) : (
+              <>
+                הקוד בתוקף עוד <b className="num">{clock(left)}</b>
+              </>
+            )}
+          </span>
+          <button type="button" className={`au-code-again${dead ? ' is-main' : ''}`} onClick={newCode} disabled={again > 0} data-act="new-code">
+            {again > 0 ? (
+              <>
+                קוד חדש בעוד <b className="num">{clock(again)}</b>
+              </>
+            ) : (
+              'לשלוח קוד חדש'
+            )}
+          </button>
+        </div>
+      )}
+      {state !== 'ok' && (
+        <p className="au-note">
+          לא הגיע? בודקים בתיקיית הספאם. במחשב אפשר גם ללחוץ על הכפתור שבמייל.{' '}
+          <button type="button" className="au-link" onClick={other} data-act="other-email">
+            לכתובת אחרת
+          </button>
+        </p>
+      )}
+    </section>
   )
 }
 

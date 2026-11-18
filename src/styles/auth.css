@@ -345,3 +345,237 @@ html[data-mode='night'] .au-fail {
     display: none;
   }
 }
+
+/* ------------------------------------------------------------------ the sign-in code (Itzik 18.11.2026) */
+.au-code {
+  justify-items: center;
+  text-align: center;
+}
+.au-code .au-lead {
+  max-width: 30em;
+  text-wrap: balance;
+}
+.au-mark.is-ok {
+  animation: au-pop 0.5s cubic-bezier(0.2, 0.8, 0.3, 1.4) both;
+}
+@keyframes au-pop {
+  from {
+    transform: scale(0.6);
+  }
+}
+/* six boxes over one real field: the field is invisible and covers them, so a tap anywhere starts typing */
+.cb6 {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+  width: min(100%, 400px);
+  margin-top: 4px;
+}
+.cb6-field {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  outline: 0;
+  box-shadow: none;
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  color: transparent;
+  caret-color: transparent;
+  font-size: 16px;
+  letter-spacing: 2em;
+  opacity: 0.01;
+  cursor: text;
+}
+.cb6-box {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 66px;
+  border-radius: 18px;
+  border: 1.5px solid var(--line-strong);
+  background: var(--card);
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 10px 24px -20px rgb(4 40 26 / 0.6);
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    background-color 0.25s ease,
+    transform 0.18s ease;
+}
+/* three and three, easier to read off the mail */
+.cb6-box:nth-of-type(3) {
+  margin-inline-end: 8px;
+}
+.cb6-box:nth-of-type(4) {
+  margin-inline-start: 8px;
+}
+.cb6-box.is-full {
+  border-color: var(--line-gold);
+  animation: cb6-in 0.18s ease both;
+}
+@keyframes cb6-in {
+  from {
+    transform: scale(0.92);
+  }
+}
+/* the box the next digit goes into, while the field has focus */
+.cb6:focus-within .cb6-box.is-at {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 4px rgb(var(--g) / 0.2);
+}
+.cb6:focus-within .cb6-box.is-at:not(.is-full)::after {
+  content: '';
+  width: 2px;
+  height: 28px;
+  border-radius: 2px;
+  background: var(--gold);
+  animation: cb6-caret 1s steps(1) infinite;
+}
+@keyframes cb6-caret {
+  50% {
+    opacity: 0;
+  }
+}
+.cb6.is-busy .cb6-box {
+  opacity: 0.6;
+}
+.cb6.is-wrong .cb6-box {
+  border-color: #c2412d;
+  animation: cb6-shake 0.42s ease both;
+}
+html[data-mode='night'] .cb6.is-wrong .cb6-box {
+  border-color: #f87171;
+}
+@keyframes cb6-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-6px);
+  }
+  50% {
+    transform: translateX(5px);
+  }
+  75% {
+    transform: translateX(-3px);
+  }
+}
+/* right: the boxes turn green one after another */
+.cb6.is-ok .cb6-box {
+  border-color: transparent;
+  background: linear-gradient(150deg, #07643f, #0fa46b);
+  color: #fff;
+  transition-delay: calc(var(--i) * 45ms);
+  animation: cb6-ok 0.4s cubic-bezier(0.2, 0.8, 0.3, 1.4) both;
+  animation-delay: calc(var(--i) * 45ms);
+}
+@keyframes cb6-ok {
+  50% {
+    transform: translateY(-5px);
+  }
+}
+.cb6.is-off .cb6-box {
+  opacity: 0.45;
+}
+.au-code-msg {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 1.5em;
+  color: var(--text-dim);
+  font-size: 15.5px;
+  font-style: normal;
+  font-weight: 600;
+}
+.au-code-msg.is-err {
+  color: #b3261e;
+  font-weight: 700;
+}
+html[data-mode='night'] .au-code-msg.is-err {
+  color: #fca5a5;
+}
+.au-code-msg .au-spin {
+  width: 18px;
+  height: 18px;
+}
+.au-code-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  width: min(100%, 400px);
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.au-code-clock {
+  color: var(--text-faint);
+  font-size: 14.5px;
+}
+.au-code-clock b,
+.au-code-again b {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+}
+.au-code-again {
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 14px;
+  border: 1px solid var(--line-strong);
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.au-code-again.is-main:not(:disabled) {
+  border-color: transparent;
+  background: linear-gradient(150deg, #07643f, #0fa46b);
+  color: #fff;
+}
+.au-code-again:disabled {
+  color: var(--text-faint);
+  cursor: default;
+}
+.au-code-again:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 2px;
+}
+@media (max-width: 420px) {
+  .cb6 {
+    gap: 7px;
+  }
+  .cb6-box {
+    height: 58px;
+    border-radius: 15px;
+    font-size: 26px;
+  }
+  .cb6-box:nth-of-type(3) {
+    margin-inline-end: 5px;
+  }
+  .cb6-box:nth-of-type(4) {
+    margin-inline-start: 5px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .au-mark.is-ok,
+  .cb6-box,
+  .cb6.is-ok .cb6-box,
+  .cb6.is-wrong .cb6-box,
+  .cb6:focus-within .cb6-box.is-at::after {
+    animation: none;
+    transition: none;
+  }
+}

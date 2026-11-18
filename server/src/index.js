@@ -4,7 +4,10 @@ import { activityOf, dayKey, maskPhone, seen, stats } from './stats.js'
 
 /**
  * The community's sign-up, for real: a broker asks to join, an approver says yes or no from an e-mail (or from the
- * approvers' screen), and only an approved broker can sign in. Sign-in is a link sent by e-mail, with no passwords.
+ * approvers' screen), and only an approved broker can sign in. Sign-in is by e-mail, with no passwords: the mail has a
+ * link, and a 6-digit code for the app on a phone's home screen (Itzik 18.11.2026), where a link opens in the browser
+ * instead of in the app. A code lives 10 minutes, works once, belongs to the address that asked for it, and dies
+ * after 5 wrong tries; a new code ends the one before.
  *
  * Privacy: brokers' details are in the database only. The public can send a request and nothing else; reading
  * details needs a staff session. Tokens and sessions are kept as SHA-256 only. The Gmail app password is a secret
@@ -16,6 +19,8 @@ const DECIDE_HOURS = 72 // the two buttons of an approval e-mail
 const LOGIN_MINUTES = 30 // a sign-in link that was asked for
 const WELCOME_DAYS = 7 // the sign-in button of the welcome e-mail
 const SESSION_DAYS = 30
+const CODE_MINUTES = 10 // a sign-in code that was asked for
+const CODE_TRIES = 5 // wrong tries before a code is ended
 
 const SITE_ORIGIN = 'https://isru-digital.github.io'
 const LOCAL = /^http:\/\/(localhost|127\.0\.0\.1):\d+$/
@@ -30,6 +35,15 @@ const b64url = (bytes) => {
   return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
 }
 const newToken = () => b64url(crypto.getRandomValues(new Uint8Array(32)))
+// six digits, evenly spread (numbers past the last whole million are drawn again)
+function newCode() {
+  const cap = Math.floor(0x1_0000_0000 / 1_000_000) * 1_000_000
+  for (;;) {
+    const n = crypto.getRandomValues(new Uint32Array(1))[0]
+    if (n < cap) return String(n % 1_000_000).padStart(6, '0')
+  }
+}
+const codeHash = (email, code) => sha(`code:${email}:${code}`)
 const newId = () => [...crypto.getRandomValues(new Uint8Array(8))].map((b) => b.toString(16).padStart(2, '0')).join('')
 async function sha(text) {
   const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))
@@ -197,9 +211,29 @@ async function sendLogin(env, email) {
   const member = await env.DB.prepare("SELECT * FROM members WHERE email = ? AND status = 'approved'").bind(email).first()
   const staff = await env.DB.prepare('SELECT * FROM staff WHERE email = ?').bind(email).first()
   if (!member && !staff) return false
-  const token = await makeToken(env, 'login', { memberId: member?.id ?? null, staffEmail: staff?.email ?? null, ttl: LOGIN_MINUTES * 60_000 })
-  await sendMail(env, { to: email, kind: 'login', ...loginMail({ site: site(env), name: member?.name ?? staff.name, enter: `${site(env)}/kehila/enter?t=${token}`, minutes: LOGIN_MINUTES }) })
+  const memberId = member?.id ?? null
+  const staffEmail = staff?.email ?? null
+  const token = await makeToken(env, 'login', { memberId, staffEmail, ttl: LOGIN_MINUTES * 60_000 })
+  // the code: a new one ends the one before, and its wrong tries start again from zero
+  await endCodes(env, memberId, staffEmail)
+  await env.DB.prepare('DELETE FROM rate WHERE key = ?').bind(`code-try:${email}`).run()
+  const code = newCode()
+  await env.DB.prepare("INSERT INTO tokens (hash, kind, member_id, staff_email, expires_at) VALUES (?, 'code', ?, ?, ?)").bind(await codeHash(email, code), memberId, staffEmail, Date.now() + CODE_MINUTES * 60_000).run()
+  await sendMail(env, {
+    to: email,
+    kind: 'login',
+    ...loginMail({ site: site(env), name: member?.name ?? staff.name, enter: `${site(env)}/kehila/enter?t=${token}`, minutes: LOGIN_MINUTES, code, codeMinutes: CODE_MINUTES }),
+  })
   return true
+}
+
+/** Ends every sign-in code still open for this broker and/or staff member. */
+const endCodes = (env, memberId, staffEmail) =>
+  env.DB.prepare("UPDATE tokens SET used_at = ? WHERE kind = 'code' AND used_at IS NULL AND member_id IS ? AND staff_email IS ?").bind(Date.now(), memberId, staffEmail).run()
+async function endCodesOf(env, email) {
+  const member = await env.DB.prepare("SELECT id FROM members WHERE email = ? AND status = 'approved'").bind(email).first()
+  const staff = await env.DB.prepare('SELECT email FROM staff WHERE email = ?').bind(email).first()
+  if (member || staff) await endCodes(env, member?.id ?? null, staff?.email ?? null)
 }
 
 async function login(env, request) {
@@ -213,20 +247,56 @@ async function login(env, request) {
   return json({ ok: true })
 }
 
-/** A sign-in link is traded for a session, once. */
+/** A sign-in link, or the address and its code, is traded for a session, once. */
 async function openSession(env, request) {
   const b = await request.json().catch(() => null)
+  if (b && b.code !== undefined) return codeSession(env, request, b)
   const t = await findToken(env, str(b?.token, 200), 'login')
   if (!t) return json({ error: 'הקישור לא תקין.', code: 'bad' }, 400)
   if (t.used_at) return json({ error: 'הקישור הזה כבר שימש לכניסה. אפשר לבקש קישור חדש.', code: 'used' }, 400)
   if (t.expires_at < Date.now()) return json({ error: 'הקישור פג. אפשר לבקש קישור חדש.', code: 'expired' }, 400)
   const spent = await env.DB.prepare('UPDATE tokens SET used_at = ? WHERE hash = ? AND used_at IS NULL').bind(Date.now(), t.hash).run()
   if (spent.meta.changes !== 1) return json({ error: 'הקישור הזה כבר שימש לכניסה. אפשר לבקש קישור חדש.', code: 'used' }, 400)
+  return startSession(env, t, 'אי אפשר להיכנס עם הקישור הזה.')
+}
+
+/** The 6-digit code from the e-mail. Wrong codes count against the address, whether it is known or not. */
+async function codeSession(env, request, b) {
+  const ip = request.headers.get('cf-connecting-ip') ?? 'local'
+  const email = emailOf(b.email)
+  const code = String(b.code ?? '').replace(/\D/g, '')
+  if (!isEmail(email) || code.length !== 6) return json({ error: 'הקוד הוא 6 ספרות. בודקים במייל ומקלידים שוב.', code: 'format' }, 400)
+  if (!(await allowed(env, `code-ip:${ip}`, 40, HOUR))) return json({ error: 'יותר מדי ניסיונות. נסו שוב בעוד שעה.', code: 'rate' }, 429)
+  const tryKey = `code-try:${email}`
+  const tries = await env.DB.prepare('SELECT n, reset_at FROM rate WHERE key = ?').bind(tryKey).first()
+  if (tries && tries.reset_at > Date.now() && tries.n >= CODE_TRIES) return json({ error: 'הקוד בוטל אחרי 5 ניסיונות שגויים. בקשו קוד חדש.', code: 'locked', left: 0 }, 429)
+
+  const t = await env.DB.prepare("SELECT * FROM tokens WHERE hash = ? AND kind = 'code'").bind(await codeHash(email, code)).first()
+  if (t && t.used_at) return json({ error: 'הקוד הזה כבר לא בתוקף. בקשו קוד חדש.', code: 'used' }, 400)
+  if (t && t.expires_at < Date.now()) return json({ error: `הקוד פג אחרי ${CODE_MINUTES} דקות. בקשו קוד חדש.`, code: 'expired' }, 400)
+  if (!t) {
+    await allowed(env, tryKey, 1000, CODE_MINUTES * 60_000)
+    const n = (await env.DB.prepare('SELECT n FROM rate WHERE key = ?').bind(tryKey).first())?.n ?? CODE_TRIES
+    const left = Math.max(0, CODE_TRIES - n)
+    if (left === 0) {
+      await endCodesOf(env, email)
+      return json({ error: 'זה היה הניסיון החמישי, והקוד בוטל. בקשו קוד חדש.', code: 'locked', left }, 400)
+    }
+    return json({ error: left === 1 ? 'הקוד לא נכון. נשאר עוד ניסיון אחד.' : `הקוד לא נכון. נשארו עוד ${left} ניסיונות.`, code: 'bad', left }, 400)
+  }
+  const spent = await env.DB.prepare('UPDATE tokens SET used_at = ? WHERE hash = ? AND used_at IS NULL').bind(Date.now(), t.hash).run()
+  if (spent.meta.changes !== 1) return json({ error: 'הקוד הזה כבר לא בתוקף. בקשו קוד חדש.', code: 'used' }, 400)
+  await env.DB.prepare('DELETE FROM rate WHERE key = ?').bind(tryKey).run()
+  return startSession(env, t, 'אי אפשר להיכנס עם הקוד הזה.')
+}
+
+/** A new session for the broker and/or staff member a spent link or code belonged to. */
+async function startSession(env, t, refused) {
   const token = newToken()
   const now = Date.now()
   await env.DB.prepare('INSERT INTO sessions (hash, member_id, staff_email, created_at, expires_at) VALUES (?, ?, ?, ?, ?)').bind(await sha(token), t.member_id, t.staff_email, now, now + SESSION_DAYS * DAY).run()
   const s = await sessionOf(env, new Request('https://x/', { headers: { authorization: `Bearer ${token}` } }))
-  if (!s) return json({ error: 'אי אפשר להיכנס עם הקישור הזה.', code: 'bad' }, 403)
+  if (!s) return json({ error: refused, code: 'bad' }, 403)
   if (s.member) await seen(env, s.member.id, true)
   return json({ ok: true, token, ...who(s) })
 }

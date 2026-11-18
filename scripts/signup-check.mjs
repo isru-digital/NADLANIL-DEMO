@@ -211,7 +211,7 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
   await page.waitForFunction(() => location.pathname.endsWith('/app/community'), { timeout: 20000 })
   await page.goto(green + '/app/crm?v=properties', { waitUntil: 'load' })
   await wait(1500)
-  check(`${d} a new sign-in link brings him back, and his property is still there`, again.subject === 'קישור הכניסה שלך' && (await page.evaluate(() => document.querySelectorAll('.kan-card').length)) === 1)
+  check(`${d} a new sign-in link brings him back, and his property is still there`, /^\d{6} הוא קוד הכניסה שלך$/.test(again.subject) && (await page.evaluate(() => document.querySelectorAll('.kan-card').length)) === 1)
 
   // ---------------------------------------------------------------- 8. the demo link keeps the example user apart
   await page.goto(green + '/demo', { waitUntil: 'load' })

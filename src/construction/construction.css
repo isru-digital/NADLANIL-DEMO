@@ -1,4 +1,5 @@
-/* "האתר בבנייה": calm and light, the brand's greens, one touch of gold. Nothing to click. */
+/* "האתר בבנייה": calm and light, the brand's greens, one touch of gold. Nothing to click, apart from the hidden way in
+   (five taps on the logo open the preview key field, .uc-key). */
 .uc {
   --uc-ink: #0b2a1f;
   --uc-dim: #3b574b;
@@ -124,9 +125,214 @@
     transform: translateY(-4px);
   }
 }
+/* the logo takes the taps quietly: no menu, no selection, no image drag on a phone */
+.uc-logo {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* ---------------------------------------------------------------- the preview key, behind five taps */
+.uc-card.is-key {
+  animation: uc-turn 0.55s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+.uc-key {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  width: min(380px, 100%);
+}
+.uc-key-mark {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  background: linear-gradient(150deg, #07643f, #0fa46b);
+  color: #fff;
+  box-shadow: 0 16px 30px -16px rgba(4, 59, 43, 0.8);
+  transition: transform 0.3s ease;
+}
+.uc-key-mark svg {
+  width: 26px;
+  height: 26px;
+}
+.uc-key.is-ok .uc-key-mark {
+  animation: uc-pop 0.5s cubic-bezier(0.2, 0.8, 0.3, 1.4) both;
+}
+.uc-key h1 {
+  font-size: clamp(24px, 5vw, 30px);
+}
+.uc-key p {
+  font-size: 16.5px;
+}
+.uc-field {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  margin-top: 6px;
+  text-align: start;
+}
+.uc-field > span:first-child {
+  font-family: var(--font-display, 'Heebo', sans-serif);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--uc-ink);
+}
+.uc-input {
+  position: relative;
+  display: block;
+}
+.uc-input input {
+  width: 100%;
+  min-height: 56px;
+  padding: 0 18px 0 54px;
+  border: 1.5px solid rgba(11, 90, 60, 0.22);
+  border-radius: 16px;
+  background: #fff;
+  color: var(--uc-ink);
+  font: inherit;
+  font-size: 19px;
+  letter-spacing: 0.04em;
+  text-align: left;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+.uc-input input:focus {
+  outline: 0;
+  border-color: var(--uc-green);
+  box-shadow: 0 0 0 4px rgba(15, 164, 107, 0.18);
+}
+.uc-key.is-wrong .uc-input input {
+  border-color: #c2412d;
+  box-shadow: 0 0 0 4px rgba(194, 65, 45, 0.14);
+  animation: uc-shake 0.4s ease both;
+}
+.uc-eye {
+  position: absolute;
+  inset-block: 4px;
+  left: 4px;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  border-radius: 12px;
+  color: var(--uc-dim);
+  cursor: pointer;
+}
+.uc-eye svg {
+  width: 20px;
+  height: 20px;
+}
+.uc-eye:focus-visible,
+.uc-go:focus-visible,
+.uc-back:focus-visible {
+  outline: 3px solid var(--uc-mint);
+  outline-offset: 2px;
+}
+.uc-msg {
+  min-height: 1.4em;
+  width: 100%;
+  color: #b3261e;
+  font-size: 14.5px;
+  font-style: normal;
+  font-weight: 700;
+  text-align: start;
+}
+.uc-msg[data-msg='wait'] {
+  color: var(--uc-dim);
+}
+.uc-acts {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+}
+.uc-go {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 54px;
+  border-radius: 16px;
+  background: linear-gradient(150deg, #07643f, #0fa46b);
+  color: #fff;
+  font-family: var(--font-display, 'Heebo', sans-serif);
+  font-size: 17.5px;
+  font-weight: 800;
+  box-shadow: 0 16px 30px -18px rgba(4, 59, 43, 0.9);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition:
+    transform 0.2s ease,
+    opacity 0.2s ease;
+}
+.uc-go:active {
+  transform: scale(0.97);
+}
+.uc-go:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.uc-back {
+  min-height: 46px;
+  border-radius: 14px;
+  color: var(--uc-dim);
+  font-size: 15.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.uc-spin {
+  width: 20px;
+  height: 20px;
+  animation: uc-spin 0.8s linear infinite;
+}
+@keyframes uc-turn {
+  from {
+    opacity: 0.4;
+    transform: perspective(900px) rotateY(-14deg) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes uc-pop {
+  from {
+    transform: scale(0.6);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+@keyframes uc-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-6px);
+  }
+  50% {
+    transform: translateX(5px);
+  }
+  75% {
+    transform: translateX(-3px);
+  }
+}
+@keyframes uc-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .uc-card,
-  .uc-dots i {
+  .uc-dots i,
+  .uc-card.is-key,
+  .uc-key.is-ok .uc-key-mark,
+  .uc-key.is-wrong .uc-input input {
     animation: none;
   }
 }

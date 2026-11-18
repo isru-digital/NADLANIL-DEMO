@@ -61,3 +61,26 @@ export async function siteOpen(): Promise<boolean> {
   if (get(STORE) === KEY_HASH) return true
   return LOCAL && get('nadlanup-gate-test', sessionStorage) !== '1'
 }
+
+/** On this computer only, a key for the checks (scripts/curtain-key-check.mjs); it opens nothing on the real site. */
+const LOCAL_TEST_HASH = 'ed80667ec3d95b40e0d38f0ca5661b5c2765c1dd62682640d0976f20bbd8254a'
+
+/**
+ * The key typed on the curtain itself (Itzik 18.11.2026): five taps on the logo open a field, with no link in sight.
+ * It is for the app on an iPhone's home screen, which has its own storage and no address bar for ?preview=. The right
+ * key is remembered exactly as ?preview= remembers it. Same curtain, not a lock: see the note at the top.
+ */
+export async function tryKey(key: string): Promise<boolean> {
+  const k = key.trim()
+  if (!k) return false
+  try {
+    const h = await sha256(k)
+    if (h === KEY_HASH || (LOCAL && h === LOCAL_TEST_HASH)) {
+      set(STORE, KEY_HASH)
+      return get(STORE) === KEY_HASH
+    }
+  } catch {
+    /* no crypto here (not https): the key cannot be checked */
+  }
+  return false
+}

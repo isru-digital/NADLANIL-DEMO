@@ -157,16 +157,35 @@ export function rejectMail({ site, member, reason }) {
 }
 
 /** A sign-in link, for a broker or for staff. */
-export function loginMail({ site, name, enter, minutes }) {
-  const subject = 'קישור הכניסה שלך'
+export function loginMail({ site, name, enter, minutes, code, codeMinutes }) {
+  // the code leads the subject, so a phone can show it and offer it on the keyboard (Itzik 18.11.2026)
+  const subject = code ? `${code} הוא קוד הכניסה שלך` : 'קישור הכניסה שלך'
+  const digits = code
+    ? `<div dir="ltr" style="margin:6px 0 20px;padding:18px 10px;border-radius:18px;background:#eef8f2;border:1px solid #cfe6d9;text-align:center;">
+         <div style="font-family:${FONT};font-size:14px;font-weight:700;color:${DIM};margin-bottom:6px;" dir="rtl">קוד הכניסה שלך</div>
+         <div style="font-family:'SF Mono',Menlo,Consolas,'Courier New',monospace;font-size:38px;line-height:1.1;font-weight:800;letter-spacing:10px;color:${DEEP};">${esc(code)}</div>
+       </div>`
+    : ''
   const html = frame(
     site,
     `${h1(`היי ${esc(name)},`)}
-     ${p('ביקשת להיכנס. לחיצה על הכפתור מכניסה אותך, בלי סיסמה.')}
-     <div style="padding:8px 0 4px;">${button(enter, 'כניסה')}</div>`,
-    { preheader: 'קישור הכניסה שביקשת.', foot: `הקישור בתוקף ל-${minutes} דקות ופועל פעם אחת. אם לא ביקשת להיכנס, אפשר להתעלם מהמייל הזה.` },
+     ${code ? p('ביקשת להיכנס. באפליקציה מקלידים את הקוד, ובמחשב אפשר פשוט ללחוץ על הכפתור. בלי סיסמה.') : p('ביקשת להיכנס. לחיצה על הכפתור מכניסה אותך, בלי סיסמה.')}
+     ${digits}
+     <div style="padding:4px 0 4px;">${button(enter, 'כניסה בלחיצה')}</div>`,
+    {
+      preheader: code ? `${code} הוא קוד הכניסה שלך. הוא בתוקף ל-${codeMinutes} דקות.` : 'קישור הכניסה שביקשת.',
+      foot: code
+        ? `הקוד בתוקף ל-${codeMinutes} דקות והקישור ל-${minutes} דקות, וכל אחד מהם פועל פעם אחת. לא ביקשת להיכנס? אפשר להתעלם מהמייל הזה.`
+        : `הקישור בתוקף ל-${minutes} דקות ופועל פעם אחת. אם לא ביקשת להיכנס, אפשר להתעלם מהמייל הזה.`,
+    },
   )
-  const text = [`היי ${name},`, 'ביקשת להיכנס. הקישור הבא מכניס אותך, בלי סיסמה:', enter, '', `הקישור בתוקף ל-${minutes} דקות ופועל פעם אחת.`].join('\n')
+  const text = [
+    `היי ${name},`,
+    ...(code ? ['ביקשת להיכנס. קוד הכניסה שלך:', code, '', `הקוד בתוקף ל-${codeMinutes} דקות ופועל פעם אחת.`, '', 'או בלחיצה על הקישור:'] : ['ביקשת להיכנס. הקישור הבא מכניס אותך, בלי סיסמה:']),
+    enter,
+    '',
+    `הקישור בתוקף ל-${minutes} דקות ופועל פעם אחת.`,
+  ].join('\n')
   return { subject, html, text }
 }
 
