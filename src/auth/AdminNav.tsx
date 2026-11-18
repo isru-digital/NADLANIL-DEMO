@@ -9,12 +9,13 @@ import '../styles/admin-nav.css'
  *   ?nav=grid   a grid of cards, each with what the part holds
  *   ?nav=side   a menu at the side on a computer, a "which part" button with a list on a phone
  *   ?nav=tabs   full-width tabs on a computer, a tab bar at the bottom of the screen on a phone
- * With no ?nav the screen is as it was. Nothing is chosen yet.
+ * Itzik chose the tabs (18.11.2026): they are the screen's menu with no ?nav. The others still open with
+ * ?nav=grid|side|rail until he approves removing them.
  */
 export type NavStyle = 'rail' | 'grid' | 'side' | 'tabs'
 export const navStyle = (): NavStyle => {
   const v = new URLSearchParams(window.location.search).get('nav')
-  return v === 'grid' || v === 'side' || v === 'tabs' ? v : 'rail'
+  return v === 'grid' || v === 'side' || v === 'rail' ? v : 'tabs'
 }
 
 type Part<V extends string> = { id: V; label: string }

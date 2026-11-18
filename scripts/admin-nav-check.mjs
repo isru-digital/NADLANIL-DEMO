@@ -51,7 +51,7 @@ for (const [dev, vp] of Object.entries(SIZES)) {
     await page.waitForFunction(() => location.pathname.endsWith('/kehila/admin'), { timeout: 20000 })
     for (const style of mode === 'night' ? ['grid', 'side', 'tabs'] : STYLES) {
       const tag = `${dev}${mode === 'night' ? ' night' : ''} ${style}`
-      await page.goto(`${green}/kehila/admin${style === 'rail' ? '' : `?nav=${style}`}#overview`, { waitUntil: 'load' })
+      await page.goto(`${green}/kehila/admin${style === 'tabs' ? '' : `?nav=${style}`}#overview`, { waitUntil: 'load' })
       await page.waitForSelector('.dk-kpi[data-kpi]', { timeout: 15000 })
       await wait(700)
       const name = `${dev}${mode === 'night' ? '-night' : ''}-${STYLES.indexOf(style)}-${style}`

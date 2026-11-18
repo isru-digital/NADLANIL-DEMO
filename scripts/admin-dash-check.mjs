@@ -134,7 +134,7 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
   const d = dev.name
   const { ctx, page, errors } = await signIn(dev.vp)
   // the tabs: the overview first, each tab shows only its own part
-  const tabs = await page.evaluate(() => ({ list: [...document.querySelectorAll('[role="tablist"].dk-nav [data-view]')].map((b) => b.textContent.replace(/\d+/g, '').trim()), on: document.querySelector('.dk-nav [aria-selected="true"]')?.dataset.view, badge: document.querySelector('[data-view="requests"] b')?.textContent }))
+  const tabs = await page.evaluate(() => ({ list: [...document.querySelectorAll('[role="tablist"].an-tabs [data-view]')].map((b) => (b.querySelector('.an-long') ?? b).textContent.replace(/\d+/g, '').trim()), on: document.querySelector('.an-tabs [aria-selected="true"]')?.dataset.view, badge: document.querySelector('[data-view="requests"] b')?.textContent }))
   check(`${d} five tabs, the overview open, the waiting count on "בקשות"`, tabs.list.join('|') === 'סקירה|בקשות|מתווכים|פילוח|צוות וכלים' && tabs.on === 'overview' && tabs.badge === '3', JSON.stringify(tabs))
   let sh = await shown(page)
   check(`${d} the overview: the cards, the waiting requests and the chart, and none of the other parts`, sh.kpis && sh.pending && sh.chart && !sh.requests && !sh.directory && !sh.breakdown && !sh.engagement && !sh.test && !sh.staff && !sh.mail, JSON.stringify(sh))
@@ -244,11 +244,13 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
   }
   check(`${d} nothing scrolls sideways in any tab`, wide <= 1, `${wide}px`)
   if (d === 'phone') {
+    // since 18.11.2026 the tabs are a bar at the bottom of a phone's screen: all five seen, nothing slides sideways
     const strip = await page.evaluate(() => {
-      const n = document.querySelector('.dk-nav')
-      return { scrolls: n.scrollWidth > n.clientWidth, overflow: getComputedStyle(n).overflowX }
+      const n = document.querySelector('.an-tabs')
+      const r = n.getBoundingClientRect()
+      return { scrolls: n.scrollWidth > n.clientWidth + 1, pos: getComputedStyle(n).position, bottom: Math.round(innerHeight - r.bottom), all: [...n.querySelectorAll('[data-view]')].every((b) => b.getBoundingClientRect().width > 40) }
     })
-    check('phone: the tabs scroll sideways inside their strip', strip.scrolls && strip.overflow === 'auto', JSON.stringify(strip))
+    check('phone: the tabs are a bar at the bottom, all five seen, none slides sideways', !strip.scrolls && strip.pos === 'fixed' && strip.bottom === 0 && strip.all, JSON.stringify(strip))
   }
   // a yes from the overview approves, and the number goes down
   await view(page, 'overview')

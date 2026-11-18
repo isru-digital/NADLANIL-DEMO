@@ -590,3 +590,96 @@ html[data-mode='night'] .ga-photo-err {
     padding: 0 14px;
   }
 }
+
+/* ---------------------------------------------------------------- filling the card from a Yad2 ad (pasted text only) */
+.ga-fill-from {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.ga-ad-steps {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: ad;
+}
+.ga-ad-steps li {
+  counter-increment: ad;
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text);
+}
+.ga-ad-steps li::before {
+  content: counter(ad);
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgb(var(--g) / 0.16);
+  color: var(--gold-soft);
+  font-size: 12.5px;
+  font-weight: 800;
+}
+.ga-ad-safe,
+.ga-ad-photos {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+.ga-ad-safe svg,
+.ga-ad-photos svg {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  margin-top: 3px;
+  color: var(--gold-soft);
+}
+.ga-paste-acts {
+  display: inline-flex;
+  gap: 8px;
+}
+.ga-ad-done {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid rgb(var(--g) / 0.4);
+  background: rgb(var(--g) / 0.08);
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+.ga-ad-done b {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  font-size: 14.5px;
+  color: var(--text);
+}
+.ga-ad-done b svg {
+  flex: none;
+  width: 17px;
+  height: 17px;
+  margin-top: 2px;
+  color: var(--gold-soft);
+}
+.ga-ad-done.is-empty {
+  border-color: rgb(214 140 30 / 0.45);
+  background: rgb(214 140 30 / 0.08);
+}
+@media (max-width: 560px) {
+  .ga-fill-from {
+    grid-template-columns: 1fr;
+  }
+}

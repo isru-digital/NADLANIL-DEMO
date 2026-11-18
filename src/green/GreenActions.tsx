@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Check, ClipboardPaste, Home, Info, Lock, MessageSquareText, RotateCcw, Save, Search, Send, ShieldCheck, Sparkles, UserRound } from 'lucide-react'
+import { ArrowLeft, Check, ClipboardPaste, FileText, Home, ImagePlus, Info, Lock, MessageSquareText, RotateCcw, Save, Search, Send, ShieldCheck, Sparkles, UserRound } from 'lucide-react'
 import { CURRENT_BROKER_ID } from '../config'
 import { brokerById, formatPriceShort } from '../data/demo'
 import type { CommunityItem, CrmItem } from '../data/demo'
@@ -10,6 +10,8 @@ import { greenUi } from './ui'
 import type { GreenAsk } from './ui'
 import { allExtras, knownCities, parseWhatsapp, sampleMessage, sampleRequest, titleOf } from './whatsapp'
 import type { Parsed } from './whatsapp'
+import { adNotes, adReport, parseYad2, sampleAd } from './yad2'
+import type { Yad2Ad } from './yad2'
 import { clientActions } from '../crm/clients'
 import { clientKey } from '../community/PublishPickers'
 import PhotoPicker from './PhotoPicker'
@@ -36,10 +38,33 @@ type Draft = {
   /** parking spaces: null = not chosen yet, 3 = three or more */
   parking: number | null
   renewal: boolean
+  /** what an ad pasted from Yad2 says and the card has no field for (floor, size, entry, the description): the card's note */
+  notes: string
 }
-const emptyDraft: Draft = { kind: 'property', city: 'פתח תקווה', rooms: '4', price: '', extras: [], category: 'home', sqm: '', hood: '', street: '', houseNo: '', parking: null, renewal: false }
+const emptyDraft: Draft = { kind: 'property', city: 'פתח תקווה', rooms: '4', price: '', extras: [], category: 'home', sqm: '', hood: '', street: '', houseNo: '', parking: null, renewal: false, notes: '' }
 const toDraft = (p: Parsed): Draft => ({ ...emptyDraft, kind: p.kind, city: p.city || 'פתח תקווה', rooms: p.rooms ? String(p.rooms) : '', price: p.price ? String(p.price) : '', extras: p.extras })
 const num = (s: string) => Number(s.replace(/[^\d.]/g, '')) || 0
+/** an ad pasted from Yad2, as the new property card. What the ad does not say keeps the card's empty value. */
+const fromAd = (ad: Yad2Ad): Draft => {
+  const business = ad.business
+  const extras = business ? ad.extras.filter((x) => commercialExtras.includes(x)) : ad.extras
+  return {
+    ...emptyDraft,
+    kind: 'property',
+    category: business ? 'business' : 'home',
+    city: ad.city || emptyDraft.city,
+    hood: ad.hood,
+    street: ad.street,
+    houseNo: ad.houseNo,
+    rooms: business ? '' : ad.rooms ? String(Math.min(ad.rooms, 6)) : '',
+    sqm: business && ad.sqm ? String(ad.sqm) : '',
+    price: ad.price ? String(ad.price) : '',
+    parking: ad.parking === null ? null : Math.min(ad.parking, 3),
+    renewal: ad.renewal,
+    extras,
+    notes: adNotes(ad),
+  }
+}
 /** a message pasted into the CRM card: "חניה" becomes one parking space, since the card asks for a number */
 const toCard = (p: Parsed): Draft => {
   const d = toDraft(p)
@@ -268,6 +293,10 @@ export default function GreenActions() {
   const [photos, setPhotos] = useState<string[]>([])
   const [paste, setPaste] = useState('')
   const [pasting, setPasting] = useState(false)
+  // ---- an ad pasted from Yad2: the text, and what was filled from it
+  const [adText, setAdText] = useState('')
+  const [adOpen, setAdOpen] = useState(false)
+  const [adDone, setAdDone] = useState<(ReturnType<typeof adReport> & { rent: boolean; hadPhone: boolean; hadLink: boolean }) | null>(null)
   // ---- a message from WhatsApp
   const [wa, setWa] = useState('')
   const [waDraft, setWaDraft] = useState<Draft | null>(null)
@@ -288,6 +317,9 @@ export default function GreenActions() {
     setSavedAt(d?.at ?? null)
     setPaste('')
     setPasting(false)
+    setAdText('')
+    setAdOpen(false)
+    setAdDone(null)
     setWa('')
     setWaDraft(null)
     setWaPhone(false)
@@ -310,6 +342,14 @@ export default function GreenActions() {
     setPhotos([])
     setRestored(false)
     setSavedAt(null)
+    setAdDone(null)
+  }
+  const fillFromAd = () => {
+    const ad = parseYad2(adText)
+    setCard(fromAd(ad))
+    setAdDone({ ...adReport(ad), rent: ad.deal === 'rent', hadPhone: ad.hadPhone, hadLink: ad.hadLink })
+    setAdOpen(false)
+    setAdText('')
   }
 
   const saveCard = () => {
@@ -337,7 +377,8 @@ export default function GreenActions() {
       price: num(card.price),
       status: 'new',
       client: client.trim() || (card.kind === 'property' ? 'בעל הנכס' : 'לקוח חדש'),
-      note: card.extras.join(', '),
+      // the extras, and what a pasted ad said that has no field of its own (only on the broker's own card)
+      note: [card.extras.join(', '), card.kind === 'property' ? card.notes.trim() : ''].filter(Boolean).join('\n'),
       updated: 'נוסף עכשיו',
       // photos belong to a property only; the first one is the card's and the post's picture
       image: card.kind === 'property' ? photos[0] : undefined,
@@ -427,7 +468,35 @@ export default function GreenActions() {
               </button>
             )}
           </div>
-          {pasting ? (
+          {adOpen ? (
+            <div className="ga-paste ga-ad" data-panel="yad2">
+              <ol className="ga-ad-steps">
+                <li>פותחים את המודעה שלכם ביד2, מסמנים את כל הטקסט ומעתיקים</li>
+                <li>מדביקים כאן, ואנחנו ממלאים את הטופס</li>
+                <li>בודקים, מוסיפים את התמונות שלכם ושומרים</li>
+              </ol>
+              <label className="field">
+                <span className="field-label">הטקסט של המודעה</span>
+                <textarea className="textarea" rows={6} value={adText} onChange={(e) => setAdText(e.target.value)} placeholder="מדביקים כאן את הטקסט שהעתקתם מהמודעה" data-f="ad-text" />
+              </label>
+              <p className="ga-ad-safe">
+                <ShieldCheck /> אנחנו לא נכנסים לאתר יד2 ולא לוקחים ממנו כלום. קוראים רק את הטקסט שהדבקתם. קישורים ומספרי טלפון שבטקסט לא נשמרים.
+              </p>
+              <div className="ga-paste-row">
+                <button type="button" className="tl-alt" onClick={() => setAdText(sampleAd)} data-act="ad-sample">
+                  <Sparkles /> מודעה לדוגמה
+                </button>
+                <span className="ga-paste-acts">
+                  <button type="button" className="btn btn-ghost btn-sm" onClick={() => setAdOpen(false)} data-act="ad-cancel">
+                    ביטול
+                  </button>
+                  <button type="button" className="btn btn-gold btn-sm" disabled={!adText.trim()} onClick={fillFromAd} data-act="ad-fill">
+                    למלא את הטופס
+                  </button>
+                </span>
+              </div>
+            </div>
+          ) : pasting ? (
             <div className="ga-paste">
               <label className="field">
                 <span className="field-label">הודעה שהועתקה מוואטסאפ</span>
@@ -452,11 +521,46 @@ export default function GreenActions() {
               </div>
             </div>
           ) : (
-            <button type="button" className="ga-from-wa" onClick={() => setPasting(true)}>
-              <ClipboardPaste /> למלא מהודעת וואטסאפ
-            </button>
+            <div className="ga-fill-from">
+              <button type="button" className="ga-from-wa" onClick={() => setAdOpen(true)} data-act="from-yad2">
+                <FileText /> למלא ממודעה שפרסמתי ביד2
+              </button>
+              <button type="button" className="ga-from-wa" onClick={() => setPasting(true)}>
+                <ClipboardPaste /> למלא מהודעת וואטסאפ
+              </button>
+            </div>
+          )}
+          {adDone && (
+            <div className={`ga-ad-done${adDone.found.length ? '' : ' is-empty'}`} role="status" data-ad-done>
+              {adDone.found.length ? (
+                <>
+                  <b>
+                    <Check /> מילאנו מהמודעה: {adDone.found.join(', ')}
+                  </b>
+                  {adDone.missing.length > 0 && <span>לא מצאנו: {adDone.missing.join(', ')}. אפשר להשלים למטה.</span>}
+                  <span>בדקו את הפרטים, במיוחד את התוספות: ביד2 מופיעים לפעמים גם דברים שאין בנכס.</span>
+                  {adDone.rent && <span>זו מודעת השכרה: המחיר הוא לחודש.</span>}
+                  {(adDone.hadPhone || adDone.hadLink) && <span>{adDone.hadPhone && adDone.hadLink ? 'מספרי הטלפון והקישור' : adDone.hadPhone ? 'מספרי הטלפון' : 'הקישור'} שבטקסט לא נשמרו.</span>}
+                </>
+              ) : (
+                <b>
+                  <Info /> לא מצאנו בטקסט פרטים של נכס. נסו להעתיק שוב את כל הטקסט של המודעה, או מלאו בעצמכם.
+                </b>
+              )}
+            </div>
           )}
           <Fields draft={card} set={(d) => setCard((c) => ({ ...c, ...d }))} kinds={['נכס', 'לקוח שמחפש']} categories full />
+          {card.kind === 'property' && (adDone || card.notes) && (
+            <label className="field">
+              <span className="field-label">עוד מהמודעה (נשאר אצלכם בכרטיס)</span>
+              <textarea className="textarea" rows={4} value={card.notes} onChange={(e) => setCard((c) => ({ ...c, notes: e.target.value }))} placeholder="קומה, גודל, כניסה ותיאור" data-f="ad-notes" />
+            </label>
+          )}
+          {card.kind === 'property' && adDone && (
+            <p className="ga-ad-photos" data-note="own-photos">
+              <ImagePlus /> מוסיפים כאן את התמונות שלכם. את התמונות מהמודעה ביד2 אנחנו לא לוקחים.
+            </p>
+          )}
           {card.kind === 'property' && <PhotoPicker photos={photos} onChange={setPhotos} />}
           <label className="field">
             <span className="field-label">{card.kind === 'property' ? 'שם בעל הנכס' : 'שם הלקוח'} (נשאר אצלכם, לא מתפרסם)</span>

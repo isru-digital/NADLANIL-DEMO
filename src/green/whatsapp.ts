@@ -27,7 +27,7 @@ export const extraWords: [RegExp, string][] = [
   [/משופצ|שיפוץ/, 'משופצת'],
   [/גינה/, 'גינה'],
   [/נוף/, 'נוף פתוח'],
-  [/מיזוג|מזגנ/, 'מיזוג'],
+  [/מיזוג|מזגן|מזגנ/, 'מיזוג'],
 ]
 export const allExtras = extraWords.map(([, label]) => label)
 
