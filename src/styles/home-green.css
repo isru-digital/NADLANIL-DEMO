@@ -767,6 +767,54 @@
 .hg-pill.is-logo {
   padding: 9px 20px;
 }
+/* the two promises in one frame, centred inside it; on a narrow phone they stack, still centred */
+.hg-pill.is-tags {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px 0;
+  max-width: 100%;
+  padding: 10px 22px;
+  text-align: center;
+  font-size: 15.5px;
+  font-weight: 600;
+  color: rgb(255 255 255 / 0.9);
+  box-shadow: 0 10px 30px -18px rgb(0 0 0 / 0.5);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+.hg-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.hg-tag b {
+  font-weight: 800;
+  color: #fff;
+}
+/* a small glowing dot between the two, with the same room on both sides of it */
+.hg-pill .hg-tag-sep {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  margin-inline: 12px 6px;
+  border-radius: 50%;
+  background: #7dffc2;
+  box-shadow:
+    0 0 0 3px rgb(125 255 194 / 0.22),
+    0 0 12px 2px rgb(125 255 194 / 0.8);
+}
+@media (max-width: 360px) {
+  .hg-pill.is-tags {
+    flex-direction: column;
+    border-radius: 18px;
+  }
+  .hg-pill .hg-tag-sep {
+    display: none;
+  }
+}
 .hg-pill.is-logo img {
   display: block;
   width: auto;

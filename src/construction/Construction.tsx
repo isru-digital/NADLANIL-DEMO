@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import type { FormEvent } from 'react'
+import type { FormEvent, TouchEvent } from 'react'
 import { Check, Eye, EyeOff, KeyRound, LoaderCircle } from 'lucide-react'
 import { asset } from '../config'
 import { tryKey } from '../config/construction'
@@ -11,37 +11,42 @@ import './construction.css'
  * the app on an iPhone's home screen, which cannot take ?preview= in its address. Nothing on the page hints at it.
  */
 const TAPS = 5
-const WINDOW_MS = 2500
+// each tap must come within this time of the one before (a calm rhythm is fine, a long stop starts again)
+const GAP_MS = 1500
 const TRIES = 5
 const PAUSE_S = 30
 
 export default function Construction() {
   const [open, setOpen] = useState(false)
-  const taps = useRef<number[]>([])
+  const taps = useRef({ n: 0, last: 0 })
 
-  const tap = () => {
+  /* On an iPhone (Safari, and Chrome, which runs on the same engine) quick taps on a picture are read as a double tap
+     to zoom, and a picture gets no click at all: pointer events were swallowed, so five taps did nothing (Itzik
+     18.11.2026). So the taps are counted on touchend, whose default (zoom, a late click) is stopped, and the mouse
+     still counts through click. A touch and the click that may follow it count once. */
+  const count = () => {
     if (open) return
     const now = Date.now()
-    taps.current = [...taps.current.filter((t) => now - t < WINDOW_MS), now]
-    if (taps.current.length >= TAPS) {
-      taps.current = []
+    const t = taps.current
+    if (now - t.last < 60) return
+    t.n = now - t.last <= GAP_MS ? t.n + 1 : 1
+    t.last = now
+    if (t.n >= TAPS) {
+      t.n = 0
       setOpen(true)
     }
+  }
+  const onTouchEnd = (e: TouchEvent) => {
+    e.preventDefault()
+    count()
   }
 
   return (
     <main className="uc" data-construction>
       <div className={`uc-card${open ? ' is-key' : ''}`}>
-        <img
-          className="uc-logo"
-          src={asset('brand/nadlanup-lockup-light.png')}
-          alt="NadlanUP"
-          width={1000}
-          height={323}
-          draggable={false}
-          onPointerUp={tap}
-          data-logo
-        />
+        <span className="uc-logo-hit" onTouchEnd={onTouchEnd} onClick={count} data-logo>
+          <img className="uc-logo" src={asset('brand/nadlanup-lockup-light.png')} alt="NadlanUP" width={1000} height={323} draggable={false} />
+        </span>
         <span className="uc-line" aria-hidden />
         {open ? (
           <KeyPanel onClose={() => setOpen(false)} />

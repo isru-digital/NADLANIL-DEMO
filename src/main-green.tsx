@@ -34,6 +34,7 @@ import { FREE_IDS, PAID_IDS, walletActions } from './config/tiers'
 import About from './pages/About'
 import InstallGuide from './pwa/InstallGuide'
 import { SignInCard } from './auth/SignInPrompt'
+import GetApp from './pwa/GetApp'
 import { startApp } from './pwa/pwa'
 import { memberActions } from './config/member'
 import { agentActions } from './agent/useAgent'
@@ -100,8 +101,16 @@ registerShell({ useNav: useCommunityNav, brand: ShellBrand, banner: UpgradeBanne
 registerShell({ useQuiet: useQuietShell, foot: DemoFoot })
 // on a phone inside the app, the day / night switch is a small button in the top bar, not a float over the content
 registerShell({ topEnd: DayNightCompact })
-// the way in for whoever is not signed in, in the menu (the app on a phone has no address bar to type it)
-registerShell({ account: SignInCard })
+// in the menu: the way in for whoever is not signed in (the app on a phone has no address bar to type it), and the
+// way to the install guide for whoever is not in the installed app
+registerShell({
+  account: ({ place }) => (
+    <>
+      <SignInCard place={place} />
+      <GetApp place={place} />
+    </>
+  ),
+})
 registerLab({
   Chip: LabChip,
   Badge: LabBadge,

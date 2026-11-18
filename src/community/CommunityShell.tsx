@@ -9,6 +9,8 @@ import type { ShellNav } from '../config/navExtras'
 import { Logo } from '../components/ui'
 import Dashboard from '../pages/Dashboard'
 import CommunityBrand from './CommunityBrand'
+import GetApp from '../pwa/GetApp'
+import { runningAsApp } from '../pwa/pwa'
 import '../styles/office.css'
 import '../styles/kehila.css'
 
@@ -99,6 +101,12 @@ export function DemoFoot() {
   return (
     <p className="demo-foot" data-foot>
       <span>נתוני דמו: השמות, הנכסים והמחירים מומצאים</span>
+      {!runningAsApp() && (
+        <>
+          <i aria-hidden>·</i>
+          <GetApp place="line" />
+        </>
+      )}
       {demo && (
         <>
           <i aria-hidden>·</i>

@@ -12,6 +12,7 @@ import NetworkMap from '../components/NetworkMap'
 import OpenPanels from '../components/OpenPanels'
 import { panelChange, panelOffice } from '../components/GreenPanels'
 import AgentTeaser from '../agent/AgentTeaser'
+import GetApp from '../pwa/GetApp'
 import { CountUp, SectionHead, behind, features } from './Home'
 import '../styles/builder.css'
 import '../styles/home.css'
@@ -75,15 +76,15 @@ export default function HomeGreen() {
 
         <div className="container hg-hero-in" id="content">
           <div className="hg-copy">
+            {/* the two promises, inside their frame and centred (Itzik 18.11.2026: on an iPhone the logo in the frame did
+                not show and the words fell outside it; the logo is already in the bar above) */}
             <motion.div className="hg-brand" {...rise(0)}>
-              <span className="hg-pill is-logo">
-                <img src={asset('brand/nadlanup-ongreen.png')} alt={PLATFORM_NAME} />
-              </span>
-              <span className="hg-tags">
-                {PLATFORM_TAGLINE.map((part) => {
+              <span className="hg-pill is-tags" data-tagline>
+                {PLATFORM_TAGLINE.map((part, i) => {
                   const [num, ...rest] = part.split(' ')
                   return (
-                    <span key={part}>
+                    <span key={part} className="hg-tag">
+                      {i > 0 && <i className="hg-tag-sep" aria-hidden />}
                       <b className="num">{num}</b> {rest.join(' ')}
                     </span>
                   )
@@ -315,6 +316,7 @@ export default function HomeGreen() {
           <div className="foot-brand">
             <Logo size={30} withName />
             <p>הדבר הבא בעולם המתווכים.</p>
+            <GetApp place="foot" />
           </div>
           <nav className="foot-links" aria-label="קישורים">
             <Link to="/about">אודות</Link>

@@ -1,0 +1,170 @@
+/* "הורדת האפליקציה" (pwa/GetApp.tsx): a row in the menu, a badge at the foot of the home page, a link on the app's
+   bottom line. The app's own icon leads, so it reads as "this app", not as an ad. Site tokens, day and night. */
+
+/* ---------------------------------------------------------------- in the menu */
+.ga-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 11px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  border: 1px dashed var(--line-strong);
+  color: var(--text);
+  text-align: start;
+  touch-action: manipulation;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+.ga-row:hover {
+  border-style: solid;
+  border-color: var(--line-gold);
+  background: rgb(var(--g) / 0.06);
+}
+.ga-row:active {
+  transform: scale(0.985);
+}
+.ga-row img {
+  border-radius: 10px;
+  box-shadow: 0 8px 16px -10px rgb(4 59 43 / 0.7);
+}
+.ga-row-words {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+.ga-row-words strong {
+  font-family: var(--font-display);
+  font-size: 15.5px;
+  font-weight: 800;
+  line-height: 1.25;
+}
+.ga-row-words span {
+  color: var(--text-faint);
+  font-size: 12.5px;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ga-row-icon {
+  width: 19px;
+  height: 19px;
+  color: var(--gold);
+}
+/* the side menu is narrow: the app's icon and the words, nothing more */
+.ga-row.is-side {
+  grid-template-columns: auto minmax(0, 1fr);
+  margin-bottom: 14px;
+  padding: 10px 12px;
+}
+.ga-row.is-side .ga-row-icon {
+  display: none;
+}
+.ga-row.is-side .ga-row-words strong {
+  white-space: nowrap;
+}
+.ga-row.is-side .ga-row-words span {
+  font-size: 12px;
+}
+.ga-row.is-more {
+  margin-bottom: 6px;
+  padding: 12px 16px;
+}
+.ga-row.is-more .ga-row-words strong {
+  font-size: 16.5px;
+}
+.ga-row.is-more .ga-row-words span {
+  font-size: 13.5px;
+}
+
+/* ---------------------------------------------------------------- at the foot of the home page */
+.ga-badge {
+  display: inline-grid;
+  grid-template-columns: 44px auto auto;
+  align-items: center;
+  gap: 12px;
+  margin-top: 18px;
+  padding: 10px 16px 10px 14px;
+  border-radius: 18px;
+  background: linear-gradient(150deg, #0b1d16, #123528);
+  color: #fff;
+  box-shadow:
+    0 18px 34px -20px rgb(4 40 26 / 0.9),
+    0 0 0 1px rgb(255 255 255 / 0.08) inset;
+  touch-action: manipulation;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+.ga-badge img {
+  border-radius: 11px;
+}
+.ga-badge span {
+  display: grid;
+  gap: 1px;
+  line-height: 1.2;
+}
+.ga-badge small {
+  font-size: 12px;
+  color: rgb(255 255 255 / 0.7);
+}
+.ga-badge b {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 800;
+}
+.ga-badge-arrow {
+  width: 18px;
+  height: 18px;
+  margin-inline-start: 6px;
+  color: #6ee7b7;
+  transition: transform 0.2s ease;
+}
+.ga-badge:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 24px 40px -20px rgb(4 40 26 / 0.95),
+    0 0 0 1px rgb(255 255 255 / 0.12) inset;
+}
+.ga-badge:hover .ga-badge-arrow {
+  transform: translateX(-3px);
+}
+.ga-badge:active {
+  transform: scale(0.98);
+}
+html[data-mode='night'] .ga-badge {
+  background: linear-gradient(150deg, #123528, #1b4a38);
+}
+
+/* ---------------------------------------------------------------- on the app's bottom line */
+.ga-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 44px;
+  font-weight: 700;
+  color: var(--gold-soft);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.ga-line svg {
+  width: 15px;
+  height: 15px;
+}
+
+.ga-row:focus-visible,
+.ga-badge:focus-visible,
+.ga-line:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ga-row,
+  .ga-badge,
+  .ga-badge-arrow {
+    transition: none;
+  }
+}
