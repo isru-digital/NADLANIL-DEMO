@@ -1,19 +1,21 @@
 /* The top of the community feed (Itzik 19.11.2026): light, like a social feed on a phone. One thin line to share,
    the rooms in one row, and then the posts. White and clean, a lot of air, green only where there is something to
    press; hairlines in place of frames and shadows. Day and night through the tokens of the page. */
-.wl {
+.wl,
+.wl-rooms {
   --wl-green: #0a7a4f;
   --wl-green-2: #12a36c;
   --wl-gold-soft: rgba(232, 183, 90, 0.26);
+}
+.wl {
   display: grid;
   gap: 0;
-  margin-bottom: 14px;
   border-radius: 18px;
   border: 1px solid var(--line);
   background: var(--card);
   overflow: hidden;
 }
-html[data-mode='night'] .wl {
+html[data-mode='night'] :is(.wl, .wl-rooms) {
   --wl-green: #34d399;
   --wl-green-2: #19b87a;
 }
@@ -60,107 +62,121 @@ html[data-mode='night'] .wl {
   outline-offset: 2px;
 }
 
-/* ---------------------------------------------------------------- the rooms, one row */
+/* ---------------------------------------------------------------- the rooms: one thin row of chips */
+/* Small round chips under the share line (Itzik 19.11.2026): the chosen one in full green, the others a light grey,
+   "הכול" first. The row stays at the top of the screen while the feed is scrolled, under the app's own top bar on a
+   phone (its height is measured and passed in --wl-top). Thin, and a hairline under it only while it is stuck. */
 .wl-rooms {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  border-top: 1px solid var(--line);
+  position: sticky;
+  top: var(--wl-top, 0px);
+  z-index: 15;
+  container: rooms / inline-size;
+  margin-block: -6px -4px;
+  padding-block: 6px;
+  /* solid, in the page's own colour: while it is stuck, photos of the posts must not show through the chips */
+  background: var(--bg);
+  transition: box-shadow 0.2s ease;
+}
+.wl-rooms.is-stuck {
+  box-shadow: 0 1px 0 var(--line-strong);
+}
+.wl-rooms-in {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 .wl-room {
   position: relative;
-  display: flex;
+  flex: none;
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 7px;
-  min-height: 50px;
-  padding: 0 6px;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 15px;
+  border-radius: 99px;
+  background: rgb(var(--w) / 0.065);
+  color: var(--text-dim);
   font-family: var(--font-display);
   font-size: 14.5px;
   font-weight: 600;
-  color: var(--text-dim);
   white-space: nowrap;
   cursor: pointer;
   touch-action: manipulation;
   transition:
+    background-color 0.18s ease,
     color 0.18s ease,
-    background-color 0.18s ease;
+    transform 0.15s ease;
 }
-.wl-room:hover {
-  background: rgb(var(--w) / 0.04);
-  color: var(--text);
-}
-/* the room I am in: green, with a line under it */
+/* a small chip, a full finger: the tap area is 44px high */
 .wl-room::after {
   content: '';
   position: absolute;
-  inset-inline: 18%;
-  bottom: 0;
-  height: 3px;
-  border-radius: 3px 3px 0 0;
-  background: var(--wl-green);
-  transform: scaleX(0);
-  transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+  inset: -4px 0;
+}
+.wl-room:hover {
+  background: rgb(var(--w) / 0.11);
+  color: var(--text);
+}
+.wl-room:active {
+  transform: scale(0.96);
 }
 .wl-room[aria-pressed='true'] {
-  color: var(--wl-green);
-  font-weight: 800;
+  background: var(--wl-green);
+  color: #fff;
+  font-weight: 700;
 }
-.wl-room[aria-pressed='true']::after {
-  transform: scaleX(1);
-}
-.wl-room-icon {
-  position: relative;
-  display: inline-grid;
-  place-items: center;
-  flex: none;
-}
-.wl-room svg,
-.wl-room .khi {
-  width: 20px;
-  height: 20px;
-}
-.wl-room-name {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-/* the feed column is narrow on every screen, so the rooms carry their short names (the full name is read to a
-   screen reader and shown on hover); the full names would need a block wider than the column ever is */
-.wl-long {
-  display: none;
+html[data-mode='night'] .wl-room[aria-pressed='true'] {
+  color: #04281b;
 }
 /* something new in the feed: a small dot on "הכול" */
 .wl-dot {
-  position: absolute;
-  top: -3px;
-  inset-inline-end: -4px;
-  width: 8px;
-  height: 8px;
+  flex: none;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: #e89f00;
-  box-shadow: 0 0 0 2px var(--card);
 }
-/* on a computer the side list has every topic, so "עוד" is for the phone */
-.wl-room.is-more {
+.wl-room[aria-pressed='true'] .wl-dot {
+  background: #ffd27a;
+}
+html[data-mode='night'] .wl-room[aria-pressed='true'] .wl-dot {
+  background: #8a5a00;
+}
+.wl-short {
   display: none;
 }
-/* beside the icon a longer name needs more room than a short one: each room takes what its name needs, and the
-   rest is shared (under 641px the names sit under the icons, in six equal columns) */
-@media (min-width: 641px) {
-  .wl-rooms {
-    display: flex;
+/* a computer: the row fits in one line. The two topics with no room of their own are in the side list there; and
+   where the feed column is too narrow for the full names in one line, the rooms carry their short names */
+@media (min-width: 1101px) {
+  .wl-room.is-extra {
+    display: none;
   }
-  .wl-room {
-    flex: 1 1 auto;
-    padding: 0 10px;
-  }
-  .wl-room-name {
-    overflow: visible;
+  @container rooms (max-width: 579px) {
+    .wl-long {
+      display: none;
+    }
+    .wl-short {
+      display: inline;
+    }
   }
 }
+/* a phone or a tablet: the row is swiped sideways. Its far edge fades, so it is clear that it goes on (the site is
+   right to left, so the row goes on to the left) */
 @media (max-width: 1100px) {
-  .wl-room.is-more {
-    display: flex;
+  .wl-rooms-in {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+    padding-inline-end: 30px;
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 30px);
+    mask-image: linear-gradient(to right, transparent 0, #000 30px);
+  }
+  .wl-rooms-in::-webkit-scrollbar {
+    display: none;
+  }
+  .wl-room {
+    scroll-snap-align: start;
   }
 }
 
@@ -370,7 +386,7 @@ html[data-theme='green'][data-mode='day'] .fbx-page.is-light .tone-violet {
 
 /* ---------------------------------------------------------------- tablet and phone */
 @media (max-width: 1100px) {
-  /* the numbered row of topics said the same as the rooms: on a phone the rooms (and "עוד") are the way */
+  /* the numbered row of topics said the same as the rooms: on a phone the row of chips is the way */
   .fbx-page.is-light .fbx-start {
     display: none;
   }
@@ -404,7 +420,6 @@ html[data-theme='green'][data-mode='day'] .fbx-page.is-light .tone-violet {
   /* the block runs edge to edge, like the posts under it */
   .wl {
     margin-inline: -16px;
-    margin-bottom: 10px;
     border-inline: 0;
     border-radius: 0;
   }
@@ -415,25 +430,14 @@ html[data-theme='green'][data-mode='day'] .fbx-page.is-light .tone-violet {
     min-height: 44px;
     font-size: 16px;
   }
-  /* the rooms: icon over a short name, six across, all on screen */
-  .wl-room {
-    flex-direction: column;
-    gap: 3px;
-    min-height: 54px;
-    padding: 6px 2px 7px;
-    font-size: 12px;
+  /* the row of rooms runs edge to edge, and starts in line with the posts */
+  .wl-rooms {
+    margin-inline: -16px;
+    margin-block: -8px -4px;
   }
-  .wl-room svg,
-  .wl-room .khi {
-    width: 21px;
-    height: 21px;
-  }
-  .wl-room-name {
-    max-width: 100%;
-  }
-  .wl-room::after {
-    inset-inline: 22%;
-    height: 2.5px;
+  .wl-rooms-in {
+    padding-inline-start: 16px;
+    scroll-padding-inline-start: 16px;
   }
   .wl .si-card.is-feed .si-words span {
     display: none;
@@ -481,7 +485,8 @@ html[data-theme='green'][data-mode='day'] .fbx-page.is-light .tone-violet {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .wl-room::after,
+  .wl-room,
+  .wl-rooms,
   .wl-share-field,
   .wl-choice {
     transition: none;

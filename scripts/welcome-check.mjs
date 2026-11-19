@@ -1,8 +1,10 @@
 // The top of the community feed, light (Itzik 19.11.2026): like a social feed on a phone. The hello of the hour, the
 // four big cards, the yellow line and the numbered row of topics are gone from the top; in their place one thin line
 // (the broker's picture and "מה תרצה לשתף היום?") that opens a sheet from the bottom with four clear choices, each
-// going on to the form that was already there; under it the rooms in one row. On a phone the first post is seen
-// without scrolling. Nothing that the cards led to was removed.
+// going on to the form that was already there. Under it the rooms, as one thin row of small round chips (19.11.2026):
+// the chosen one in full green, the others a light grey, "הכול" first; swiped sideways on a phone, one line on a
+// computer, and stuck to the top while the feed is scrolled. On a phone the first post is seen without scrolling.
+// Nothing that the cards led to was removed.
 // Usage: node scripts/welcome-check.mjs [outDir]     (BASE_GREEN overrides the address)
 import puppeteer from 'puppeteer-core'
 import { mkdirSync } from 'node:fs'
@@ -21,7 +23,9 @@ const PREVIEW = '6d5eaaca072bf02f647051d8688d1337a4ab7a6cb92a2a8b3924cf91fda89e8
 const tap = (page, sel) => page.$eval(sel, (el) => (el.scrollIntoView({ block: 'center' }), el.click()))
 const CHOICES = ['נכס לשיתוף', 'מחפש לקונה', 'מתווך בעיר אחרת', 'שאלה']
 const ROOMS = ['הכול', 'נכסים לשיתוף', 'מחפש לקונה', 'מתווך בעיר אחרת', 'ידע ושאלות']
-const SHORT = ['הכול', 'נכסים', 'קונים', 'עיר אחרת', 'שאלות', 'עוד']
+const SHORT = ['הכול', 'נכסים', 'קונים', 'עיר אחרת', 'שאלות']
+// on a phone the row is swiped, so the full names are there, and after them the two topics that have no room
+const PHONE_ROW = [...ROOMS, 'פוסטים', 'עסקאות שנסגרו']
 
 const fresh = async (vp, mode = 'day') => {
   const page = await browser.newPage()
@@ -82,19 +86,31 @@ for (const [tag, vp] of [
       share: { text: field?.textContent.trim(), h: Math.round(box(field)?.height ?? 0), avatar: !!share?.querySelector('img, .avatar'), blockH: Math.round(box(share)?.height ?? 0) },
       rooms: rooms.map((r) => ({
         id: r.dataset.room,
-        label: r.getAttribute('aria-label') ?? r.textContent.trim(),
-        shown: [...r.querySelectorAll('.wl-room-name, .wl-long, .wl-short')].filter((e) => e.children.length === 0 && seen(e)).map((e) => e.textContent.trim()).join(''),
+        label: r.getAttribute('aria-label') ?? r.innerText.trim(),
+        shown: r.innerText.trim(),
         h: Math.round(box(r).height),
-        inside: box(r).left >= 0 && box(r).right <= vw + 0.5,
-        cut: (() => {
-          const n = r.querySelector('.wl-room-name')
-          return n.scrollWidth > n.clientWidth + 1
-        })(),
+        tap: Math.round(box(r).height + 2 * Math.abs(parseFloat(getComputedStyle(r, '::after').top) || 0)),
+        round: parseFloat(getComputedStyle(r).borderRadius) >= box(r).height / 2,
+        on: r.getAttribute('aria-pressed') === 'true',
+        bg: getComputedStyle(r).backgroundColor,
+        ink: getComputedStyle(r).color,
         top: Math.round(box(r).top),
+        left: Math.round(box(r).left),
+        right: Math.round(box(r).right),
       })),
-      slides: (() => {
-        const n = document.querySelector('[data-rooms]')
-        return n.scrollWidth > n.clientWidth + 1
+      row: (() => {
+        const nav = document.querySelector('[data-rooms]')
+        const row = document.querySelector('[data-rooms-row]')
+        const share = document.querySelector('.wl-share')
+        return {
+          h: Math.round(box(nav).height),
+          sticky: getComputedStyle(nav).position,
+          swipes: row.scrollWidth > row.clientWidth + 1,
+          left: Math.round(box(row).left),
+          right: Math.round(box(row).right),
+          underShare: box(nav).top >= box(share).bottom - 1,
+          vw,
+        }
       })(),
       post: post ? { top: Math.round(box(post).top), navTop: Math.round(navTop), scrolled: Math.round(scrollY) } : null,
       values: [...document.querySelectorAll('.feed-value')].map((v) => v.textContent.trim()),
@@ -112,11 +128,17 @@ for (const [tag, vp] of [
   check(`${tag}: gone from the top: the hello, "מה רוצים לעשות היום?", the four big cards, the yellow line, the old "מה חדש אצלך" line`, !w.gone.hello && !w.gone.ask && w.gone.cards === 0 && !w.gone.banner && !w.gone.oldLine, w.gone)
   if (phone) check('phone: the numbered row of topics is gone', !w.gone.numbers, w.gone)
   check(`${tag}: one thin line: the broker's picture and "מה תרצה לשתף היום?"`, w.share.text === 'מה תרצה לשתף היום?' && w.share.avatar && w.share.h >= 44 && w.share.blockH <= 76, w.share)
+  const grey = w.rooms.filter((r) => !r.on)
+  check(`${tag}: the rooms are small round chips in one thin row, under the share line`, w.rooms.every((r) => r.h <= 40 && r.round && r.top === w.rooms[0].top) && w.row.h <= 52 && w.row.underShare, { row: w.row, h: w.rooms.map((r) => r.h) })
+  check(`${tag}: small to the eye, full to the finger: each chip takes a tap 44px high`, w.rooms.every((r) => r.tap >= 44), w.rooms.map((r) => r.tap))
+  check(`${tag}: "הכול" is first and chosen: full green with white words; the others are one light grey`, w.rooms[0].id === 'all' && w.rooms[0].on && w.rooms[0].bg === 'rgb(10, 122, 79)' && w.rooms[0].ink === 'rgb(255, 255, 255)' && w.rooms[0].right >= Math.max(...w.rooms.map((r) => r.right)) && grey.length === w.rooms.length - 1 && grey.every((r) => r.bg === grey[0].bg && /rgba\(.*, 0\.0\d+\)/.test(r.bg)), w.rooms.map((r) => [r.id, r.on, r.bg, r.ink]))
   if (phone) {
-    check('phone: the rooms are one row of six (short names), all on screen, none cut short, nothing slides', w.rooms.map((r) => r.shown).join('|') === SHORT.join('|') && w.rooms.every((r) => r.h >= 44 && r.inside && r.top === w.rooms[0].top && !r.cut) && !w.slides, w.rooms)
+    check('phone: the row is swiped sideways: the full names, then the two topics with no room; the page itself does not slide', w.rooms.map((r) => r.shown).join('|') === PHONE_ROW.join('|') && w.row.swipes && w.wide <= 1, { row: w.row, names: w.rooms.map((r) => r.shown) })
+    check('phone: it opens with "הכול" in full view at the start of the row', w.rooms[0].right <= w.row.vw && w.rooms[0].left >= 0, w.rooms[0])
     check('phone: the first post is seen without scrolling (its top is well above the bottom bar)', !!w.post && w.post.scrolled === 0 && w.post.navTop - w.post.top >= 120, w.post)
   } else {
-    check('desktop: the rooms in one row of five, no name cut short', w.rooms.map((r) => r.shown).join('|') === SHORT.slice(0, 5).join('|') && w.rooms.every((r) => r.h >= 44 && r.inside && r.top === w.rooms[0].top && !r.cut), w.rooms)
+    const names = w.rooms.map((r) => r.shown).join('|')
+    check('desktop: the row fits in one line, five chips, nothing to swipe and none outside it', (names === SHORT.join('|') || names === ROOMS.join('|')) && !w.row.swipes && w.rooms.every((r) => r.left >= w.row.left - 0.5 && r.right <= w.row.right + 0.5), { row: w.row, rooms: w.rooms.map((r) => [r.shown, r.left, r.right]) })
     check('desktop: the first post is seen without scrolling', !!w.post && w.post.top < 900 - 150, w.post)
   }
   check(`${tag}: each room keeps its full name for a screen reader and on hover`, w.rooms.slice(0, 5).map((r) => r.label).join('|') === ROOMS.join('|'), w.rooms.map((r) => r.label))
@@ -128,7 +150,9 @@ for (const [tag, vp] of [
   // ---- nothing floats over the line; on a phone the day / night switch is a small button in the top bar
   const cover = await page.evaluate(() => {
     const hit = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom
-    const line = document.querySelector('.wl').getBoundingClientRect()
+    const a = document.querySelector('.wl').getBoundingClientRect()
+    const b = document.querySelector('[data-rooms]').getBoundingClientRect()
+    const line = { left: Math.min(a.left, b.left), right: Math.max(a.right, b.right), top: a.top, bottom: b.bottom }
     const floats = [...document.querySelectorAll('.dn, .dn-compact')].filter((e) => getComputedStyle(e).display !== 'none' && getComputedStyle(e).position === 'fixed').map((e) => e.getBoundingClientRect())
     const compact = document.querySelector('.dn-compact')
     return {
@@ -256,7 +280,7 @@ for (const [tag, vp] of [
   })
   check(`${tag}: a post just published carries "חדש" in the line under the name, over nothing`, !!mark && mark.text === 'חדש' && mark.inMeta && mark.covers.length === 0 && mark.inside, mark)
   check(`${tag}: the topic's name on it ("מתווך בעיר אחרת") reads clearly on the white post (4.5 to 1 at least)`, !!mark && mark.topic === 'מתווך בעיר אחרת' && mark.contrast >= 4.5, mark)
-  await page.screenshot({ path: `${out}/${tag}-5-fresh-post.png` })
+  await page.screenshot({ path: `${out}/${tag}-6-fresh-post.png` })
 
   // ---- the referrals room has one name everywhere: "מתווך בעיר אחרת"
   await page.goto(green + '/app/community?topic=referrals', { waitUntil: 'networkidle0' })
@@ -274,27 +298,55 @@ for (const [tag, vp] of [
   check(`${tag}: the referrals room is called "מתווך בעיר אחרת" everywhere (rooms, list, posts), its page "מציאת מתווך בעיר אחרת"`, names.room === 'מתווך בעיר אחרת' && names.on === 'true' && names.head === 'מציאת מתווך בעיר אחרת' && names.posts.join() === 'מתווך בעיר אחרת' && names.rail.every((t) => t === 'מתווך בעיר אחרת') && !names.old, names)
   check(`${tag}: inside a room the share line and the rooms stay at the top`, names.line)
 
-  // ---- a room is one tap; the topics with no room of their own are behind "עוד" on a phone
+  // ---- a room is one tap, as before
   await page.goto(green + '/app/community', { waitUntil: 'networkidle0' })
   await wait(700)
   await tap(page, '[data-room="seeking"]')
   await wait(900)
-  const room = await page.evaluate(() => ({ on: document.querySelector('[data-room="seeking"]')?.getAttribute('aria-pressed'), head: document.querySelector('.topic-head h2')?.textContent }))
-  check(`${tag}: a room opens with one tap`, room.on === 'true' && room.head === 'מחפש לקונה', room)
+  const room = await page.evaluate(() => ({ on: document.querySelector('[data-room="seeking"]')?.getAttribute('aria-pressed'), head: document.querySelector('.topic-head h2')?.textContent, pressed: document.querySelectorAll('[data-room][aria-pressed="true"]').length }))
+  check(`${tag}: a room opens with one tap, and only its chip is green`, room.on === 'true' && room.head === 'מחפש לקונה' && room.pressed === 1, room)
+  await tap(page, '[data-room="seeking"]')
+  await wait(700)
+  check(`${tag}: a tap on the chosen room goes back to "הכול"`, await page.evaluate(() => document.querySelector('[data-room="all"]').getAttribute('aria-pressed') === 'true'))
+
+  // ---- the row stays at the top while the feed is scrolled: thin, under the app's top bar, and it still works
+  await page.evaluate(() => window.scrollTo({ top: 1400, behavior: 'instant' }))
+  await wait(700)
+  const stuck = await page.evaluate(() => {
+    const nav = document.querySelector('[data-rooms]').getBoundingClientRect()
+    const bar = document.querySelector('.topbar')
+    const barBottom = bar && getComputedStyle(bar).display !== 'none' ? Math.round(bar.getBoundingClientRect().bottom) : 0
+    const share = document.querySelector('.wl-share').getBoundingClientRect()
+    // what is drawn in the middle of the row: the row itself or one of its chips, never a post
+    const top = document.elementFromPoint(nav.left + nav.width / 2, nav.top + nav.height / 2)
+    return { y: Math.round(scrollY), top: Math.round(nav.top), barBottom, h: Math.round(nav.height), mark: document.querySelector('[data-rooms]').classList.contains('is-stuck'), shareGone: share.bottom < barBottom + 1, onTop: !!top?.closest('[data-rooms]'), bg: getComputedStyle(document.querySelector('[data-rooms]')).backgroundColor }
+  })
+  check(`${tag}: scrolled down, the row is stuck at the top (under the app's bar on a phone), thin, over the posts`, stuck.y > 1000 && stuck.top === stuck.barBottom && stuck.h <= 52 && stuck.mark && stuck.shareGone && stuck.onTop && !/rgba\(.*, 0(\.\d+)?\)$/.test(stuck.bg), stuck)
+  await page.screenshot({ path: `${out}/${tag}-4-stuck.png` })
+  await tap(page, '[data-room="coop"]')
+  await wait(900)
+  const fromStuck = await page.evaluate(() => ({ on: document.querySelector('[data-room="coop"]').getAttribute('aria-pressed'), url: location.search }))
+  check(`${tag}: a chip works from the stuck row too`, fromStuck.on === 'true' && /topic=coop/.test(fromStuck.url), fromStuck)
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }))
+  await wait(400)
+  const unstuck = await page.evaluate(() => document.querySelector('[data-rooms]').classList.contains('is-stuck'))
+  check(`${tag}: back at the top the row lets go (no line under it)`, !unstuck)
+
   if (phone) {
-    await tap(page, '[data-room="more"]')
-    await page.waitForSelector('[data-more-rooms]', { visible: true, timeout: 4000 })
-    await wait(450)
-    const more = await page.evaluate(() => [...document.querySelectorAll('[data-more-rooms] [data-topic]')].map((b) => b.dataset.topic))
-    check('phone: "עוד" opens the two topics that have no room: posts and closed deals', more.join() === 'posts,wins', more)
-    await page.screenshot({ path: `${out}/${tag}-4-more.png` })
-    await tap(page, '[data-more-rooms] [data-topic="wins"]')
-    await wait(900)
-    const wins = await page.evaluate(() => ({ url: location.search, on: document.querySelector('[data-room="more"]')?.getAttribute('aria-pressed'), name: document.querySelector('[data-room="more"] .wl-room-name')?.textContent.trim(), head: document.querySelector('.topic-head h2')?.textContent.trim() }))
-    check('phone: choosing one opens it, and "עוד" shows where I am', /topic=wins/.test(wins.url) && wins.on === 'true' && wins.name === wins.head, wins)
+    // the chips past the edge: swipe the row, tap, and the chosen chip is brought into sight
+    await page.evaluate(() => document.querySelector('[data-room="wins"]').click())
+    await wait(1100)
+    const wins = await page.evaluate(() => {
+      const row = document.querySelector('[data-rooms-row]').getBoundingClientRect()
+      const c = document.querySelector('[data-room="wins"]')
+      const r = c.getBoundingClientRect()
+      return { url: location.search, on: c.getAttribute('aria-pressed'), inSight: r.left >= row.left - 1 && r.right <= row.right + 1, head: document.querySelector('.topic-head h2')?.textContent.trim() }
+    })
+    check('phone: the topics with no room of their own are chips at the end of the row; choosing one opens it and brings its chip into sight', /topic=wins/.test(wins.url) && wins.on === 'true' && wins.inSight && /עסקאות/.test(wins.head ?? ''), wins)
+    await page.screenshot({ path: `${out}/${tag}-5-far-chip.png` })
   } else {
-    const rail = await page.evaluate(() => [...document.querySelectorAll('.comm-rail .rail-btn')].filter((b) => b.getBoundingClientRect().width > 0).length)
-    check('desktop: the side list still has every topic', rail >= 7, rail)
+    const rail = await page.evaluate(() => ({ list: [...document.querySelectorAll('.comm-rail .rail-btn')].filter((b) => b.getBoundingClientRect().width > 0).length, extra: [...document.querySelectorAll('.wl-room.is-extra')].filter((b) => b.getBoundingClientRect().width > 0).length }))
+    check('desktop: the side list still has every topic (so the two extra chips are not shown here)', rail.list >= 7 && rail.extra === 0, rail)
   }
   check(`${tag}: no errors`, errors.length === 0, errors)
   await page.close()

@@ -118,6 +118,17 @@ for (const [tag, vp] of [
   check(`${tag}: one tap publishes the buyer in "מחפש לקונה", without his name or phone`, !!post && post.topicId === 'seeking' && /^מחפש ל(קונה|שוכר)/.test(post.title) && !JSON.stringify(post).includes(nameOnly) && !/555-/.test(JSON.stringify(post)), { post: post?.title, nameOnly, cl: !!cl })
   await page.screenshot({ path: `${out}/${tag}-4-buyer-published.png` })
 
+  // After a buyer is published the site checks for a match and shows its answer over the whole screen, a moment
+  // later: "אין עדיין התאמה", or the matches it found (the phone run comes after the computer's, in the same browser,
+  // so there it can find some). That screen keeps the keyboard to itself, so when it was still up the typing below
+  // went nowhere and this check failed now and then (19.11.2026). Wait for it and close it, whichever it is.
+  await page
+    .waitForSelector('[data-match-screen]', { visible: true, timeout: 5000 })
+    .then(() => page.evaluate(() => document.querySelector('[data-act="close-match"]')?.click()))
+    .catch(() => {})
+  await page.waitForFunction(() => !document.querySelector('[data-match-screen]'), { timeout: 5000 }).catch(() => {})
+  await wait(400)
+
   // ---- a new buyer from the feed: the form opens at once, saved in the CRM and published
   const before = (await clients(page)).length || 0
   await tap(page, '[data-act="add-buyer"]')
