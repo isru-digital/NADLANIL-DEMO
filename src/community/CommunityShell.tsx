@@ -1,5 +1,5 @@
 import type { ReactElement } from 'react'
-import { Link, Navigate, useLocation } from 'react-router-dom'
+import { Link, Navigate } from 'react-router-dom'
 import { ArrowLeft, BadgeCheck, Check, Home, Lock, UserRound } from 'lucide-react'
 import { useMember } from '../config/member'
 import { useStore } from '../store'
@@ -64,31 +64,12 @@ export function AppIndex() {
   return isOffice ? <Dashboard /> : <Navigate to={COMMUNITY_FEED} replace />
 }
 
-/** A clear way from the community to the office's page, on every screen a community member sees inside. */
-export function UpgradeBanner() {
-  const { isOffice } = useMember()
-  const { pathname } = useLocation()
-  // the office's own screens and the locked tools already carry this call
-  if (isOffice || /^\/app\/(office|builder|folder|agent)/.test(pathname)) return null
-  // the feed's top is kept for the posts (Itzik 19.11.2026): there the call is in the menu that the broker's picture
-  // opens, and once, quietly, among the posts (UpgradePost below)
-  if (pathname === COMMUNITY_FEED) return null
-  // a small, quiet strip: one line, never louder than the screen under it
-  return (
-    <Link to={OFFICE_PAGE} className="upb is-slim">
-      <BadgeCheck aria-hidden />
-      <span>
-        <b>{UPGRADE_LABEL}</b>
-        <small>0% עמלה למשרד, 100% עמלה למתווך</small>
-      </span>
-      <em>
-        לפרטים <ArrowLeft />
-      </em>
-    </Link>
-  )
-}
-
-/** The same call as one quiet post inside the feed, once: marked as the office's own word, never a broker's post. */
+/**
+ * The way from the community to the office's page. It used to be a strip above every screen inside the app; every
+ * line at the top pushes the content down, so the strip is gone (Itzik 19.11.2026). The same call is a line of the
+ * menu that the broker's picture opens (community/TopActions.tsx), on every screen, and this: one quiet post inside
+ * the feed, once, marked as the office's own word, never a broker's post.
+ */
 export function UpgradePost() {
   const { isOffice } = useMember()
   if (isOffice) return null

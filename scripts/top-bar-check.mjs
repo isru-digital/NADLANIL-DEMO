@@ -281,8 +281,39 @@ for (const [dev, vp] of [
   const fromOther = await page.evaluate(() => ({ path: location.pathname, open: !!document.querySelector('[data-search-screen]') }))
   check(`${dev}: the same three icons are on the app's other screens; the search goes to the feed and opens there`, other.acts === 3 && fromOther.path.endsWith('/app/community') && fromOther.open, { other, fromOther })
   await closeAll(page)
+  // the upgrade strip is gone from every screen of the app: it lives in the profile menu and in the feed's quiet post
+  const strips = []
+  for (const path of ['/app/community', '/app/brokers', '/app/crm', '/app/crm?v=properties', '/app/agent']) {
+    await page.goto(green + path, { waitUntil: 'networkidle0' })
+    await wait(700)
+    const st = await page.evaluate(() => {
+      const seen = (el) => !!el && el.getBoundingClientRect().width > 0
+      const first = document.querySelector('.main-page')
+      const bar = document.querySelector('.topbar')
+      return {
+        strip: document.querySelectorAll('.upb').length,
+        // what stands between the top bar and the screen itself, on a phone
+        gap: seen(bar) && first ? Math.round(first.getBoundingClientRect().top - bar.getBoundingClientRect().bottom) : null,
+        menu: [...document.querySelectorAll('[data-act="open-profile"]')].filter(seen).length,
+      }
+    })
+    strips.push([path, st.strip, st.gap, st.menu])
+  }
+  check(`${dev}: no upgrade strip above any screen of the app (feed, brokers, CRM, our agent); the profile menu is on all of them`, strips.every(([, n, gap, menu]) => n === 0 && menu === 1 && (gap === null || gap <= 30)), strips)
+  await page.goto(green + '/app/crm', { waitUntil: 'networkidle0' })
+  await wait(900)
+  await page.screenshot({ path: `${out}/${dev}-9-crm-top.png` })
+  await tap(page, '[data-act="open-profile"]')
+  await page.waitForSelector('[data-profile-menu]', { visible: true, timeout: 4000 })
+  await wait(500)
+  const fromCrm = await page.evaluate(() => document.querySelector('[data-profile-menu] [data-upgrade="menu"]')?.getAttribute('href'))
+  check(`${dev}: from the CRM too, the menu has "שדרג למשרד NadlanUP"`, !!fromCrm && fromCrm.endsWith('/app/office'), fromCrm)
+  await page.screenshot({ path: `${out}/${dev}-10-crm-menu.png` })
+  await closeAll(page)
   if (phone) {
-    // a screen that is not one of the main ones: the way back is in the bar
+    // a screen that is not one of the main ones: the way back is in the bar (a property, reached from the feed)
+    await closeAll(page)
+    await feed(page)
     const href = await page.evaluate(() => document.querySelector('a[href*="/app/property/"]')?.getAttribute('href'))
     if (href) {
       await page.goto('http://localhost:5240' + href, { waitUntil: 'networkidle0' })

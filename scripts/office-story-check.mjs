@@ -184,9 +184,11 @@ for (const [tag, vp, phone] of [
   // ---- 5. "שדרג למשרד NadlanUP" from the feed leads to the same page
   await page.goto(green + '/app/community', { waitUntil: 'networkidle0' })
   await wait(600)
-  const hasBanner = await page.$('.upb')
+  // 19.11.2026: the strip above the feed is gone; the same call is one quiet post among the posts (and a line of
+  // the profile menu, see scripts/top-bar-check.mjs)
+  const hasBanner = await page.$('[data-upgrade="post"]')
   if (hasBanner) {
-    await tap(page, '.upb')
+    await tap(page, '[data-upgrade="post"]')
     await page.waitForSelector('[data-office-story]', { visible: true, timeout: 5000 }).catch(() => {})
   }
   const viaBanner = await page.evaluate(() => ({ path: location.pathname, story: !!document.querySelector('[data-office-story]') }))

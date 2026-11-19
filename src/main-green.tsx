@@ -13,7 +13,7 @@ import DayNightSwitch, { DayNightCompact } from './components/DayNightSwitch'
 import { PLATFORM_NAME } from './config'
 import { COMMUNITY_HOME, COMMUNITY_JOIN } from './config/community'
 import CommunityHome from './community/CommunityHome'
-import { AppIndex, DemoFoot, OfficeOnly, ShellBrand, UpgradeBanner, UpgradePost, useCommunityNav, useQuietShell } from './community/CommunityShell'
+import { AppIndex, DemoFoot, OfficeOnly, ShellBrand, UpgradePost, useCommunityNav, useQuietShell } from './community/CommunityShell'
 import HomeGreen from './pages/HomeGreen'
 import AgentArea from './agent/AgentArea'
 import AgentPage from './agent/AgentPage'
@@ -96,7 +96,7 @@ registerCrm({ flatProperties: true })
 registerShell({ bar: MemberBar, badge: MemberBadge, lab: TieredLab })
 // the community under its own name: its name at the top for a community member, no dashboard and two locked lines
 // in the menu, and a strip that leads to the office's page
-registerShell({ useNav: useCommunityNav, brand: ShellBrand, banner: UpgradeBanner })
+registerShell({ useNav: useCommunityNav, brand: ShellBrand })
 // a community member sees a live community: no beta lab, demo tags or reset inside; one small demo line at the foot
 registerShell({ useQuiet: useQuietShell, foot: DemoFoot })
 // on a phone inside the app, the day / night switch is a small button in the top bar, not a float over the content

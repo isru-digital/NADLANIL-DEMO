@@ -54,10 +54,11 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
   await page.goto(green + '/app/community', { waitUntil: 'load' })
   await wait(1200)
   const strip = await page.evaluate(() => {
-    const s = document.querySelector('.upb')
-    return { slim: s?.classList.contains('is-slim'), h: Math.round(s?.getBoundingClientRect().height ?? 0), text: s?.innerText.replace(/\s+/g, ' ') }
+    // 19.11.2026: no strip above the screens any more; in the feed the call is one quiet post among the posts
+    const s = document.querySelector('[data-upgrade="post"]')
+    return { slim: !document.querySelector('.upb') && document.querySelectorAll('[data-upgrade="post"]').length === 1, h: Math.round(s?.getBoundingClientRect().height ?? 0), text: s?.innerText.replace(/\s+/g, ' ') }
   })
-  check(`${d} the "שדרג למשרד NadlanUP" strip is small and quiet`, strip.slim && strip.h <= 52 && strip.text.includes('שדרג למשרד NadlanUP'), JSON.stringify(strip))
+  check(`${d} "שדרג למשרד NadlanUP" is one small, quiet post in the feed, with no strip above the screen`, strip.slim && strip.h <= 110 && strip.text.includes('שדרג למשרד NadlanUP'), JSON.stringify(strip))
   const me = await page.evaluate(() => document.querySelector('.me-card .me-body > span:not(.avatar)')?.textContent ?? '')
   check(`${d} the example broker is a regular broker, not luxury`, me.includes('מתווכת דירות יד שנייה') && !me.includes('יוקרה'), me)
   await shot('1-feed')
