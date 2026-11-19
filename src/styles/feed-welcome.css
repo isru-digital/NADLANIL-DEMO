@@ -64,26 +64,65 @@ html[data-mode='night'] :is(.wl, .wl-rooms) {
 
 /* ---------------------------------------------------------------- the rooms: one thin row of chips */
 /* Small round chips under the share line (Itzik 19.11.2026): the chosen one in full green, the others a light grey,
-   "הכול" first. The row stays at the top of the screen while the feed is scrolled, under the app's own top bar on a
-   phone (its height is measured and passed in --wl-top). Thin, and a hairline under it only while it is stuck. */
+   "הכול" first. The row stays at the top of the screen while the feed is scrolled.
+
+   IT MUST NOT MOVE AT ALL WHILE STUCK (on a real iPhone the first version jumped up and down). So everything that
+   holds it is here, in the stylesheet, and none of it changes while the page scrolls:
+     - `top` is a fixed length. On a computer 0; on a phone the height of the app's top bar, which is one fixed
+       number there (--app-bar-h in top-actions.css: 54px and the phone's safe area), minus 1px so that no hairline
+       of the feed can ever show between the bar and the row.
+     - its height is fixed (the chips are 36px, the padding 6px), and the line under it is always there: nothing is
+       switched on when it sticks, so there is nothing to redraw at that moment.
+     - no script runs on the page's scroll (see community/FeedWelcome.tsx), no transition, no containment on the
+       sticky box itself, and no mask on what is inside it (the fades are separate small boxes over its ends).
+   The feed column is a plain column (not a grid) in this look, so the row's "room to stick in" is the whole column
+   in every browser. */
+.fbx-page.is-light .comm-feed {
+  display: flex;
+  flex-direction: column;
+}
 .wl-rooms {
   position: sticky;
-  top: var(--wl-top, 0px);
+  top: 0;
   z-index: 15;
-  container: rooms / inline-size;
+  height: 48px;
+  box-sizing: border-box;
   margin-block: -6px -4px;
-  padding-block: 6px;
+  padding-block: 6px 5px;
+  border-bottom: 1px solid var(--line);
   /* solid, in the page's own colour: while it is stuck, photos of the posts must not show through the chips */
   background: var(--bg);
-  transition: box-shadow 0.2s ease;
 }
-.wl-rooms.is-stuck {
-  box-shadow: 0 1px 0 var(--line-strong);
+@media (max-width: 980px) {
+  /* under the app's top bar. Only where that bar is the thin one of a community member, whose height is known; the
+     office member's view of the demo has a taller bar of two rows, so there the row stays in its place in the page */
+  html[data-member='community'] .wl-rooms {
+    top: calc(var(--app-bar-h) - 1px);
+  }
+  html:not([data-member='community']) .wl-rooms {
+    position: static;
+  }
 }
 .wl-rooms-in {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--wl-gap, 6px);
+  height: 36px;
+}
+/* where the row begins and ends: two markers that only say whether they are in sight */
+.wl-edge {
+  flex: none;
+  width: 1px;
+  height: 1px;
+  margin-inline: -1px calc(-1 * var(--wl-gap, 6px));
+  pointer-events: none;
+}
+.wl-edge.is-end {
+  margin-inline: calc(-1 * var(--wl-gap, 6px)) -1px;
+}
+/* the fades over the row's ends. Hidden where the row does not go on (a computer, or its end / its start) */
+.wl-fade {
+  display: none;
 }
 .wl-room {
   position: relative;
@@ -92,7 +131,7 @@ html[data-mode='night'] :is(.wl, .wl-rooms) {
   align-items: center;
   gap: 6px;
   min-height: 36px;
-  padding: 0 15px;
+  padding: 0 var(--wl-pad, 15px);
   border-radius: 99px;
   background: rgb(var(--w) / 0.065);
   color: var(--text-dim);
@@ -151,6 +190,10 @@ html[data-mode='night'] .wl-room[aria-pressed='true'] .wl-dot {
   .wl-room.is-extra {
     display: none;
   }
+  /* asked of the chips' own box, not of the sticky row around it */
+  .wl-rooms-in {
+    container: rooms / inline-size;
+  }
   @container rooms (max-width: 579px) {
     .wl-long {
       display: none;
@@ -160,23 +203,81 @@ html[data-mode='night'] .wl-room[aria-pressed='true'] .wl-dot {
     }
   }
 }
-/* a phone or a tablet: the row is swiped sideways. Its far edge fades, so it is clear that it goes on (the site is
-   right to left, so the row goes on to the left) */
+/* a phone or a tablet: the row is swiped sideways, and it has to be clear at a glance that it goes on (the site is
+   right to left, so it goes on to the left):
+     - a chip is always cut by the far edge (the gap between the chips is chosen for that, FeedWelcome.tsx)
+     - a clear fade over that edge, with a small arrow; both go when the end of the row is reached
+     - once the row was moved, a lighter fade over its start says there is something back there too */
 @media (max-width: 1100px) {
   .wl-rooms-in {
     overflow-x: auto;
+    overflow-y: hidden;
     overscroll-behavior-x: contain;
-    scroll-snap-type: x proximity;
     scrollbar-width: none;
-    padding-inline-end: 30px;
-    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 30px);
-    mask-image: linear-gradient(to right, transparent 0, #000 30px);
+    padding-inline-end: 16px;
   }
   .wl-rooms-in::-webkit-scrollbar {
     display: none;
   }
-  .wl-room {
-    scroll-snap-align: start;
+  .wl-fade {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    z-index: 1;
+    display: block;
+    padding: 0;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+  .wl-fade.is-more {
+    left: 0;
+    width: 68px;
+    background: linear-gradient(to right, var(--bg) 0, var(--bg) 26%, transparent 100%);
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  .wl-fade.is-back {
+    right: 0;
+    width: 28px;
+    background: linear-gradient(to left, var(--bg) 0, transparent 100%);
+  }
+  .wl-rooms[data-more] .wl-fade.is-more {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .wl-rooms[data-back] .wl-fade.is-back {
+    opacity: 1;
+  }
+  /* the small arrow: a round button at the very edge, the way on */
+  .wl-fade.is-more span {
+    position: absolute;
+    top: 50%;
+    left: 8px;
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    margin-top: -14px;
+    border-radius: 50%;
+    border: 1px solid var(--line-strong);
+    background: var(--card);
+    color: var(--wl-green);
+    box-shadow: 0 2px 6px -2px rgb(4 40 26 / 0.3);
+  }
+  .wl-fade.is-more svg {
+    width: 17px;
+    height: 17px;
+    stroke-width: 2.4;
+  }
+  /* the hint of the first visit: the arrow leans the way the row is about to go */
+  .wl-rooms[data-hint] .wl-fade.is-more span {
+    animation: wl-lean 0.7s ease-in-out;
+  }
+  @keyframes wl-lean {
+    50% {
+      transform: translateX(-4px);
+    }
   }
 }
 
@@ -437,7 +538,6 @@ html[data-theme='green'][data-mode='day'] .fbx-page.is-light .tone-violet {
   }
   .wl-rooms-in {
     padding-inline-start: 16px;
-    scroll-padding-inline-start: 16px;
   }
   .wl .si-card.is-feed .si-words span {
     display: none;
@@ -486,10 +586,13 @@ html[data-theme='green'][data-mode='day'] .fbx-page.is-light .tone-violet {
 
 @media (prefers-reduced-motion: reduce) {
   .wl-room,
-  .wl-rooms,
+  .wl-fade,
   .wl-share-field,
   .wl-choice {
     transition: none;
+  }
+  .wl-rooms[data-hint] .wl-fade.is-more span {
+    animation: none;
   }
 }
 

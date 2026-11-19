@@ -56,8 +56,8 @@ const ROOMS: { id: TopicId; label: string; short: string; extra?: boolean }[] = 
 export default function FeedWelcome({ items, view, onView, onIntent }: { items: CommunityItem[]; view: View; onView: (v: View) => void; onIntent?: (i: Intent) => void }) {
   const me = brokerById(CURRENT_BROKER_ID)
   const [sheet, setSheet] = useState(false)
-  const [stuck, setStuck] = useState(false)
   const rooms = useRef<HTMLElement>(null)
+  const row = useRef<HTMLDivElement>(null)
   const fresh = items.some((it) => it.fresh)
 
   const choose = (i: Intent) => {
@@ -66,45 +66,129 @@ export default function FeedWelcome({ items, view, onView, onIntent }: { items: 
     window.setTimeout(() => onIntent?.(i), 180)
   }
 
-  /* The row sticks under the app's top bar. On a phone that bar is itself stuck to the top and its height changes
-     (one line, or two when "כניסה" is in it), so its height is measured; on a computer there is no such bar. The row
-     also learns when it is stuck, to draw a hairline under itself only then. */
+  /* HOW THE ROW STAYS STILL (Itzik 19.11.2026: on a real iPhone it jumped up and down while the feed was scrolled).
+     It sticks by CSS alone: `position: sticky` with an offset written in the stylesheet (the app's top bar has one
+     fixed height there, see --app-bar-h). Nothing here listens to the page's scroll, measures anything while it
+     scrolls, or changes the row when it sticks. That was the cause: the first version measured the row on every
+     scroll frame, measured the top bar's height into an inline style, and switched a line on when the row stuck;
+     on an iPhone the system places sticky elements itself while scrolling, and a page that measures and re-styles
+     them mid-scroll makes them jump. So: no scroll listener, no ResizeObserver on the bar, no "stuck" state.
+
+     What does run is about the row's own sideways scroll only, and never while the page scrolls:
+       - two observers say whether the row's start and its end are in sight (for the fades and the small arrow)
+       - once, the gap between the chips is chosen so that a chip is cut by the row's far edge (it shows there is more)
+       - on the very first visit only, the row moves a little and comes back, once, as a hint */
   useEffect(() => {
     const nav = rooms.current
-    if (!nav) return
-    const bar = document.querySelector<HTMLElement>('.topbar')
-    let top = 0
-    const measure = () => {
-      top = bar && getComputedStyle(bar).position === 'sticky' ? Math.round(bar.getBoundingClientRect().height) : 0
-      nav.style.setProperty('--wl-top', `${top}px`)
-      onScroll()
+    const r = row.current
+    if (!nav || !r) return
+    const start = r.querySelector<HTMLElement>('.wl-edge.is-start')
+    const end = r.querySelector<HTMLElement>('.wl-edge.is-end')
+    const io =
+      'IntersectionObserver' in window && start && end
+        ? new IntersectionObserver(
+            (seen) =>
+              seen.forEach((e) => {
+                if (e.target === start) nav.toggleAttribute('data-back', !e.isIntersecting)
+                else nav.toggleAttribute('data-more', !e.isIntersecting)
+              }),
+            { root: r, threshold: 0.5 },
+          )
+        : null
+    if (start && end) {
+      io?.observe(start)
+      io?.observe(end)
     }
-    let frame = 0
-    const onScroll = () => {
-      cancelAnimationFrame(frame)
-      frame = requestAnimationFrame(() => setStuck(window.scrollY > 4 && nav.getBoundingClientRect().top <= top + 0.5))
+
+    // A chip cut by the far edge says "there is more". Where the edge falls depends on the phone's width, so the
+    // spacing of the row is chosen to leave one chip cut as near its middle as can be: a good part of it showing
+    // past the arrow, and a good part of it hidden. Two small things may move for that, both within a few pixels of
+    // their usual size: the gap between the chips, and the chips' side padding. Done at the row's start only, once
+    // the fonts are in (the chips' widths depend on them); on a computer, where the row fits, nothing is touched.
+    const ARROW = 40
+    const cut = () => {
+      const tuned = !!r.style.getPropertyValue('--wl-gap')
+      if (tuned) {
+        r.style.removeProperty('--wl-gap')
+        r.style.removeProperty('--wl-pad')
+      }
+      if (r.scrollWidth <= r.clientWidth + 1 || Math.abs(r.scrollLeft) > 1) return
+      const chips = [...r.querySelectorAll<HTMLElement>('.wl-room')].filter((c) => c.offsetWidth > 0)
+      const edge = r.getBoundingClientRect().left
+      let best = { gap: 6, pad: 15, score: -Infinity }
+      for (let gap = 5; gap <= 12; gap++) {
+        for (let pad = 12; pad <= 17; pad++) {
+          r.style.setProperty('--wl-gap', `${gap}px`)
+          r.style.setProperty('--wl-pad', `${pad}px`)
+          let fit = 0
+          for (const c of chips) {
+            const box = c.getBoundingClientRect()
+            if (box.left < edge && box.right > edge) fit = Math.min(box.right - edge - ARROW, edge - box.left)
+          }
+          // the usual spacing is kept unless moving it buys a clearly better cut
+          const score = fit - 1.5 * (Math.abs(gap - 6) + Math.abs(pad - 15))
+          if (score > best.score) best = { gap, pad, score }
+        }
+      }
+      r.style.setProperty('--wl-gap', `${best.gap}px`)
+      r.style.setProperty('--wl-pad', `${best.pad}px`)
     }
-    measure()
-    const ro = bar && 'ResizeObserver' in window ? new ResizeObserver(measure) : null
-    if (bar) ro?.observe(bar)
-    window.addEventListener('resize', measure)
-    window.addEventListener('scroll', onScroll, { passive: true })
+    cut()
+    document.fonts?.ready.then(cut).catch(() => {})
+    // the row's width changes only when the phone is turned or the window resized, never while the page scrolls
+    let width = r.clientWidth
+    const onResize = () => {
+      if (r.clientWidth === width) return
+      width = r.clientWidth
+      cut()
+    }
+    window.addEventListener('resize', onResize)
+
+    // the first visit only: the row moves a little toward the rest of the rooms and back, once
+    let t1 = 0
+    let t2 = 0
+    const HINT = 'nadlanup-rooms-hint-v1'
+    const seenHint = () => {
+      try {
+        return localStorage.getItem(HINT) === '1'
+      } catch {
+        return true
+      }
+    }
+    const calm = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    if (!seenHint() && !calm && r.scrollWidth > r.clientWidth + 1) {
+      t1 = window.setTimeout(() => {
+        if (Math.abs(r.scrollLeft) > 1 || window.scrollY > 40) return
+        try {
+          localStorage.setItem(HINT, '1')
+        } catch {
+          /* no storage: the hint may show again */
+        }
+        nav.setAttribute('data-hint', '')
+        // a little: "הכול", the chosen room, stays in sight the whole time
+        r.scrollBy({ left: -48, behavior: 'smooth' })
+        t2 = window.setTimeout(() => {
+          r.scrollBy({ left: 48, behavior: 'smooth' })
+          nav.removeAttribute('data-hint')
+        }, 720)
+      }, 1300)
+    }
     return () => {
-      cancelAnimationFrame(frame)
-      ro?.disconnect()
-      window.removeEventListener('resize', measure)
-      window.removeEventListener('scroll', onScroll)
+      io?.disconnect()
+      window.removeEventListener('resize', onResize)
+      window.clearTimeout(t1)
+      window.clearTimeout(t2)
     }
   }, [])
 
   // the chosen chip is always in sight (on a phone it may be off the edge of the row)
   useEffect(() => {
     const on = rooms.current?.querySelector<HTMLElement>('[aria-pressed="true"]')
-    const row = rooms.current?.querySelector<HTMLElement>('.wl-rooms-in')
-    if (!on || !row || row.scrollWidth <= row.clientWidth) return
+    const r = row.current
+    if (!on || !r || r.scrollWidth <= r.clientWidth) return
     const a = on.getBoundingClientRect()
-    const b = row.getBoundingClientRect()
-    if (a.left < b.left + 28 || a.right > b.right - 12) row.scrollBy({ left: a.left + a.width / 2 - (b.left + b.width / 2), behavior: 'smooth' })
+    const b = r.getBoundingClientRect()
+    if (a.left < b.left + 56 || a.right > b.right - 12) r.scrollBy({ left: a.left + a.width / 2 - (b.left + b.width / 2), behavior: 'smooth' })
   }, [view])
 
   return (
@@ -122,9 +206,10 @@ export default function FeedWelcome({ items, view, onView, onIntent }: { items: 
         </div>
       </section>
 
-      {/* the rooms: one thin row of chips, stuck to the top while the feed is scrolled */}
-      <nav ref={rooms} className={`wl-rooms${stuck ? ' is-stuck' : ''}`} aria-label="החדרים של הקהילה" data-rooms data-stuck={stuck ? '' : undefined}>
-        <div className="wl-rooms-in" data-rooms-row>
+      {/* the rooms: one thin row of chips, stuck to the top while the feed is scrolled (by CSS alone, see above) */}
+      <nav ref={rooms} className="wl-rooms" aria-label="החדרים של הקהילה" data-rooms>
+        <div ref={row} className="wl-rooms-in" data-rooms-row>
+          <i className="wl-edge is-start" aria-hidden />
           <button type="button" className="wl-room is-all" aria-pressed={view === 'all'} onClick={() => onView('all')} data-room="all">
             {fresh && <i className="wl-dot" aria-label="יש עדכונים חדשים" />}
             הכול
@@ -144,7 +229,16 @@ export default function FeedWelcome({ items, view, onView, onIntent }: { items: 
               <span className="wl-short">{r.short}</span>
             </button>
           ))}
+          <i className="wl-edge is-end" aria-hidden />
         </div>
+        {/* the row goes on: a fade over its far edge with a small arrow (gone at the end), and a fade at its start
+            once it was moved. The arrow is a help for the eye and the finger; the chips themselves are the controls. */}
+        <i className="wl-fade is-back" aria-hidden />
+        <button type="button" className="wl-fade is-more" tabIndex={-1} aria-hidden onClick={() => row.current?.scrollBy({ left: -Math.round((row.current?.clientWidth ?? 300) * 0.6), behavior: 'smooth' })} data-act="rooms-more">
+          <span>
+            <ChevronLeft />
+          </span>
+        </button>
       </nav>
 
       <Modal open={sheet} onClose={() => setSheet(false)} title="מה תרצה לשתף היום?">

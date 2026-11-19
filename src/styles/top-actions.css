@@ -79,12 +79,22 @@ html[data-mode='night'] .ta .ta-count {
 }
 
 /* ---------------------------------------------------------------- the top bar itself: thin, one row */
+/* Its height is ONE fixed number, written here and nowhere measured: 54px and the phone's safe area at the top.
+   The row of rooms sticks right under it (feed-welcome.css uses the same number), so the two can never drift apart,
+   whatever the browser does with its own bars while the page scrolls. */
+:root {
+  --app-bar-h: calc(54px + env(safe-area-inset-top, 0px));
+}
 @media (max-width: 980px) {
   .topbar.has-bar:has(.ta) {
     flex-wrap: nowrap;
     row-gap: 0;
-    min-height: 54px;
+    box-sizing: border-box;
+    height: var(--app-bar-h);
+    min-height: 0;
     padding-bottom: 0;
+    /* fully solid: the bar was 97% opaque, and a ghost of the posts moved behind it while the feed scrolled */
+    background: rgb(var(--k2)) !important;
   }
   .topbar.has-bar:has(.ta) .topbar-bar {
     flex: none;
