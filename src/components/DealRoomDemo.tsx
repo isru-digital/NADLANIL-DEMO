@@ -8,6 +8,7 @@ import { brokers, formatPriceShort } from '../data/demo'
 import { Avatar, EASE } from './ui'
 import { lockScroll } from '../lib/scrollLock'
 import { labSlots } from '../config/navExtras'
+import { signedIn } from '../auth/session'
 import '../styles/deal-demo.css'
 
 /**
@@ -17,9 +18,13 @@ import '../styles/deal-demo.css'
  * Nothing here is interactive beyond moving between the two scenes; it is a picture of where the product is going.
  */
 
+// the first of the two is "me" in the scene: the demo's example user, or the real person who is signed in
+// (auth/profile.ts). What is said about a real person is written without a gender and without an invented city.
 const maya = brokers[0]
 const yonatan = brokers[1]
 const first = (name: string) => name.split(' ')[0]
+const mineSub = () => (signedIn ? [maya.title, maya.area].filter(Boolean).join(', ') : 'מתווכת, תל אביב')
+const mineOk = () => (signedIn ? 'אישרת' : `${first(maya.name)} אישרה`)
 
 // the sparks of the "match" burst: positions are worked out once
 const sparks = Array.from({ length: 16 }, (_, i) => {
@@ -54,7 +59,7 @@ function MatchScene({ matched }: { matched: boolean }) {
           <Avatar src={maya.avatar} name="" size={40} ring />
           <div>
             <b>{maya.name}</b>
-            <small>מתווכת, תל אביב</small>
+            <small>{mineSub()}</small>
           </div>
         </div>
         <h3>בית פרטי בהרצליה פיתוח, עד {formatPriceShort(15000000)}</h3>
@@ -64,7 +69,7 @@ function MatchScene({ matched }: { matched: boolean }) {
           <li>חניה ל-3</li>
         </ul>
         <span className="dr-ok dr-ok-a">
-          <Check /> {first(maya.name)} אישרה
+          <Check /> {mineOk()}
         </span>
       </div>
 
@@ -130,9 +135,9 @@ const steps = [
   { label: 'העמלה שולמה', state: 'next' },
 ] as const
 
-const chat: { mine?: boolean; text: string }[] = [
-  { text: 'היי מאיה, הלקוחה מוזמנת לביקור מחר ב-17:00?' },
-  { mine: true, text: 'מעולה, אני מביאה אותה.' },
+const chat = (): { mine?: boolean; text: string }[] => [
+  { text: `היי ${first(maya.name)}, הלקוחה מוזמנת לביקור מחר ב-17:00?` },
+  { mine: true, text: signedIn ? 'מעולה, נגיע יחד.' : 'מעולה, אני מביאה אותה.' },
   { text: 'נהדר. החלוקה נשארת כמו שאישרנו.' },
 ]
 
@@ -169,7 +174,7 @@ function RoomScene() {
           </div>
           <div className="dr-approve">
             <span style={{ '--d': '1.5s' } as CSSProperties}>
-              <Check /> {first(maya.name)} אישרה
+              <Check /> {mineOk()}
             </span>
             <span style={{ '--d': '1.9s' } as CSSProperties}>
               <Check /> {first(yonatan.name)} אישר
@@ -192,7 +197,7 @@ function RoomScene() {
           <Lock /> צ'אט פרטי בין שניכם
         </div>
         <div className="dr-bubbles">
-          {chat.map((m, i) => (
+          {chat().map((m, i) => (
             <motion.div
               key={m.text}
               className={`dr-bubble${m.mine ? ' is-mine' : ''}`}

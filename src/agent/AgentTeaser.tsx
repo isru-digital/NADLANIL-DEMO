@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom'
 import { ArrowLeft, BadgeCheck, Sparkles } from 'lucide-react'
 import { Reveal } from '../components/ui'
-import { areaOptions, sampleProfile } from './agentData'
+import { areaOptions, emptyProfile, sampleProfile } from './agentData'
+import { signedIn } from '../auth/session'
 import ProfilePreview from './ProfilePreview'
 import '../styles/agent.css'
 
@@ -71,7 +72,8 @@ export default function AgentTeaser() {
             <Sparkles />
           </span>
           <div className="agt-pv" aria-hidden>
-            <ProfilePreview profile={sampleProfile} />
+            {/* a signed-in person sees their own name on the picture of the page, never the example user's */}
+            <ProfilePreview profile={signedIn ? { ...emptyProfile, gender: 'm', name: signedIn.name } : sampleProfile} />
           </div>
         </Reveal>
       </div>

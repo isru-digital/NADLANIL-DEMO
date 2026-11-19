@@ -3,6 +3,7 @@ import { BellRing, Check, Mic, ShieldCheck, Sparkles, Wallet } from 'lucide-reac
 import { asset } from '../config'
 import { brokers } from '../data/demo'
 import { Avatar } from './ui'
+import { signedIn } from '../auth/session'
 import { MAP_CLIP, MAP_H, MAP_W, mapX, mapY } from './NetworkMap'
 
 /**
@@ -228,17 +229,20 @@ export function TrustScene() {
     { l: 'ביטולים והיעלמויות', v: 'כמעט אפס', w: 96 },
     { l: 'עמלה שולמה בזמן', v: 'תמיד', w: 100 },
   ]
+  // the numbers are invented, so the badge is never drawn on a real person: when somebody is signed in the
+  // picture shows another of the demo's brokers, not them (brokers[0] is the signed-in person then)
+  const who = signedIn ? 1 : 0
   return (
     <div className="bl-trust">
       <div className="bl-trust-who">
         <span className="bl-trust-av">
-          {face(0, 72)}
+          {face(who, 72)}
           <i>
             <ShieldCheck />
           </i>
         </span>
-        <strong>מאיה לנדאו</strong>
-        <em>מהימנה</em>
+        <strong>{brokers[who].name}</strong>
+        <em>{who === 0 ? 'מהימנה' : 'מהימן'}</em>
       </div>
       <ul className="bl-meters">
         {rows.map((r, i) => (

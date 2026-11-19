@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { ArrowLeft, BadgeCheck, Bell, Clock, KeyRound, LogOut, Moon, Search, ShieldCheck, Sun } from 'lucide-react'
+import { ArrowLeft, BadgeCheck, Bell, Clock, KeyRound, LogOut, Moon, Search, ShieldCheck, Sun, Undo2 } from 'lucide-react'
 import { CURRENT_BROKER_ID } from '../config'
 import { OFFICE_PAGE, UPGRADE_LABEL } from '../config/community'
 import { dayNight, useDayNight } from '../config/dayNight'
 import { useMember } from '../config/member'
 import { brokerById } from '../data/demo'
 import { useStore } from '../store'
-import { asMember, session, sessionActions } from '../auth/session'
+import { demo, session, sessionActions, signedIn } from '../auth/session'
 import { LOGIN_PATH } from '../auth/SignInPrompt'
 import { Avatar, Modal } from '../components/ui'
 import '../styles/top-actions.css'
@@ -30,10 +30,11 @@ export default function TopActions() {
   const navigate = useNavigate()
   const { notices, myCities } = useStore()
   const [menu, setMenu] = useState(false)
+  // one source for who this is, on every screen: the app's current broker. For a real person auth/profile.ts made
+  // it them (name, initials); only a presentation of the demo has the example user here (Itzik 19.11.2026)
   const me = brokerById(CURRENT_BROKER_ID)
-  const name = asMember?.name ?? session?.staff?.name ?? me.name
-  // a member has his own picture (his initials); staff with no broker's card get initials of their name
-  const picture = session && !asMember ? '' : me.avatar
+  const name = me.name
+  const picture = me.avatar
   const unread = notices.filter((n) => !n.read).length
 
   // the feed opens what was asked for (pages/Community.tsx reads ?open=), keeping the room it is in
@@ -56,25 +57,23 @@ export default function TopActions() {
       <button type="button" className="ta-me" onClick={() => setMenu(true)} aria-label={`החשבון של ${name}`} aria-haspopup="dialog" data-act="open-profile">
         <Avatar src={picture} name={name} size={36} />
       </button>
-      <ProfileMenu open={menu} onClose={() => setMenu(false)} name={name} picture={picture} />
+      <ProfileMenu open={menu} onClose={() => setMenu(false)} name={name} picture={picture} role={me.title} />
     </div>
   )
 }
 
 /** What the picture opens: who is signed in, the way out, the upgrade, and light or dark. */
-function ProfileMenu({ open, onClose, name, picture }: { open: boolean; onClose: () => void; name: string; picture: string }) {
+function ProfileMenu({ open, onClose, name, picture, role }: { open: boolean; onClose: () => void; name: string; picture: string; role: string }) {
   const { isOffice } = useMember()
   const { mode, byHand } = useDayNight()
-  const me = brokerById(CURRENT_BROKER_ID)
-  const role = session ? (asMember ? me.title : 'צוות הקהילה') : me.title
   const look: { id: 'day' | 'night' | 'auto'; label: string; icon: typeof Sun; on: boolean; set: () => void }[] = [
     { id: 'day', label: 'בהיר', icon: Sun, on: byHand && mode === 'day', set: () => dayNight.set('day') },
     { id: 'night', label: 'כהה', icon: Moon, on: byHand && mode === 'night', set: () => dayNight.set('night') },
     { id: 'auto', label: 'לפי השעה', icon: Clock, on: !byHand, set: () => dayNight.auto() },
   ]
   return (
-    <Modal open={open} onClose={onClose} title="החשבון שלי">
-      <div className="modal-body pfm" data-profile-menu>
+    <Modal open={open} onClose={onClose} title={demo ? 'חשבון לדוגמה' : 'החשבון שלי'}>
+      <div className="modal-body pfm" data-profile-menu data-who={signedIn ? (signedIn.isStaff ? 'staff' : 'member') : 'demo'}>
         <div className="pfm-who">
           <Avatar src={picture} name={name} size={52} />
           <span>
@@ -95,7 +94,7 @@ function ProfileMenu({ open, onClose, name, picture }: { open: boolean; onClose:
             <ArrowLeft className="pfm-go" aria-hidden />
           </Link>
         )}
-        {session?.staff && (
+        {signedIn?.isStaff && (
           <Link to="/kehila/admin" className="pfm-row" onClick={onClose} data-act="to-admin">
             <i aria-hidden>
               <ShieldCheck />
@@ -131,13 +130,25 @@ function ProfileMenu({ open, onClose, name, picture }: { open: boolean; onClose:
           </div>
         </div>
 
-        {session && (
+        {signedIn && (
           <button type="button" className="pfm-row is-exit" onClick={() => sessionActions.signOut()} data-act="sign-out">
             <i aria-hidden>
               <LogOut />
             </i>
             <span>
               <b>יציאה</b>
+            </span>
+          </button>
+        )}
+        {/* the example user lives only inside a presentation: this is the way out of it, back to one's own name */}
+        {demo && (
+          <button type="button" className="pfm-row is-back" onClick={() => sessionActions.stopDemo()} data-act="leave-demo">
+            <i aria-hidden>
+              <Undo2 />
+            </i>
+            <span>
+              <b>{session ? 'חזרה לחשבון שלי' : 'יציאה מההדגמה'}</b>
+              <small>השם והנתונים כאן הם של משתמשת לדוגמה</small>
             </span>
           </button>
         )}

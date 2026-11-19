@@ -16,6 +16,8 @@ export type Broker = {
   avatar: string
   bio: string
   years: number
+  /** Only on a real, signed-in person's own card (auth/profile.ts): their own number, or none. Never invented. */
+  phone?: string
 }
 
 export type CrmStatus = 'new' | 'active' | 'tour' | 'negotiation' | 'closed'
@@ -668,7 +670,9 @@ export type Notice = {
  * not given to real lines.
  */
 const PHONE_PREFIX = ['050', '052', '053', '054', '055', '058']
-export const brokerPhone = (b: Pick<Broker, 'id'>) => {
+export const brokerPhone = (b: Pick<Broker, 'id' | 'phone'>) => {
+  // a real person's own number (empty when they gave none): an invented one is never put next to their name
+  if (b.phone !== undefined) return b.phone
   const n = Number(b.id.replace(/\D/g, '')) || 1
   return `${PHONE_PREFIX[n % PHONE_PREFIX.length]}-555-02${String(n).padStart(2, '0')}`
 }

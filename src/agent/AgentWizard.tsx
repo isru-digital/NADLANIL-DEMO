@@ -7,6 +7,7 @@ import { areaOptions, clientOptions, firstLineIdeas, firstName, languageOptions,
 import type { AgentProfile } from './agentData'
 import { readImage, useAgent } from './useAgent'
 import ProfilePreview from './ProfilePreview'
+import { signedIn } from '../auth/session'
 import '../styles/agent.css'
 
 const TOTAL = 15
@@ -87,9 +88,13 @@ function PhotoField({ value, onChange }: { value: string; onChange: (v: string) 
         <button type="button" className="btn btn-gold btn-sm" onClick={() => input.current?.click()}>
           <Upload /> {value ? 'להחליף תמונה' : 'להעלות תמונה'}
         </button>
-        <button type="button" className="btn btn-ghost btn-sm" onClick={() => onChange(sampleProfile.photo)}>
-          תמונת דוגמה
-        </button>
+        {/* the example user's picture, licence and whole profile are shortcuts for a presentation of the demo:
+            on a real person's page they would put her face and her name in place of theirs */}
+        {!signedIn && (
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => onChange(sampleProfile.photo)}>
+            תמונת דוגמה
+          </button>
+        )}
         {value && (
           <button type="button" className="btn btn-quiet btn-sm" onClick={() => onChange('')}>
             <X /> הסרה
@@ -167,7 +172,7 @@ export default function AgentWizard() {
           <div className="ag-fields">
             <label className="ag-field">
               <span>שם מלא</span>
-              <input value={p.name} onChange={(e) => set({ name: e.target.value })} placeholder="למשל: מאיה לנדאו" autoFocus />
+              <input value={p.name} onChange={(e) => set({ name: e.target.value })} placeholder="למשל: ישראל ישראלי" autoFocus />
             </label>
             <div className="ag-field">
               <span>איך פונים אליכם?</span>
@@ -198,9 +203,11 @@ export default function AgentWizard() {
                 <b>{p.licenseFile ? p.licenseFile : 'העלאת צילום או קובץ של הרישיון'}</b>
                 <small>{p.licenseFile ? 'הועלה. אפשר להחליף' : 'תמונה או PDF'}</small>
               </button>
-              <button type="button" className="btn btn-ghost btn-sm" onClick={() => set({ licenseFile: sampleProfile.licenseFile, licenseNo: p.licenseNo || sampleProfile.licenseNo })}>
-                קובץ דוגמה
-              </button>
+              {!signedIn && (
+                <button type="button" className="btn btn-ghost btn-sm" onClick={() => set({ licenseFile: sampleProfile.licenseFile, licenseNo: p.licenseNo || sampleProfile.licenseNo })}>
+                  קובץ דוגמה
+                </button>
+              )}
             </div>
             <label className="ag-field">
               <span>מספר רישיון</span>
@@ -415,9 +422,11 @@ export default function AgentWizard() {
           </div>
         </div>
 
-        <button type="button" className="ag-fill" onClick={fillSample}>
-          <WandSparkles /> דמו מהיר: למלא את הכול בדוגמה
-        </button>
+        {!signedIn && (
+          <button type="button" className="ag-fill" onClick={fillSample}>
+            <WandSparkles /> דמו מהיר: למלא את הכול בדוגמה
+          </button>
+        )}
       </div>
 
       <aside className="ag-wiz-side" aria-label="תצוגה מקדימה של הדף">

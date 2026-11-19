@@ -174,11 +174,16 @@ export default function CommunityCard({
             {item.fresh && !preview && <span className="fb-new">חדש</span>}
             <span>{item.time}</span>
             <i aria-hidden>·</i>
-            <span className="fb-city">
-              <MapPin />
-              {item.city}
-            </span>
-            <i aria-hidden>·</i>
+            {/* a post by one of the staff, who work in no city, has none */}
+            {item.city && (
+              <>
+                <span className="fb-city">
+                  <MapPin />
+                  {item.city}
+                </span>
+                <i aria-hidden>·</i>
+              </>
+            )}
             <Globe2 aria-label="גלוי לחברי הקהילה" />
             {mine && !preview && <em className="ci-mine">הפרסום שלך</em>}
           </div>

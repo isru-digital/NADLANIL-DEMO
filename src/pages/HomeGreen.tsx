@@ -252,7 +252,9 @@ export default function HomeGreen() {
                       {(['night', 'gallery', 'line'] as const).map((id) => (
                         <span key={id} className={`tpl-thumb tpl-${id}`}>
                           <i />
-                          <b>מאיה</b>
+                          {/* the name on the small sample page: a visitor sees no person's name at all, a signed-in
+                              person sees their own, and only a presentation of the demo has the example user's */}
+                          <b data-tpl-name>{hasAccess ? brokers[0].name.split(' ')[0] : 'השם שלך'}</b>
                           <u />
                         </span>
                       ))}

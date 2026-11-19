@@ -29,6 +29,7 @@ import type { TopicId } from '../config/topics'
 import { brokerById, brokers, cities, fitsSearch, formatPriceShort, roomsLabel } from '../data/demo'
 import type { CommunityItem } from '../data/demo'
 import { useStore } from '../store'
+import { signedIn } from '../auth/session'
 import { actionSlots, communitySlots } from '../config/navExtras'
 import FeedSearch from '../community/FeedSearch'
 import { Avatar, EASE, Modal } from '../components/ui'
@@ -187,7 +188,8 @@ export default function Community() {
       id: `u${Date.now()}`,
       topicId,
       authorId: me.id,
-      city: 'תל אביב',
+      // the example user works in תל אביב. A real person's post carries their own first city, or none (19.11.2026)
+      city: signedIn ? me.area : 'תל אביב',
       time: 'עכשיו',
       body,
       likes: 0,
@@ -249,9 +251,7 @@ export default function Community() {
             <div className="me-body">
               <Avatar src={me.avatar} name={me.name} size={68} ring />
               <strong>{me.name}</strong>
-              <span>
-                {me.title} · {me.area}
-              </span>
+              <span>{[me.title, me.area].filter(Boolean).join(' · ')}</span>
               <ul>
                 {myStats.map((s) => (
                   <li key={s.label}>

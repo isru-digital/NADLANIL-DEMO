@@ -21,7 +21,8 @@ export default function OwnerPage() {
   const [q] = useSearchParams()
   const read = readOwnerView(q)
   const v = read ?? { ...sample, date: new Date().toISOString().slice(0, 10) }
-  const broker = brokerById(v.brokerId) ?? brokerById('b1')
+  // a real broker's link carries their own name; only a link of the demo falls back to an invented broker
+  const broker = v.by ? { name: v.by.name, title: v.by.title, avatar: '' } : (brokerById(v.brokerId) ?? brokerById('b1'))
 
   useEffect(() => {
     const prev = document.title
@@ -105,8 +106,8 @@ export default function OwnerPage() {
           <Avatar src={broker.avatar} name={broker.name} size={48} ring />
           <div>
             <small>המתווך שמלווה את הנכס</small>
-            <b>{broker.name}</b>
-            <span>{broker.title}</span>
+            <b data-broker-name>{broker.name}</b>
+            {broker.title && <span>{broker.title}</span>}
           </div>
         </div>
 

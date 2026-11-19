@@ -68,13 +68,63 @@ function read(): Session | null {
   }
 }
 
+/** The presentation was opened in this very tab (the /demo link). It ends with the tab. */
+const tab = {
+  on() {
+    try {
+      return sessionStorage.getItem(DEMO) === '1'
+    } catch {
+      return false
+    }
+  },
+  set(v: boolean) {
+    try {
+      if (v) sessionStorage.setItem(DEMO, '1')
+      else sessionStorage.removeItem(DEMO)
+    } catch {
+      /* no storage: the presentation is not remembered */
+    }
+  },
+}
+
 /** As they were when the page loaded. */
 export const session: Session | null = read()
-export const demo: boolean = get(DEMO) === '1'
+/**
+ * A presentation of the demo, with the example user (מאיה). The example user must never stand in for a real
+ * person (Itzik 19.11.2026), so on a device where somebody is signed in the presentation lives only in the tab that
+ * opened /demo: every other tab, and the app the next time it opens, show that person's own account. A mark that
+ * an old presentation left on such a device is cleared here.
+ */
+export const demo: boolean = session ? tab.on() : tab.on() || get(DEMO) === '1'
+if (session && !demo && get(DEMO) !== null) set(DEMO, null)
 /** The community's screens open for an approved broker, for staff, and for a presentation of the demo. */
 export const hasAccess: boolean = demo || !!session
 /** A real broker's own view: his name and his own empty area, not the example user's. */
 export const asMember: MemberInfo | null = !demo && session?.member ? session.member : null
+
+/**
+ * The real person who is signed in, as every screen of the app shows them: an approved broker, or one of the staff
+ * who has no broker's card. Null for a visitor and inside a presentation of the demo. auth/profile.ts turns the
+ * app's "current broker" into this person, so a screen never has to pick a name by itself.
+ */
+export type SignedIn = { key: string; name: string; title: string; phone: string; email: string; cities: string[]; areas: string; isStaff: boolean; isBroker: boolean }
+export const signedIn: SignedIn | null = demo || !session
+  ? null
+  : asMember
+    ? {
+        key: `m:${asMember.id}`,
+        name: asMember.name,
+        title: asMember.work === 'office' ? `מתווך, ${asMember.office_name}` : 'מתווך עצמאי',
+        phone: asMember.phone,
+        email: asMember.email,
+        cities: asMember.cities,
+        areas: asMember.areas,
+        isStaff: !!session.staff,
+        isBroker: true,
+      }
+    : session.staff
+      ? { key: `s:${session.staff.email.toLowerCase()}`, name: session.staff.name, title: 'צוות הקהילה', phone: '', email: session.staff.email, cities: [], areas: '', isStaff: true, isBroker: false }
+      : null
 
 const base = import.meta.env.BASE_URL.replace(/\/$/, '')
 /** Goes to a page of the site with a full reload. */
@@ -85,21 +135,29 @@ export const sessionActions = {
     set(KEY, JSON.stringify(s))
     // a real sign-in ends a presentation that was left open on this device
     set(DEMO, null)
+    tab.set(false)
     set(PENDING, null)
   },
   async signOut(to = '/kehila') {
     const s = read()
     set(KEY, null)
+    // whoever leaves the account is a visitor: no name at all, not the example user's
+    set(DEMO, null)
+    tab.set(false)
     if (s) await call('/api/logout', { method: 'POST', token: s.token }).catch(() => null)
     go(to)
   },
   startDemo() {
-    set(DEMO, '1')
+    tab.set(true)
+    // on a device with nobody signed in the presentation is remembered, as it always was
+    if (!read()) set(DEMO, '1')
     go('/app')
   },
+  /** Out of the presentation: back to the person's own account, or to the community's page for a visitor. */
   stopDemo() {
     set(DEMO, null)
-    go('/kehila')
+    tab.set(false)
+    go(read() ? '/app' : '/kehila')
   },
 }
 

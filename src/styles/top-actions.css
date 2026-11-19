@@ -216,6 +216,10 @@ html[data-mode='night'] .pfm-row.is-main > i {
   background: linear-gradient(150deg, #0a7a4f, #19b87a);
 }
 /* the way out: apart from the rest, in the colour of leaving */
+/* out of a presentation of the demo, back to one's own name */
+.pfm-row.is-back {
+  margin-top: 6px;
+}
 .pfm-row.is-exit {
   margin-top: 6px;
   color: var(--danger);

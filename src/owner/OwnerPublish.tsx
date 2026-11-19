@@ -6,6 +6,7 @@ import { crmItems } from '../data/demo'
 import type { CommunityItem, CrmItem } from '../data/demo'
 import { useStore } from '../store'
 import { Modal } from '../components/ui'
+import { signedIn } from '../auth/session'
 import { CardPhotos } from '../green/PhotoPicker'
 import { commercialBody, commercialSeedIds, isCommercial } from '../crm/categories'
 import { dateHe, ownerActions, ownerLink, usePublishDates, viewersIn } from './ownerLink'
@@ -93,7 +94,7 @@ function OwnerLink({ item, publishedTo }: { item: CrmItem; publishedTo?: string 
   const close = useCallback(() => setOpen(false), [])
   if (item.kind !== 'property' || !publishedTo) return null
   const date = dates[item.id]
-  const url = ownerLink(item, date, CURRENT_BROKER_ID)
+  const url = ownerLink(item, date, CURRENT_BROKER_ID, signedIn ? { name: signedIn.name, title: signedIn.title } : undefined)
 
   const copy = async () => {
     let ok = false

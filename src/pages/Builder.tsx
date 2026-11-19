@@ -18,6 +18,7 @@ import { aiBioText, formatPriceShort, templates, testimonials } from '../data/de
 import type { TemplateId } from '../data/demo'
 import { useStore } from '../store'
 import { EASE, Modal, PageHead } from '../components/ui'
+import { signedIn } from '../auth/session'
 import LandingTemplate from '../templates/LandingTemplate'
 import '../styles/builder.css'
 import '../styles/community.css'
@@ -87,7 +88,17 @@ export default function Builder() {
   // "AI writes my bio": types a prepared Hebrew text. No real AI call in the demo.
   const writeBio = (toneIndex = tone) => {
     window.clearInterval(typer.current)
-    const text = aiBioText[toneIndex % aiBioText.length]
+    // the prepared texts are the example user's ("אני מאיה, 11 שנים בתל אביב"). A real person gets drafts built from
+    // what they typed on this screen, with no invented years, streets or numbers, and without a gender
+    const who = builder.name.trim()
+    const where = builder.area.trim() ? ` ב${builder.area.trim()}` : ''
+    const own = [
+      `${who ? `${who}, ` : ''}תיווך נדל"ן${where}. אצלי כל לקוח מקבל תשובה מהירה וליווי אישי, מהשיחה הראשונה ועד החתימה.`,
+      `קונים, מוכרים או משכירים${where}? שיחה ראשונה קצרה, בלי התחייבות, ומשם מתקדמים בקצב שלכם.`,
+      `${who ? `${who.split(' ')[0]}, ` : ''}תיווך נדל"ן${where}. מחפשים דירה? ספרו לי תקציב ואזור, ואחזור אליכם עם אפשרויות. מוכרים? נדבר על מחיר אמיתי.`,
+    ]
+    const ideas = signedIn ? own : aiBioText
+    const text = ideas[toneIndex % ideas.length]
     let i = 0
     setTyping(true)
     setBuilder({ bio: '' })

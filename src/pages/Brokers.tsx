@@ -6,6 +6,7 @@ import { CURRENT_BROKER_ID, asset } from '../config'
 import { brokers, regions, specialties } from '../data/demo'
 import type { Broker } from '../data/demo'
 import { useStore } from '../store'
+import { signedIn } from '../auth/session'
 import { nameSlots } from '../config/navExtras'
 import { EASE, Modal, PageHead, iniColor, initialsOf } from '../components/ui'
 import type { CSSProperties } from 'react'
@@ -24,6 +25,8 @@ export default function Brokers() {
     const q = query.trim()
     return brokers.filter(
       (b) =>
+        // one of the staff who is not a broker is not listed among the brokers
+        !(signedIn && !signedIn.isBroker && b.id === CURRENT_BROKER_ID) &&
         (!region || b.region === region) &&
         (!specialty || b.specialties.includes(specialty)) &&
         (!q || [b.name, b.area, b.title, ...b.specialties].some((v) => v.includes(q))),

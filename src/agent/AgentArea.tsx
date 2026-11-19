@@ -6,7 +6,8 @@ import { useEffect } from 'react'
 import { useMember } from '../config/member'
 import { OFFICE_NAME } from '../config/office'
 import { TERMS, costOf, priceText, usePick } from '../config/pricing'
-import { firstName, inArea, sampleProfile, slugOf } from './agentData'
+import { emptyProfile, firstName, inArea, sampleProfile, slugOf } from './agentData'
+import { signedIn } from '../auth/session'
 import { useAgent } from './useAgent'
 import AgentWizard from './AgentWizard'
 import ProfilePreview from './ProfilePreview'
@@ -89,14 +90,25 @@ function Gate() {
       </div>
 
       <div className="ag-gate-visual" aria-hidden>
+        {/* a real person sees their own name on the picture of the page, with nothing invented about them */}
         <div className="ag-float">
-          <ProfilePreview profile={sampleProfile} />
+          <ProfilePreview profile={signedIn ? { ...emptyProfile, gender: 'm', name: signedIn.name } : sampleProfile} />
         </div>
-        <div className="ag-serp is-float">
-          <small>{PLATFORM_NAME} › agent › maya-landau</small>
-          <b>מאיה לנדאו, מתווכת נדל"ן בתל אביב והמרכז</b>
-          <span>מלווה לקוחות בתל אביב והמרכז כבר 11 שנים. יוקרה, דירות מגורים ותושבי חוץ.</span>
-        </div>
+        {signedIn ? (
+          <div className="ag-serp is-float" data-serp="mine">
+            <small>
+              {PLATFORM_NAME} › agent › {slugOf(signedIn.name)}
+            </small>
+            <b>{signedIn.name} | תיווך נדל"ן</b>
+            <span>כך הדף שלך יופיע בגוגל, עם האזורים וההתמחויות שלך.</span>
+          </div>
+        ) : (
+          <div className="ag-serp is-float">
+            <small>{PLATFORM_NAME} › agent › maya-landau</small>
+            <b>מאיה לנדאו, מתווכת נדל"ן בתל אביב והמרכז</b>
+            <span>מלווה לקוחות בתל אביב והמרכז כבר 11 שנים. יוקרה, דירות מגורים ותושבי חוץ.</span>
+          </div>
+        )}
       </div>
     </section>
   )

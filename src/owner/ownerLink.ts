@@ -60,14 +60,23 @@ export function usePublishDates() {
 export const OWNER_PATH = '/o/p'
 
 /** What the owner's page shows. Nothing here identifies the owner. */
-export type OwnerView = { title: string; area: string; city: string; rooms: string; sqm?: number; price: number; date: string; image?: string; brokerId: string }
+export type OwnerView = { title: string; area: string; city: string; rooms: string; sqm?: number; price: number; date: string; image?: string; brokerId: string; by?: { name: string; title: string } }
 
-export function ownerLink(item: CrmItem, date: string | undefined, brokerId: string) {
+/**
+ * `by` is the real, signed-in broker who sends the link. The owner opens it on another phone, where nobody is signed
+ * in: without the name in the link the page showed the demo's example user as "the broker who handles the property"
+ * (found 19.11.2026). A broker's own name and title are what they hand the owner anyway.
+ */
+export function ownerLink(item: CrmItem, date: string | undefined, brokerId: string, by?: { name: string; title: string }) {
   // an office or a business property is described by its size, not by rooms
   const commercial = !!item.category && item.category !== 'home'
   const q = new URLSearchParams({ t: item.title, a: item.area, c: item.city, r: commercial ? '' : item.rooms, p: String(item.price), d: date ?? today(), b: brokerId })
   if (commercial && item.sqm) q.set('s', String(item.sqm))
   if (item.image && /^img\/[\w.-]+$/.test(item.image)) q.set('i', item.image)
+  if (by?.name) {
+    q.set('n', by.name)
+    if (by.title) q.set('j', by.title)
+  }
   return `${location.origin}${import.meta.env.BASE_URL.replace(/\/$/, '')}${OWNER_PATH}?${q.toString()}`
 }
 
@@ -86,6 +95,7 @@ export function readOwnerView(q: URLSearchParams): OwnerView | null {
     // only a picture from the demo's own folder
     image: image && /^img\/[\w.-]+$/.test(image) ? image : undefined,
     brokerId: q.get('b') ?? 'b1',
+    by: q.get('n')?.trim() ? { name: q.get('n')!.trim().slice(0, 60), title: (q.get('j') ?? '').trim().slice(0, 80) } : undefined,
   }
 }
 

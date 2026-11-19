@@ -185,11 +185,10 @@ export default function PropertyPage() {
                 {broker.name}
                 {nameSlots.Badge && <nameSlots.Badge brokerId={broker.id} />}
               </strong>
-              <span>
-                {broker.title} · {broker.area}
-              </span>
+              <span>{[broker.title, broker.area].filter(Boolean).join(' · ')}</span>
               <small>
-                {broker.years} שנות ניסיון · פורסם {item.time}
+                {/* a real person's card has no invented years */}
+                {broker.years > 0 ? `${broker.years} שנות ניסיון · ` : ''}פורסם {item.time}
               </small>
             </div>
           </div>
