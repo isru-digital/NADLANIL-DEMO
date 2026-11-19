@@ -24,7 +24,8 @@ const state = (page) =>
       const [r, g, b] = c.match(/[\d.]+/g).map(Number)
       return Math.round(0.2126 * r + 0.7152 * g + 0.0722 * b)
     }
-    const hello = document.querySelector('[data-greeting]')
+    // 19.11.2026: the top of the feed is light; the share line stands where the hello stood
+    const hello = document.querySelector('[data-act="share"]')
     const wl = document.querySelector('[data-welcome]')
     return {
       path: location.pathname.replace(/^\/NADLANIL-DEMO(\/green)?/, '') + location.search,
@@ -69,7 +70,7 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
   await page.goto(green + '/app/community', { waitUntil: 'load' })
   await wait(2000)
   let s = await state(page)
-  check(`${d} the feed opens with the welcome and the rooms`, s.hello && s.rooms.length === 5 && s.rooms[0].on, JSON.stringify(s.rooms))
+  check(`${d} the feed opens with the share line and the rooms`, s.hello && s.rooms.map((r) => r.id).join() === 'all,coop,seeking,referrals,knowledge,more' && s.rooms[0].on, JSON.stringify(s.rooms))
   check(`${d} the old plain title stays for screen readers, out of sight`, s.h1 === 'קהילה' && !s.h1Seen)
   check(`${d} nothing scrolls sideways`, s.ov <= 1, `${s.ov}px`)
   check(`${d} a community member's card does not lead to the landing page (it belongs to the office)`, !s.meLink || d === 'phone')
@@ -99,7 +100,7 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
   await page.reload({ waitUntil: 'load' })
   await wait(2000)
   s = await state(page)
-  check(`${d} at night the hello is light on a dark welcome`, s.helloLum > 190 && s.paperLum < 60, `${s.helloLum} on ${s.paperLum}`)
+  check(`${d} at night the share line is light on a dark top`, s.helloLum > 150 && s.paperLum < 60, `${s.helloLum} on ${s.paperLum}`)
   await page.screenshot({ path: `${out}/${d}-3-night.png` })
 
   // reduced motion: the welcome stands still

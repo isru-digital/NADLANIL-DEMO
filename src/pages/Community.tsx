@@ -158,8 +158,17 @@ export default function Community() {
   // sharing a property or a buyer: pick from the CRM, or add a new one (saved in the CRM and published)
   const [pick, setPick] = useState<'property' | 'buyer' | 'new-buyer' | 'referral' | null>(null)
   const [refCity, setRefCity] = useState('')
-  // the four cards of the welcome: each goes straight to its action
-  const onIntent = (i: Intent) => (i === 'property' ? setPick('property') : i === 'buyer' ? setPick('buyer') : i === 'referral' ? (setRefCity(''), setPick('referral')) : openComposer('knowledge'))
+  // the choices of the share sheet at the top of the feed: each goes straight to the form that was already there
+  const onIntent = (i: Intent) => {
+    if (i === 'property') setPick('property')
+    else if (i === 'buyer') setPick('buyer')
+    else if (i === 'referral') {
+      setRefCity('')
+      setPick('referral')
+    } else if (i === 'learn') openComposer('knowledge')
+    else if (i === 'win') openComposer('wins')
+    else openComposer('posts', i === 'photo')
+  }
   const newProperty = () => (actionSlots.newCard ? actionSlots.newCard() : setPick('property'))
   const openComposer = (topicId?: TopicId, photo?: boolean) =>
     setComposer({ topicId: topicId ?? (topic?.compose ? topic.id : 'posts'), photo })
@@ -189,15 +198,14 @@ export default function Community() {
   ]
 
   return (
-    <div className="fbx-page">
-      {communitySlots.Top && <communitySlots.Top items={scoped} view={view} onView={setView as (v: never) => void} onIntent={onIntent} />}
+    <div className={`fbx-page${communitySlots.Top ? ' is-light' : ''}`}>
       {/* -------------------------------------------------------- top bar */}
       <header className="fbx-top">
         <h1>קהילה</h1>
         <label className="fbx-search">
           <Search />
           <span className="sr-only">חיפוש בקהילה</span>
-          <input type="search" placeholder="חיפוש בקהילה: עיר, מתווך, נכס..." value={query} onChange={(e) => setQuery(e.target.value)} />
+          <input type="search" placeholder="חיפוש: עיר, מתווך, נכס" value={query} onChange={(e) => setQuery(e.target.value)} />
           {query && (
             <button type="button" aria-label="ניקוי חיפוש" onClick={() => setQuery('')}>
               <X />
@@ -265,6 +273,9 @@ export default function Community() {
 
         {/* ------------------------------------------------------ feed */}
         <div className="comm-feed">
+          {/* the green version's top of the feed: the share line and the rooms (Itzik 19.11.2026: light, the first
+              post seen without scrolling) */}
+          {communitySlots.Top && <communitySlots.Top items={scoped} view={view} onView={setView as (v: never) => void} onIntent={onIntent} />}
           {/* "מציאת מתווך בעיר אחרת": the referrals room opens with a search of brokers by city */}
           {topic?.id === 'referrals' && communitySlots.Top && (
             <BrokerFinder
@@ -353,7 +364,8 @@ export default function Community() {
             />
           )}
 
-          {(!topic || topic.compose) && (
+          {/* with the share line at the top (above), this older line would say the same thing twice */}
+          {!communitySlots.Top && (!topic || topic.compose) && (
             <section className="fb composer-pill">
               <div className="composer-row">
                 <Avatar src={me.avatar} name={me.name} size={42} />

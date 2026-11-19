@@ -50,9 +50,11 @@ const look = (page) =>
       barH: bar ? Math.round(r(bar).height) : 0,
       feedBtnH: feed ? Math.round(r(feed.querySelector('.si-go')).height) : 0,
       account: !!document.querySelector('.au-chip'),
-      roomsFirst: (() => {
-        const rooms = document.querySelector('[data-rooms]')
-        return !feed || !rooms || rooms.getBoundingClientRect().top < feed.getBoundingClientRect().top
+      // 19.11.2026: the feed's top is light; the way in is one slim row at the top of its block, above the share line
+      feedH: feed ? Math.round(r(feed).height) : 0,
+      feedFirst: (() => {
+        const share = document.querySelector('[data-act="share"]')
+        return !feed || !share || feed.getBoundingClientRect().bottom <= share.getBoundingClientRect().top + 1
       })(),
       wide: document.documentElement.scrollWidth - document.documentElement.clientWidth,
       dashes: /[\u2013\u2014]/.test(document.body.innerText),
@@ -83,7 +85,7 @@ for (const [dev, vp] of [
     const l = await look(page)
     check(`${tag}: "כניסה" in the top bar`, l.bar && l.barH >= 36, l)
     if (dev === 'desktop') check(`${tag}: a sign-in card in the side menu`, l.side, l)
-    check(`${tag}: a sign-in card in the feed, under the rooms (the rooms stay first)`, l.feed && l.roomsFirst && l.feedBtnH >= 44, l)
+    check(`${tag}: a slim sign-in row at the top of the feed (above the share line), with a button big enough to tap`, l.feed && l.feedFirst && l.feedH <= 72 && l.feedBtnH >= 44, l)
     check(`${tag}: every one of them leads to the code screen`, l.hrefs.length >= 2 && l.hrefs.every((h) => h?.endsWith('/kehila/login')), l.hrefs)
     check(`${tag}: no sideways scroll, no long dashes`, l.wide <= 1 && !l.dashes, l)
     await page.screenshot({ path: `${file}-feed.png` })
