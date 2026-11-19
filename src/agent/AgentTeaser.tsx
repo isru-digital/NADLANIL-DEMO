@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { ArrowLeft, BadgeCheck, Sparkles } from 'lucide-react'
 import { Reveal } from '../components/ui'
 import { areaOptions, emptyProfile, sampleProfile } from './agentData'
-import { signedIn } from '../auth/session'
+import { demo, signedIn } from '../auth/session'
 import ProfilePreview from './ProfilePreview'
 import '../styles/agent.css'
 
@@ -39,9 +39,12 @@ export default function AgentTeaser() {
             <Link to="/join/office" className="btn btn-white btn-lg">
               להצטרפות למשרד <ArrowLeft />
             </Link>
-            <Link to="/agent/demo" className="btn btn-outline-white btn-lg">
-              לראות דף לדוגמה
-            </Link>
+            {/* the sample page is the example user's: offered inside a presentation of the demo only */}
+            {demo && (
+              <Link to="/agent/demo" className="btn btn-outline-white btn-lg">
+                לראות דף לדוגמה
+              </Link>
+            )}
           </div>
           <small className="agt-note">האזור הוא חלק מהמשרד, ונפתח לחברי המשרד. 0% עמלה למשרד.</small>
         </Reveal>
@@ -72,8 +75,9 @@ export default function AgentTeaser() {
             <Sparkles />
           </span>
           <div className="agt-pv" aria-hidden>
-            {/* a signed-in person sees their own name on the picture of the page, never the example user's */}
-            <ProfilePreview profile={signedIn ? { ...emptyProfile, gender: 'm', name: signedIn.name } : sampleProfile} />
+            {/* the example user is on the picture of the page inside a presentation of the demo only. A signed-in
+                person sees their own name there, and a visitor sees the place where a name will be */}
+            <ProfilePreview profile={demo ? sampleProfile : signedIn ? { ...emptyProfile, gender: 'm', name: signedIn.name } : { ...emptyProfile, gender: 'm', areas: sampleProfile.areas, specialties: sampleProfile.specialties }} />
           </div>
         </Reveal>
       </div>

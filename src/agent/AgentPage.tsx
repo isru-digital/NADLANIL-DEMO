@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, Navigate, useParams } from 'react-router-dom'
 import { animate, motion, useInView } from 'framer-motion'
 import { Briefcase, Building2, ChevronDown, Download, Gem, Globe, Heart, Home, KeyRound, Languages, Mail, MapPin, MessageCircle, Phone, Quote, ShieldCheck, Sun, TrendingUp } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -10,6 +10,7 @@ import { useStore } from '../store'
 import { BackButton, DemoTag, EASE, Logo, Reveal } from '../components/ui'
 import { areaLabel, composeAbout, firstName, inArea, joinList, sampleProfile, slugOf, specialtyOptions, styleOptions } from './agentData'
 import type { AgentProfile } from './agentData'
+import { demo, signedIn } from '../auth/session'
 import { useAgent } from './useAgent'
 import AreasMap from './AreasMap'
 import HomeStrip from '../components/HomeStrip'
@@ -131,8 +132,13 @@ export default function AgentPage() {
   const decoded = decodeURIComponent(slug)
   const mine = useAgent().profile
   const isMine = mine.name.trim().length > 1 && slugOf(mine.name) === decoded
-  const p = isMine ? mine : decoded === 'demo' ? sampleProfile : null
+  // the sample page is the example user's (מאיה): it is shown inside a presentation of the demo only (Itzik
+  // 19.11.2026). Anybody else who follows an old link to it lands where their own page is made, or on the home page
+  const sample = decoded === 'demo'
+  const p = isMine ? mine : sample && demo ? sampleProfile : null
   useSeo(p, decoded)
+
+  if (!p && sample) return <Navigate to={signedIn ? '/app/agent' : '/'} replace />
 
   if (!p)
     return (

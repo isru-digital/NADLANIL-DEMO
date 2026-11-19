@@ -7,7 +7,7 @@ import { useMember } from '../config/member'
 import { OFFICE_NAME } from '../config/office'
 import { TERMS, costOf, priceText, usePick } from '../config/pricing'
 import { emptyProfile, firstName, inArea, sampleProfile, slugOf } from './agentData'
-import { signedIn } from '../auth/session'
+import { demo, signedIn } from '../auth/session'
 import { useAgent } from './useAgent'
 import AgentWizard from './AgentWizard'
 import ProfilePreview from './ProfilePreview'
@@ -77,9 +77,12 @@ function Gate() {
           <Link to="/join/office" className="btn btn-gold btn-lg">
             להצטרפות למשרד <ArrowLeft />
           </Link>
-          <Link to="/agent/demo" className="btn btn-ghost btn-lg">
-            לראות דף לדוגמה
-          </Link>
+          {/* the sample page is the example user's: offered inside a presentation of the demo only */}
+          {demo && (
+            <Link to="/agent/demo" className="btn btn-ghost btn-lg">
+              לראות דף לדוגמה
+            </Link>
+          )}
         </div>
         <Link to="/upgrade" className="ag-compare">
           מה כלול במשרד? להשוואת המסלולים <ArrowLeft />
@@ -92,14 +95,14 @@ function Gate() {
       <div className="ag-gate-visual" aria-hidden>
         {/* a real person sees their own name on the picture of the page, with nothing invented about them */}
         <div className="ag-float">
-          <ProfilePreview profile={signedIn ? { ...emptyProfile, gender: 'm', name: signedIn.name } : sampleProfile} />
+          <ProfilePreview profile={signedIn ? { ...emptyProfile, gender: 'm', name: signedIn.name } : demo ? sampleProfile : emptyProfile} />
         </div>
-        {signedIn ? (
+        {signedIn || !demo ? (
           <div className="ag-serp is-float" data-serp="mine">
             <small>
-              {PLATFORM_NAME} › agent › {slugOf(signedIn.name)}
+              {PLATFORM_NAME} › agent › {signedIn ? slugOf(signedIn.name) : '...'}
             </small>
-            <b>{signedIn.name} | תיווך נדל"ן</b>
+            <b>{signedIn ? `${signedIn.name} | ` : ''}תיווך נדל"ן</b>
             <span>כך הדף שלך יופיע בגוגל, עם האזורים וההתמחויות שלך.</span>
           </div>
         ) : (

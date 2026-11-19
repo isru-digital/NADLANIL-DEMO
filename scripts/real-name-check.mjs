@@ -8,7 +8,9 @@
 //  3. the link a real broker sends a property's owner carries the broker's own name (it showed the example user)
 //  4. the example user lives only in a presentation that was opened through /demo, and there is a way out of it.
 //     On a device where somebody is signed in the presentation stays in its own tab
-//  5. whoever is not signed in sees no person's name: the app is locked
+//  5. whoever is not signed in sees no person's name: the app is locked, and the public pages do not carry hers
+//  6. the two sample pages built on the example user, /agent/demo and /o/p with no property in the link, exist
+//     inside a presentation only (Itzik 19.11.2026). Anywhere else they lead away, and nothing links to them
 // Against the LOCAL test server (real sessions, a real approval) and the green dev server; saves screenshots.
 // Usage: node scripts/real-name-check.mjs [outDir]
 import puppeteer from 'puppeteer-core'
@@ -110,6 +112,12 @@ const scan = (page) =>
     })
     return [...new Set(hits)]
   }, HER)
+
+const scanName = (page) => scan(page).then((h) => h.filter((x) => /מאיה|לנדאו|maya/i.test(x)))
+const pathOf = (page) => page.evaluate(() => location.pathname.replace(/^\/NADLANIL-DEMO\/green/, '') || '/')
+const sampleLinks = (page) => page.evaluate(() => document.querySelectorAll('a[href$="/agent/demo"]').length)
+/** A link to the owner's page as the demo makes it, and as a broker's link was before 19.11.2026: no name in it. */
+const BARE_LINK = '/o/p?' + new URLSearchParams({ t: 'דירת 4 חדרים בפתח תקווה', a: 'כפר גנים', c: 'פתח תקווה', r: '4', p: '2650000', d: '2026-11-19', b: 'b1' })
 
 /** Who the app says is here, wherever it says it. */
 const whoIsHere = (page) =>
@@ -274,7 +282,17 @@ for (const [dev, vp] of [
         const tpl = await page.evaluate(() => [...new Set([...document.querySelectorAll('[data-tpl-name]')].map((b) => b.textContent))])
         check(`${t}: the small sample page on the home page carries their own first name`, tpl.length === 1 && tpl[0] === p.name.split(' ')[0], tpl)
       }
+      if (path === '/' || path === '/app/agent') check(`${t}: ${path} does not offer the example user's sample page`, (await sampleLinks(page)) === 0)
     }
+    // ---------------------------------------------------------------- 6. the two sample pages are the demo's
+    await open(page, '/agent/demo')
+    let at = await pathOf(page)
+    hits = await scan(page)
+    check(`${t}: /agent/demo leads to where their own page is made, with nothing of the example user`, at === '/app/agent' && hits.length === 0, { at, hits })
+    await open(page, '/o/p')
+    at = await pathOf(page)
+    hits = await scan(page)
+    check(`${t}: /o/p with no property leads to the community's page, with nothing of the example user`, at === '/kehila' && hits.length === 0, { at, hits })
 
     // ---------------------------------------------------------------- the deal room's look-only picture
     // (a community member has no beta lab in the app; the deal room opens from the home page, "לצפייה בדמו")
@@ -286,7 +304,7 @@ for (const [dev, vp] of [
     })
     await page.waitForSelector('.dr-req', { timeout: 6000 }).catch(() => {})
     await wait(900)
-    const room = await page.evaluate(() => ({ who: document.querySelector('.dr-req .dr-who b')?.textContent.trim(), sub: document.querySelector('.dr-req .dr-who small')?.textContent.trim(), ok: document.querySelector('.dr-ok-a')?.textContent.trim() }))
+    const room = await page.evaluate(() => ({ who: document.querySelector('.dr-req .dr-who > div > b')?.textContent.trim(), sub: document.querySelector('.dr-req .dr-who small')?.textContent.trim(), ok: document.querySelector('.dr-ok-a')?.textContent.trim() }))
     hits = await scan(page)
     check(`${t}: in the deal room's picture "me" is ${p.name}, written without a gender, with nothing of the example user`, room.who === p.name && room.ok === 'אישרת' && !/מתווכת/.test(room.sub ?? '') && hits.length === 0, { room, hits })
     await shot('4-deal-room')
@@ -356,6 +374,20 @@ for (const [dev, vp] of [
     })
     check(`${dev}, /demo: its menu says it is an example account, and has the way out of the presentation`, menu.who === 'demo' && menu.title === 'חשבון לדוגמה' && menu.name === 'מאיה לנדאו' && menu.signIn && !menu.out && menu.leave === 'יציאה מההדגמה', menu)
     await page.screenshot({ path: `${out}/${dev}-demo-menu.png` })
+    await closeAll(page)
+    await open(page, '/agent/demo')
+    const samplePage = await page.evaluate(() => document.querySelector('.agp-hero h1')?.textContent.trim())
+    await page.screenshot({ path: `${out}/${dev}-demo-agent-sample.png` })
+    await open(page, '/o/p')
+    const ownerSample = await page.evaluate(() => ({ foot: document.querySelector('.own-foot')?.textContent ?? '', broker: document.querySelector('[data-broker-name]')?.textContent.trim() }))
+    await open(page, '/app/agent')
+    const offered = await sampleLinks(page)
+    await open(page, '/')
+    const offeredHome = await sampleLinks(page)
+    check(`${dev}, /demo: the two sample pages are there, with the example user, and the demo offers them`, samplePage === 'מאיה לנדאו' && ownerSample.foot.includes('עמוד לדוגמה') && ownerSample.broker === 'מאיה לנדאו' && offered === 1 && offeredHome === 1, { samplePage, ownerSample, offered, offeredHome })
+    await open(page, '/app/community', 1600)
+    await tap(page, '[data-act="open-profile"]')
+    await wait(600)
     await Promise.all([page.waitForNavigation({ waitUntil: 'load' }), tap(page, '[data-act="leave-demo"]')])
     await wait(900)
     const left = await page.evaluate(() => ({ path: location.pathname, mark: localStorage.getItem('nadlanup-demo-v1'), tab: sessionStorage.getItem('nadlanup-demo-v1') }))
@@ -370,6 +402,42 @@ for (const [dev, vp] of [
     await open(page, '/')
     const tpl = await page.evaluate(() => [...new Set([...document.querySelectorAll('[data-tpl-name]')].map((b) => b.textContent))])
     check(`${dev}, a visitor: the small sample page on the home page says "השם שלך"`, tpl.length === 1 && tpl[0] === 'השם שלך', tpl)
+    check(`${dev}, a visitor: the home page does not offer the example user's sample page`, (await sampleLinks(page)) === 0)
+    const named = []
+    for (const path of ['/', '/kehila', '/kehila/join', '/kehila/login', '/join', '/join/office', '/upgrade', '/office', '/about', '/install']) {
+      await open(page, path, 1000)
+      const h = await scanName(page)
+      if (h.length) named.push({ path, h })
+    }
+    check(`${dev}, a visitor: no public page carries the example user's name`, named.length === 0, named)
+    // the deal room's picture on the home page: "me" is nobody by name
+    await open(page, '/', 1500)
+    await page.evaluate(() => {
+      const b = document.querySelector('.op-demo')
+      b?.scrollIntoView({ block: 'center' })
+      b?.click()
+    })
+    await page.waitForSelector('.dr-req', { timeout: 6000 }).catch(() => {})
+    await wait(900)
+    const room = await page.evaluate(() => ({ who: document.querySelector('.dr-req .dr-who > div > b')?.textContent.trim(), ok: document.querySelector('.dr-ok-a')?.textContent.trim(), photo: !!document.querySelector('.dr-req .dr-who img') }))
+    await page.screenshot({ path: `${out}/${dev}-visitor-deal-room.png` })
+    await page.waitForSelector('.dr-go.is-ready', { timeout: 12000 }).catch(() => {})
+    await page.evaluate(() => document.querySelector('.dr-go.is-ready')?.click())
+    await wait(4200)
+    const chat = await page.evaluate(() => [...document.querySelectorAll('.dr-msg')].map((m) => m.textContent))
+    // (her face is still one of the invented brokers' faces in a row on the home page behind the window: her name is nowhere)
+    const roomHits = await scanName(page)
+    check(`${dev}, a visitor: in the deal room's picture "me" has no name and no photo`, room.who === 'מתווך מהקהילה' && room.ok === 'אישרת' && !room.photo && chat[0]?.startsWith('היי, ') && chat[1] === 'מעולה, נגיע יחד.' && roomHits.length === 0, { room, chat, roomHits })
+    // 6. the two sample pages, and a link to the owner's page that names no broker
+    await open(page, '/agent/demo')
+    const a1 = await pathOf(page)
+    await open(page, '/o/p')
+    const a2 = await pathOf(page)
+    check(`${dev}, a visitor: /agent/demo leads to the home page and /o/p with no property to the community's page`, a1 === '/' && a2 === '/kehila', { a1, a2 })
+    await open(page, BARE_LINK)
+    const bare = await page.evaluate(() => ({ card: document.querySelector('.own-card')?.textContent.includes('דירת 4 חדרים בפתח תקווה') ?? false, broker: !!document.querySelector('.own-broker') }))
+    const bareHits = await scan(page)
+    check(`${dev}, a visitor: an owner's link with no broker's name shows the property and names nobody`, bare.card && !bare.broker && bareHits.length === 0, { bare, bareHits })
     await ctx.close()
   }
 

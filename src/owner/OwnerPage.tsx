@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import { BadgeCheck, CalendarDays, Lock, MapPin, Users } from 'lucide-react'
 import { asset } from '../config'
 import { COMMUNITY_HOME, COMMUNITY_NAME } from '../config/community'
@@ -7,6 +7,7 @@ import { brokerById, formatPriceShort } from '../data/demo'
 import { Avatar, DemoTag } from '../components/ui'
 import CommunityBrand from '../community/CommunityBrand'
 import { dateHe, readOwnerView, viewersIn } from './ownerLink'
+import { demo } from '../auth/session'
 import type { OwnerView } from './ownerLink'
 import '../styles/owner.css'
 
@@ -21,8 +22,9 @@ export default function OwnerPage() {
   const [q] = useSearchParams()
   const read = readOwnerView(q)
   const v = read ?? { ...sample, date: new Date().toISOString().slice(0, 10) }
-  // a real broker's link carries their own name; only a link of the demo falls back to an invented broker
-  const broker = v.by ? { name: v.by.name, title: v.by.title, avatar: '' } : (brokerById(v.brokerId) ?? brokerById('b1'))
+  // a real broker's link carries their own name. A link without one is the demo's (or was sent before 19.11.2026):
+  // its invented broker is shown inside a presentation of the demo only, and anywhere else the page names no broker
+  const broker = v.by ? { name: v.by.name, title: v.by.title, avatar: '' } : demo ? (brokerById(v.brokerId) ?? brokerById('b1')) : null
 
   useEffect(() => {
     const prev = document.title
@@ -32,6 +34,9 @@ export default function OwnerPage() {
       document.title = prev
     }
   }, [])
+
+  // the page with no property in its link is a sample, with the example user as its broker: inside the demo only
+  if (!read && !demo) return <Navigate to={COMMUNITY_HOME} replace />
 
   return (
     <div className="own">
@@ -102,14 +107,16 @@ export default function OwnerPage() {
           </span>
         </p>
 
-        <div className="own-broker">
-          <Avatar src={broker.avatar} name={broker.name} size={48} ring />
-          <div>
-            <small>המתווך שמלווה את הנכס</small>
-            <b data-broker-name>{broker.name}</b>
-            {broker.title && <span>{broker.title}</span>}
+        {broker && (
+          <div className="own-broker">
+            <Avatar src={broker.avatar} name={broker.name} size={48} ring />
+            <div>
+              <small>המתווך שמלווה את הנכס</small>
+              <b data-broker-name>{broker.name}</b>
+              {broker.title && <span>{broker.title}</span>}
+            </div>
           </div>
-        </div>
+        )}
 
         <p className="own-foot">{read ? 'עמוד הדגמה. הנתונים בדמו מומצאים.' : 'עמוד לדוגמה: כך ייראה העמוד שבעל הנכס מקבל. הנתונים מומצאים.'}</p>
       </main>

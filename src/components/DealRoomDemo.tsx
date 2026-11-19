@@ -8,7 +8,7 @@ import { brokers, formatPriceShort } from '../data/demo'
 import { Avatar, EASE } from './ui'
 import { lockScroll } from '../lib/scrollLock'
 import { labSlots } from '../config/navExtras'
-import { signedIn } from '../auth/session'
+import { demo, signedIn } from '../auth/session'
 import '../styles/deal-demo.css'
 
 /**
@@ -18,13 +18,15 @@ import '../styles/deal-demo.css'
  * Nothing here is interactive beyond moving between the two scenes; it is a picture of where the product is going.
  */
 
-// the first of the two is "me" in the scene: the demo's example user, or the real person who is signed in
-// (auth/profile.ts). What is said about a real person is written without a gender and without an invented city.
-const maya = brokers[0]
+// the first of the two is "me" in the scene. Inside a presentation of the demo it is the example user (מאיה); for
+// a real person who is signed in it is them (auth/profile.ts made brokers[0] theirs); a visitor, who has no name,
+// sees no person's name there (Itzik 19.11.2026). Outside the demo nothing is written with a gender or a city.
 const yonatan = brokers[1]
 const first = (name: string) => name.split(' ')[0]
-const mineSub = () => (signedIn ? [maya.title, maya.area].filter(Boolean).join(', ') : 'מתווכת, תל אביב')
-const mineOk = () => (signedIn ? 'אישרת' : `${first(maya.name)} אישרה`)
+const VISITOR = 'מתווך מהקהילה'
+const maya = demo || signedIn ? brokers[0] : { ...brokers[0], name: VISITOR, avatar: '' }
+const mineSub = () => (demo ? 'מתווכת, תל אביב' : signedIn ? [maya.title, maya.area].filter(Boolean).join(', ') : 'הבקשה שלך')
+const mineOk = () => (demo ? `${first(maya.name)} אישרה` : 'אישרת')
 
 // the sparks of the "match" burst: positions are worked out once
 const sparks = Array.from({ length: 16 }, (_, i) => {
@@ -56,7 +58,7 @@ function MatchScene({ matched }: { matched: boolean }) {
       <div className="dr-card dr-req">
         <span className="dr-kicker">בקשת חיפוש</span>
         <div className="dr-who">
-          <Avatar src={maya.avatar} name="" size={40} ring />
+          <Avatar src={maya.avatar} name={maya.avatar ? '' : maya.name} size={40} ring />
           <div>
             <b>{maya.name}</b>
             <small>{mineSub()}</small>
@@ -136,8 +138,8 @@ const steps = [
 ] as const
 
 const chat = (): { mine?: boolean; text: string }[] => [
-  { text: `היי ${first(maya.name)}, הלקוחה מוזמנת לביקור מחר ב-17:00?` },
-  { mine: true, text: signedIn ? 'מעולה, נגיע יחד.' : 'מעולה, אני מביאה אותה.' },
+  { text: `היי${demo || signedIn ? ` ${first(maya.name)}` : ''}, הלקוחה מוזמנת לביקור מחר ב-17:00?` },
+  { mine: true, text: demo ? 'מעולה, אני מביאה אותה.' : 'מעולה, נגיע יחד.' },
   { text: 'נהדר. החלוקה נשארת כמו שאישרנו.' },
 ]
 
@@ -147,7 +149,7 @@ function RoomScene() {
       <div className="dr-panel">
         <div className="dr-room-head">
           <span className="dr-pair">
-            <Avatar src={maya.avatar} name="" size={46} ring />
+            <Avatar src={maya.avatar} name={maya.avatar ? '' : maya.name} size={46} ring />
             <Avatar src={yonatan.avatar} name="" size={46} ring />
           </span>
           <div>
@@ -205,7 +207,7 @@ function RoomScene() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               transition={{ duration: 0.5, ease: EASE, delay: 1.1 + i * 1.0 }}
             >
-              <Avatar src={(m.mine ? maya : yonatan).avatar} name="" size={28} />
+              <Avatar src={(m.mine ? maya : yonatan).avatar} name={m.mine && !maya.avatar ? maya.name : ''} size={28} />
               <span className="dr-msg">{m.text}</span>
             </motion.div>
           ))}
