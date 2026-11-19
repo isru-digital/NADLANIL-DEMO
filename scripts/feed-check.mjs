@@ -32,8 +32,9 @@ const state = (page) =>
       hello: !!hello,
       rooms: [...document.querySelectorAll('[data-room]')].map((r) => ({ id: r.dataset.room, on: r.getAttribute('aria-pressed') === 'true' })),
       rail: Object.fromEntries([...document.querySelectorAll('.comm-rail .rail-btn')].map((b) => [b.querySelector('.rail-label')?.textContent.trim(), Number(b.querySelector('.rail-count')?.textContent)])),
-      h1: document.querySelector('.fbx-top h1')?.textContent.trim(),
-      h1Seen: (document.querySelector('.fbx-top h1')?.getBoundingClientRect().width ?? 0) > 2,
+      // 19.11.2026: the header with the search field left the page; the title for screen readers stayed
+      h1: document.querySelector('.fbx-page > h1')?.textContent.trim(),
+      h1Seen: (document.querySelector('.fbx-page > h1')?.getBoundingClientRect().width ?? 0) > 2,
       cards: document.querySelectorAll('.fb.ci').length,
       topics: [...new Set([...document.querySelectorAll('.fb.ci .fb-topic')].map((t) => t.textContent.trim()))],
       ov: document.documentElement.scrollWidth - document.documentElement.clientWidth,

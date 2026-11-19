@@ -70,6 +70,9 @@ export function UpgradeBanner() {
   const { pathname } = useLocation()
   // the office's own screens and the locked tools already carry this call
   if (isOffice || /^\/app\/(office|builder|folder|agent)/.test(pathname)) return null
+  // the feed's top is kept for the posts (Itzik 19.11.2026): there the call is in the menu that the broker's picture
+  // opens, and once, quietly, among the posts (UpgradePost below)
+  if (pathname === COMMUNITY_FEED) return null
   // a small, quiet strip: one line, never louder than the screen under it
   return (
     <Link to={OFFICE_PAGE} className="upb is-slim">
@@ -80,6 +83,27 @@ export function UpgradeBanner() {
       </span>
       <em>
         לפרטים <ArrowLeft />
+      </em>
+    </Link>
+  )
+}
+
+/** The same call as one quiet post inside the feed, once: marked as the office's own word, never a broker's post. */
+export function UpgradePost() {
+  const { isOffice } = useMember()
+  if (isOffice) return null
+  return (
+    <Link to={OFFICE_PAGE} className="upost" data-upgrade="post">
+      <i aria-hidden>
+        <BadgeCheck />
+      </i>
+      <span>
+        <small>מהמשרד</small>
+        <b>{UPGRADE_LABEL}</b>
+        <span>0% עמלה למשרד, 100% עמלה למתווך</span>
+      </span>
+      <em>
+        לפרטים <ArrowLeft aria-hidden />
       </em>
     </Link>
   )

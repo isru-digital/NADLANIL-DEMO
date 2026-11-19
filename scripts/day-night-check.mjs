@@ -172,7 +172,9 @@ for (const t of ['12:00', '22:00']) {
     // on the other pages it is still the float in the corner
     const s = await page.evaluate(() => {
       const inApp = location.pathname.includes('/app')
-      const el = inApp ? document.querySelector('.dn-compact') : document.querySelector('.dn')
+      // 19.11.2026: for a community member the choice is in the menu that the broker's picture opens, so inside the
+      // app the thing to reach is that picture, in the top bar; the office member's view keeps the small button
+      const el = inApp ? [...document.querySelectorAll('[data-act="open-profile"], .dn-compact')].find((e) => e.getBoundingClientRect().width > 0) : document.querySelector('.dn')
       const r = el?.getBoundingClientRect()
       const nav = document.querySelector('.bottom-nav')?.getBoundingClientRect()
       const bar = document.querySelector('.topbar')?.getBoundingClientRect()
@@ -184,10 +186,26 @@ for (const t of ['12:00', '22:00']) {
         clear: !nav || nav.height === 0 || (r && r.bottom <= nav.top + 1),
         inBar: !inApp || (!!bar && !!r && r.top >= bar.top - 1 && r.bottom <= bar.bottom + 1),
         floatHidden: !inApp || !float || getComputedStyle(float).display === 'none',
+        viaMenu: inApp && !!el && el.matches('[data-act="open-profile"]'),
         h: r ? Math.round(inApp ? r.height : document.querySelector('.dn button').getBoundingClientRect().height) : 0,
       }
     })
-    check(`phone, ${t}, ${path}: the switch is on screen (inside the app: in the top bar, no float over the content), and nothing scrolls sideways`, s.ov <= 1 && s.in && s.clear && s.inBar && s.floatHidden && s.h >= 36, JSON.stringify(s))
+    check(`phone, ${t}, ${path}: the switch is on screen (inside the app: reached from the top bar, no float over the content), and nothing scrolls sideways`, s.ov <= 1 && s.in && s.clear && s.inBar && s.floatHidden && s.h >= 36, JSON.stringify(s))
+    // through the menu: the picture opens it, and "כהה" / "בהיר" there change the page
+    if (s.viaMenu && path === '/app/community') {
+      await page.evaluate(() => [...document.querySelectorAll('[data-act="open-profile"]')].find((e) => e.getBoundingClientRect().width > 0).click())
+      await page.waitForSelector('[data-look]', { visible: true, timeout: 4000 })
+      const was = await page.evaluate(() => document.documentElement.dataset.mode)
+      const to = was === 'night' ? 'day' : 'night'
+      await page.evaluate((m) => document.querySelector(`[data-look] [data-mode="${m}"]`).click(), to)
+      await wait(400)
+      const now = await page.evaluate(() => ({ mode: document.documentElement.dataset.mode, h: Math.round(document.querySelector('[data-look] button').getBoundingClientRect().height) }))
+      check(`phone, ${t}, ${path}: the profile menu switches between light and dark (buttons of 44px)`, now.mode === to && now.h >= 44, { was, now })
+      await page.evaluate(() => document.querySelector('[data-look] [data-mode="auto"]').click())
+      await wait(300)
+      await page.keyboard.press('Escape')
+      await wait(400)
+    }
   }
   await page.screenshot({ path: `${out}/dn-phone-${t === '12:00' ? 'day' : 'night'}.png` })
   await page.close()

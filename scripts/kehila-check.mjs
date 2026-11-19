@@ -80,16 +80,18 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
 
   // ---- 3. the way to the office from inside the community
   const banner = await page.evaluate(() => {
-    const a = document.querySelector('.upb')
+    // 19.11.2026: the strip left the top of the feed (every line there pushes the posts down); the same call is one
+    // quiet post among the posts, and a line of the menu that the broker's picture opens (scripts/top-bar-check.mjs)
+    const a = document.querySelector('[data-upgrade="post"]')
     const r = a?.getBoundingClientRect()
-    return a ? { text: a.textContent.replace(/\s+/g, ' ').trim(), to: a.pathname, top: Math.round(r.top), h: Math.round(r.height), inside: r.left >= 0 && r.right <= innerWidth } : null
+    return a ? { text: a.textContent.replace(/\s+/g, ' ').trim(), to: a.pathname, top: Math.round(r.top), h: Math.round(r.height), inside: r.left >= 0 && r.right <= innerWidth, strip: !!document.querySelector('.upb'), n: document.querySelectorAll('[data-upgrade="post"]').length } : null
   })
-  check(`${d} the feed has a clear "שדרג למשרד NadlanUP" strip, on the first screen`, !!banner && banner.text.includes('שדרג למשרד NadlanUP') && banner.top < 400 && banner.inside && banner.h >= 44, JSON.stringify(banner))
+  check(`${d} the feed has "שדרג למשרד NadlanUP" as one quiet post among the posts, and no strip at its top`, !!banner && banner.text.includes('שדרג למשרד NadlanUP') && banner.n === 1 && !banner.strip && banner.inside && banner.h >= 44, JSON.stringify(banner))
   check(`${d} nothing scrolls sideways in the feed`, (await overflow(page)) <= 1)
   await shot(page, `${d}-2-feed`)
-  await page.evaluate(() => document.querySelector('.upb')?.click())
+  await page.evaluate(() => document.querySelector('[data-upgrade="post"]')?.click())
   await wait(1700)
-  check(`${d} the strip leads to the office's page`, (await path(page)) === '/app/office', await path(page))
+  check(`${d} the post leads to the office's page`, (await path(page)) === '/app/office', await path(page))
   check(`${d} the office's page shows the fee from 549`, (await text(page)).includes('החל מ-549 ₪ + מע"מ לחודש'))
 
   // ---- 4. the two tools that belong to the office

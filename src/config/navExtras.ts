@@ -128,6 +128,8 @@ export function registerCrm(slots: typeof crmSlots) {
  */
 export const communitySlots: {
   Top?: ComponentType<{ items: import('../data/demo').CommunityItem[]; view: string; onView: (v: never) => void; onIntent?: (i: 'property' | 'buyer' | 'referral' | 'learn') => void }>
+  /** one quiet post of the office inside the feed, shown once (the upgrade call, moved off the top of the page) */
+  Promo?: ComponentType
 } = {}
 export function registerCommunity(slots: typeof communitySlots) {
   Object.assign(communitySlots, slots)

@@ -30,6 +30,7 @@ import { brokerById, brokers, cities, fitsSearch, formatPriceShort, roomsLabel }
 import type { CommunityItem } from '../data/demo'
 import { useStore } from '../store'
 import { actionSlots, communitySlots } from '../config/navExtras'
+import FeedSearch from '../community/FeedSearch'
 import { Avatar, EASE, Modal } from '../components/ui'
 import CommunityCard from '../components/CommunityCard'
 import { BuyerPicker, PropertyPicker, ReferralSheet } from '../community/PublishPickers'
@@ -94,6 +95,18 @@ export default function Community() {
   useEffect(() => setFilter(NO_FILTER), [view])
   const [citiesOpen, setCitiesOpen] = useState(false)
   const [noticesOpen, setNoticesOpen] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
+  // the search and the bell are icons of the app's top bar now (community/TopActions.tsx): they come here with
+  // ?open=search or ?open=notices, from this screen or from any other
+  const ask = params.get('open')
+  useEffect(() => {
+    if (!ask) return
+    if (ask === 'search') setSearchOpen(true)
+    if (ask === 'notices') setNoticesOpen(true)
+    const next = new URLSearchParams(params)
+    next.delete('open')
+    setParams(next, { replace: true })
+  }, [ask]) // eslint-disable-line react-hooks/exhaustive-deps
   const [composer, setComposer] = useState<{ topicId: TopicId; photo?: boolean } | null>(null)
   const [story, setStory] = useState<number | null>(null)
   const unread = notices.filter((n) => !n.read).length
@@ -110,15 +123,11 @@ export default function Community() {
 
   const scoped = useMemo(() => items.filter(inCities), [items, myCities]) // eslint-disable-line react-hooks/exhaustive-deps
   const q = query.trim()
-  const visible = scoped.filter(
-    (it) =>
-      (view === 'all' || it.topicId === view) &&
-      (!filterable || passes(it, filter)) &&
-      (!q ||
-        [it.title ?? '', it.body, it.city, brokerById(it.authorId).name, it.property?.area ?? '', ...(it.search?.wants ?? [])].some((v) =>
-          v.includes(q),
-        )),
-  )
+  const hasWords = (it: CommunityItem) =>
+    !q || [it.title ?? '', it.body, it.city, brokerById(it.authorId).name, it.property?.area ?? '', ...(it.search?.wants ?? [])].some((v) => v.includes(q))
+  const visible = scoped.filter((it) => (view === 'all' || it.topicId === view) && (!filterable || passes(it, filter)) && hasWords(it))
+  // the search screen looks in every room
+  const found = scoped.filter(hasWords)
 
   // which posts fit something of mine
   const myProperties = items.filter((it) => it.authorId === me.id && it.property)
@@ -200,6 +209,10 @@ export default function Community() {
   return (
     <div className={`fbx-page${communitySlots.Top ? ' is-light' : ''}`}>
       {/* -------------------------------------------------------- top bar */}
+      {/* In the green version these three moved off the page (Itzik 19.11.2026): the search and the cities are the
+          search screen, behind the search icon of the app's top bar, and the bell is an icon there too. */}
+      {communitySlots.Top && <h1 className="sr-only">קהילה</h1>}
+      {!communitySlots.Top && (
       <header className="fbx-top">
         <h1>קהילה</h1>
         <label className="fbx-search">
@@ -224,6 +237,7 @@ export default function Community() {
           </button>
         </div>
       </header>
+      )}
 
       <div className="fbx">
         {/* ---------------------------------------------- start column */}
@@ -430,6 +444,8 @@ export default function Community() {
                 >
                   <CommunityCard item={it} match={matchFor(it)} />
                 </motion.div>,
+                // once, after the fourth post of "הכול": the office's quiet post (it left the top of the page)
+                ...(communitySlots.Promo && view === 'all' && !q && i === 3 && visible.length > 4 ? [<communitySlots.Promo key="promo" />] : []),
                 // now and then, between the posts, one short line on what sharing brings
                 ...(communitySlots.Top && i % 5 === 2 && i < visible.length - 1
                   ? [
@@ -570,6 +586,31 @@ export default function Community() {
       <PropertyPicker open={pick === 'property'} onClose={() => setPick(null)} />
       <ReferralSheet open={pick === 'referral'} initialCity={refCity} onClose={() => setPick(null)} />
       <BuyerPicker open={pick === 'buyer' || pick === 'new-buyer'} startNew={pick === 'new-buyer'} onClose={() => setPick(null)} />
+
+      {/* ------------------------------------------------- the search screen (the green version) */}
+      {communitySlots.Top && (
+        <FeedSearch
+          open={searchOpen}
+          onClose={() => setSearchOpen(false)}
+          query={query}
+          onQuery={setQuery}
+          cities={cities}
+          mine={myCities}
+          countIn={(c) => items.filter((it) => it.city === c).length}
+          onCity={toggleCity}
+          onClearCities={() => setMyCities([])}
+          found={found}
+          onPick={(it) => {
+            setSearchOpen(false)
+            focus(it.topicId, it.id)
+          }}
+          onApply={() => {
+            setSearchOpen(false)
+            // what was found is from every room, so the feed shows every room
+            if ((q || myCities.length > 0) && view !== 'all') setView('all')
+          }}
+        />
+      )}
 
       {/* ------------------------------------------------- cities picker */}
       <Modal

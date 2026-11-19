@@ -13,7 +13,7 @@ import DayNightSwitch, { DayNightCompact } from './components/DayNightSwitch'
 import { PLATFORM_NAME } from './config'
 import { COMMUNITY_HOME, COMMUNITY_JOIN } from './config/community'
 import CommunityHome from './community/CommunityHome'
-import { AppIndex, DemoFoot, OfficeOnly, ShellBrand, UpgradeBanner, useCommunityNav, useQuietShell } from './community/CommunityShell'
+import { AppIndex, DemoFoot, OfficeOnly, ShellBrand, UpgradeBanner, UpgradePost, useCommunityNav, useQuietShell } from './community/CommunityShell'
 import HomeGreen from './pages/HomeGreen'
 import AgentArea from './agent/AgentArea'
 import AgentPage from './agent/AgentPage'
@@ -36,7 +36,7 @@ import InstallGuide from './pwa/InstallGuide'
 import { SignInCard } from './auth/SignInPrompt'
 import GetApp from './pwa/GetApp'
 import { startApp } from './pwa/pwa'
-import { memberActions } from './config/member'
+import { memberActions, useMember } from './config/member'
 import { agentActions } from './agent/useAgent'
 import { registerActions, registerCommunity, registerCrm, registerLab, registerNames, registerNav, registerReset, registerShell } from './config/navExtras'
 import ClientsTable from './crm/ClientsTable'
@@ -100,7 +100,10 @@ registerShell({ useNav: useCommunityNav, brand: ShellBrand, banner: UpgradeBanne
 // a community member sees a live community: no beta lab, demo tags or reset inside; one small demo line at the foot
 registerShell({ useQuiet: useQuietShell, foot: DemoFoot })
 // on a phone inside the app, the day / night switch is a small button in the top bar, not a float over the content
-registerShell({ topEnd: DayNightCompact })
+// day / night is in the menu that the broker's picture opens (19.11.2026); the office member's view of the demo has
+// no such menu, so there the small button stays
+registerShell({ topEnd: () => (useMember().isOffice ? <DayNightCompact /> : null) })
+registerCommunity({ Promo: UpgradePost })
 // in the menu: the way in for whoever is not signed in (the app on a phone has no address bar to type it), and the
 // way to the install guide for whoever is not in the installed app
 registerShell({

@@ -186,7 +186,7 @@ export default function AppShell() {
         </div>
       </aside>
 
-      <header className={`topbar${Bar ? ' has-bar' : ''}`}>
+      <header className={`topbar${Bar ? ' has-bar' : ''}`} data-root={nav.some((n) => n.to === location.pathname) || location.pathname === '/app' ? '' : undefined}>
         <div className="topbar-start">
           <BackButton fallback="/" className="is-icon" />
           {Brand ? (

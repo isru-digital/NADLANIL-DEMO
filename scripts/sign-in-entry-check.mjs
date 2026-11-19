@@ -38,7 +38,9 @@ const look = (page) =>
     }
     const at = (sel) => [...document.querySelectorAll(sel)].find(seen)
     const href = (el) => (el ? (el.matches('a') ? el : el.querySelector('a'))?.getAttribute('href') : null)
-    const bar = at('[data-signin="bar"]')
+    // 19.11.2026: the "כניסה" button took a row of its own in the top bar; it is in the menu that the broker's
+    // picture opens now. Here: the picture is there to open it (the menu itself is opened further down).
+    const bar = at('[data-act="open-profile"]')
     const side = at('[data-signin="side"]')
     const feed = at('[data-signin="feed"]')
     const r = (el) => el?.getBoundingClientRect()
@@ -46,10 +48,11 @@ const look = (page) =>
       bar: !!bar,
       side: !!side,
       feed: !!feed,
-      hrefs: [bar, side, feed].filter(Boolean).map(href),
+      hrefs: [side, feed].filter(Boolean).map(href),
       barH: bar ? Math.round(r(bar).height) : 0,
       feedBtnH: feed ? Math.round(r(feed.querySelector('.si-go')).height) : 0,
-      account: !!document.querySelector('.au-chip'),
+      account: /החשבון של/.test(bar?.getAttribute('aria-label') ?? ''),
+      chip: [...document.querySelectorAll('.au-chip, .si-chip')].filter(seen).length,
       // 19.11.2026: the feed's top is light; the way in is one slim row at the top of its block, above the share line
       feedH: feed ? Math.round(r(feed).height) : 0,
       feedFirst: (() => {
@@ -83,10 +86,21 @@ for (const [dev, vp] of [
     await page.waitForSelector('[data-welcome]', { timeout: 15000 })
     await wait(900)
     const l = await look(page)
-    check(`${tag}: "כניסה" in the top bar`, l.bar && l.barH >= 36, l)
+    check(`${tag}: the broker's picture is in the top bar (44px), and no "כניסה" button takes a row there`, l.bar && l.barH >= 44 && l.chip === 0, l)
+    await page.evaluate(() => [...document.querySelectorAll('[data-act="open-profile"]')].find((e) => e.getBoundingClientRect().width > 0).click())
+    await page.waitForSelector('[data-profile-menu]', { visible: true, timeout: 4000 })
+    await wait(500)
+    const inMenu = await page.evaluate(() => {
+      const a = document.querySelector('[data-profile-menu] [data-signin="menu"]')
+      return a ? { href: a.getAttribute('href'), text: a.querySelector('b')?.textContent, h: Math.round(a.getBoundingClientRect().height), first: a.previousElementSibling?.classList.contains('pfm-who') } : null
+    })
+    check(`${tag}: "כניסה לחשבון" is the first line of the menu that the picture opens, to the code screen`, !!inMenu && inMenu.href?.endsWith('/kehila/login') && inMenu.text === 'כניסה לחשבון' && inMenu.h >= 44 && inMenu.first, inMenu)
+    if (mode === 'day') await page.screenshot({ path: `${file}-menu.png` })
+    await page.keyboard.press('Escape')
+    await wait(450)
     if (dev === 'desktop') check(`${tag}: a sign-in card in the side menu`, l.side, l)
     check(`${tag}: a slim sign-in row at the top of the feed (above the share line), with a button big enough to tap`, l.feed && l.feedFirst && l.feedH <= 72 && l.feedBtnH >= 44, l)
-    check(`${tag}: every one of them leads to the code screen`, l.hrefs.length >= 2 && l.hrefs.every((h) => h?.endsWith('/kehila/login')), l.hrefs)
+    check(`${tag}: every one of them leads to the code screen`, l.hrefs.length >= (dev === 'desktop' ? 2 : 1) && l.hrefs.every((h) => h?.endsWith('/kehila/login')), l.hrefs)
     check(`${tag}: no sideways scroll, no long dashes`, l.wide <= 1 && !l.dashes, l)
     await page.screenshot({ path: `${file}-feed.png` })
 
@@ -137,7 +151,13 @@ for (const [dev, vp] of [
   await page.waitForSelector('[data-welcome]', { timeout: 15000 })
   await wait(1200)
   const l = await look(page)
-  check(`signed in, ${dev}: no "כניסה" anywhere, and the account chip is there instead`, !l.bar && !l.side && !l.feed && l.account, l)
+  check(`signed in, ${dev}: no "כניסה" in the menu or the feed; the picture in the top bar stands for the account`, l.bar && !l.side && !l.feed && l.account && l.chip === 0, l)
+  await page.evaluate(() => [...document.querySelectorAll('[data-act="open-profile"]')].find((e) => e.getBoundingClientRect().width > 0).click())
+  await page.waitForSelector('[data-profile-menu]', { visible: true, timeout: 4000 })
+  const signedMenu = await page.evaluate(() => ({ signin: !!document.querySelector('[data-profile-menu] [data-signin]'), exit: !!document.querySelector('[data-profile-menu] [data-act="sign-out"]') }))
+  check(`signed in, ${dev}: the profile menu has "יציאה" and no "כניסה"`, !signedMenu.signin && signedMenu.exit, signedMenu)
+  await page.keyboard.press('Escape')
+  await wait(450)
   if (dev === 'phone') {
     await page.evaluate(() => [...document.querySelectorAll('.bottom-nav .bottom-link')].at(-1).click())
     await page.waitForSelector('.more-sheet', { timeout: 4000 })

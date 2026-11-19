@@ -152,7 +152,8 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
   t = await text(page)
   const inside = await page.evaluate(() => ({
     feed: !!document.querySelector('.fbx-page'),
-    chip: document.querySelector('.au-chip-name')?.textContent.trim() ?? null,
+    // 19.11.2026: the name with "יציאה" is in the menu that the broker's picture opens; the picture carries the name
+    chip: ([...document.querySelectorAll('[data-act="open-profile"]')].find((e) => e.getBoundingClientRect().width > 0)?.getAttribute('aria-label') ?? '').replace(/^החשבון של /, '') || null,
     demoSwitch: !!document.querySelector('.ms'),
     resetTab: !!document.querySelector('.dreset'),
     me: document.querySelector('.me-card .me-body strong')?.textContent.trim() ?? document.querySelector('.side-user strong')?.textContent.trim() ?? null,
@@ -189,11 +190,11 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
   // ---------------------------------------------------------------- 7. out, and in again with a new link
   await page.goto(green + '/app/community', { waitUntil: 'load' })
   await wait(1500)
-  if (phone) {
-    await page.evaluate(() => document.querySelector('.topbar .au-chip button, .au-chip button')?.click())
-  } else {
-    await page.evaluate(() => document.querySelector('.au-chip button')?.click())
-  }
+  // the way out: the picture in the top bar, then "יציאה" at the foot of its menu
+  await page.evaluate(() => [...document.querySelectorAll('[data-act="open-profile"]')].find((e) => e.getBoundingClientRect().width > 0)?.click())
+  await page.waitForSelector('[data-profile-menu] [data-act="sign-out"]', { visible: true, timeout: 5000 })
+  await wait(400)
+  await page.evaluate(() => document.querySelector('[data-profile-menu] [data-act="sign-out"]').click())
   await page.waitForFunction(() => location.pathname.endsWith('/kehila'), { timeout: 15000 })
   await page.goto(green + '/app/community', { waitUntil: 'load' })
   await wait(1000)

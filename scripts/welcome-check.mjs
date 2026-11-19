@@ -164,13 +164,10 @@ for (const [tag, vp] of [
   })
   check(`${tag}: nothing floats over the share line and the rooms`, !cover.covered, cover)
   if (phone) {
-    const before = await page.evaluate(() => document.documentElement.dataset.mode)
-    await page.click('.dn-compact')
-    await wait(400)
-    const after = await page.evaluate(() => document.documentElement.dataset.mode)
-    check('phone: the small button in the top bar switches between light and dark', cover.compact && before !== after, { before, after })
-    await page.click('.dn-compact')
-    await wait(300)
+    // 19.11.2026: light or dark is chosen in the menu that the broker's picture opens (scripts/top-bar-check.mjs
+    // walks it); nothing of it is left in the top bar or floating over the feed
+    const sw = await page.evaluate(() => [...document.querySelectorAll('.dn, .dn-compact')].filter((e) => e.getBoundingClientRect().width > 0).length)
+    check('phone: no day / night switch in the top bar or over the feed (it is in the profile menu)', sw === 0 && !cover.compact, { sw, compact: cover.compact })
   } else {
     check('desktop: the profile card says "0% עמלה למשרד" (no "גזירות")', cover.tagline.some((t) => t.replace(/\s/g, '') === '0%עמלהלמשרד') && !cover.old, cover.tagline)
   }

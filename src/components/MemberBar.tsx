@@ -10,8 +10,8 @@ import { Modal } from './ui'
 import { labItems } from './BetaLab'
 import MemberSwitch from './MemberSwitch'
 import { AccountChip } from '../auth/Access'
-import { SignInChip } from '../auth/SignInPrompt'
-import { demo, session } from '../auth/session'
+import TopActions from '../community/TopActions'
+import { demo } from '../auth/session'
 import '../styles/tiers.css'
 
 /**
@@ -27,8 +27,9 @@ export default function MemberBar() {
 
   // a community member sees the community, not the demo's controls: no wallet of credits and no view switch here
   // (the view switch lives in the small line at the foot of the page). A signed-in broker sees who is signed in.
-  // Whoever is not signed in (the presentation, or the app on a phone before signing in) gets "כניסה" here instead.
-  if (!isOffice) return !session ? <SignInChip /> : demo ? null : <AccountChip />
+  // 19.11.2026: the name with "יציאה" (and "כניסה" for whoever is not signed in) took a row of their own at the top;
+  // they are in the menu that the broker's picture opens now, next to the search and the bell (TopActions).
+  if (!isOffice) return <TopActions />
 
   return (
     <div className="mb">
