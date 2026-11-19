@@ -227,6 +227,37 @@ for (const [tag, vp] of [
   check(`${tag}: the referral is published for באר שבע, and the seller is saved in the CRM`, !!ref.it && ref.it.side === 'seller' && /באר שבע/.test(ref.it.title) && ref.cl?.type === 'seller' && /topic=referrals/.test(ref.url) && /נשמרה ב-CRM/.test(ref.toast ?? ''), ref)
   check(`${tag}: the referral carries no name and no phone`, !!ref.it && !ref.it.json.includes('יוסי') && !ref.it.json.includes('0190'), ref.it?.title)
 
+  // ---- the post that was just published: its "חדש" mark covers nothing, and the topic's name reads (19.11.2026)
+  await page.evaluate(() => document.querySelector('.fb.ci.is-fresh')?.scrollIntoView({ block: 'center' }))
+  await wait(700)
+  const mark = await page.evaluate(() => {
+    const post = document.querySelector('.fb.ci.is-fresh')
+    const m = post?.querySelector('.fb-new')
+    if (!m) return null
+    const hit = (a, b) => a.left < b.right - 0.5 && b.left < a.right - 0.5 && a.top < b.bottom - 0.5 && b.top < a.bottom - 0.5
+    const r = m.getBoundingClientRect()
+    const topic = post.querySelector('.fb-topic')
+    const others = [...post.querySelectorAll('.fb-name > *, .fb-meta > *, .fb-menu')].filter((e) => e !== m)
+    const lin = (v) => (v / 255 <= 0.03928 ? v / 255 / 12.92 : ((v / 255 + 0.055) / 1.055) ** 2.4)
+    const lum = (c) => {
+      const [x, y, z] = c.match(/[\d.]+/g).map(Number)
+      return 0.2126 * lin(x) + 0.7152 * lin(y) + 0.0722 * lin(z)
+    }
+    const a = lum(getComputedStyle(topic).color)
+    const b = lum(getComputedStyle(post).backgroundColor)
+    return {
+      text: m.textContent.trim(),
+      inMeta: !!m.closest('.fb-meta'),
+      covers: others.filter((e) => hit(r, e.getBoundingClientRect())).map((e) => e.className || e.tagName),
+      inside: r.left >= post.getBoundingClientRect().left && r.right <= post.getBoundingClientRect().right,
+      topic: topic.textContent.trim(),
+      contrast: Math.round(((Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05)) * 10) / 10,
+    }
+  })
+  check(`${tag}: a post just published carries "חדש" in the line under the name, over nothing`, !!mark && mark.text === 'חדש' && mark.inMeta && mark.covers.length === 0 && mark.inside, mark)
+  check(`${tag}: the topic's name on it ("מתווך בעיר אחרת") reads clearly on the white post (4.5 to 1 at least)`, !!mark && mark.topic === 'מתווך בעיר אחרת' && mark.contrast >= 4.5, mark)
+  await page.screenshot({ path: `${out}/${tag}-5-fresh-post.png` })
+
   // ---- the referrals room has one name everywhere: "מתווך בעיר אחרת"
   await page.goto(green + '/app/community?topic=referrals', { waitUntil: 'networkidle0' })
   await wait(900)

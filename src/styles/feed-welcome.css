@@ -332,6 +332,20 @@ html[data-mode='night'] .wl {
 html[data-mode='night'] .fbx-page.is-light .story-add strong {
   color: #eaf6f0;
 }
+/* "חדש" on a post that was just published: a small mark at the start of the line under the name. It used to hang
+   from the top edge of the post, where a long topic name ran under it. */
+html[data-theme='green'] .fbx-page.is-light .fb-new {
+  position: static;
+  flex: none;
+  padding: 1px 9px;
+  border-radius: 99px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+/* the name of "מתווך בעיר אחרת" was a pale lilac made for a dark page: by day it is a violet that reads on white */
+html[data-theme='green'][data-mode='day'] .fbx-page.is-light .tone-violet {
+  --tone: #6a4bc4;
+}
 /* flat surfaces: a hairline, no lifted shadows */
 .fbx-page.is-light .fb {
   box-shadow: none;

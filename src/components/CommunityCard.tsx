@@ -148,8 +148,6 @@ export default function CommunityCard({
       id={preview ? undefined : `ci-${item.id}`}
       className={`fb ci ci-${topic.kind} tone-${topic.tone}${item.fresh ? ' is-fresh' : ''}${match ? ' is-match' : ''}`}
     >
-      {item.fresh && !preview && <span className="fb-new">חדש</span>}
-
       {/* ------------------------------------------------------------ header */}
       <header className="fb-head">
         <Avatar src={author.avatar} name={author.name} size={42} />
@@ -171,6 +169,9 @@ export default function CommunityCard({
             )}
           </div>
           <div className="fb-meta">
+            {/* in the line under the name (19.11.2026): hanging from the top of the post it covered the topic's name
+                on a phone. The older look still places it at the top of the post, through its own style. */}
+            {item.fresh && !preview && <span className="fb-new">חדש</span>}
             <span>{item.time}</span>
             <i aria-hidden>·</i>
             <span className="fb-city">
