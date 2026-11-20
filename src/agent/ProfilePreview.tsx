@@ -11,7 +11,17 @@ export default function ProfilePreview({ profile: p }: { profile: AgentProfile }
   return (
     <div className="agp-mini">
       <div className="agp-mini-photo">
-        {p.photo ? <img src={p.photo} alt="" /> : <span>{name ? name[0] : '?'}</span>}
+        {p.photo ? (
+          <img src={p.photo} alt="" />
+        ) : name ? (
+          <span>{name[0]}</span>
+        ) : (
+          // nobody's card yet (a visitor on the home page): a plain figure, not a question mark (Itzik 20.11.2026)
+          <svg className="agp-mini-nobody" viewBox="0 0 96 120" aria-hidden data-nobody>
+            <circle cx="48" cy="44" r="19" />
+            <path d="M12 120c0-22 16-37 36-37s36 15 36 37z" />
+          </svg>
+        )}
         {p.licenseFile && (
           <i title="רישיון הועלה">
             <ShieldCheck />

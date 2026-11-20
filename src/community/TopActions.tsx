@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { ArrowLeft, BadgeCheck, Bell, Clock, KeyRound, LogOut, Moon, Search, ShieldCheck, Sun, Undo2 } from 'lucide-react'
+import { ArrowLeft, BadgeCheck, Bell, Clock, KeyRound, LogOut, Moon, Search, ShieldCheck, Sun, Undo2, UserRoundPen } from 'lucide-react'
 import { CURRENT_BROKER_ID } from '../config'
 import { OFFICE_PAGE, UPGRADE_LABEL } from '../config/community'
 import { dayNight, useDayNight } from '../config/dayNight'
@@ -10,6 +10,7 @@ import { useStore } from '../store'
 import { demo, session, sessionActions, signedIn } from '../auth/session'
 import { LOGIN_PATH } from '../auth/SignInPrompt'
 import { Avatar, Modal } from '../components/ui'
+import ProfileEdit from './ProfileEdit'
 import '../styles/top-actions.css'
 
 /**
@@ -30,6 +31,7 @@ export default function TopActions() {
   const navigate = useNavigate()
   const { notices, myCities } = useStore()
   const [menu, setMenu] = useState(false)
+  const [edit, setEdit] = useState(false)
   // one source for who this is, on every screen: the app's current broker. For a real person auth/profile.ts made
   // it them (name, initials); only a presentation of the demo has the example user here (Itzik 19.11.2026)
   const me = brokerById(CURRENT_BROKER_ID)
@@ -57,13 +59,25 @@ export default function TopActions() {
       <button type="button" className="ta-me" onClick={() => setMenu(true)} aria-label={`החשבון של ${name}`} aria-haspopup="dialog" data-act="open-profile">
         <Avatar src={picture} name={name} size={36} />
       </button>
-      <ProfileMenu open={menu} onClose={() => setMenu(false)} name={name} picture={picture} role={me.title} />
+      <ProfileMenu
+        open={menu}
+        onClose={() => setMenu(false)}
+        name={name}
+        picture={picture}
+        role={me.title}
+        onEdit={() => {
+          setMenu(false)
+          setEdit(true)
+        }}
+      />
+      {/* "עריכת פרופיל": a signed-in person's own name, picture, phone and where they work (20.11.2026) */}
+      <ProfileEdit open={edit} onClose={() => setEdit(false)} />
     </div>
   )
 }
 
 /** What the picture opens: who is signed in, the way out, the upgrade, and light or dark. */
-function ProfileMenu({ open, onClose, name, picture, role }: { open: boolean; onClose: () => void; name: string; picture: string; role: string }) {
+function ProfileMenu({ open, onClose, name, picture, role, onEdit }: { open: boolean; onClose: () => void; name: string; picture: string; role: string; onEdit: () => void }) {
   const { isOffice } = useMember()
   const { mode, byHand } = useDayNight()
   const look: { id: 'day' | 'night' | 'auto'; label: string; icon: typeof Sun; on: boolean; set: () => void }[] = [
@@ -74,13 +88,37 @@ function ProfileMenu({ open, onClose, name, picture, role }: { open: boolean; on
   return (
     <Modal open={open} onClose={onClose} title={demo ? 'חשבון לדוגמה' : 'החשבון שלי'}>
       <div className="modal-body pfm" data-profile-menu data-who={signedIn ? (signedIn.isStaff ? 'staff' : 'member') : 'demo'}>
-        <div className="pfm-who">
-          <Avatar src={picture} name={name} size={52} />
-          <span>
-            <strong>{name}</strong>
-            <small>{role}</small>
-          </span>
-        </div>
+        {/* the picture and the name open the edit screen too, as in any social app. The example account of a
+            presentation is nobody's to edit */}
+        {signedIn ? (
+          <button type="button" className="pfm-who" onClick={onEdit} aria-label={`${name}, ${role}. עריכת פרופיל`} data-act="edit-profile-who">
+            <Avatar src={picture} name={name} size={52} />
+            <span>
+              <strong>{name}</strong>
+              <small>{role}</small>
+            </span>
+          </button>
+        ) : (
+          <div className="pfm-who">
+            <Avatar src={picture} name={name} size={52} />
+            <span>
+              <strong>{name}</strong>
+              <small>{role}</small>
+            </span>
+          </div>
+        )}
+        {signedIn && (
+          <button type="button" className="pfm-row is-edit" onClick={onEdit} data-act="edit-profile">
+            <i aria-hidden>
+              <UserRoundPen />
+            </i>
+            <span>
+              <b>עריכת פרופיל</b>
+              <small>שם, תמונה, טלפון ואזור עבודה</small>
+            </span>
+            <ArrowLeft className="pfm-go" aria-hidden />
+          </button>
+        )}
 
         {!session && (
           <Link to={LOGIN_PATH} className="pfm-row is-main" onClick={onClose} data-signin="menu">

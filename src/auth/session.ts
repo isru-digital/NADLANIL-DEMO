@@ -9,6 +9,8 @@
  * Nothing here is reactive on purpose: signing in, signing out and starting the demo all reload the page, because
  * the demo's stores read the browser's storage once, when they are loaded (see auth/profile.ts).
  */
+import { identity } from '../config/identity'
+
 export type MemberInfo = {
   id: string
   name: string
@@ -107,7 +109,7 @@ export const asMember: MemberInfo | null = !demo && session?.member ? session.me
  * who has no broker's card. Null for a visitor and inside a presentation of the demo. auth/profile.ts turns the
  * app's "current broker" into this person, so a screen never has to pick a name by itself.
  */
-export type SignedIn = { key: string; name: string; title: string; phone: string; email: string; cities: string[]; areas: string; isStaff: boolean; isBroker: boolean }
+export type SignedIn = { key: string; name: string; title: string; phone: string; email: string; cities: string[]; areas: string; photo: string; isStaff: boolean; isBroker: boolean }
 export const signedIn: SignedIn | null = demo || !session
   ? null
   : asMember
@@ -119,12 +121,60 @@ export const signedIn: SignedIn | null = demo || !session
         email: asMember.email,
         cities: asMember.cities,
         areas: asMember.areas,
+        photo: '',
         isStaff: !!session.staff,
         isBroker: true,
       }
     : session.staff
-      ? { key: `s:${session.staff.email.toLowerCase()}`, name: session.staff.name, title: 'צוות הקהילה', phone: '', email: session.staff.email, cities: [], areas: '', isStaff: true, isBroker: false }
+      ? { key: `s:${session.staff.email.toLowerCase()}`, name: session.staff.name, title: 'צוות הקהילה', phone: '', email: session.staff.email, cities: [], areas: '', photo: '', isStaff: true, isBroker: false }
       : null
+
+/**
+ * "עריכת פרופיל" (Itzik 20.11.2026): how a signed-in person chose to appear. A display name or a nickname, a phone,
+ * the cities and neighbourhoods they work in, and a small round picture (320 px, a few dozen KB).
+ *
+ * It is kept in THIS browser only, per person, next to everything else a person has here. The server and its
+ * database are not touched: what the person signed up with stays as it was there, and the approvers' screen still
+ * shows that. So the edit does not follow the person to another device yet; that needs the server (Itzik decides).
+ * The phone is for the person's own forms: nothing in the feed shows it.
+ */
+export type OwnProfile = { name: string; phone: string; cities: string[]; areas: string; photo: string }
+const ownKey = (who: string) => `nadlanup-profile-v1:${who}`
+function readOwn(who: string): Partial<OwnProfile> | null {
+  try {
+    const v = JSON.parse(get(ownKey(who)) ?? 'null') as Partial<OwnProfile> | null
+    return v && typeof v === 'object' ? v : null
+  } catch {
+    return null
+  }
+}
+function takeOwn(to: SignedIn, own: Partial<OwnProfile>) {
+  if (typeof own.name === 'string' && own.name.trim().length >= 2) to.name = own.name.trim()
+  if (typeof own.phone === 'string') to.phone = own.phone.trim()
+  if (Array.isArray(own.cities)) to.cities = own.cities.filter((c) => typeof c === 'string' && c.trim()).map((c) => c.trim())
+  if (typeof own.areas === 'string') to.areas = own.areas.trim()
+  if (typeof own.photo === 'string' && (own.photo === '' || own.photo.startsWith('data:image/'))) to.photo = own.photo
+}
+if (signedIn) {
+  const own = readOwn(signedIn.key)
+  if (own) takeOwn(signedIn, own)
+}
+
+/**
+ * Saves the person's own profile and shows it everywhere at once (config/identity.ts). False when the browser could
+ * not keep it (storage is full or closed): nothing changes then, so the screen can say so.
+ */
+export function saveOwnProfile(next: OwnProfile): boolean {
+  if (!signedIn) return false
+  try {
+    localStorage.setItem(ownKey(signedIn.key), JSON.stringify(next))
+  } catch {
+    return false
+  }
+  takeOwn(signedIn, next)
+  identity.changed()
+  return true
+}
 
 const base = import.meta.env.BASE_URL.replace(/\/$/, '')
 /** Goes to a page of the site with a full reload. */

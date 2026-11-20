@@ -2,6 +2,8 @@ import { brokers, builderDefaults, cities, communityItems } from '../data/demo'
 import type { BuilderState, Comment, CommunityItem } from '../data/demo'
 import { CURRENT_BROKER_ID } from '../config'
 import { signedIn } from './session'
+import { identity } from '../config/identity'
+import { initials } from '../config/initials'
 
 /**
  * Whose area this browser shows. It must be imported at the very top of the green entry, before any store: the
@@ -159,31 +161,23 @@ try {
   /* storage unavailable: nothing is remembered; the name below is still the signed-in person's */
 }
 
-/** The signed-in person's initials on a green disc, in place of a photo. */
-function initials(name: string) {
-  const letters = name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0])
-    .join('')
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#07643f"/><stop offset="1" stop-color="#0fa46b"/></linearGradient></defs><rect width="120" height="120" fill="url(#g)"/><text x="60" y="62" text-anchor="middle" dominant-baseline="central" font-family="Heebo,Arial,sans-serif" font-size="46" font-weight="800" fill="#fff">${letters}</text></svg>`
-  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`
-}
-
-if (signedIn) {
+/** The app's "current broker" is the signed-in person, as they chose to appear (their own picture, or initials). */
+function becomeMe() {
+  if (!signedIn) return
   const me = brokers.find((b) => b.id === CURRENT_BROKER_ID)
-  if (me) {
-    me.name = signedIn.name
-    me.title = signedIn.title
-    me.area = signedIn.cities[0] ?? ''
-    me.region = signedIn.areas
-    me.specialties = []
-    me.years = 0
-    me.avatar = initials(signedIn.name)
-    me.bio = ''
-    me.phone = signedIn.phone
-  }
+  if (!me) return
+  me.name = signedIn.name
+  me.title = signedIn.title
+  me.area = signedIn.cities[0] ?? ''
+  me.region = signedIn.areas
+  me.specialties = []
+  me.years = 0
+  me.avatar = signedIn.photo || initials(signedIn.name)
+  me.bio = ''
+  me.phone = signedIn.phone
 }
+becomeMe()
+// "עריכת פרופיל" was saved: the same person, with a new name or picture, before any screen is drawn again
+identity.subscribe(becomeMe)
 
 export {}

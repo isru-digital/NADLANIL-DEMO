@@ -6,7 +6,7 @@ import { COMMUNITY_HOME, COMMUNITY_JOIN, COMMUNITY_NAME } from '../config/commun
 import CommunityBrand from '../community/CommunityBrand'
 import CodeBoxes from './CodeBoxes'
 import { runningAsApp } from '../pwa/pwa'
-import { asMember, call, demo, go, hasAccess, recheck, session, sessionActions } from './session'
+import { asMember, call, demo, go, hasAccess, recheck, session, sessionActions, signedIn } from './session'
 import type { MemberInfo, StaffInfo } from './session'
 import '../styles/join-green.css'
 import '../styles/auth.css'
@@ -336,7 +336,8 @@ export function DemoStart() {
 /** In the app's top bar, for a signed-in broker or staff: who is signed in, the way to the approvers' screen, and out. */
 export function AccountChip() {
   if (demo || !session) return null
-  const name = asMember?.name ?? session.staff?.name ?? ''
+  // the name the person chose to appear under ("עריכת פרופיל"), or the one they signed up with
+  const name = signedIn?.name ?? asMember?.name ?? session.staff?.name ?? ''
   return (
     <div className="au-chip" data-account={asMember ? 'member' : 'staff'}>
       {session.staff && (
