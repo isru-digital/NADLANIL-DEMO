@@ -725,8 +725,33 @@
   }
 }
 @media (max-width: 560px) {
+  /* "כניסה" stays in the bar on a phone too (21.11.2026, the site is open): a member who comes back to the main
+     address finds the way in at once, next to "הצטרפות". A full finger's height, and close to the button */
   .hg-login {
-    display: none;
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 9px;
+    white-space: nowrap;
+  }
+  .hg-nav-in {
+    gap: 10px;
+  }
+  .hg-nav-cta {
+    gap: 2px;
+  }
+  /* the bar's button is a full finger's height on a phone (it was 38px) */
+  .hg-nav-cta .btn-sm {
+    --btn-h: 44px;
+  }
+  /* the first screen: the promise and the two buttons sit right under the bar, and the map shows below them.
+     (The shared rule for sections gave the head 13vh of air above it, which the phone rule here meant to be small.) */
+  .home.hg section.hg-hero {
+    padding-block-start: 38px;
+  }
+  /* between two parts of the page: 13vh above and 13vh below made a quarter of the screen empty on a phone */
+  .home.hg section:not(.hero):not(.hg-hero) {
+    padding-block: 70px;
   }
   .hg-cta .btn {
     flex: 1;
@@ -820,3 +845,31 @@
   width: auto;
   height: 26px;
 }
+
+/* the narrowest phones (under 350px): the bar has room for the logo and one button only */
+@media (max-width: 349px) {
+  .hg-login {
+    display: none;
+  }
+}
+
+/* the foot's links in two columns (21.11.2026): the foot is half as tall, and on a phone each link is a full
+   finger's height instead of a thin line of text */
+.hg .foot-links {
+  grid-template-columns: repeat(2, minmax(0, max-content));
+  column-gap: 36px;
+}
+@media (max-width: 980px) {
+  .hg .foot-links {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 14px;
+    row-gap: 0;
+  }
+  .hg .foot-links a {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    padding-block: 4px;
+  }
+}
+

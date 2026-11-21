@@ -2,14 +2,18 @@
  * "האתר בבנייה" (Itzik, 17.11.2026): while a big round of changes is made, every visitor sees one page that says the
  * system is being upgraded, on every address (/kehila, /kehila/join, /kehila/login, /kehila/admin, /demo, all of it).
  *
- * TO OPEN THE SITE TO EVERYONE AGAIN: set UNDER_CONSTRUCTION to false below, commit and push. Nothing else.
+ * THE SWITCH. One word on the line `export const UNDER_CONSTRUCTION = ...` below, then commit and push. Nothing else.
+ *   false = the site is open: every address shows the platform itself.
+ *   true  = "the site is being upgraded": every visitor sees the one page, on every address.
+ * 21.11.2026: Itzik opened the site ("open the site") to show it to the partners. The page, its code, the key and
+ * the five taps on its logo all stay as they were, so `true` brings the page back exactly as it was.
  *
  * Itzik's own way in: the link with ?preview=<his key> once, and this browser remembers it (localStorage). The key
  * itself is not in the code, only its SHA-256, so reading the code does not give it away. ?preview=off forgets it.
  * This is a curtain, not a lock: the site's code is public (GitHub Pages, a public repo), so someone determined can
  * still read it. The server checks every sign-in and every admin screen on its own, as before.
  */
-export const UNDER_CONSTRUCTION = true
+export const UNDER_CONSTRUCTION = false
 
 const KEY_HASH = '6d5eaaca072bf02f647051d8688d1337a4ab7a6cb92a2a8b3924cf91fda89e8b'
 const STORE = 'nadlanup-preview-v1'
@@ -39,7 +43,9 @@ const set = (k: string, v: string | null, s: Storage = localStorage) => {
 
 /** Is the real site open for this browser? Reads (and then removes) ?preview= from the address. */
 export async function siteOpen(): Promise<boolean> {
-  if (!UNDER_CONSTRUCTION) return true
+  // open: nothing to ask. On this computer the page can still be called up with ?gate=on, so the checks of the page
+  // and of its key keep running while the switch is off, and bringing it back is known to work
+  if (!UNDER_CONSTRUCTION && !LOCAL) return true
   const url = new URL(location.href)
   const given = url.searchParams.get('preview')
   const gate = url.searchParams.get('gate')
