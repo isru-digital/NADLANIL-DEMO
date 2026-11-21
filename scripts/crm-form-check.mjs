@@ -1,7 +1,8 @@
 // The CRM property card (16.11.2026): exact address (street, number, neighbourhood), parking as a number (0, 1, 2, 3+),
 // "מיועד להתחדשות עירונית" with a tag and a filter, big buttons instead of lists, and a draft that saves itself.
-// The street and the house number are seen only by the broker who put the property in: the feed, the card and the
-// property page show the city and the neighbourhood only.
+// Since 22.11.2026 the street is shown to every broker in the community; the building's number only when the broker
+// turns "להציג מספר בניין" on, and the flat's number never (scripts/post-form-check.mjs). The full address is seen
+// only by the broker who put the property in.
 // Usage: node scripts/crm-form-check.mjs [outDir]     (BASE_GREEN overrides the address)
 import puppeteer from 'puppeteer-core'
 import { mkdirSync } from 'node:fs'
@@ -121,6 +122,11 @@ for (const [tag, vp] of [
   }))
   check(`${tag}: closing and opening again brings the draft back`, /המשכנו מהטיוטה/.test(back.line) && back.street === STREET && back.house === '12' && back.city === 'חיפה' && back.parking === '2' && back.renewal === 'true', back)
 
+  // a property needs its kind since 22.11.2026: "מגורים", then "דירה"
+  await page.evaluate(() => document.querySelector('.ga [data-cat="home"]')?.click())
+  await wait(500)
+  await page.evaluate(() => document.querySelector('.ga .pf-kind[data-kind="דירה"]')?.click())
+  await wait(200)
   // ---- save
   await click('.ga-go')
   await wait(900)
@@ -152,17 +158,19 @@ for (const [tag, vp] of [
   await wait(600)
   const store = await page.evaluate(() => JSON.parse(localStorage.getItem('brokers-demo-state-v5') ?? '{}'))
   const posted = (store.items ?? []).filter((it) => it.property && JSON.stringify(it).includes('נווה שאנן') && it.authorId === 'b1')
-  const leak = (store.items ?? []).filter((it) => JSON.stringify(it).includes(STREET))
+  // since 22.11.2026 the street is shown to every broker; the building's number only when the broker asks for it
+  // (scripts/post-form-check.mjs walks the switch). Here the switch is off: the street is there, the number is not
+  const leak = (store.items ?? []).filter((it) => JSON.stringify(it).includes(`${STREET} 12`) || it.property?.houseNo)
   check(`${tag}: the property went up to the community with city and neighbourhood, parking and the renewal mark`, posted.length === 1 && posted[0].property.area === 'חיפה - נווה שאנן' && posted[0].property.parking === 2 && posted[0].property.renewal === true, posted.map((p) => p.property))
-  check(`${tag}: the street and the house number are nowhere in the community`, leak.length === 0, leak.map((l) => l.id))
+  check(`${tag}: the community got the street, and not the building's number`, leak.length === 0 && posted[0]?.property.street === STREET, { leak: leak.map((l) => l.id), street: posted[0]?.property.street })
 
   await page.goto(green + '/app/community?topic=coop', { waitUntil: 'networkidle0' })
   await wait(900)
   const feed = await page.evaluate((street) => ({
-    text: document.querySelector('main')?.innerText.includes(street),
+    text: document.querySelector('main')?.innerText.includes(`${street} 12`),
     mine: [...document.querySelectorAll('.fb-prop')].find((c) => c.textContent.includes('נווה שאנן') && c.querySelector('[data-renewal]'))?.querySelector('.fb-embed-kicker')?.textContent,
   }), STREET)
-  check(`${tag}: in the feed: "חיפה - נווה שאנן" and the tag, no street`, !feed.text && /חיפה - נווה שאנן/.test(feed.mine ?? '') && /התחדשות עירונית/.test(feed.mine ?? ''), feed)
+  check(`${tag}: in the feed: "חיפה - נווה שאנן", the street without its number, and the tag`, !feed.text && /חיפה - נווה שאנן, סמטת הכרמים/.test(feed.mine ?? '') && /התחדשות עירונית/.test(feed.mine ?? ''), feed)
 
   // ---- the feed filter
   await click('[data-filter="renewal"]')

@@ -79,7 +79,8 @@ for (const [tag, vp] of [
     }
   })
   check(`${tag}: a buyer gets the whole search: buy/rent, budget, cities, neighbourhoods, kind, rooms, must-haves, free words`, look.search && look.sale === 'true' && look.sliders === 2 && look.parts.length === 0, look)
-  check(`${tag}: parking, elevator, safe room and balcony as buttons`, JSON.stringify(look.must) === JSON.stringify(['חניה', 'מעלית', 'ממ"ד', 'מרפסת']), look.must)
+  // since 22.11.2026 the floor's shared safe room ("ממ"ק") is a must-have of its own, next to "ממ"ד"
+  check(`${tag}: parking, elevator, the two safe rooms and balcony as buttons`, JSON.stringify(look.must) === JSON.stringify(['חניה', 'מעלית', 'ממ"ד', 'ממ"ק', 'מרפסת']), look.must)
   check(`${tag}: no lists, every button 44px or more, inputs 16px, nothing spills`, look.selects === 0 && look.small.length === 0 && look.inputs >= 16 && look.wide <= 1, look)
   let a = await amounts(page)
   check(`${tag}: the budget shows its two amounts clearly (1.5 to 3 million by default)`, /1\.5/.test(a.min) && /3/.test(a.max) && /מ'/.test(a.min) && !a.month, a)

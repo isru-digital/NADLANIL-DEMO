@@ -10,7 +10,10 @@ import { nameSlots } from '../config/navExtras'
 import { Avatar, EASE, Modal } from '../components/ui'
 import ChatWindow from './ChatWindow'
 import { IconHome } from './KhIcons'
+import { propertyKind } from './match'
+import { fullAddress, streetOf } from './place'
 import '../styles/property.css'
+import '../styles/post-form.css'
 
 /** The price as it is said: an asking price, or a monthly rent. */
 export const priceText = (p: NonNullable<CommunityItem['property']>) => (p.deal === 'rent' ? `${formatPrice(p.price)} לחודש` : formatPrice(p.price))
@@ -60,11 +63,14 @@ export default function PropertyPage() {
   const mine = item.authorId === CURRENT_BROKER_ID
   const buyer = !!interested[`buyer:${item.id}`]
   const rent = p.deal === 'rent'
-  // the exact address lives in the CRM of the broker who put the property in, and only that broker sees it here
+  // the full address (with the flat's number) lives in the CRM of the broker who put the property in, and only that
+  // broker sees it here. Everyone else sees the street, and the building's number when the broker chose to show it
   const own = mine && item.sourceId ? crm.find((c) => c.id === item.sourceId) : undefined
-  const exact = own?.street ? `${own.street}${own.houseNo ? ` ${own.houseNo}` : ''}${own.neighborhood ? `, ${own.neighborhood}` : ''}, ${own.city}` : null
+  const exact = own ? fullAddress(own) : null
+  const street = streetOf(p)
+  const kind = propertyKind(p, item.title)
   const facts = [
-    { icon: BedDouble, label: 'חדרים', value: p.rooms },
+    ...(p.rooms ? [{ icon: BedDouble, label: 'חדרים', value: p.rooms }] : []),
     { icon: Ruler, label: 'שטח', value: p.sqm ? `${p.sqm} מ"ר` : 'לא צוין' },
     { icon: Layers, label: 'קומה', value: p.floor ?? 'לא צוין' },
     { icon: Car, label: 'חניה', value: p.parking == null ? 'לא צוין' : p.parking === 0 ? 'אין' : p.parking === 1 ? 'חניה אחת' : p.parking >= 3 ? '3 חניות ומעלה' : `${p.parking} חניות` },
@@ -132,12 +138,18 @@ export default function PropertyPage() {
         {/* ----------------------------------------------------------- the details */}
         <section className="pp-info">
           <span className="pp-area">
-            <MapPin /> {p.area}
+            <MapPin />{' '}
+            <span className="pf-place">
+              {p.area}
+              {street && <span data-street>, {street}</span>}
+            </span>
           </span>
           <h1>{item.title}</h1>
           <div className="pp-price">
             <strong className="num">{priceText(p)}</strong>
-            {p.kind && <span className="tag">{p.kind}</span>}
+            <span className="tag" data-kind={kind.kind} data-group={kind.group}>
+              {kind.kind}
+            </span>
             {p.renewal && (
               <span className="tag pp-renew" data-renewal>
                 התחדשות עירונית
@@ -146,8 +158,12 @@ export default function PropertyPage() {
           </div>
           {exact && (
             <p className="pp-exact" data-exact>
-              <Lock /> <span>הכתובת המדויקת: <b>{exact}</b></span>
-              <small>רק אתם רואים אותה. בקהילה מופיעות רק העיר והשכונה.</small>
+              <Lock /> <span>הכתובת המלאה: <b>{exact}</b></span>
+              <small>
+                {street
+                  ? `רק אתם רואים אותה. בקהילה מופיעים העיר, השכונה והרחוב${p.houseNo ? ' עם מספר הבניין' : ', בלי מספר הבניין'}.`
+                  : 'רק אתם רואים אותה. בקהילה מופיעות רק העיר והשכונה.'}
+              </small>
             </p>
           )}
 

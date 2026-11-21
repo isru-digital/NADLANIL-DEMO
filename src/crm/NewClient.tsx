@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react'
 import type { CSSProperties, FormEvent, KeyboardEvent } from 'react'
-import { ArrowUpDown, Car, Home, KeyRound, Minus, Plus, ShieldCheck, Sun, X } from 'lucide-react'
+import { ArrowUpDown, Car, Home, KeyRound, Minus, Plus, Shield, ShieldCheck, Sun, X } from 'lucide-react'
 import { Modal } from '../components/ui'
 import { formatPriceShort } from '../data/demo'
 import { knownCities } from '../green/whatsapp'
 import { useStore } from '../store'
 import { TYPES } from './clients'
 import type { Client, ClientType } from './clients'
+import { GROUPS, KINDS } from '../config/propertyTypes'
+import type { PropGroup } from '../config/propertyTypes'
 import '../styles/new-client.css'
+import '../styles/post-form.css'
 
 /**
  * A new client. For a buyer or a renter it is a full search, like the property card: buy or rent, a budget from and
@@ -15,16 +18,17 @@ import '../styles/new-client.css'
  * everything has a sensible default, so a broker on the phone is done in under a minute. Sellers and the office's
  * types keep the short form (name, phone, type).
  */
-export type NewClientInput = Pick<Client, 'name' | 'phone' | 'type'> & Partial<Pick<Client, 'about' | 'cities' | 'rooms' | 'sum' | 'budgetMin' | 'neighborhoods' | 'kinds' | 'roomsMin' | 'roomsMax' | 'must' | 'wants'>>
+export type NewClientInput = Pick<Client, 'name' | 'phone' | 'type'> & Partial<Pick<Client, 'about' | 'cities' | 'rooms' | 'sum' | 'budgetMin' | 'neighborhoods' | 'kinds' | 'group' | 'roomsMin' | 'roomsMax' | 'must' | 'wants'>>
 
 const SALE = [500000, 750000, 1000000, 1250000, 1500000, 1750000, 2000000, 2250000, 2500000, 2750000, 3000000, 3500000, 4000000, 4500000, 5000000, 6000000, 7000000, 8000000, 10000000, 12000000, 15000000]
 const RENT = [1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000, 5500, 6000, 6500, 7000, 8000, 9000, 10000, 12000, 15000, 20000]
 const DEFAULTS = { sale: [4, 10], rent: [5, 11] } as const
-const KINDS = ['דירה', 'דירת גן', 'פנטהאוז', 'דופלקס', "קוטג'", 'בית פרטי']
+// the kinds of property are the one list of config/propertyTypes.ts (22.11.2026), in two steps like the property form
 const MUST: { id: string; icon: typeof Car }[] = [
   { id: 'חניה', icon: Car },
   { id: 'מעלית', icon: ArrowUpDown },
   { id: 'ממ"ד', icon: ShieldCheck },
+  { id: 'ממ"ק', icon: Shield },
   { id: 'מרפסת', icon: Sun },
 ]
 const FIRST_CITIES = ['תל אביב', 'רמת גן', 'גבעתיים', 'פתח תקווה', 'חיפה', 'ירושלים', 'באר שבע', 'נתניה', 'ראשון לציון']
@@ -33,10 +37,12 @@ const money = (n: number, rent: boolean, last: boolean) => (rent ? `${n.toLocale
 const roomsText = (a: number, b: number) => (a === b ? `${a} חדרים` : `${a} עד ${b} חדרים`)
 
 /** One line for the table: what this client is looking for, in plain words. */
-export function aboutOf(p: { rent: boolean; cities: string[]; hoods: string[]; roomsMin: number; roomsMax: number; lo: number; hi: number; hiIsTop: boolean }) {
+export function aboutOf(p: { rent: boolean; cities: string[]; hoods: string[]; roomsMin: number; roomsMax: number; lo: number; hi: number; hiIsTop: boolean; business?: boolean; kinds?: string[] }) {
   const where = p.hoods.length ? p.hoods.join(', ') + (p.cities.length ? ` (${p.cities.join(', ')})` : '') : p.cities.join(' או ')
   const budget = `${money(p.lo, p.rent, false)} עד ${money(p.hi, p.rent, p.hiIsTop)}${p.rent ? ' לחודש' : ''}`
-  return `${p.rent ? 'מחפש לשכור' : 'מחפש לקנות'} ${roomsText(p.roomsMin, p.roomsMax)}${where ? ` ב${where}` : ''}, ${budget}`
+  // a commercial property has no rooms: the line says which kinds
+  const what = p.business ? (p.kinds?.length ? p.kinds.join(', ') : 'נכס מסחרי') : roomsText(p.roomsMin, p.roomsMax)
+  return `${p.rent ? 'מחפש לשכור' : 'מחפש לקנות'} ${what}${where ? ` ב${where}` : ''}, ${budget}`
 }
 
 export default function NewClient({ open, onClose, isOffice, onAdd, searchOnly = false }: { open: boolean; onClose: () => void; isOffice: boolean; onAdd: (p: NewClientInput) => void; searchOnly?: boolean }) {
@@ -51,6 +57,7 @@ export default function NewClient({ open, onClose, isOffice, onAdd, searchOnly =
   const [allCities, setAllCities] = useState(false)
   const [hoods, setHoods] = useState<string[]>([])
   const [hood, setHood] = useState('')
+  const [group, setGroup] = useState<PropGroup>('home')
   const [kinds, setKinds] = useState<string[]>(['דירה'])
   const [roomsMin, setRoomsMin] = useState(3)
   const [roomsMax, setRoomsMax] = useState(4)
@@ -72,6 +79,7 @@ export default function NewClient({ open, onClose, isOffice, onAdd, searchOnly =
     setAllCities(false)
     setHoods([])
     setHood('')
+    setGroup('home')
     setKinds(['דירה'])
     setRoomsMin(3)
     setRoomsMax(4)
@@ -123,6 +131,7 @@ export default function NewClient({ open, onClose, isOffice, onAdd, searchOnly =
       cities,
       neighborhoods: allHoods,
       kinds,
+      group,
       roomsMin,
       roomsMax,
       rooms: Math.round((roomsMin + roomsMax) / 2),
@@ -130,7 +139,7 @@ export default function NewClient({ open, onClose, isOffice, onAdd, searchOnly =
       sum: max,
       must,
       wants: wants.trim(),
-      about: aboutOf({ rent, cities, hoods: allHoods, roomsMin, roomsMax, lo: min, hi: max, hiIsTop: hi === steps.length - 1 }),
+      about: aboutOf({ rent, cities, hoods: allHoods, roomsMin, roomsMax, lo: min, hi: max, hiIsTop: hi === steps.length - 1, business: group === 'business', kinds }),
     })
   }
 
@@ -263,26 +272,48 @@ export default function NewClient({ open, onClose, isOffice, onAdd, searchOnly =
                 )}
               </div>
 
-              {/* the kind of home */}
-              <div className="ct-field" data-f="kinds">
+              {/* the kind of property, in two steps: the group, then the kinds of that group (as many as fit the buyer) */}
+              <div className="ct-field pf-step" data-f="kinds">
                 <span className="ct-label">סוג נכס</span>
-                <div className="nc-picks">
-                  {KINDS.map((k) => (
+                <div className="pf-groups is-small" role="group" aria-label="מגורים או מסחרי">
+                  {GROUPS.map((g) => (
+                    <button
+                      key={g.id}
+                      type="button"
+                      className="pf-group"
+                      aria-pressed={group === g.id}
+                      data-group={g.id}
+                      onClick={() => {
+                        if (group === g.id) return
+                        setGroup(g.id)
+                        // the kinds of the other group mean nothing here: a home starts from a flat, a commercial search from every kind
+                        setKinds(g.id === 'home' ? ['דירה'] : [])
+                      }}
+                    >
+                      <g.icon aria-hidden /> {g.label}
+                    </button>
+                  ))}
+                </div>
+                <div className="nc-picks" data-kinds={group}>
+                  {KINDS[group].map((k) => (
                     <button key={k} type="button" className="nc-pick" aria-pressed={kinds.includes(k)} onClick={() => flip(kinds, k, setKinds)} data-kind={k}>
                       {k}
                     </button>
                   ))}
                 </div>
+                <small className="nc-kinds-note">{kinds.length === 0 ? `בלי סימון: כל סוגי ה${group === 'business' ? 'מסחרי' : 'מגורים'}.` : 'אפשר לסמן כמה סוגים.'}</small>
               </div>
 
-              {/* rooms, from and to */}
-              <div className="ct-field" data-f="rooms">
-                <span className="ct-label">חדרים</span>
-                <div className="nc-rooms">
-                  <Stepper label="מ-" value={roomsMin} min={1} max={roomsMax} onChange={setRoomsMin} id="min" />
-                  <Stepper label="עד" value={roomsMax} min={roomsMin} max={8} onChange={setRoomsMax} id="max" />
+              {/* rooms, from and to (a commercial property is not counted in rooms) */}
+              {group === 'home' && (
+                <div className="ct-field" data-f="rooms">
+                  <span className="ct-label">חדרים</span>
+                  <div className="nc-rooms">
+                    <Stepper label="מ-" value={roomsMin} min={1} max={roomsMax} onChange={setRoomsMin} id="min" />
+                    <Stepper label="עד" value={roomsMax} min={roomsMin} max={8} onChange={setRoomsMax} id="max" />
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* the must-haves */}
               <div className="ct-field" data-f="must">

@@ -47,7 +47,8 @@ import { AppGuard, DemoStart, Enter, Login } from './auth/Access'
 import { demo } from './auth/session'
 import { pickActions } from './config/pricing'
 import FeedWelcome from './community/FeedWelcome'
-import { CATEGORIES, CommercialSeed, categoryOf } from './crm/categories'
+import { CATEGORIES, CommercialSeed, cardKind, categoryOf } from './crm/categories'
+import { hasRooms } from './config/propertyTypes'
 import OwnerPage from './owner/OwnerPage'
 import { AutoPublish, AutoPublishNote, OwnerLinkButton } from './owner/OwnerPublish'
 import MatchMoment from './community/MatchMoment'
@@ -89,7 +90,7 @@ registerCommunity({ Top: FeedWelcome as never })
 // every property put in the CRM goes up to the community by itself; a published card carries the link for its owner
 registerCrm({ AutoBar: AutoPublishNote, CardExtra: OwnerLinkButton })
 // a property is a private home, an office or a business property: picked when it is opened, shown and filtered on the board
-registerCrm({ categories: CATEGORIES.map(({ id, label }) => ({ id, label })), categoryOf })
+registerCrm({ categories: CATEGORIES.map(({ id, label }) => ({ id, label })), categoryOf, kindOf: cardKind, noRooms: (item) => !hasRooms(categoryOf(item), cardKind(item)) })
 // the community's properties have no stages: one list of cards (Itzik 17.11.2026)
 registerCrm({ flatProperties: true })
 // the top bar (the view switch with the wallet or the quota), the office member's mark, and the lab in three layers

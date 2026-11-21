@@ -8,7 +8,9 @@ import { useStore } from '../store'
 import { Modal } from '../components/ui'
 import { signedIn } from '../auth/session'
 import { CardPhotos } from '../green/PhotoPicker'
-import { commercialBody, commercialSeedIds, isCommercial } from '../crm/categories'
+import { cardKind, categoryOf, commercialBody, commercialSeedIds, isCommercial } from '../crm/categories'
+import { hasRooms } from '../config/propertyTypes'
+import { publicPlace } from '../community/place'
 import { dateHe, ownerActions, ownerLink, usePublishDates, viewersIn } from './ownerLink'
 import '../styles/owner.css'
 
@@ -18,28 +20,34 @@ const seed = new Set([...crmItems.map((x) => x.id), ...commercialSeedIds])
 const pending = new Set<string>()
 
 /**
- * What the community sees of a property: the property itself and a fixed line. The owner's name, the owner's phone,
- * the broker's internal note and the exact address (street and house number) are not read here at all: the area is
- * the city and the neighbourhood.
+ * What the community sees of a property: the property itself and a fixed line. The owner's name, the owner's phone
+ * and the broker's internal note are not read here at all.
+ * The place (Itzik 22.11.2026): the city, the neighbourhood and the street, always; the building's number only when
+ * the broker turned "להציג מספר בניין" on; the flat's number never (see community/place.ts).
+ * Where it shows: in the feed; in the row of stories too only when the broker asked for it and there is a photo.
  */
-export const postOf = (item: CrmItem, authorId: string): CommunityItem => ({
-  id: `m-${item.id}-${Date.now()}`,
-  topicId: 'coop',
-  authorId,
-  time: 'עכשיו',
-  likes: 0,
-  comments: [],
-  sourceId: item.id,
-  city: item.city,
-  title: item.title,
-  body: isCommercial(item) ? commercialBody : 'נכס חדש אצלי. פתוח לשיתוף פעולה עם מתווך שיש לו קונה מתאים.',
-  image: item.image,
-  // an office or a business property has no rooms: its size goes next to its area
-  property: isCommercial(item)
-    ? { area: item.sqm ? `${item.area} · ${item.sqm} מ"ר` : item.area, rooms: '', price: item.price, split: 'חלוקת עמלה שווה', showPrice: true, kind: 'משרדי/עסקי', parking: item.parking }
-    : { area: item.area, rooms: item.rooms, price: item.price, split: 'חלוקת עמלה שווה', showPrice: true, parking: item.parking, renewal: item.renewal || undefined },
-  fresh: true,
-})
+export const postOf = (item: CrmItem, authorId: string): CommunityItem => {
+  const group = categoryOf(item)
+  const kind = cardKind(item)
+  const shared = { price: item.price, split: 'חלוקת עמלה שווה', showPrice: true, kind, group, parking: item.parking, extra: item.extras?.length ? item.extras : undefined, ...publicPlace(item) }
+  return {
+    id: `m-${item.id}-${Date.now()}`,
+    topicId: 'coop',
+    authorId,
+    time: 'עכשיו',
+    likes: 0,
+    comments: [],
+    sourceId: item.id,
+    city: item.city,
+    title: item.title,
+    body: isCommercial(item) ? commercialBody : 'נכס חדש אצלי. פתוח לשיתוף פעולה עם מתווך שיש לו קונה מתאים.',
+    image: item.image,
+    show: item.asStory && item.image ? 'both' : 'feed',
+    // a commercial property and a plot of land have no rooms: their size is given in square metres
+    property: hasRooms(group, kind) ? { ...shared, area: item.area, rooms: item.rooms, renewal: item.renewal || undefined } : { ...shared, area: item.area, rooms: '', sqm: item.sqm },
+    fresh: true,
+  }
+}
 
 /**
  * Every property the broker puts in the CRM (the new card form, the pull from Yad2, the first property of the

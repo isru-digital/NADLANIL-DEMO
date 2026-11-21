@@ -1,26 +1,32 @@
 import { CURRENT_BROKER_ID } from '../config'
 import type { CommunityItem, PropertyInfo, SearchSpec } from '../data/demo'
+import { isBusinessWord, isKind, kindFits, kindOf, searchGroup } from '../config/propertyTypes'
 
 /**
  * The match between a property and a buyer's search (Itzik 17.11.2026): city, neighbourhood, kind of home, rooms,
  * budget, parking, elevator and safe room. The deal (sale or rent) and the city must agree; the rest adds up to a
  * score out of 100, and each part says whether it fits, so a card can show why. Nothing here reads a street or a
- * house number: the community holds the city and the neighbourhood only.
+ * house number: a match is made of the city and the neighbourhood.
+ * The kind (22.11.2026) is one of the two lists of config/propertyTypes.ts: "מגורים" never matches "מסחרי", and
+ * inside a group a search that names kinds is answered by a property of one of those kinds.
  */
 export type Reason = { label: string; ok: boolean }
 export type Match = { item: CommunityItem; score: number; reasons: Reason[] }
 
 export const MATCH_MIN = 55
-const AMENITIES = ['חניה', 'מעלית', 'ממ"ד'] as const
+const AMENITIES = ['חניה', 'מעלית', 'ממ"ד', 'ממ"ק'] as const
 
 const hoodOf = (p: PropertyInfo) => p.area.split(' - ')[1]?.split(' · ')[0].trim() ?? ''
 /** an office or a business property, or a search for one: they match each other only */
-export const isBizKind = (k: string) => /משרד|עסק|מסחר|חנות/.test(k)
-const isBiz = (p: PropertyInfo) => isBizKind(p.kind ?? '') || (!p.rooms && p.area.includes('מ"ר'))
+export const isBizKind = (k: string) => isBusinessWord(k)
+/** the group and the kind of a post's property; a post from before the list is read from its old words */
+export const propertyKind = (p: PropertyInfo, title?: string) => kindOf({ group: p.group, kind: p.kind, title, business: !p.rooms && p.area.includes('מ"ר') })
+const isBiz = (p: PropertyInfo) => propertyKind(p).group === 'business'
 const has = (p: PropertyInfo, a: (typeof AMENITIES)[number]) => {
   const extra = (p.extra ?? []).join(' ')
   if (a === 'חניה') return (p.parking ?? 0) > 0 || extra.includes('חניה')
   if (a === 'מעלית') return p.elevator === true || extra.includes('מעלית')
+  if (a === 'ממ"ק') return extra.includes('ממ"ק') || extra.includes('ממק')
   return extra.includes('ממ"ד') || extra.includes('ממד')
 }
 
@@ -28,7 +34,8 @@ const has = (p: PropertyInfo, a: (typeof AMENITIES)[number]) => {
 export function scoreOf(city: string, p: PropertyInfo, s: SearchSpec): { score: number; reasons: Reason[] } | null {
   if ((p.deal ?? 'sale') !== (s.deal ?? 'sale')) return null
   if (s.cities.length && !s.cities.includes(city)) return null
-  if (isBiz(p) !== !!s.kinds?.some(isBizKind)) return null
+  const want = searchGroup(s)
+  if (isBiz(p) !== (want === 'business')) return null
   const reasons: Reason[] = [{ label: city, ok: true }]
   let pts = 25
 
@@ -41,9 +48,11 @@ export function scoreOf(city: string, p: PropertyInfo, s: SearchSpec): { score: 
   } else pts += 10
 
   // kind of home
-  const kind = p.kind ?? (isBiz(p) ? 'משרדי/עסקי' : 'דירה')
-  if (s.kinds?.length) {
-    const ok = s.kinds.some((k) => kind.includes(k) || k.includes(kind))
+  const mine = propertyKind(p)
+  const kind = mine.kind
+  // a search that names kinds of the list is answered by one of them; an older, general search takes the whole group
+  if (s.kinds?.some((k) => isKind(want, k))) {
+    const ok = kindFits(mine, s.kinds, want)
     pts += ok ? 10 : 2
     reasons.push({ label: ok ? kind : `${kind}, לא מה שביקש`, ok })
   } else pts += 10

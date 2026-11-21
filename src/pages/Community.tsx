@@ -5,6 +5,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
   Bell,
+  Camera,
   Check,
   ChevronLeft,
   ChevronRight,
@@ -26,8 +27,15 @@ import {
 import { CURRENT_BROKER_ID, asset } from '../config'
 import { topicById, topics } from '../config/topics'
 import type { TopicId } from '../config/topics'
-import { brokerById, brokers, cities, fitsSearch, formatPriceShort, roomsLabel } from '../data/demo'
+import { brokerById, brokers, cities, fitsSearch, formatPriceShort, inFeed, inStories, roomsLabel } from '../data/demo'
 import type { CommunityItem } from '../data/demo'
+import { GROUPS, KINDS, kindFits, searchGroup } from '../config/propertyTypes'
+import type { PropGroup } from '../config/propertyTypes'
+import { propertyKind } from '../community/match'
+import { streetOf } from '../community/place'
+import { Toggle } from '../components/Toggle'
+import { shrinkPhoto } from '../green/PhotoPicker'
+import '../styles/post-form.css'
 import { useStore } from '../store'
 import { signedIn } from '../auth/session'
 import { actionSlots, communitySlots } from '../config/navExtras'
@@ -47,8 +55,14 @@ import '../styles/property.css'
 type View = TopicId | 'all'
 
 /** The filters of properties and of buyers: city, rooms, price and sale or rent. Empty means "all". */
-type Filter = { city: string; rooms: string; price: string; deal: '' | 'sale' | 'rent'; renewal: boolean }
-const NO_FILTER: Filter = { city: '', rooms: '', price: '', deal: '', renewal: false }
+type Filter = { city: string; rooms: string; price: string; deal: '' | 'sale' | 'rent'; renewal: boolean; kind: string }
+const NO_FILTER: Filter = { city: '', rooms: '', price: '', deal: '', renewal: false, kind: '' }
+/** the kind of property in the filter: "home|דירה" is one kind, "home|" is the whole group */
+const kindKey = (group: PropGroup, kind = '') => `${group}|${kind}`
+const readKind = (key: string) => {
+  const [group, kind] = key.split('|') as [PropGroup, string]
+  return { group, kind }
+}
 const SALE_PRICES = [1500000, 2000000, 2500000, 3000000, 4000000, 6000000, 10000000]
 const RENT_PRICES = [4000, 6000, 8000, 10000]
 const ROOMS = ['2', '3', '4', '5']
@@ -59,6 +73,11 @@ function passes(it: CommunityItem, f: Filter) {
     const p = it.property
     const rooms = parseFloat(p.rooms)
     if (f.city && it.city !== f.city) return false
+    if (f.kind) {
+      const want = readKind(f.kind)
+      const has = propertyKind(p, it.title)
+      if (has.group !== want.group || (want.kind && has.kind !== want.kind)) return false
+    }
     if (f.renewal && !p.renewal) return false
     if (f.deal && (p.deal ?? 'sale') !== f.deal) return false
     if (f.rooms && (f.rooms === '5' ? rooms < 5 : Math.floor(rooms) !== Number(f.rooms))) return false
@@ -69,6 +88,11 @@ function passes(it: CommunityItem, f: Filter) {
   if (it.search) {
     const s = it.search
     if (f.city && !s.cities.includes(f.city)) return false
+    // a buyer who looks for this kind of property (a buyer who named no kind takes every kind of the group)
+    if (f.kind) {
+      const want = readKind(f.kind)
+      if (searchGroup(s) !== want.group || (want.kind && !kindFits({ group: want.group, kind: want.kind }, s.kinds, want.group))) return false
+    }
     if (f.deal && (s.deal ?? 'sale') !== f.deal) return false
     if (f.rooms && (f.rooms === '5' ? s.roomsMax < 5 : Number(f.rooms) < s.roomsMin || Number(f.rooms) > s.roomsMax)) return false
     if (f.price && ((s.deal ?? 'sale') !== (f.deal || 'sale') || s.budget > Number(f.price))) return false
@@ -81,7 +105,9 @@ const demoPhotos = ['img/win-01.webp', 'img/prop-07.webp', 'img/prop-05.webp', '
 
 export default function Community() {
   const [params, setParams] = useSearchParams()
-  const { items, myCities, setMyCities, notices, markNoticesRead, clearFresh, addItem, toast, crm } = useStore()
+  const { items: everything, myCities, setMyCities, notices, markNoticesRead, clearFresh, addItem, toast, crm } = useStore()
+  // the feed and every list made of it hold posts only: a story that was not also published as a post is not in them
+  const items = useMemo(() => everything.filter(inFeed), [everything])
   const me = brokerById(CURRENT_BROKER_ID)
   const firstName = me.name.split(' ')[0]
   const raw = params.get('topic')
@@ -108,7 +134,7 @@ export default function Community() {
     next.delete('open')
     setParams(next, { replace: true })
   }, [ask]) // eslint-disable-line react-hooks/exhaustive-deps
-  const [composer, setComposer] = useState<{ topicId: TopicId; photo?: boolean } | null>(null)
+  const [composer, setComposer] = useState<{ topicId: TopicId; photo?: boolean; story?: boolean } | null>(null)
   const [story, setStory] = useState<number | null>(null)
   const unread = notices.filter((n) => !n.read).length
 
@@ -146,14 +172,15 @@ export default function Community() {
     return undefined
   }
   const matches = items.filter((it) => matchFor(it))
-  const stories = scoped.filter((it) => it.image)
+  // the row of stories: what was published as a story (and what was there before the two were told apart)
+  const stories = useMemo(() => everything.filter((it) => inCities(it) && inStories(it)), [everything, myCities]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // "new" highlight settles after a while
   useEffect(() => {
-    if (!items.some((c) => c.fresh)) return
+    if (!everything.some((c) => c.fresh)) return
     const t = window.setTimeout(clearFresh, 12000)
     return () => window.clearTimeout(t)
-  }, [items, clearFresh])
+  }, [everything, clearFresh])
 
   // deep link from an alert: bring the post into view
   useEffect(() => {
@@ -180,10 +207,10 @@ export default function Community() {
     else openComposer('posts', i === 'photo')
   }
   const newProperty = () => (actionSlots.newCard ? actionSlots.newCard() : setPick('property'))
-  const openComposer = (topicId?: TopicId, photo?: boolean) =>
-    setComposer({ topicId: topicId ?? (topic?.compose ? topic.id : 'posts'), photo })
+  const openComposer = (topicId?: TopicId, photo?: boolean, story?: boolean) =>
+    setComposer({ topicId: topicId ?? (topic?.compose ? topic.id : 'posts'), photo, story })
 
-  const publish = (topicId: TopicId, body: string, image?: string) => {
+  const publish = (topicId: TopicId, body: string, image: string | undefined, show: 'feed' | 'story' | 'both') => {
     addItem({
       id: `u${Date.now()}`,
       topicId,
@@ -196,10 +223,13 @@ export default function Community() {
       comments: [],
       image,
       fresh: true,
+      show,
     })
     setComposer(null)
-    setView(view === 'all' ? 'all' : topicId)
-    toast(`פורסם בנושא "${topicById(topicId).name}"`)
+    // a story is seen in the row of stories, which is at the top of the whole feed
+    setView(show === 'story' || view === 'all' ? 'all' : topicId)
+    toast(show === 'story' ? 'הסטורי עלה. הוא מופיע בשורת הסטורי בלבד' : show === 'both' ? `פורסם בנושא "${topicById(topicId).name}", וגם כסטורי` : `פורסם בנושא "${topicById(topicId).name}"`)
+    if (show !== 'feed') window.setTimeout(() => document.querySelector('.stories')?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 350)
   }
 
   const myStats = [
@@ -345,18 +375,18 @@ export default function Community() {
           )}
 
           {!topic && stories.length > 0 && (
-            <div className="stories" aria-label="עדכונים אחרונים">
-              <button className="story story-add" onClick={() => openComposer('posts', true)}>
+            <div className="stories" aria-label="סטורי">
+              <button className="story story-add" onClick={() => openComposer('posts', true, true)} data-act="new-story">
                 <img src={asset(me.avatar)} alt="" />
                 <span className="story-plus">
                   <Plus />
                 </span>
-                <strong>עדכון חדש</strong>
+                <strong>סטורי חדש</strong>
               </button>
               {stories.map((s, i) => {
                 const b = brokerById(s.authorId)
                 return (
-                  <button key={s.id} className="story" onClick={() => setStory(i)} aria-label={`עדכון מאת ${b.name}`}>
+                  <button key={s.id} className="story" onClick={() => setStory(i)} aria-label={`סטורי מאת ${b.name}`} data-story={s.id}>
                     <img src={asset(s.image!)} alt="" loading="lazy" />
                     <span className="story-face">
                       <Avatar src={b.avatar} name={b.avatar ? '' : b.name} size={36} ring />
@@ -686,7 +716,7 @@ export default function Community() {
 function FilterBar({ kind, filter, onChange, count, cities }: { kind: 'properties' | 'buyers'; filter: Filter; onChange: (f: Filter) => void; count: number; cities: string[] }) {
   const set = (patch: Partial<Filter>) => onChange({ ...filter, ...patch })
   const prices = filter.deal === 'rent' ? RENT_PRICES : SALE_PRICES
-  const on = filter.city || filter.rooms || filter.price || filter.deal || filter.renewal
+  const on = filter.city || filter.rooms || filter.price || filter.deal || filter.renewal || filter.kind
   return (
     <section className="flt" aria-label={kind === 'properties' ? 'סינון נכסים' : 'סינון קונים'} data-filters={kind}>
       <label>
@@ -697,6 +727,23 @@ function FilterBar({ kind, filter, onChange, count, cities }: { kind: 'propertie
             <option key={c} value={c}>
               {c}
             </option>
+          ))}
+        </select>
+      </label>
+      {/* the same two lists as in the property form: the whole group, or one kind of it */}
+      <label>
+        <span>סוג נכס</span>
+        <select value={filter.kind} onChange={(e) => set({ kind: e.target.value })} data-filter="kind">
+          <option value="">כל הסוגים</option>
+          {GROUPS.map((g) => (
+            <optgroup key={g.id} label={g.label}>
+              <option value={kindKey(g.id)}>כל ה{g.label}</option>
+              {KINDS[g.id].map((k) => (
+                <option key={k} value={kindKey(g.id, k)}>
+                  {k}
+                </option>
+              ))}
+            </optgroup>
           ))}
         </select>
       </label>
@@ -824,6 +871,10 @@ function NoticeList({ notices, onPick, large }: { notices: NoticeT[]; onPick: (n
 
 /* ================================================================ composer */
 
+/**
+ * A post, or a story (Itzik 22.11.2026). The two are separate: a post is in the feed, a story is a picture in the row
+ * of stories. One small switch in each puts it in the other place too, and it is off unless the broker turns it on.
+ */
 function ComposerModal({
   state,
   onClose,
@@ -831,9 +882,9 @@ function ComposerModal({
   hasCrmProperties,
   onPickProperty,
 }: {
-  state: { topicId: TopicId; photo?: boolean } | null
+  state: { topicId: TopicId; photo?: boolean; story?: boolean } | null
   onClose: () => void
-  onPublish: (topicId: TopicId, body: string, image?: string) => void
+  onPublish: (topicId: TopicId, body: string, image: string | undefined, show: 'feed' | 'story' | 'both') => void
   hasCrmProperties: boolean
   onPickProperty: () => void
 }) {
@@ -843,56 +894,109 @@ function ComposerModal({
   const [body, setBody] = useState('')
   const [image, setImage] = useState<string | undefined>()
   const [photos, setPhotos] = useState(false)
+  // a story or a post (kept here, so the window does not change its face while it closes)
+  const [story, setStory] = useState(false)
+  // the second place: a story that is a post too, a post that is a story too. Off unless it is turned on
+  const [also, setAlso] = useState(false)
+  const [miss, setMiss] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [photoErr, setPhotoErr] = useState('')
   const area = useRef<HTMLTextAreaElement>(null)
+  const file = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (!state) return
     setTopicId(state.topicId)
     setBody('')
     setImage(undefined)
-    setPhotos(!!state.photo)
-    const t = window.setTimeout(() => area.current?.focus(), 200)
+    setPhotos(!!state.photo || !!state.story)
+    setStory(!!state.story)
+    setAlso(false)
+    setMiss(false)
+    setBusy(false)
+    setPhotoErr('')
+    // a story starts from its picture, a post from its words
+    const t = window.setTimeout(() => !state.story && area.current?.focus(), 200)
     return () => window.clearTimeout(t)
   }, [state])
 
+  // the broker's own picture, made smaller in the browser before it is kept (like the photos of a property)
+  const own = !!image && image.startsWith('data:')
+  const pickFile = async (f: File | undefined) => {
+    if (!f) return
+    if (!f.type.startsWith('image/')) return setPhotoErr('הקובץ הזה הוא לא תמונה. בוחרים תמונה מהגלריה או מצלמים.')
+    setBusy(true)
+    try {
+      setImage(await shrinkPhoto(f))
+      setPhotoErr('')
+      setMiss(false)
+    } catch {
+      setPhotoErr('לא הצלחנו לפתוח את התמונה הזאת. אפשר לנסות תמונה אחרת.')
+    }
+    setBusy(false)
+  }
+
+  const asStory = story || also
+  const show: 'feed' | 'story' | 'both' = story ? (also ? 'both' : 'story') : also ? 'both' : 'feed'
+  const inFeedToo = !story || also
+  const send = () => {
+    // a story is a picture: without one it is said at the picture, not sent
+    if (asStory && !image) {
+      setMiss(true)
+      setPhotos(true)
+      return
+    }
+    onPublish(topicId, body.trim(), image, show)
+  }
+
   return (
-    <Modal open={!!state} onClose={onClose} title="יצירת פוסט">
-      <div className="modal-body composer-modal">
+    <Modal open={!!state} onClose={onClose} title={story ? 'סטורי חדש' : 'יצירת פוסט'}>
+      <div className="modal-body composer-modal" data-composer={story ? 'story' : 'post'}>
+        {story && (
+          <p className="pf-story-head">
+            <Camera /> סטורי הוא תמונה בשורת הסטורי, בראש הפיד. הוא לא מופיע בפיד עצמו.
+          </p>
+        )}
         <div className="composer-author">
           <Avatar src={me.avatar} name={me.name} size={44} />
           <div>
             <strong>{me.name}</strong>
-            <div className="composer-topics" role="radiogroup" aria-label="נושא הפוסט">
-              {composeTopics.map((t) => (
-                <button
-                  key={t.id}
-                  type="button"
-                  role="radio"
-                  aria-checked={topicId === t.id}
-                  className={`tag${topicId === t.id ? ' tag-gold' : ''}`}
-                  onClick={() => setTopicId(t.id)}
-                >
-                  <t.icon />
-                  {t.name}
-                </button>
-              ))}
-            </div>
+            {/* a topic belongs to a post in the feed: a story that is a story only has none */}
+            {inFeedToo && (
+              <div className="composer-topics" role="radiogroup" aria-label="נושא הפוסט">
+                {composeTopics.map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={topicId === t.id}
+                    className={`tag${topicId === t.id ? ' tag-gold' : ''}`}
+                    onClick={() => setTopicId(t.id)}
+                  >
+                    <t.icon />
+                    {t.name}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
         <label className="sr-only" htmlFor="composer-text">
-          תוכן הפוסט
+          {story ? 'כמה מילים על התמונה' : 'תוכן הפוסט'}
         </label>
         <textarea
           id="composer-text"
           ref={area}
-          className={`composer-area${body.length < 80 ? ' is-big' : ''}`}
+          className={`composer-area${body.length < 80 && !story ? ' is-big' : ''}`}
           placeholder={
-            topicId === 'knowledge'
-              ? 'מה השאלה? משא ומתן, בלעדיות, פולואפ למוכרים...'
-              : topicId === 'wins'
-                ? 'ספרו על העסקה שנסגרה'
-                : 'מה חדש אצלך בשטח?'
+            story
+              ? 'כמה מילים על התמונה (לא חובה)'
+              : topicId === 'knowledge'
+                ? 'מה השאלה? משא ומתן, בלעדיות, פולואפ למוכרים...'
+                : topicId === 'wins'
+                  ? 'ספרו על העסקה שנסגרה'
+                  : 'מה חדש אצלך בשטח?'
           }
           value={body}
           onChange={(e) => setBody(e.target.value)}
@@ -907,7 +1011,42 @@ function ComposerModal({
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.26, ease: EASE }}
             >
-              <span>בחירת תמונה</span>
+              {/* the broker's own picture, from the gallery or the camera */}
+              <div className="pf-own-photo">
+                <input
+                  ref={file}
+                  type="file"
+                  accept="image/*"
+                  hidden
+                  onChange={(e) => {
+                    void pickFile(e.target.files?.[0])
+                    e.target.value = ''
+                  }}
+                  data-f="post-photo"
+                />
+                {own && (
+                  <span className="pf-shot" data-own-photo>
+                    <img src={image} alt="התמונה שנבחרה" />
+                    <button type="button" onClick={() => setImage(undefined)} aria-label="הסרת התמונה" data-act="remove-photo">
+                      <X />
+                    </button>
+                  </span>
+                )}
+                <button type="button" className="pf-upload" onClick={() => file.current?.click()} disabled={busy} data-act="upload-photo">
+                  <ImagePlus /> {busy ? 'מכינים את התמונה' : own ? 'תמונה אחרת' : 'העלאת תמונה'}
+                </button>
+              </div>
+              {photoErr && (
+                <em className="pf-err" role="alert" data-err="photo">
+                  {photoErr}
+                </em>
+              )}
+              {miss && asStory && !image && (
+                <em className="pf-err" role="alert" data-err="story-photo">
+                  סטורי הוא תמונה. מעלים תמונה, או בוחרים אחת מהדוגמאות.
+                </em>
+              )}
+              <span>או תמונה לדוגמה</span>
               <div>
                 {demoPhotos.map((p) => (
                   <button
@@ -915,8 +1054,11 @@ function ComposerModal({
                     type="button"
                     className={image === p ? 'is-on' : ''}
                     aria-pressed={image === p}
-                    aria-label="בחירת תמונה"
-                    onClick={() => setImage(image === p ? undefined : p)}
+                    aria-label="בחירת תמונה לדוגמה"
+                    onClick={() => {
+                      setImage(image === p ? undefined : p)
+                      setMiss(false)
+                    }}
                   >
                     <img src={asset(p)} alt="" />
                     {image === p && (
@@ -931,28 +1073,47 @@ function ComposerModal({
           )}
         </AnimatePresence>
 
-        <div className="composer-add">
-          <span>הוספה לפוסט</span>
-          <button type="button" className={photos ? 'is-on' : ''} aria-pressed={photos} onClick={() => setPhotos((p) => !p)} aria-label="תמונה">
-            <ImagePlus style={{ color: '#74d3a8' }} />
-          </button>
-          {hasCrmProperties && (
-            <button
-              type="button"
-              aria-label="שיתוף נכס מהנכסים שלי"
-              title="שיתוף נכס מהנכסים שלי"
-              onClick={() => {
-                onClose()
-                onPickProperty()
-              }}
-            >
-              <Share2 style={{ color: '#c3b1f4' }} />
+        {!story && (
+          <div className="composer-add">
+            <span>הוספה לפוסט</span>
+            <button type="button" className={photos ? 'is-on' : ''} aria-pressed={photos} onClick={() => setPhotos((p) => !p)} aria-label="תמונה">
+              <ImagePlus style={{ color: '#74d3a8' }} />
             </button>
-          )}
-        </div>
+            {hasCrmProperties && (
+              <button
+                type="button"
+                aria-label="שיתוף נכס מהנכסים שלי"
+                title="שיתוף נכס מהנכסים שלי"
+                onClick={() => {
+                  onClose()
+                  onPickProperty()
+                }}
+              >
+                <Share2 style={{ color: '#c3b1f4' }} />
+              </button>
+            )}
+          </div>
+        )}
 
-        <button className="btn btn-gold btn-block" disabled={!body.trim()} onClick={() => onPublish(topicId, body.trim(), image)}>
-          פרסום
+        {/* the one small switch: off, a story is a story only and a post is a post only */}
+        {story ? (
+          <Toggle id="also-post" on={also} onChange={setAlso} label="לפרסם גם כפוסט בפיד" hint={also ? 'הסטורי יופיע גם כפוסט בפיד, בנושא שנבחר למעלה.' : 'כבוי: הסטורי מופיע בשורת הסטורי בלבד.'} />
+        ) : (
+          <Toggle
+            id="also-story"
+            on={also}
+            onChange={(v) => {
+              setAlso(v)
+              // a story needs a picture: the pictures open when it is turned on
+              if (v) setPhotos(true)
+            }}
+            label="להעלות גם כסטורי"
+            hint={also ? 'הפוסט יופיע גם בשורת הסטורי, עם התמונה.' : 'כבוי: הפוסט מופיע בפיד בלבד.'}
+          />
+        )}
+
+        <button className="btn btn-gold btn-block" disabled={story ? busy : !body.trim() || busy} onClick={send} data-act="publish">
+          {story ? 'העלאת הסטורי' : 'פרסום'}
         </button>
       </div>
     </Modal>
@@ -1006,7 +1167,7 @@ function StoryViewer({
           className="story-scrim"
           role="dialog"
           aria-modal="true"
-          aria-label={`עדכון מאת ${author.name}`}
+          aria-label={`סטורי מאת ${author.name}`}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -1047,17 +1208,20 @@ function StoryViewer({
             <button className="story-tap story-tap-prev" onClick={prev} aria-label="הקודם" tabIndex={-1} />
             <button className="story-tap story-tap-next" onClick={next} aria-label="הבא" tabIndex={-1} />
             <footer>
-              <span className="tag tag-gold">{topicById(s.topicId).name}</span>
-              <h3>{s.title ?? s.body}</h3>
+              <span className="tag tag-gold">{inFeed(s) ? topicById(s.topicId).name : 'סטורי'}</span>
+              {(s.title ?? s.body) && <h3>{s.title ?? s.body}</h3>}
               {s.property && (
                 <p className="num">
-                  {s.property.area} · {s.property.rooms} חדרים · {formatPriceShort(s.property.price)}
+                  {[s.property.area, streetOf(s.property), s.property.rooms ? `${s.property.rooms} חדרים` : '', formatPriceShort(s.property.price)].filter(Boolean).join(' · ')}
                 </p>
               )}
-              <button className="btn btn-gold btn-sm" onClick={() => onOpenPost(s)}>
-                לפוסט המלא
-                <ChevronLeft />
-              </button>
+              {/* a story that is a story only has no post to open */}
+              {inFeed(s) && (
+                <button className="btn btn-gold btn-sm" onClick={() => onOpenPost(s)}>
+                  לפוסט המלא
+                  <ChevronLeft />
+                </button>
+              )}
             </footer>
           </motion.div>
           <button className="story-nav story-next" onClick={next} aria-label="העדכון הבא">

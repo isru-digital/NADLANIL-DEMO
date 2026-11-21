@@ -42,6 +42,9 @@ function shrink(file: File): Promise<string> {
   })
 }
 
+/** the same shrinking, for a picture of a post or a story */
+export const shrinkPhoto = shrink
+
 const mb = (bytes: number) => (bytes / 1024 / 1024).toFixed(1)
 
 export default function PhotoPicker({ photos, onChange }: { photos: string[]; onChange: (next: string[]) => void }) {

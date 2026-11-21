@@ -145,6 +145,7 @@ export default function Crm() {
   // the green version gives a property a category (private, office, business) and lets the board show one of them
   const cats = crmSlots.categories
   const catOf = crmSlots.categoryOf
+  const kindOfCard = crmSlots.kindOf
   const [cat, setCat] = useState('all')
   // properties marked for urban renewal, on their own
   const [renewalOnly, setRenewalOnly] = useState(false)
@@ -199,9 +200,10 @@ export default function Crm() {
           {it.image && <Photo src={it.image} alt={it.title} ratio="16 / 8" className="kan-photo" />}
           <div className="kan-body">
             <div className="kan-top">
-              <span className={`tag ${isProperty ? 'tag-gold' : 'tag-blue'}`}>
+              {/* a property's tag is its kind (דירה, פנטהאוז, משרד...), under its group: מגורים or מסחרי */}
+              <span className={`tag ${isProperty ? 'tag-gold' : 'tag-blue'}`} data-cat={isProperty && catOf ? catOf(it) : undefined} data-kind={isProperty && kindOfCard ? kindOfCard(it) : undefined}>
                 {isProperty ? <Home /> : <UserSearch />}
-                {isProperty ? (cats && catOf ? (cats.find((c) => c.id === catOf(it))?.label ?? 'נכס') : 'נכס') : 'לקוח'}
+                {isProperty ? (kindOfCard ? kindOfCard(it) : cats && catOf ? (cats.find((c) => c.id === catOf(it))?.label ?? 'נכס') : 'נכס') : 'לקוח'}
               </span>
               {isProperty ? (
                 <button
@@ -225,11 +227,12 @@ export default function Crm() {
               </span>
             )}
             {it.street && (
-              <p className="kan-address" data-exact title="רק אתם רואים את הכתובת המדויקת">
+              <p className="kan-address" data-exact title="רק אתם רואים את הכתובת המלאה">
                 <Lock />
                 <span>
                   {it.street}
                   {it.houseNo && ` ${it.houseNo}`}
+                  {it.aptNo && `, דירה ${it.aptNo}`}
                   {it.neighborhood && `, ${it.neighborhood}`}
                 </span>
               </p>
@@ -239,7 +242,7 @@ export default function Crm() {
                 <MapPin />
                 {it.area}
               </span>
-              {it.category && it.category !== 'home' ? (
+              {(crmSlots.noRooms ? crmSlots.noRooms(it) : it.category && it.category !== 'home') ? (
                 <span>
                   <Ruler />
                   <span className="num">{it.sqm ?? '-'}</span> מ"ר

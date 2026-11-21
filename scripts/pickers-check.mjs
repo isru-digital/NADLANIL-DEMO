@@ -88,14 +88,21 @@ for (const [tag, vp] of [
   await page.type('[data-f="street"]', 'סמטת הכרמים')
   await page.type('[data-f="house"]', '12')
   await page.type('[data-f="price"]', '1690000')
+  // a property needs its kind since 22.11.2026: "מגורים", then "דירה"
+  await page.evaluate(() => document.querySelector('.ga [data-cat="home"]')?.click())
+  await wait(500)
+  await page.evaluate(() => document.querySelector('.ga .pf-kind[data-kind="דירה"]')?.click())
+  await wait(200)
   await tap(page, '.ga-go')
   await wait(1500)
   s = await store(page)
   const card = s.crm.find((c) => c.street === 'סמטת הכרמים')
   post = card && s.items.find((it) => it.sourceId === card.id)
-  const leak = s.items.filter((it) => JSON.stringify(it).includes('סמטת הכרמים'))
+  // since 22.11.2026 the street is shown to every broker; the building's number only when the broker asks for it
+  // (the switch is off here), and it is "12" in this check
+  const leak = s.items.filter((it) => JSON.stringify(it).includes('סמטת הכרמים 12') || it.property?.houseNo)
   check(`${tag}: a new property is saved in the CRM and published in the community`, s.crm.length === crmBefore + 1 && !!card && !!post && post.topicId === 'coop', { crm: s.crm.length, crmBefore, post: post?.title })
-  check(`${tag}: the community gets "חיפה - נווה שאנן" and never the street or the house number`, post?.property?.area === 'חיפה - נווה שאנן' && leak.length === 0, { area: post?.property?.area, leak: leak.length })
+  check(`${tag}: the community gets "חיפה - נווה שאנן" and the street, and never the building's number`, post?.property?.area === 'חיפה - נווה שאנן' && post?.property?.street === 'סמטת הכרמים' && leak.length === 0, { area: post?.property?.area, street: post?.property?.street, leak: leak.length })
 
   // ---- looking for a buyer: pick one of mine
   await page.goto(green + '/app/community?topic=seeking', { waitUntil: 'networkidle0' })

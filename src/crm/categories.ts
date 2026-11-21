@@ -1,8 +1,8 @@
 import { useEffect } from 'react'
-import { Building2, Home } from 'lucide-react'
-import type { LucideIcon } from 'lucide-react'
 import type { CrmItem } from '../data/demo'
 import { useStore } from '../store'
+import { GROUPS, groupLabel, kindOf, kindTitle } from '../config/propertyTypes'
+import type { PropGroup } from '../config/propertyTypes'
 
 /**
  * A property's category (green version, Itzik 14.11.2026): not only private homes, also offices and business
@@ -10,26 +10,28 @@ import { useStore } from '../store'
  * is opened, shows on its card, and the board can be filtered by it. A property with no category is a private home
  * (everything the demo had before).
  */
-export type PropCategory = 'home' | 'business'
+export type PropCategory = PropGroup
 
-export const CATEGORIES: { id: PropCategory; label: string; icon: LucideIcon }[] = [
-  { id: 'home', label: 'פרטי', icon: Home },
-  { id: 'business', label: 'משרדי/עסקי', icon: Building2 },
-]
+/** 22.11.2026: the two categories are the two groups of config/propertyTypes.ts, "מגורים" and "מסחרי", and under each
+    one the property has a kind of that group's list. A card saved before that keeps its category and gets the
+    closest kind when it is read (`cardKind`). */
+export const CATEGORIES = GROUPS
 
 /** 'office' was a category of its own for a day: a card saved then counts as "משרדי/עסקי". */
 export const categoryOf = (item: Pick<CrmItem, 'category'>): PropCategory => (item.category && item.category !== 'home' ? 'business' : 'home')
-export const categoryLabel = (id: PropCategory) => CATEGORIES.find((c) => c.id === id)!.label
+export const categoryLabel = (id: PropCategory) => groupLabel(id)
+/** the kind of a card's property: as it was picked, or the closest one for a card that was saved before the list */
+export const cardKind = (item: Pick<CrmItem, 'category' | 'ptype' | 'title'>) => kindOf({ group: categoryOf(item), kind: item.ptype, title: item.title }).kind
 export const isCommercial = (item: Pick<CrmItem, 'category'>) => categoryOf(item) !== 'home'
 
 /** What can be marked on an office or a business property (a home has its own list). */
-export const commercialExtras = ['חניה', 'מעלית', 'מיזוג', 'נגישות', 'חזית לרחוב', 'מחסן', 'משופץ']
+export const commercialExtras = ['חניה', 'מעלית', 'ממ"ק', 'מיזוג', 'נגישות', 'חזית לרחוב', 'מחסן', 'משופץ']
 
-/** "נכס משרדי/עסקי 120 מ"ר בפתח תקווה" */
-export const commercialTitle = (sqm: number, city: string) => `נכס משרדי/עסקי${sqm ? ` ${sqm} מ"ר` : ''}${city ? ` ב${city}` : ''}`
+/** "משרד 120 מ"ר בפתח תקווה" */
+export const commercialTitle = (sqm: number, city: string, kind = 'שטח מסחרי') => kindTitle('business', kind, { sqm, city })
 
 /** What the community reads under an office or a business property. Never the owner, never the broker's notes. */
-export const commercialBody = 'נכס משרדי/עסקי חדש אצלי. פתוח לשיתוף פעולה עם מתווך שיש לו לקוח מתאים.'
+export const commercialBody = 'נכס מסחרי חדש אצלי. פתוח לשיתוף פעולה עם מתווך שיש לו לקוח מתאים.'
 
 /** Two demo properties, so the two new categories are not empty when the board opens. Invented, like all the demo's data. */
 export const commercialSeed: CrmItem[] = [
@@ -37,6 +39,7 @@ export const commercialSeed: CrmItem[] = [
     id: 'cm1',
     kind: 'property',
     category: 'business',
+    ptype: 'משרד',
     title: 'משרד 120 מ"ר בבניין משרדים',
     area: 'פתח תקווה, קריית מטלון',
     city: 'פתח תקווה',
@@ -53,6 +56,7 @@ export const commercialSeed: CrmItem[] = [
     id: 'cm2',
     kind: 'property',
     category: 'business',
+    ptype: 'חנות',
     title: 'חנות 45 מ"ר ברחוב ראשי',
     area: 'חולון, סוקולוב',
     city: 'חולון',

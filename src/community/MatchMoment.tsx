@@ -9,7 +9,8 @@ import type { CommunityItem, Notice, SearchSpec } from '../data/demo'
 import { useStore } from '../store'
 import { Avatar } from '../components/ui'
 import ChatWindow from './ChatWindow'
-import { isBizKind, matchStore, matchUi, matchesFor, otherSideInterested, isMutual, placeOf, scoreOf } from './match'
+import { matchStore, matchUi, matchesFor, otherSideInterested, isMutual, placeOf, propertyKind, scoreOf } from './match'
+import { DEFAULT_KIND, hasRooms, isKind, searchGroup } from '../config/propertyTypes'
 import type { Match, Pair } from './match'
 import '../styles/match.css'
 
@@ -48,7 +49,7 @@ const firstName = (id: string) => brokerById(id).name.split(' ')[0]
 const priceOf = (it: CommunityItem) =>
   it.property ? `${formatPriceShort(it.property.price)}${it.property.deal === 'rent' ? ' לחודש' : ''}` : it.search ? `עד ${formatPriceShort(it.search.budget)}` : ''
 const roomsOf = (it: CommunityItem) =>
-  it.property ? (it.property.rooms ? `${it.property.rooms} חדרים` : '') : it.search ? (it.search.kinds?.some(isBizKind) ? it.search.kinds.join(', ') : roomsLabel(it.search)) : ''
+  it.property ? (it.property.rooms ? `${it.property.rooms} חדרים` : '') : it.search ? (searchGroup(it.search) === 'business' ? it.search.kinds?.join(', ') || 'נכס מסחרי' : roomsLabel(it.search)) : ''
 
 /** the first line of the chat, in the broker's own voice, left in the box to send or change */
 function openerFor(mine: CommunityItem, theirs: CommunityItem, score: number) {
@@ -195,7 +196,7 @@ export default function MatchMoment({ sim = false }: { sim?: boolean }) {
 
 /* ================================================================ the other side, invented for the demo */
 
-const AMEN = ['חניה', 'מעלית', 'ממ"ד']
+const AMEN = ['חניה', 'מעלית', 'ממ"ד', 'ממ"ק']
 function counterpartOf(mine: CommunityItem): CommunityItem | null {
   const local = (city: string) => {
     // a broker who works in that city, and for a sale not one who does rentals only
@@ -212,9 +213,11 @@ function counterpartOf(mine: CommunityItem): CommunityItem | null {
     const rent = p.deal === 'rent'
     const step = rent ? 100 : 10000
     const hood = p.area.split(' - ')[1]?.split(' · ')[0].trim()
-    const biz = !p.rooms
+    // the invented buyer looks for the same kind of property, in the same group (מגורים or מסחרי)
+    const k = propertyKind(p, mine.title)
+    const biz = k.group === 'business'
     const extra = (p.extra ?? []).join(' ')
-    const wants = AMEN.filter((a) => (a === 'חניה' ? (p.parking ?? 0) > 0 : a === 'מעלית' ? p.elevator : extra.includes('ממ"ד')))
+    const wants = AMEN.filter((a) => (a === 'חניה' ? (p.parking ?? 0) > 0 : a === 'מעלית' ? p.elevator : extra.includes(a)))
     const search: SearchSpec = {
       cities: [mine.city],
       roomsMin: Number.isNaN(rooms) ? 3 : Math.max(1, Math.floor(rooms)),
@@ -223,7 +226,8 @@ function counterpartOf(mine: CommunityItem): CommunityItem | null {
       wants,
       deal: rent ? 'rent' : 'sale',
       neighborhoods: hood ? [hood] : undefined,
-      kinds: biz ? ['משרדי/עסקי'] : undefined,
+      kinds: [k.kind],
+      group: k.group,
     }
     return {
       id: `sim-b-${mine.id}-${stamp}`,
@@ -233,7 +237,7 @@ function counterpartOf(mine: CommunityItem): CommunityItem | null {
       time: 'עכשיו',
       likes: 0,
       comments: [],
-      title: biz ? `מחפש ללקוח: נכס משרדי/עסקי ב${mine.city}` : `${rent ? 'מחפש לשוכר' : 'מחפש לקונה'}: ${roomsLabel(search)} ב${mine.city}`,
+      title: biz || !hasRooms(k.group, k.kind) ? `מחפש ללקוח: ${k.kind} ב${mine.city}` : `${rent ? 'מחפש לשוכר' : 'מחפש לקונה'}: ${roomsLabel(search)} ב${mine.city}`,
       body: `${hood ? `שכונה: ${hood}. ` : ''}${rent ? 'שוכר רציני' : 'קונה רציני'}. מי שיש לו נכס מתאים, דברו איתי.`,
       search,
     }
@@ -246,8 +250,11 @@ function counterpartOf(mine: CommunityItem): CommunityItem | null {
     const rent = s.deal === 'rent'
     const step = rent ? 100 : 10000
     const hood = s.neighborhoods?.[0]
-    const kind = s.kinds?.[0] ?? 'דירה'
-    const rooms = String(s.roomsMax)
+    // the invented property is of the kind the search names (the first one), in the search's own group
+    const group = searchGroup(s)
+    const kind = s.kinds?.find((x) => isKind(group, x)) ?? DEFAULT_KIND[group]
+    const sized = !hasRooms(group, kind)
+    const rooms = sized ? '' : String(s.roomsMax)
     // a photo of the demo's own (generated) properties, of the same city when there is one
     const pics = communityItems.filter((i) => i.property && i.image && i.authorId !== CURRENT_BROKER_ID)
     const pic = (pics.find((i) => i.city === city) ?? pics[0])?.image
@@ -260,7 +267,7 @@ function counterpartOf(mine: CommunityItem): CommunityItem | null {
       likes: 0,
       comments: [],
       image: pic,
-      title: `${kind} ${rooms} חדרים ב${hood ?? city}`,
+      title: sized ? `${kind} ב${hood ?? city}` : `${kind} ${rooms} חדרים ב${hood ?? city}`,
       body: 'נכס חדש אצלי. פתוח לשיתוף פעולה עם מתווך שיש לו קונה מתאים.',
       property: {
         area: hood ? `${city} - ${hood}` : city,
@@ -270,6 +277,7 @@ function counterpartOf(mine: CommunityItem): CommunityItem | null {
         showPrice: true,
         deal: rent ? 'rent' : 'sale',
         kind,
+        group,
         parking: 1,
         elevator: true,
         extra: ['ממ"ד', 'מרפסת'],

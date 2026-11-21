@@ -22,8 +22,7 @@ import {
   Sparkles,
   ThumbsUp,
   Trophy,
-  Wallet,
-} from 'lucide-react'
+  Wallet, Building2 } from 'lucide-react'
 import { CURRENT_BROKER_ID } from '../config'
 import { reactionById, reactions, topicReactions } from '../config/reactions'
 import type { ReactionId } from '../config/reactions'
@@ -38,6 +37,10 @@ import '../styles/community.css'
 import '../styles/feed.css'
 import '../styles/topics.css'
 import '../styles/property.css'
+import '../styles/post-form.css'
+import { propertyKind } from '../community/match'
+import { searchGroup } from '../config/propertyTypes'
+import { streetOf } from '../community/place'
 
 /**
  * One community post, Facebook-style. The same component renders the feed and the
@@ -265,7 +268,12 @@ export default function CommunityCard({
             <div className="fb-embed-main">
               <span className="fb-embed-kicker">
                 <MapPin />
-                {item.property.area}
+                {/* the city and the neighbourhood, then the street, for every broker in the community; the building's
+                    number only when the broker chose to show it (one run of words, so the comma sits where it should) */}
+                <span className="pf-place">
+                  {item.property.area}
+                  {streetOf(item.property) && <span data-street>, {streetOf(item.property)}</span>}
+                </span>
                 {item.property.deal === 'rent' && <em className="fb-deal">להשכרה</em>}
                 {item.property.renewal && (
                   <em className="fb-renew" data-renewal>
@@ -281,6 +289,9 @@ export default function CommunityCard({
                 </Link>
               )}
               <div className="fb-facts">
+                <span className="fb-kind" data-kind={propertyKind(item.property, item.title).kind}>
+                  {propertyKind(item.property, item.title).kind}
+                </span>
                 {item.property.rooms && (
                   <span>
                     <BedDouble />
@@ -298,6 +309,15 @@ export default function CommunityCard({
                   {item.property.split}
                 </span>
               </div>
+              {/* what the property has: a safe room, a lift... (the first few; the property's page has them all) */}
+              {(item.property.extra?.length ?? 0) > 0 && (
+                <ul className="fb-extras" data-extras aria-label="מה יש בנכס">
+                  {item.property.extra!.slice(0, 4).map((x) => (
+                    <li key={x}>{x}</li>
+                  ))}
+                  {item.property.extra!.length > 4 && <li className="is-more num">+{item.property.extra!.length - 4}</li>}
+                </ul>
+              )}
               {!preview && (item.property.images?.length ?? 0) > 0 && (
                 <Link to={`/app/property/${item.id}`} className="fb-more">
                   לכל הפרטים ו-{item.property.images!.length} תמונות <ChevronLeft />
@@ -325,8 +345,8 @@ export default function CommunityCard({
                 <MapPin />
                 {item.search.cities.join(', ')}
               </li>
-              <li>
-                <BedDouble />
+              <li data-search-what>
+                {searchGroup(item.search) === 'business' ? <Building2 /> : <BedDouble />}
                 {roomsLabel(item.search)}
               </li>
               <li>

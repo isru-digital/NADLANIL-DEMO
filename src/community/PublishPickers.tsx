@@ -11,6 +11,7 @@ import { useStore } from '../store'
 import { Modal } from '../components/ui'
 import { postOf } from '../owner/OwnerPublish'
 import { clientActions, useClients } from '../crm/clients'
+import { searchGroup } from '../config/propertyTypes'
 import type { Client } from '../crm/clients'
 import NewClient from '../crm/NewClient'
 import type { NewClientInput } from '../crm/NewClient'
@@ -21,7 +22,8 @@ import '../styles/publish-pickers.css'
  *  - "נכסים לשיתוף פעולה": pick one of my CRM properties (a small photo each), or add a new one. A new property goes
  *    into the CRM first and up to the community by itself (AutoPublish), so it is in both places.
  *  - "מחפש לקונה": pick a buyer or a renter from my CRM, or a new one. A new buyer is saved in the CRM and published.
- * The community sees the city and the neighbourhood only: never the street, the house number, a name or a phone.
+ * The community sees the city, the neighbourhood and the street (since 22.11.2026; the building's number only when
+ * the broker chose to show it): never the flat's number, a name or a phone.
  */
 
 /** The key a published client is kept under, so the list can say "already in the community". */
@@ -32,8 +34,11 @@ export function buyerPost(cl: Client, authorId: string): CommunityItem {
   const rent = cl.type === 'renter'
   const roomsMin = cl.roomsMin ?? Math.max(1, cl.rooms || 3)
   const roomsMax = cl.roomsMax ?? Math.max(roomsMin, cl.rooms || 4)
-  const search: SearchSpec = { cities: cl.cities, roomsMin, roomsMax, budget: cl.sum, wants: cl.must ?? [], deal: rent ? 'rent' : 'sale', neighborhoods: cl.neighborhoods, kinds: cl.kinds, budgetMin: cl.budgetMin }
+  const group = searchGroup({ group: cl.group, kinds: cl.kinds })
+  const search: SearchSpec = { cities: cl.cities, roomsMin, roomsMax, budget: cl.sum, wants: cl.must ?? [], deal: rent ? 'rent' : 'sale', neighborhoods: cl.neighborhoods, kinds: cl.kinds, group, budgetMin: cl.budgetMin }
   const where = cl.cities.length ? ` ב${cl.cities.join(' או ב')}` : ''
+  // a commercial search has no rooms: its title says which kinds
+  const what = group === 'business' ? (cl.kinds?.length ? cl.kinds.join(', ') : 'נכס מסחרי') : roomsLabel(search)
   const hoods = cl.neighborhoods?.length ? `שכונות: ${cl.neighborhoods.join(', ')}. ` : ''
   return {
     id: `b-${cl.id}-${Date.now()}`,
@@ -44,7 +49,8 @@ export function buyerPost(cl: Client, authorId: string): CommunityItem {
     likes: 0,
     comments: [],
     fresh: true,
-    title: `${rent ? 'מחפש לשוכר' : 'מחפש לקונה'}: ${roomsLabel(search)}${where}`,
+    title: `${rent ? 'מחפש לשוכר' : 'מחפש לקונה'}: ${what}${where}`,
+    show: 'feed',
     body: `${hoods}${cl.wants ? `${cl.wants}. ` : ''}${rent ? 'שוכר רציני' : 'קונה רציני'}. מי שיש לו נכס מתאים, גם שקט, דברו איתי.`,
     search,
   }
@@ -69,7 +75,7 @@ export function PropertyPicker({ open, onClose }: { open: boolean; onClose: () =
     else navigate('/app/crm?v=properties')
   }
   return (
-    <Modal open={open} onClose={onClose} title="שיתוף נכס בקהילה" subtitle="בוחרים נכס מה-CRM שלכם, או מוסיפים נכס חדש. בקהילה רואים רק עיר ושכונה.">
+    <Modal open={open} onClose={onClose} title="שיתוף נכס בקהילה" subtitle="בוחרים נכס מה-CRM שלכם, או מוסיפים נכס חדש. בקהילה רואים עיר, שכונה ורחוב.">
       <div className="modal-body pk" data-picker="property">
         <button type="button" className="pk-new" onClick={fresh} data-act="new-property">
           <span className="pk-new-ico">

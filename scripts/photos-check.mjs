@@ -129,6 +129,11 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
   await wait(300)
   check(`${d} going back to "נכס" keeps the photos`, (await picker(page)).n === 3)
 
+  // a property needs its kind since 22.11.2026: "מגורים", then "דירה"
+  await page.evaluate(() => document.querySelector('.ga [data-cat="home"]')?.click())
+  await wait(500)
+  await page.evaluate(() => document.querySelector('.ga .pf-kind[data-kind="דירה"]')?.click())
+  await wait(200)
   await page.evaluate(() => [...document.querySelectorAll('.ga-go')].find((b) => b.textContent.includes('הוספה ל-CRM')).click())
   await wait(1700)
   const card = () =>

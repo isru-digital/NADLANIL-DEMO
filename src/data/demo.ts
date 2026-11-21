@@ -4,6 +4,7 @@
 // ---------------------------------------------------------------------------
 
 import type { TopicId } from '../config/topics'
+import { isKind, searchGroup } from '../config/propertyTypes'
 import { REFERRAL_TERMS } from '../config/topics'
 
 export type Broker = {
@@ -39,15 +40,25 @@ export type CrmItem = {
   images?: string[]
   /** green version: a private home (also when missing), an office or a business property */
   category?: 'home' | 'office' | 'business'
+  /** the kind of property, one of the group's list in config/propertyTypes.ts (22.11.2026). An older card has none
+      and is read through `kindOf` */
+  ptype?: string
   sqm?: number
   floor?: string
   /** city used for community filtering and matching */
   city: string
-  /** the exact address: street and house number stay with the broker who put the property in; never published */
+  /** the address (22.11.2026): the street is shown to every broker in the community; the building's number only when
+      the broker turned "להציג מספר בניין" on; the flat's number never leaves the broker's own card */
   street?: string
   houseNo?: string
+  aptNo?: string
+  showHouseNo?: boolean
   /** the neighbourhood: published with the city */
   neighborhood?: string
+  /** what the property has (a safe room, a lift...): on the broker's card and, since 22.11.2026, on the post too */
+  extras?: string[]
+  /** "להעלות גם כסטורי": the post of this property is in the row of stories too (it needs a photo) */
+  asStory?: boolean
   /** how many parking spaces (0 = none, 3 = three or more) */
   parking?: number
   /** marked for urban renewal (תמ"א 38 or פינוי בינוי) */
@@ -67,6 +78,8 @@ export type SearchSpec = {
   /** a full search (17.11.2026): the neighbourhoods, the kinds of home and the least the buyer pays */
   neighborhoods?: string[]
   kinds?: string[]
+  /** "מגורים" or "מסחרי" (22.11.2026); an older search is read from its kinds */
+  group?: 'home' | 'business'
   budgetMin?: number
 }
 
@@ -614,7 +627,13 @@ export type PropertyInfo = {
   split: string
   showPrice?: boolean
   deal?: 'sale' | 'rent'
+  /** the kind of property (config/propertyTypes.ts) and its group; an older post is read through `kindOf` */
   kind?: string
+  group?: 'home' | 'business'
+  /** the street, shown to every broker in the community (22.11.2026); the building's number is here only when the
+      broker chose to show it. The flat's number is never here. */
+  street?: string
+  houseNo?: string
   sqm?: number
   floor?: string
   /** how many parking spaces (0 = none, 3 = three or more) */
@@ -648,7 +667,18 @@ export type CommunityItem = {
   /** CRM item this message was created from */
   sourceId?: string
   fresh?: boolean
+  /**
+   * Where it shows (22.11.2026): a post is in the feed only, a story in the row of stories only, unless its writer
+   * turned on "להעלות גם כסטורי" / "לפרסם גם כפוסט בפיד". What was published before this had no such choice and
+   * stays where it was: in the feed, and in the stories when it has a photo.
+   */
+  show?: 'feed' | 'story' | 'both'
 }
+
+/** Is it in the feed (and in every list that is made of the feed's posts)? */
+export const inFeed = (it: Pick<CommunityItem, 'show'>) => it.show !== 'story'
+/** Is it in the row of stories? A story is a picture, so it needs one. */
+export const inStories = (it: Pick<CommunityItem, 'show' | 'image'>) => !!it.image && it.show !== 'feed'
 
 export type Notice = {
   id: string
@@ -1107,8 +1137,13 @@ export const fitsSearch = (s: SearchSpec, p: { city: string; rooms: string; pric
   return s.cities.includes(p.city) && rooms >= s.roomsMin && rooms <= s.roomsMax && p.price <= s.budget
 }
 
+/** what a search is for, in a few words: the rooms of a home, or the kinds of a commercial property (it has no rooms) */
 export const roomsLabel = (s: SearchSpec) =>
-  s.roomsMin === s.roomsMax ? `${s.roomsMin} חדרים` : `${s.roomsMin} עד ${s.roomsMax} חדרים`
+  searchGroup(s) === 'business'
+    ? s.kinds?.filter((k) => isKind('business', k)).join(', ') || 'נכס מסחרי'
+    : s.roomsMin === s.roomsMax
+      ? `${s.roomsMin} חדרים`
+      : `${s.roomsMin} עד ${s.roomsMax} חדרים`
 
 // -------------------------------------------------------------- onboarding
 // טקסטים לדוגמה. הנוסח הסופי ייכתב על ידי המייסדים.

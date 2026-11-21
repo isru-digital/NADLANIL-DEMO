@@ -13,6 +13,7 @@ import { Avatar, Modal } from '../components/ui'
 import { TYPES, clientActions, dateText, dateValue, daysFrom, lastText, matchLabel, matchesFor, sideOf, typeOf, useClients, yad2Demo } from './clients'
 import type { Client, ClientType } from './clients'
 import NewClient from './NewClient'
+import { groupLabel } from '../config/propertyTypes'
 import '../styles/clients.css'
 
 /**
@@ -502,7 +503,7 @@ function SearchSummary({ cl }: { cl: Client }) {
     ['עסקה', rent ? 'השכרה' : 'קנייה'],
     [rent ? 'שכירות לחודש' : 'תקציב', `${money(cl.budgetMin ?? 0)} עד ${money(cl.sum)}`],
     ['איפה', where.length ? where.join(', ') : 'לא צוין'],
-    ['סוג נכס', cl.kinds?.length ? cl.kinds.join(', ') : 'לא צוין'],
+    ['סוג נכס', cl.kinds?.length ? cl.kinds.join(', ') : cl.group ? `כל סוגי ה${groupLabel(cl.group)}` : 'לא צוין'],
     ['חדרים', cl.roomsMin === cl.roomsMax ? `${cl.roomsMin}` : `${cl.roomsMin} עד ${cl.roomsMax}`],
     ['חייב שיהיה', cl.must?.length ? cl.must.join(', ') : 'לא צוין'],
   ]

@@ -173,6 +173,11 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
   check(`${d} his properties board starts empty (not the example user's properties)`, await page.evaluate(() => document.querySelectorAll('.kan-card').length === 0))
   await page.evaluate(() => document.querySelector('[data-act="new-card"]')?.click())
   await wait(800)
+  // a property needs its kind since 22.11.2026: "מגורים", then "דירה"
+  await page.evaluate(() => document.querySelector('.ga [data-cat="home"]')?.click())
+  await wait(500)
+  await page.evaluate(() => document.querySelector('.ga .pf-kind[data-kind="דירה"]')?.click())
+  await wait(200)
   await page.evaluate(() => [...document.querySelectorAll('.ga-go')].find((x) => x.textContent.includes('הוספה ל-CRM')).click())
   await wait(1600)
   const mine = await page.evaluate(() => ({ cards: [...document.querySelectorAll('.kan-card h3')].map((h) => h.textContent.trim()), published: document.body.innerText.includes('פורסם בקהילה') }))

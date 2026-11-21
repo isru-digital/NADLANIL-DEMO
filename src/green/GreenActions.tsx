@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Check, ClipboardPaste, FileText, Home, ImagePlus, Info, Lock, MessageSquareText, RotateCcw, Save, Search, Send, ShieldCheck, Sparkles, UserRound } from 'lucide-react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { ArrowLeft, Check, ClipboardPaste, Eye, FileText, Home, ImagePlus, Info, Lock, MessageSquareText, RotateCcw, Save, Search, Send, ShieldCheck, Sparkles, UserRound } from 'lucide-react'
 import { CURRENT_BROKER_ID } from '../config'
 import { brokerById, formatPriceShort } from '../data/demo'
 import type { CommunityItem, CrmItem } from '../data/demo'
@@ -15,9 +16,13 @@ import type { Yad2Ad } from './yad2'
 import { clientActions } from '../crm/clients'
 import { clientKey } from '../community/PublishPickers'
 import PhotoPicker from './PhotoPicker'
-import { CATEGORIES, commercialExtras, commercialTitle } from '../crm/categories'
+import { CATEGORIES, commercialExtras } from '../crm/categories'
 import type { PropCategory } from '../crm/categories'
+import { DEFAULT_KIND, KINDS, closestKind, hasRooms, isKind, kindTitle } from '../config/propertyTypes'
+import { streetName } from '../community/place'
+import { Toggle } from '../components/Toggle'
 import '../styles/green-actions.css'
+import '../styles/post-form.css'
 
 /**
  * The pop-ups of the actions that work in the browser in the green version: a new CRM card, sharing a post with
@@ -29,29 +34,40 @@ type Draft = {
   rooms: string
   price: string
   extras: string[]
-  category: PropCategory
+  /** step 1: "מגורים" or "מסחרי" ('' until it is picked); step 2: the kind, one of that group's list */
+  category: PropCategory | ''
+  ptype: string
   sqm: string
-  /** the exact address: the neighbourhood is published with the city, the street and number stay in the CRM */
+  /** the address: the city, the neighbourhood and the street are shown in the community; the building's number only
+      when `showHouseNo` is on; the flat's number stays on the broker's own card */
   hood: string
   street: string
   houseNo: string
+  aptNo: string
+  showHouseNo: boolean
+  /** "להעלות גם כסטורי" */
+  asStory: boolean
   /** parking spaces: null = not chosen yet, 3 = three or more */
   parking: number | null
   renewal: boolean
   /** what an ad pasted from Yad2 says and the card has no field for (floor, size, entry, the description): the card's note */
   notes: string
 }
-const emptyDraft: Draft = { kind: 'property', city: 'פתח תקווה', rooms: '4', price: '', extras: [], category: 'home', sqm: '', hood: '', street: '', houseNo: '', parking: null, renewal: false, notes: '' }
+const emptyDraft: Draft = { kind: 'property', city: 'פתח תקווה', rooms: '4', price: '', extras: [], category: '', ptype: '', sqm: '', hood: '', street: '', houseNo: '', aptNo: '', showHouseNo: false, asStory: false, parking: null, renewal: false, notes: '' }
+/** no rooms, a size in square metres: a commercial property, or a plot of land */
+const bySize = (d: Draft) => d.kind === 'property' && !!d.category && !hasRooms(d.category, d.ptype || DEFAULT_KIND[d.category])
 const toDraft = (p: Parsed): Draft => ({ ...emptyDraft, kind: p.kind, city: p.city || 'פתח תקווה', rooms: p.rooms ? String(p.rooms) : '', price: p.price ? String(p.price) : '', extras: p.extras })
 const num = (s: string) => Number(s.replace(/[^\d.]/g, '')) || 0
 /** an ad pasted from Yad2, as the new property card. What the ad does not say keeps the card's empty value. */
-const fromAd = (ad: Yad2Ad): Draft => {
+const fromAd = (ad: Yad2Ad, text: string): Draft => {
   const business = ad.business
   const extras = business ? ad.extras.filter((x) => commercialExtras.includes(x)) : ad.extras
   return {
     ...emptyDraft,
     kind: 'property',
     category: business ? 'business' : 'home',
+    // the kind the ad's own words name (a penthouse, a garden flat, a shop...), for the broker to check
+    ptype: closestKind(business ? 'business' : 'home', text),
     city: ad.city || emptyDraft.city,
     hood: ad.hood,
     street: ad.street,
@@ -66,8 +82,9 @@ const fromAd = (ad: Yad2Ad): Draft => {
   }
 }
 /** a message pasted into the CRM card: "חניה" becomes one parking space, since the card asks for a number */
-const toCard = (p: Parsed): Draft => {
-  const d = toDraft(p)
+const toCard = (p: Parsed, text: string): Draft => {
+  // a message from a WhatsApp group is about a home; its kind is read from its words, for the broker to check
+  const d: Draft = { ...toDraft(p), ...(p.kind === 'property' ? { category: 'home' as const, ptype: closestKind('home', text) } : {}) }
   return d.extras.includes('חניה') ? { ...d, parking: 1, extras: d.extras.filter((x) => x !== 'חניה') } : d
 }
 
@@ -139,12 +156,15 @@ function CityPick({ city, onPick }: { city: string; onPick: (c: string) => void 
 }
 
 /** The fields a property or a request is made of; shared by the CRM card and the WhatsApp confirmation. */
-function Fields({ draft, set, kinds, categories = false, full = false }: { draft: Draft; set: (d: Partial<Draft>) => void; kinds: [string, string]; categories?: boolean; full?: boolean }) {
-  // an office or a business property is measured in square metres and has its own list of extras
-  const commercial = categories && draft.kind === 'property' && draft.category !== 'home'
+function Fields({ draft, set, kinds, categories = false, full = false, missing = false }: { draft: Draft; set: (d: Partial<Draft>) => void; kinds: [string, string]; categories?: boolean; full?: boolean; missing?: boolean }) {
   const property = draft.kind === 'property'
+  // a commercial property (and a plot of land) is measured in square metres; a commercial one has its own extras
+  const commercial = categories && bySize(draft)
+  const business = categories && property && draft.category === 'business'
   // the CRM card asks for parking as a number, so "חניה" leaves the list of extras there
-  const extras = (commercial ? commercialExtras : allExtras).filter((x) => !(full && property && x === 'חניה'))
+  const extras = (business ? commercialExtras : allExtras).filter((x) => !(full && property && x === 'חניה'))
+  // what every broker in the community will see of the address, as it is being typed
+  const seen = [draft.hood.trim() ? `${draft.city} - ${draft.hood.trim()}` : draft.city, draft.street.trim() ? `${streetName(draft.street)}${draft.showHouseNo && draft.houseNo.trim() ? ` ${draft.houseNo.trim()}` : ''}` : ''].filter(Boolean).join(', ')
   const roomsOn = (r: string) => (r === '6+' ? num(draft.rooms) >= 6 : draft.rooms === r)
   return (
     <div className="ga-fields">
@@ -160,26 +180,52 @@ function Fields({ draft, set, kinds, categories = false, full = false }: { draft
         </div>
       </div>
       {categories && property && (
-        <div className="field" data-f="category">
-          <span className="field-label">קטגוריה</span>
-          <div className="ga-picks" role="group" aria-label="קטגוריה">
+        <div className="field pf-step" data-f="category">
+          <span className="field-label">סוג הנכס</span>
+          {/* step 1: two big buttons */}
+          <div className="pf-groups" role="group" aria-label="מגורים או מסחרי">
             {CATEGORIES.map((c) => (
               <button
                 key={c.id}
                 type="button"
-                className="ga-pick"
+                className="pf-group"
                 aria-pressed={draft.category === c.id}
                 data-cat={c.id}
                 onClick={() => {
-                  // the two lists of extras are different: keep only what the new category also has
+                  if (draft.category === c.id) return
+                  // the two lists of extras are different: keep only what the new group also has; a kind that is in
+                  // both lists (a plot of land) stays picked, any other one is picked again from the new list
                   const list = c.id === 'home' ? allExtras : commercialExtras
-                  set({ category: c.id, extras: draft.extras.filter((x) => list.includes(x)) })
+                  set({ category: c.id, ptype: isKind(c.id, draft.ptype) ? draft.ptype : '', extras: draft.extras.filter((x) => list.includes(x)) })
                 }}
               >
-                <c.icon /> {c.label}
+                <c.icon aria-hidden /> {c.label}
               </button>
             ))}
           </div>
+          {/* step 2: the kinds of the group that was picked */}
+          <AnimatePresence initial={false} mode="wait">
+            {draft.category && (
+              <motion.div key={draft.category} className="pf-kinds" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.22 }}>
+                <div className="pf-kinds-in" data-f="kinds" data-group={draft.category}>
+                  <span id="pf-kinds-label">{draft.category === 'business' ? 'איזה נכס מסחרי?' : 'איזה נכס למגורים?'}</span>
+                  <div className="pf-kinds-list" role="group" aria-labelledby="pf-kinds-label">
+                    {KINDS[draft.category].map((k) => (
+                      <button key={k} type="button" className="pf-kind" aria-pressed={draft.ptype === k} onClick={() => set({ ptype: k })} data-kind={k}>
+                        {draft.ptype === k && <Check aria-hidden />}
+                        {k}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+          {missing && (!draft.category || !draft.ptype) && (
+            <em className="pf-err" role="alert" data-err="kind">
+              {draft.category ? 'בוחרים איזה נכס זה מהרשימה.' : 'בוחרים קודם: מגורים או מסחרי.'}
+            </em>
+          )}
         </div>
       )}
 
@@ -188,7 +234,7 @@ function Fields({ draft, set, kinds, categories = false, full = false }: { draft
       {full && property && (
         <fieldset className="ga-address" data-f="address">
           <legend className="field-label">הכתובת</legend>
-          <div className="ga-address-row">
+          <div className="ga-address-row is-four">
             <label className="field is-hood">
               <span className="field-sub">שכונה</span>
               <input className="input" value={draft.hood} onChange={(e) => set({ hood: e.target.value })} placeholder="לדוגמה: נווה שאנן" autoComplete="off" enterKeyHint="next" data-f="hood" />
@@ -198,12 +244,23 @@ function Fields({ draft, set, kinds, categories = false, full = false }: { draft
               <input className="input" value={draft.street} onChange={(e) => set({ street: e.target.value })} placeholder="לדוגמה: הרצל" autoComplete="off" enterKeyHint="next" data-f="street" />
             </label>
             <label className="field is-no">
-              <span className="field-sub">מספר</span>
+              <span className="field-sub">מספר בניין</span>
               <input className="input num" inputMode="numeric" value={draft.houseNo} onChange={(e) => set({ houseNo: e.target.value })} placeholder="12" autoComplete="off" enterKeyHint="next" data-f="house" />
             </label>
+            <label className="field is-no">
+              <span className="field-sub">דירה</span>
+              <input className="input num" inputMode="numeric" value={draft.aptNo} onChange={(e) => set({ aptNo: e.target.value })} placeholder="7" autoComplete="off" enterKeyHint="next" data-f="apt" />
+            </label>
           </div>
+          <Toggle id="house-no" on={draft.showHouseNo} onChange={(showHouseNo) => set({ showHouseNo })} label="להציג מספר בניין" hint={draft.showHouseNo ? 'המתווכים בקהילה יראו גם את מספר הבניין.' : 'כבוי: המתווכים בקהילה רואים את הרחוב, בלי המספר.'} />
+          <p className="pf-seen" data-seen aria-live="polite">
+            <span>
+              <Eye /> כך יראו המתווכים בקהילה
+            </span>
+            <b>{seen}</b>
+          </p>
           <p className="ga-private">
-            <Lock /> הרחוב ומספר הבית נשארים אצלכם. בקהילה, בכרטיס ובדף הנכס מופיעות רק העיר והשכונה.
+            <Lock /> מספר הדירה והכתובת המלאה נשמרים רק אצלכם, בכרטיס שלכם. שם וטלפון של בעל הנכס לא מתפרסמים אף פעם.
           </p>
         </fieldset>
       )}
@@ -293,6 +350,8 @@ export default function GreenActions() {
   const [photos, setPhotos] = useState<string[]>([])
   const [paste, setPaste] = useState('')
   const [pasting, setPasting] = useState(false)
+  // what stops the card from being saved, shown at its field: no kind of property, or a story with no photo
+  const [cardMiss, setCardMiss] = useState<{ kind?: boolean; story?: boolean }>({})
   // ---- an ad pasted from Yad2: the text, and what was filled from it
   const [adText, setAdText] = useState('')
   const [adOpen, setAdOpen] = useState(false)
@@ -315,6 +374,7 @@ export default function GreenActions() {
     setPhotos(d?.photos ?? [])
     setRestored(!!d)
     setSavedAt(d?.at ?? null)
+    setCardMiss({})
     setPaste('')
     setPasting(false)
     setAdText('')
@@ -343,10 +403,11 @@ export default function GreenActions() {
     setRestored(false)
     setSavedAt(null)
     setAdDone(null)
+    setCardMiss({})
   }
   const fillFromAd = () => {
     const ad = parseYad2(adText)
-    setCard(fromAd(ad))
+    setCard(fromAd(ad, adText))
     setAdDone({ ...adReport(ad), rent: ad.deal === 'rent', hadPhone: ad.hadPhone, hadLink: ad.hadLink })
     setAdOpen(false)
     setAdText('')
@@ -354,11 +415,20 @@ export default function GreenActions() {
 
   const saveCard = () => {
     const rooms = num(card.rooms)
-    const commercial = card.kind === 'property' && card.category !== 'home'
+    const property = card.kind === 'property'
+    // a property needs its kind, and a story needs a picture: said at the field itself, and brought into view
+    const miss = { kind: property && (!card.category || !card.ptype), story: property && card.asStory && photos.length === 0 }
+    if (miss.kind || miss.story) {
+      setCardMiss(miss)
+      window.setTimeout(() => document.querySelector(miss.kind ? '.ga [data-f="category"]' : '.ga [data-toggle="as-story"]')?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 60)
+      return
+    }
+    const group = card.category || 'home'
+    const commercial = bySize(card)
     const item: CrmItem = {
       id: `n${Date.now()}`,
-      kind: card.kind === 'property' ? 'property' : 'client',
-      title: commercial ? commercialTitle(num(card.sqm), card.city) : titleOf(card.kind, rooms || null, card.city),
+      kind: property ? 'property' : 'client',
+      title: property ? kindTitle(group, card.ptype, { rooms: rooms || null, sqm: num(card.sqm) || null, city: card.city }) : titleOf(card.kind, rooms || null, card.city),
       // the area is the city and the neighbourhood: this is what the community sees
       area: card.kind === 'property' && card.hood.trim() ? `${card.city} - ${card.hood.trim()}` : card.city,
       city: card.city,
@@ -367,13 +437,19 @@ export default function GreenActions() {
             neighborhood: card.hood.trim() || undefined,
             street: card.street.trim() || undefined,
             houseNo: card.houseNo.trim() || undefined,
+            aptNo: card.aptNo.trim() || undefined,
+            // always a yes or a no: a card that carries this was saved under the rule that the street is shown
+            showHouseNo: card.showHouseNo,
             parking: card.parking ?? undefined,
             renewal: card.renewal || undefined,
+            extras: card.extras.length ? card.extras : undefined,
+            asStory: card.asStory || undefined,
           }
         : {}),
       rooms: commercial ? '-' : card.rooms || '-',
       sqm: commercial ? num(card.sqm) || undefined : undefined,
-      category: card.kind === 'property' ? card.category : undefined,
+      category: property ? group : undefined,
+      ptype: property ? card.ptype : undefined,
       price: num(card.price),
       status: 'new',
       client: client.trim() || (card.kind === 'property' ? 'בעל הנכס' : 'לקוח חדש'),
@@ -398,7 +474,10 @@ export default function GreenActions() {
     const rooms = num(waDraft.rooms)
     const price = num(waDraft.price)
     const id = `w${Date.now()}`
-    const base = { id, authorId: me.id, city: waDraft.city, time: 'עכשיו', likes: 0, comments: [], fresh: true }
+    // a post in the feed, not a story (it has no picture)
+    const base = { id, authorId: me.id, city: waDraft.city, time: 'עכשיו', likes: 0, comments: [], fresh: true, show: 'feed' as const }
+    // the kind of home the message's own words name, or a flat
+    const waKind = closestKind('home', wa)
     const item: CommunityItem =
       waDraft.kind === 'property'
         ? {
@@ -406,7 +485,7 @@ export default function GreenActions() {
             topicId: 'coop',
             title: titleOf('property', rooms || null, waDraft.city),
             body: waDraft.extras.length ? `${waDraft.extras.join(', ')}.` : 'פרטים נוספים אצלי.',
-            property: { area: waDraft.city, rooms: waDraft.rooms || '-', price, split: 'חלוקת עמלה שווה', showPrice: price > 0 },
+            property: { area: waDraft.city, rooms: waDraft.rooms || '-', price, split: 'חלוקת עמלה שווה', showPrice: price > 0, kind: waKind, group: 'home', extra: waDraft.extras.length ? waDraft.extras : undefined },
           }
         : {
             ...base,
@@ -424,6 +503,9 @@ export default function GreenActions() {
         area: waDraft.city,
         city: waDraft.city,
         rooms: waDraft.rooms || '-',
+        category: 'home',
+        ptype: waKind,
+        extras: waDraft.extras.length ? waDraft.extras : undefined,
         price,
         status: 'new',
         client: 'בעל הנכס',
@@ -447,7 +529,7 @@ export default function GreenActions() {
     const src = ask.item
     const from = brokerById(src.authorId).name
     const id = `s${Date.now()}`
-    addItem({ ...src, id, authorId: me.id, time: 'עכשיו', likes: 0, comments: [], fresh: true, sourceId: undefined, body: `${words.trim() ? `${words.trim()} ` : ''}(שיתוף של פוסט מאת ${from}) ${src.body}` })
+    addItem({ ...src, id, authorId: me.id, time: 'עכשיו', likes: 0, comments: [], fresh: true, sourceId: undefined, show: 'feed', body: `${words.trim() ? `${words.trim()} ` : ''}(שיתוף של פוסט מאת ${from}) ${src.body}` })
     close()
     toast('השיתוף פורסם בקהילה')
     window.setTimeout(() => document.getElementById(`ci-${id}`)?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 350)
@@ -511,7 +593,7 @@ export default function GreenActions() {
                   className="btn btn-gold btn-sm"
                   disabled={!paste.trim()}
                   onClick={() => {
-                    setCard(toCard(parseWhatsapp(paste)))
+                    setCard(toCard(parseWhatsapp(paste), paste))
                     setPasting(false)
                     toast('הפרטים מולאו מההודעה. בדקו ושמרו')
                   }}
@@ -549,7 +631,7 @@ export default function GreenActions() {
               )}
             </div>
           )}
-          <Fields draft={card} set={(d) => setCard((c) => ({ ...c, ...d }))} kinds={['נכס', 'לקוח שמחפש']} categories full />
+          <Fields draft={card} set={(d) => setCard((c) => ({ ...c, ...d }))} kinds={['נכס', 'לקוח שמחפש']} categories full missing={!!cardMiss.kind} />
           {card.kind === 'property' && (adDone || card.notes) && (
             <label className="field">
               <span className="field-label">עוד מהמודעה (נשאר אצלכם בכרטיס)</span>
@@ -562,6 +644,17 @@ export default function GreenActions() {
             </p>
           )}
           {card.kind === 'property' && <PhotoPicker photos={photos} onChange={setPhotos} />}
+          {/* a property goes up as a post in the feed; in the row of stories too only when the broker asks for it */}
+          {card.kind === 'property' && (
+            <Toggle
+              id="as-story"
+              on={card.asStory}
+              onChange={(asStory) => setCard((c) => ({ ...c, asStory }))}
+              label="להעלות גם כסטורי"
+              hint={card.asStory ? 'הנכס יופיע בפיד, וגם בשורת הסטורי עם התמונה הראשונה.' : 'כבוי: הנכס מופיע בפיד בלבד.'}
+              warn={cardMiss.story && card.asStory && photos.length === 0 ? 'סטורי הוא תמונה. מוסיפים תמונה אחת לפחות, או מכבים את המתג.' : undefined}
+            />
+          )}
           <label className="field">
             <span className="field-label">{card.kind === 'property' ? 'שם בעל הנכס' : 'שם הלקוח'} (נשאר אצלכם, לא מתפרסם)</span>
             <input className="input" value={client} onChange={(e) => setClient(e.target.value)} placeholder="לדוגמה: משפחת כהן" />

@@ -146,7 +146,7 @@ for (const [tag, vp] of [
   check(`${tag}: each room keeps its full name for a screen reader and on hover`, w.rooms.slice(0, 5).map((r) => r.label).join('|') === ROOMS.join('|'), w.rooms.map((r) => r.label))
   check(`${tag}: the short lines between the posts are still there, with no numbers`, w.values.length >= 1 && w.values.every((v) => !/\d/.test(v)), w.values)
   check(`${tag}: no sideways scroll, no long dashes`, w.wide <= 1 && !w.dashes, w)
-  check(`${tag}: the "עדכון חדש" tile shows its words (dark on the light card, inside the tile)`, !!w.addTile && w.addTile.text === 'עדכון חדש' && w.addTile.color !== w.addTile.bg && w.addTile.color !== 'rgb(255, 255, 255)' && w.addTile.inside, w.addTile)
+  check(`${tag}: the "סטורי חדש" tile shows its words (dark on the light card, inside the tile)`, !!w.addTile && w.addTile.text === 'סטורי חדש' && w.addTile.color !== w.addTile.bg && w.addTile.color !== 'rgb(255, 255, 255)' && w.addTile.inside, w.addTile)
   await page.screenshot({ path: `${out}/${tag}-1-feed.png` })
 
   // ---- nothing floats over the line; on a phone the day / night switch is a small button in the top bar

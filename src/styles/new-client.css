@@ -241,7 +241,8 @@
 }
 .nc-must {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  /* five must-haves since the floor's safe room joined (22.11.2026): as many in a row as fit */
+  grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
 }
 .nc-pick:focus-visible,
 .nc-seg button:focus-visible,
@@ -366,7 +367,7 @@
     padding: 14px 12px;
   }
   .nc-must {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
   }
   .nc-rooms {
     grid-template-columns: 1fr;

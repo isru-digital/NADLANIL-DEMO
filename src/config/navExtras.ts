@@ -113,6 +113,10 @@ export const crmSlots: {
   /** the categories a property can have: the board can be filtered by them, and a card carries its own */
   categories?: { id: string; label: string }[]
   categoryOf?: (item: import('../data/demo').CrmItem) => string
+  /** the kind of a card's property (דירה, פנטהאוז, משרד...), written on its tag */
+  kindOf?: (item: import('../data/demo').CrmItem) => string
+  /** a property that is measured in square metres and has no rooms (a commercial one, a plot of land) */
+  noRooms?: (item: import('../data/demo').CrmItem) => boolean
   /** an extra line of actions at the bottom of a card on the board */
   CardExtra?: ComponentType<{ item: import('../data/demo').CrmItem; publishedTo?: string }>
   /** properties on one list, without stages (new, in progress, negotiation...) */
