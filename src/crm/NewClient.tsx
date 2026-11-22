@@ -10,6 +10,7 @@ import type { Client, ClientType } from './clients'
 import { GROUPS, KINDS } from '../config/propertyTypes'
 import type { PropGroup } from '../config/propertyTypes'
 import '../styles/new-client.css'
+import { PlacePicker } from '../components/PlacePicker'
 import '../styles/post-form.css'
 
 /**
@@ -18,7 +19,7 @@ import '../styles/post-form.css'
  * everything has a sensible default, so a broker on the phone is done in under a minute. Sellers and the office's
  * types keep the short form (name, phone, type).
  */
-export type NewClientInput = Pick<Client, 'name' | 'phone' | 'type'> & Partial<Pick<Client, 'about' | 'cities' | 'rooms' | 'sum' | 'budgetMin' | 'neighborhoods' | 'kinds' | 'group' | 'roomsMin' | 'roomsMax' | 'must' | 'wants'>>
+export type NewClientInput = Pick<Client, 'name' | 'phone' | 'type'> & Partial<Pick<Client, 'about' | 'cities' | 'rooms' | 'sum' | 'budgetMin' | 'neighborhoods' | 'streets' | 'kinds' | 'group' | 'roomsMin' | 'roomsMax' | 'must' | 'wants'>>
 
 const SALE = [500000, 750000, 1000000, 1250000, 1500000, 1750000, 2000000, 2250000, 2500000, 2750000, 3000000, 3500000, 4000000, 4500000, 5000000, 6000000, 7000000, 8000000, 10000000, 12000000, 15000000]
 const RENT = [1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000, 5500, 6000, 6500, 7000, 8000, 9000, 10000, 12000, 15000, 20000]
@@ -56,7 +57,9 @@ export default function NewClient({ open, onClose, isOffice, onAdd, searchOnly =
   const [cities, setCities] = useState<string[]>([])
   const [allCities, setAllCities] = useState(false)
   const [hoods, setHoods] = useState<string[]>([])
-  const [hood, setHood] = useState('')
+  // streets and neighbourhoods are picked from the cities' lists, or from the map (22.11.2026); several of each
+  const [streetList, setStreetList] = useState<string[]>([])
+  const [manual, setManual] = useState<string[]>([])
   const [group, setGroup] = useState<PropGroup>('home')
   const [kinds, setKinds] = useState<string[]>(['דירה'])
   const [roomsMin, setRoomsMin] = useState(3)
@@ -78,7 +81,8 @@ export default function NewClient({ open, onClose, isOffice, onAdd, searchOnly =
     setCities([])
     setAllCities(false)
     setHoods([])
-    setHood('')
+    setStreetList([])
+    setManual([])
     setGroup('home')
     setKinds(['דירה'])
     setRoomsMin(3)
@@ -98,21 +102,6 @@ export default function NewClient({ open, onClose, isOffice, onAdd, searchOnly =
     setType(t)
   }
   const flip = (list: string[], v: string, set: (l: string[]) => void) => set(list.includes(v) ? list.filter((x) => x !== v) : [...list, v])
-  const addHood = () => {
-    const words = hood
-      .split(',')
-      .map((w) => w.trim())
-      .filter((w) => w && !hoods.includes(w))
-    if (words.length) setHoods([...hoods, ...words])
-    setHood('')
-  }
-  const onHoodKey = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      e.preventDefault()
-      addHood()
-    }
-  }
-
   const submit = (e: FormEvent) => {
     e.preventDefault()
     if (name.trim().length < 2) return setErr('צריך שם, לפחות שתי אותיות.')
@@ -121,7 +110,7 @@ export default function NewClient({ open, onClose, isOffice, onAdd, searchOnly =
       onAdd({ name: name.trim(), phone: phone.trim(), type })
       return
     }
-    const allHoods = hood.trim() ? [...hoods, ...hood.split(',').map((w) => w.trim()).filter(Boolean)] : hoods
+    const allHoods = hoods
     const min = steps[lo]
     const max = steps[hi]
     onAdd({
@@ -130,6 +119,7 @@ export default function NewClient({ open, onClose, isOffice, onAdd, searchOnly =
       type,
       cities,
       neighborhoods: allHoods,
+      streets: streetList,
       kinds,
       group,
       roomsMin,
@@ -249,27 +239,20 @@ export default function NewClient({ open, onClose, isOffice, onAdd, searchOnly =
                 </div>
               </div>
 
-              {/* neighbourhoods, several */}
+              {/* streets and neighbourhoods, several, from the cities' lists or the map */}
               <div className="ct-field" data-f="hoods">
-                <span className="ct-label">שכונות</span>
-                <div className="nc-hood">
-                  <input className="input" value={hood} onChange={(e) => setHood(e.target.value)} onKeyDown={onHoodKey} placeholder="לדוגמה: הבורסה, נחלת יצחק" autoComplete="off" enterKeyHint="done" data-f="hood" />
-                  <button type="button" className="nc-add" onClick={addHood} disabled={!hood.trim()} aria-label="הוספת שכונה">
-                    <Plus />
-                  </button>
-                </div>
-                {hoods.length > 0 && (
-                  <div className="nc-tags">
-                    {hoods.map((h) => (
-                      <span key={h} className="nc-tag" data-hood={h}>
-                        {h}
-                        <button type="button" onClick={() => setHoods(hoods.filter((x) => x !== h))} aria-label={`הסרת ${h}`}>
-                          <X />
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                )}
+                <span className="ct-label">שכונות ורחובות</span>
+                <PlacePicker
+                  id="buyer"
+                  many
+                  cities={cities}
+                  value={{ streets: streetList, hoods, manual }}
+                  onChange={(p) => {
+                    setStreetList(p.streets)
+                    setHoods(p.hoods)
+                    setManual(p.manual)
+                  }}
+                />
               </div>
 
               {/* the kind of property, in two steps: the group, then the kinds of that group (as many as fit the buyer) */}

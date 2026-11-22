@@ -39,6 +39,8 @@ export type Client = {
   /** a buyer's or a renter's full search (the new client form, 17.11.2026): the least they pay */
   budgetMin?: number
   neighborhoods?: string[]
+  /** the streets a buyer asked for (22.11.2026), from the cities' lists */
+  streets?: string[]
   /** kinds of property, of the list in config/propertyTypes.ts: דירה, דירת גן, פנטהאוז... or משרד, חנות... */
   kinds?: string[]
   /** "מגורים" or "מסחרי" (22.11.2026); a client saved before that is read from the kinds */

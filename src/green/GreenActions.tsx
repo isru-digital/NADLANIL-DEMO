@@ -21,6 +21,7 @@ import type { PropCategory } from '../crm/categories'
 import { DEFAULT_KIND, KINDS, closestKind, hasRooms, isKind, kindTitle } from '../config/propertyTypes'
 import { streetName } from '../community/place'
 import { Toggle } from '../components/Toggle'
+import { PlacePicker } from '../components/PlacePicker'
 import { CoopField, PriceField } from './PriceCoop'
 import '../styles/green-actions.css'
 import '../styles/post-form.css'
@@ -45,6 +46,8 @@ type Draft = {
   street: string
   houseNo: string
   aptNo: string
+  /** the names that were added by hand, not picked from the city's lists */
+  placeManual: string[]
   showHouseNo: boolean
   /** "להעלות גם כסטורי" */
   asStory: boolean
@@ -56,7 +59,7 @@ type Draft = {
   /** what an ad pasted from Yad2 says and the card has no field for (floor, size, entry, the description): the card's note */
   notes: string
 }
-const emptyDraft: Draft = { kind: 'property', city: 'פתח תקווה', rooms: '4', price: '', extras: [], category: '', ptype: '', sqm: '', hood: '', street: '', houseNo: '', aptNo: '', showHouseNo: false, asStory: false, coopPct: null, parking: null, renewal: false, notes: '' }
+const emptyDraft: Draft = { kind: 'property', city: 'פתח תקווה', rooms: '4', price: '', extras: [], category: '', ptype: '', sqm: '', hood: '', street: '', houseNo: '', aptNo: '', placeManual: [], showHouseNo: false, asStory: false, coopPct: null, parking: null, renewal: false, notes: '' }
 /** no rooms, a size in square metres: a commercial property, or a plot of land */
 const bySize = (d: Draft) => d.kind === 'property' && !!d.category && !hasRooms(d.category, d.ptype || DEFAULT_KIND[d.category])
 const toDraft = (p: Parsed): Draft => ({ ...emptyDraft, kind: p.kind, city: p.city || 'פתח תקווה', rooms: p.rooms ? String(p.rooms) : '', price: p.price ? String(p.price) : '', extras: p.extras })
@@ -232,20 +235,19 @@ function Fields({ draft, set, kinds, categories = false, full = false, missing =
         </div>
       )}
 
-      <CityPick city={draft.city} onPick={(city) => set({ city })} />
+      <CityPick city={draft.city} onPick={(city) => set(city === draft.city ? { city } : { city, street: '', hood: '', placeManual: [] })} />
 
       {full && property && (
         <fieldset className="ga-address" data-f="address">
           <legend className="field-label">הכתובת</legend>
-          <div className="ga-address-row is-four">
-            <label className="field is-hood">
-              <span className="field-sub">שכונה</span>
-              <input className="input" value={draft.hood} onChange={(e) => set({ hood: e.target.value })} placeholder="לדוגמה: נווה שאנן" autoComplete="off" enterKeyHint="next" data-f="hood" />
-            </label>
-            <label className="field is-street">
-              <span className="field-sub">רחוב</span>
-              <input className="input" value={draft.street} onChange={(e) => set({ street: e.target.value })} placeholder="לדוגמה: הרצל" autoComplete="off" enterKeyHint="next" data-f="street" />
-            </label>
+          {/* the street and the neighbourhood from the lists of the city (or the map), one of each (22.11.2026) */}
+          <PlacePicker
+            id="property"
+            cities={[draft.city]}
+            value={{ streets: draft.street ? [draft.street] : [], hoods: draft.hood ? [draft.hood] : [], manual: draft.placeManual }}
+            onChange={(p) => set({ street: p.streets[0] ?? '', hood: p.hoods[0] ?? '', placeManual: p.manual })}
+          />
+          <div className="ga-address-row is-two">
             <label className="field is-no">
               <span className="field-sub">מספר בניין</span>
               <input className="input num" inputMode="numeric" value={draft.houseNo} onChange={(e) => set({ houseNo: e.target.value })} placeholder="12" autoComplete="off" enterKeyHint="next" data-f="house" />
@@ -453,6 +455,7 @@ export default function GreenActions() {
             street: card.street.trim() || undefined,
             houseNo: card.houseNo.trim() || undefined,
             aptNo: card.aptNo.trim() || undefined,
+            placeManual: card.placeManual.length ? card.placeManual : undefined,
             // always a yes or a no: a card that carries this was saved under the rule that the street is shown
             showHouseNo: card.showHouseNo,
             parking: card.parking ?? undefined,

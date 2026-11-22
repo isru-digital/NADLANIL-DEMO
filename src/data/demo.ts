@@ -53,6 +53,8 @@ export type CrmItem = {
   houseNo?: string
   aptNo?: string
   showHouseNo?: boolean
+  /** a street or a neighbourhood added by hand, not picked from the city's list (22.11.2026) */
+  placeManual?: string[]
   /** the neighbourhood: published with the city */
   neighborhood?: string
   /** what the property has (a safe room, a lift...): on the broker's card and, since 22.11.2026, on the post too */
@@ -79,6 +81,8 @@ export type SearchSpec = {
   deal?: 'sale' | 'rent'
   /** a full search (17.11.2026): the neighbourhoods, the kinds of home and the least the buyer pays */
   neighborhoods?: string[]
+  /** the streets the buyer asked for (22.11.2026), picked from the city's list */
+  streets?: string[]
   kinds?: string[]
   /** "מגורים" or "מסחרי" (22.11.2026); an older search is read from its kinds */
   group?: 'home' | 'business'

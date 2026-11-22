@@ -1,0 +1,219 @@
+{
+  "תל אביב": {
+    "code": 5000,
+    "streets": 2636,
+    "hoods": 179,
+    "map": true,
+    "mapped": 60
+  },
+  "רמת גן": {
+    "code": 8600,
+    "streets": 629,
+    "hoods": 77,
+    "map": true,
+    "mapped": 22
+  },
+  "גבעתיים": {
+    "code": 6300,
+    "streets": 149,
+    "hoods": 25,
+    "map": false,
+    "mapped": 0
+  },
+  "הרצליה": {
+    "code": 6400,
+    "streets": 710,
+    "hoods": 74,
+    "map": false,
+    "mapped": 0
+  },
+  "רמת השרון": {
+    "code": 2650,
+    "streets": 388,
+    "hoods": 51,
+    "map": false,
+    "mapped": 0
+  },
+  "רעננה": {
+    "code": 8700,
+    "streets": 376,
+    "hoods": 43,
+    "map": false,
+    "mapped": 0
+  },
+  "נתניה": {
+    "code": 7400,
+    "streets": 982,
+    "hoods": 77,
+    "map": false,
+    "mapped": 0
+  },
+  "ירושלים": {
+    "code": 3000,
+    "streets": 4095,
+    "hoods": 340,
+    "map": false,
+    "mapped": 0
+  },
+  "מודיעין": {
+    "code": 1200,
+    "streets": 522,
+    "hoods": 17,
+    "map": false,
+    "mapped": 0
+  },
+  "חיפה": {
+    "code": 4000,
+    "streets": 1335,
+    "hoods": 136,
+    "map": false,
+    "mapped": 0
+  },
+  "ראשון לציון": {
+    "code": 8300,
+    "streets": 1271,
+    "hoods": 83,
+    "map": false,
+    "mapped": 0
+  },
+  "באר שבע": {
+    "code": 9000,
+    "streets": 1258,
+    "hoods": 52,
+    "map": false,
+    "mapped": 0
+  },
+  "פתח תקווה": {
+    "code": 7900,
+    "streets": 1064,
+    "hoods": 118,
+    "map": false,
+    "mapped": 0
+  },
+  "אשדוד": {
+    "code": 70,
+    "streets": 668,
+    "hoods": 58,
+    "map": false,
+    "mapped": 0
+  },
+  "חדרה": {
+    "code": 6500,
+    "streets": 586,
+    "hoods": 87,
+    "map": false,
+    "mapped": 0
+  },
+  "עפולה": {
+    "code": 7700,
+    "streets": 424,
+    "hoods": 28,
+    "map": false,
+    "mapped": 0
+  },
+  "חולון": {
+    "code": 6600,
+    "streets": 598,
+    "hoods": 59,
+    "map": false,
+    "mapped": 0
+  },
+  "כפר סבא": {
+    "code": 6900,
+    "streets": 536,
+    "hoods": 52,
+    "map": false,
+    "mapped": 0
+  },
+  "נהריה": {
+    "code": 9100,
+    "streets": 287,
+    "hoods": 34,
+    "map": false,
+    "mapped": 0
+  },
+  "בת ים": {
+    "code": 6200,
+    "streets": 268,
+    "hoods": 25,
+    "map": false,
+    "mapped": 0
+  },
+  "אשקלון": {
+    "code": 7100,
+    "streets": 1038,
+    "hoods": 83,
+    "map": false,
+    "mapped": 0
+  },
+  "הוד השרון": {
+    "code": 9700,
+    "streets": 441,
+    "hoods": 31,
+    "map": false,
+    "mapped": 0
+  },
+  "רחובות": {
+    "code": 8400,
+    "streets": 638,
+    "hoods": 69,
+    "map": false,
+    "mapped": 0
+  },
+  "נס ציונה": {
+    "code": 7200,
+    "streets": 283,
+    "hoods": 41,
+    "map": false,
+    "mapped": 0
+  },
+  "קריית אונו": {
+    "code": 2620,
+    "streets": 216,
+    "hoods": 16,
+    "map": false,
+    "mapped": 0
+  },
+  "בני ברק": {
+    "code": 6100,
+    "streets": 400,
+    "hoods": 48,
+    "map": false,
+    "mapped": 0
+  },
+  "ראש העין": {
+    "code": 2640,
+    "streets": 423,
+    "hoods": 30,
+    "map": false,
+    "mapped": 0
+  },
+  "גבעת שמואל": {
+    "code": 681,
+    "streets": 106,
+    "hoods": 10,
+    "map": false,
+    "mapped": 0
+  },
+  "יבנה": {
+    "code": 2660,
+    "streets": 251,
+    "hoods": 20,
+    "map": false,
+    "mapped": 0
+  },
+  "טבריה": {
+    "code": 6700,
+    "streets": 282,
+    "hoods": 49,
+    "map": false,
+    "mapped": 0
+  },
+  "אילת": {
+    "code": 2600,
+    "streets": 737,
+    "hoods": 53,
+    "map": false,
+    "mapped": 0
+  }
+}

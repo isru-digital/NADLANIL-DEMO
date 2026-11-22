@@ -1,6 +1,7 @@
 import { CURRENT_BROKER_ID } from '../config'
 import type { CommunityItem, PropertyInfo, SearchSpec } from '../data/demo'
 import { isBusinessWord, isKind, kindFits, kindOf, searchGroup } from '../config/propertyTypes'
+import { nameKey, samePlace } from '../config/places'
 
 /**
  * The match between a property and a buyer's search (Itzik 17.11.2026): city, neighbourhood, kind of home, rooms,
@@ -16,7 +17,7 @@ export type Match = { item: CommunityItem; score: number; reasons: Reason[] }
 export const MATCH_MIN = 55
 const AMENITIES = ['חניה', 'מעלית', 'ממ"ד', 'ממ"ק'] as const
 
-const hoodOf = (p: PropertyInfo) => p.area.split(' - ')[1]?.split(' · ')[0].trim() ?? ''
+export const hoodOf = (p: PropertyInfo) => p.area.split(' - ')[1]?.split(' · ')[0].trim() ?? ''
 /** an office or a business property, or a search for one: they match each other only */
 export const isBizKind = (k: string) => isBusinessWord(k)
 /** the group and the kind of a post's property; a post from before the list is read from its old words */
@@ -42,10 +43,18 @@ export function scoreOf(city: string, p: PropertyInfo, s: SearchSpec): { score: 
   // neighbourhood: counts fully when the buyer did not ask for one
   const hood = hoodOf(p)
   if (s.neighborhoods?.length) {
-    const ok = !!hood && s.neighborhoods.some((h) => hood.includes(h) || h.includes(hood))
+    // one way of writing a name (22.11.2026): "נוה שאנן" and "שכונת נווה שאנן" are the same neighbourhood
+    const ok = !!hood && s.neighborhoods.some((h) => samePlace(h, hood) || nameKey(hood).includes(nameKey(h)) || nameKey(h).includes(nameKey(hood)))
     pts += ok ? 10 : 3
     reasons.push({ label: ok ? `שכונה: ${hood}` : 'שכונה אחרת', ok })
   } else pts += 10
+
+  // the streets a buyer asked for: a property on one of them is a little better (the street is public since 22.11.2026)
+  if (s.streets?.length) {
+    const ok = !!p.street && s.streets.some((x) => samePlace(x, p.street!))
+    if (ok) pts += 5
+    reasons.push({ label: ok ? `רחוב ${p.street}` : 'רחוב אחר', ok })
+  }
 
   // kind of home
   const mine = propertyKind(p)

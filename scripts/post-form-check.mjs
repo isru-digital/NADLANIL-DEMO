@@ -262,6 +262,38 @@ const pickKind = async (page, v) => {
   }
   await wait(400)
 }
+/** picks a street or a neighbourhood from the city's list (since 22.11.2026 they are not typed freely): the exact
+    name when the list has it, added by hand otherwise, so the names in this check stay the same */
+const pickPlace = async (page, kind, name, scope = '') => {
+  const nap = (ms) => new Promise((r) => setTimeout(r, ms))
+  await page.evaluate((s, k) => document.querySelector(`${s} [data-places] [data-kind="${k}"]`)?.click(), scope, kind)
+  await nap(200)
+  const box = `${scope} [data-places] [data-f="${kind}-search"]`
+  await page.waitForSelector(box, { visible: true, timeout: 8000 })
+  await page.$eval(box, (el) => {
+    el.scrollIntoView({ block: 'center' })
+    el.focus()
+    el.select()
+  })
+  await page.keyboard.press('Backspace')
+  await page.type(box, name)
+  await page
+    .waitForFunction((s) => !!document.querySelector(`${s} [data-places] [data-list] [data-pick]`) || document.querySelector(`${s} [data-places] .pl-none`)?.textContent === 'לא נמצא ברשימה.', { timeout: 8000 }, scope)
+    .catch(() => {})
+  await nap(200)
+  const hit = await page.evaluate(
+    (s, n) => {
+      const b = [...document.querySelectorAll(`${s} [data-places] [data-pick]`)].find((x) => x.dataset.pick === n)
+      if (b) b.click()
+      else document.querySelector(`${s} [data-places] [data-act="manual"]`)?.click()
+      return !!b
+    },
+    scope,
+    name,
+  )
+  await nap(250)
+  return hit
+}
 const toAll = async (t) => {
   await t.page.goto(green + '/app/community', { waitUntil: 'networkidle0' })
   await wait(700)
@@ -314,8 +346,8 @@ for (const [dev, vp] of DEVICES) {
   const city = await page.$('.ga [data-city="חיפה"]')
   if (!city) await t.click('.ga [data-act="more-cities"]')
   await t.click('.ga [data-city="חיפה"]')
-  await t.type('.ga [data-f="hood"]', 'נווה שאנן')
-  await t.type('.ga [data-f="street"]', 'הרצל')
+  await pickPlace(page, 'hood', 'נווה שאנן', '.ga')
+  await pickPlace(page, 'street', 'הרצל', '.ga')
   await t.type('.ga [data-f="house"]', '12')
   await t.type('.ga [data-f="apt"]', '7')
   await t.click('.ga [data-rooms="5"]')
@@ -339,7 +371,8 @@ for (const [dev, vp] of DEVICES) {
     h: Math.round(document.querySelector('[data-toggle="house-no"]').getBoundingClientRect().height),
     seen: document.querySelector('[data-seen] b')?.textContent.trim(),
     note: document.querySelector('.ga-address .ga-private')?.textContent.trim(),
-    fields: ['hood', 'street', 'house', 'apt'].map((f) => !!document.querySelector(`.ga [data-f="${f}"]`)),
+    // since 22.11.2026 the street and the neighbourhood are picked from the city's lists (scripts/places-check.mjs)
+    fields: [!!document.querySelector('.ga [data-places="property"]'), ...['house', 'apt'].map((f) => !!document.querySelector(`.ga [data-f="${f}"]`))],
   }))
   check(`${dev}: a small switch "להציג מספר בניין" next to the address, off by default, a full finger high`, addr.label === 'להציג מספר בניין' && addr.toggle === 'false' && addr.role === 'switch' && addr.h >= 44 && addr.fields.every(Boolean), addr)
   check(`${dev}: off: "כך יראו המתווכים" shows the city, the neighbourhood and the street, without the number`, addr.seen === 'חיפה - נווה שאנן, רחוב הרצל' && addr.note.includes('מספר הדירה והכתובת המלאה נשמרים רק אצלכם'), addr)
@@ -450,8 +483,8 @@ for (const [dev, vp] of DEVICES) {
   await t.click('.ga .pf-kind[data-kind="משרד"]')
   if (!(await page.$('.ga [data-city="חיפה"]'))) await t.click('.ga [data-act="more-cities"]')
   await t.click('.ga [data-city="חיפה"]')
-  await t.type('.ga [data-f="hood"]', 'הדר')
-  await t.type('.ga [data-f="street"]', 'שדרות הנשיא')
+  await pickPlace(page, 'hood', 'הדר', '.ga')
+  await pickPlace(page, 'street', 'שדרות הנשיא', '.ga')
   await t.type('.ga [data-f="house"]', '40')
   await t.type('.ga [data-f="apt"]', '3')
   await t.type('.ga [data-f="sqm"]', '120')
@@ -890,7 +923,7 @@ for (const [dev, vp] of DEVICES) {
     await n.click('.ga [data-cat="home"]')
     await wait(400)
     await n.click('.ga .pf-kind[data-kind="דירה"]')
-    await n.type('.ga [data-f="street"]', 'הרצל')
+    await pickPlace(n.page, 'street', 'הרצל', '.ga')
     await n.type('.ga [data-f="house"]', '12')
     await n.click('[data-toggle="house-no"]')
     await n.click('[data-toggle="as-story"]')

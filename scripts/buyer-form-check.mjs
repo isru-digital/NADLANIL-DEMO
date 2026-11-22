@@ -8,6 +8,38 @@ import { mkdirSync } from 'node:fs'
 const green = process.env.BASE_GREEN ?? 'http://localhost:5240/NADLANIL-DEMO/green'
 const out = process.argv[2] ?? '_shots/buyer-form'
 mkdirSync(out, { recursive: true })
+/** picks a street or a neighbourhood from the city's list (since 22.11.2026 they are not typed freely): the exact
+    name when the list has it, added by hand otherwise, so the names in this check stay the same */
+const pickPlace = async (page, kind, name, scope = '') => {
+  const nap = (ms) => new Promise((r) => setTimeout(r, ms))
+  await page.evaluate((s, k) => document.querySelector(`${s} [data-places] [data-kind="${k}"]`)?.click(), scope, kind)
+  await nap(200)
+  const box = `${scope} [data-places] [data-f="${kind}-search"]`
+  await page.waitForSelector(box, { visible: true, timeout: 8000 })
+  await page.$eval(box, (el) => {
+    el.scrollIntoView({ block: 'center' })
+    el.focus()
+    el.select()
+  })
+  await page.keyboard.press('Backspace')
+  await page.type(box, name)
+  await page
+    .waitForFunction((s) => !!document.querySelector(`${s} [data-places] [data-list] [data-pick]`) || document.querySelector(`${s} [data-places] .pl-none`)?.textContent === 'לא נמצא ברשימה.', { timeout: 8000 }, scope)
+    .catch(() => {})
+  await nap(200)
+  const hit = await page.evaluate(
+    (s, n) => {
+      const b = [...document.querySelectorAll(`${s} [data-places] [data-pick]`)].find((x) => x.dataset.pick === n)
+      if (b) b.click()
+      else document.querySelector(`${s} [data-places] [data-act="manual"]`)?.click()
+      return !!b
+    },
+    scope,
+    name,
+  )
+  await nap(250)
+  return hit
+}
 const wait = (ms) => new Promise((r) => setTimeout(r, ms))
 const browser = await puppeteer.launch({ executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: 'new', args: ['--hide-scrollbars'] })
 let fails = 0
@@ -107,10 +139,8 @@ for (const [tag, vp] of [
   await slide(page, '[data-range="max"]', 12)
   await tap(page, '[data-city="תל אביב"]')
   await tap(page, '[data-city="רמת גן"]')
-  await page.type('[data-f="hood"]', 'הבורסה')
-  await page.keyboard.press('Enter')
-  await page.type('[data-f="hood"]', 'נחלת יצחק')
-  await tap(page, '.nc-add')
+  await pickPlace(page, 'hood', 'הבורסה')
+  await pickPlace(page, 'hood', 'נחלת יצחק')
   await tap(page, '[data-kind="דירת גן"]')
   await tap(page, '[data-step="max"] [data-dir="up"]')
   await tap(page, '[data-step="max"] [data-dir="up"]')
@@ -119,7 +149,7 @@ for (const [tag, vp] of [
   await tap(page, '[data-must="ממ\\"ד"]')
   await page.type('[data-f="wants"]', 'קומה גבוהה, קרוב לפארק')
   const filled = await page.evaluate(() => ({
-    hoods: [...document.querySelectorAll('[data-hood]')].map((h) => h.dataset.hood),
+    hoods: [...document.querySelectorAll('[data-places] [data-chip="hood"]')].map((h) => h.dataset.name),
     rooms: [...document.querySelectorAll('.nc-step b')].map((b) => b.textContent),
     cities: [...document.querySelectorAll('[data-city][aria-pressed="true"]')].map((b) => b.dataset.city),
   }))

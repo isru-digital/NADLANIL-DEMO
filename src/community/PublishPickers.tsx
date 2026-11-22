@@ -35,11 +35,12 @@ export function buyerPost(cl: Client, authorId: string): CommunityItem {
   const roomsMin = cl.roomsMin ?? Math.max(1, cl.rooms || 3)
   const roomsMax = cl.roomsMax ?? Math.max(roomsMin, cl.rooms || 4)
   const group = searchGroup({ group: cl.group, kinds: cl.kinds })
-  const search: SearchSpec = { cities: cl.cities, roomsMin, roomsMax, budget: cl.sum, wants: cl.must ?? [], deal: rent ? 'rent' : 'sale', neighborhoods: cl.neighborhoods, kinds: cl.kinds, group, budgetMin: cl.budgetMin }
+  const search: SearchSpec = { cities: cl.cities, roomsMin, roomsMax, budget: cl.sum, wants: cl.must ?? [], deal: rent ? 'rent' : 'sale', neighborhoods: cl.neighborhoods, streets: cl.streets?.length ? cl.streets : undefined, kinds: cl.kinds, group, budgetMin: cl.budgetMin }
   const where = cl.cities.length ? ` ב${cl.cities.join(' או ב')}` : ''
   // a commercial search has no rooms: its title says which kinds
   const what = group === 'business' ? (cl.kinds?.length ? cl.kinds.join(', ') : 'נכס מסחרי') : roomsLabel(search)
   const hoods = cl.neighborhoods?.length ? `שכונות: ${cl.neighborhoods.join(', ')}. ` : ''
+  const streets = cl.streets?.length ? `רחובות: ${cl.streets.join(', ')}. ` : ''
   return {
     id: `b-${cl.id}-${Date.now()}`,
     topicId: 'seeking',
@@ -51,7 +52,7 @@ export function buyerPost(cl: Client, authorId: string): CommunityItem {
     fresh: true,
     title: `${rent ? 'מחפש לשוכר' : 'מחפש לקונה'}: ${what}${where}`,
     show: 'feed',
-    body: `${hoods}${cl.wants ? `${cl.wants}. ` : ''}${rent ? 'שוכר רציני' : 'קונה רציני'}. מי שיש לו נכס מתאים, גם שקט, דברו איתי.`,
+    body: `${hoods}${streets}${cl.wants ? `${cl.wants}. ` : ''}${rent ? 'שוכר רציני' : 'קונה רציני'}. מי שיש לו נכס מתאים, גם שקט, דברו איתי.`,
     search,
   }
 }

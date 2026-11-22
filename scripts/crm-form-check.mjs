@@ -17,6 +17,38 @@ const check = (name, ok, info) => {
   if (!ok) fails++
   console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${ok || info === undefined ? '' : '  [' + JSON.stringify(info) + ']'}`)
 }
+/** picks a street or a neighbourhood from the city's list (since 22.11.2026 they are not typed freely): the exact
+    name when the list has it, added by hand otherwise, so the names in this check stay the same */
+const pickPlace = async (page, kind, name, scope = '') => {
+  const nap = (ms) => new Promise((r) => setTimeout(r, ms))
+  await page.evaluate((s, k) => document.querySelector(`${s} [data-places] [data-kind="${k}"]`)?.click(), scope, kind)
+  await nap(200)
+  const box = `${scope} [data-places] [data-f="${kind}-search"]`
+  await page.waitForSelector(box, { visible: true, timeout: 8000 })
+  await page.$eval(box, (el) => {
+    el.scrollIntoView({ block: 'center' })
+    el.focus()
+    el.select()
+  })
+  await page.keyboard.press('Backspace')
+  await page.type(box, name)
+  await page
+    .waitForFunction((s) => !!document.querySelector(`${s} [data-places] [data-list] [data-pick]`) || document.querySelector(`${s} [data-places] .pl-none`)?.textContent === 'לא נמצא ברשימה.', { timeout: 8000 }, scope)
+    .catch(() => {})
+  await nap(200)
+  const hit = await page.evaluate(
+    (s, n) => {
+      const b = [...document.querySelectorAll(`${s} [data-places] [data-pick]`)].find((x) => x.dataset.pick === n)
+      if (b) b.click()
+      else document.querySelector(`${s} [data-places] [data-act="manual"]`)?.click()
+      return !!b
+    },
+    scope,
+    name,
+  )
+  await nap(250)
+  return hit
+}
 const STREET = 'סמטת הכרמים'
 
 for (const [tag, vp] of [
@@ -75,7 +107,7 @@ for (const [tag, vp] of [
       picks: picks.length,
       small: picks.filter((p) => p.getBoundingClientRect().height < 44).map((p) => p.textContent).slice(0, 4),
       draft: m.querySelector('[data-draft]')?.textContent,
-      address: !!m.querySelector('[data-f="street"]') && !!m.querySelector('[data-f="house"]') && !!m.querySelector('[data-f="hood"]'),
+      address: !!m.querySelector('[data-places="property"]') && !!m.querySelector('[data-f="house"]'),
       parking: [...m.querySelectorAll('[data-parking]')].map((b) => b.textContent),
       renewal: !!m.querySelector('[data-f="renewal"]'),
       inputs: Math.min(...[...m.querySelectorAll('input:not([type=file])')].map((i) => parseFloat(getComputedStyle(i).fontSize))),
@@ -90,8 +122,8 @@ for (const [tag, vp] of [
 
   // ---- fill it in
   await click('[data-city="חיפה"]')
-  await page.type('[data-f="hood"]', 'נווה שאנן')
-  await page.type('[data-f="street"]', STREET)
+  await pickPlace(page, 'hood', 'נווה שאנן')
+  await pickPlace(page, 'street', STREET)
   await page.type('[data-f="house"]', '12')
   await click('[data-rooms="4"]')
   // the price is a slider since 22.11.2026; a tap on the number opens the box for an exact price
@@ -119,7 +151,7 @@ for (const [tag, vp] of [
   await open()
   const back = await page.evaluate(() => ({
     line: document.querySelector('[data-draft]')?.textContent,
-    street: document.querySelector('[data-f="street"]')?.value,
+    street: document.querySelector('[data-places]')?.dataset.streetValue,
     house: document.querySelector('[data-f="house"]')?.value,
     city: document.querySelector('[data-city][aria-pressed="true"]')?.textContent,
     parking: document.querySelector('[data-parking][aria-checked="true"]')?.textContent,
@@ -180,8 +212,12 @@ for (const [tag, vp] of [
   }), STREET)
   check(`${tag}: in the feed: "חיפה - נווה שאנן", the street without its number, and the tag`, !feed.text && /חיפה - נווה שאנן, סמטת הכרמים/.test(feed.mine ?? '') && /התחדשות עירונית/.test(feed.mine ?? ''), feed)
 
-  // ---- the feed filter
-  await click('[data-filter="renewal"]')
+  // ---- the feed filter (a tap on the button itself: on a phone the bottom bar was taken for it once the filter grew a
+  // "שכונה" row, 22.11.2026; by hand the button is reached as before)
+  await page.$eval('[data-filter="renewal"]', (el) => {
+    el.scrollIntoView({ block: 'center' })
+    el.click()
+  })
   await wait(1300)
   const f = await page.evaluate(() => ({
     count: Number(document.querySelector('[data-count]')?.textContent),

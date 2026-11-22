@@ -9,6 +9,38 @@ import { mkdirSync } from 'node:fs'
 const green = process.env.BASE_GREEN ?? 'http://localhost:5240/NADLANIL-DEMO/green'
 const out = process.argv[2] ?? '_shots/yad2-import'
 mkdirSync(out, { recursive: true })
+/** picks a street or a neighbourhood from the city's list (since 22.11.2026 they are not typed freely): the exact
+    name when the list has it, added by hand otherwise, so the names in this check stay the same */
+const pickPlace = async (page, kind, name, scope = '') => {
+  const nap = (ms) => new Promise((r) => setTimeout(r, ms))
+  await page.evaluate((s, k) => document.querySelector(`${s} [data-places] [data-kind="${k}"]`)?.click(), scope, kind)
+  await nap(200)
+  const box = `${scope} [data-places] [data-f="${kind}-search"]`
+  await page.waitForSelector(box, { visible: true, timeout: 8000 })
+  await page.$eval(box, (el) => {
+    el.scrollIntoView({ block: 'center' })
+    el.focus()
+    el.select()
+  })
+  await page.keyboard.press('Backspace')
+  await page.type(box, name)
+  await page
+    .waitForFunction((s) => !!document.querySelector(`${s} [data-places] [data-list] [data-pick]`) || document.querySelector(`${s} [data-places] .pl-none`)?.textContent === 'לא נמצא ברשימה.', { timeout: 8000 }, scope)
+    .catch(() => {})
+  await nap(200)
+  const hit = await page.evaluate(
+    (s, n) => {
+      const b = [...document.querySelectorAll(`${s} [data-places] [data-pick]`)].find((x) => x.dataset.pick === n)
+      if (b) b.click()
+      else document.querySelector(`${s} [data-places] [data-act="manual"]`)?.click()
+      return !!b
+    },
+    scope,
+    name,
+  )
+  await nap(250)
+  return hit
+}
 const wait = (ms) => new Promise((r) => setTimeout(r, ms))
 const browser = await puppeteer.launch({ executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: 'new', args: ['--hide-scrollbars'] })
 let fails = 0
@@ -59,8 +91,8 @@ const card = (page) =>
     return {
       city: on('[data-city]'),
       cat: on('[data-cat]'),
-      hood: val('hood'),
-      street: val('street'),
+      hood: m.querySelector('[data-places]')?.dataset.hoodValue ?? val('hood'),
+      street: m.querySelector('[data-places]')?.dataset.streetValue ?? val('street'),
       house: val('house'),
       rooms: on('[data-rooms]'),
       sqm: val('sqm'),

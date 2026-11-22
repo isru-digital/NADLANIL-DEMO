@@ -10,7 +10,7 @@ import type { CrmItem, PropertyInfo } from '../data/demo'
  */
 
 /** "הרצל" is said "רחוב הרצל"; "שדרות רוטשילד" and "סמטת הכרמים" already say what they are */
-const NAMED = /^(רחוב|רח'|רח׳|שדרות|שד'|שד׳|שדרת|סמטת|סמטה|דרך|כיכר|מעלה|מעלות|נתיב|טיילת|מבוא|משעול)\s/
+const NAMED = /^(רחוב|רח'|רח׳|שדרות|שד'|שד׳|שדרת|סמטת|סמטה|דרך|כיכר|ככר|מעלה|מעלות|נתיב|טיילת|מבוא|משעול|גשר|מעבר|שביל|כביש)\s/
 export const streetName = (street: string) => (NAMED.test(street.trim()) ? street.trim() : `רחוב ${street.trim()}`)
 
 /** the street as the community sees it: with the building's number only if the post carries it */

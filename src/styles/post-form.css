@@ -751,3 +751,8 @@ html[dir='ltr'] .ss-marks span {
     transition: none;
   }
 }
+
+/* the house and the flat numbers, under the street and the neighbourhood picked from the lists (22.11.2026) */
+.ga-address-row.is-two {
+  grid-template-columns: 1fr 1fr;
+}

@@ -31,7 +31,8 @@ import { brokerById, brokers, cities, fitsSearch, formatPriceShort, inFeed, inSt
 import type { CommunityItem } from '../data/demo'
 import { GROUPS, KINDS, kindFits, searchGroup } from '../config/propertyTypes'
 import type { PropGroup } from '../config/propertyTypes'
-import { propertyKind } from '../community/match'
+import { hoodOf, propertyKind } from '../community/match'
+import { nameKey } from '../config/places'
 import { streetOf } from '../community/place'
 import { Toggle } from '../components/Toggle'
 import { shrinkPhoto } from '../green/PhotoPicker'
@@ -55,8 +56,10 @@ import '../styles/property.css'
 type View = TopicId | 'all'
 
 /** The filters of properties and of buyers: city, rooms, price and sale or rent. Empty means "all". */
-type Filter = { city: string; rooms: string; price: string; deal: '' | 'sale' | 'rent'; renewal: boolean; kind: string }
-const NO_FILTER: Filter = { city: '', rooms: '', price: '', deal: '', renewal: false, kind: '' }
+type Filter = { city: string; rooms: string; price: string; deal: '' | 'sale' | 'rent'; renewal: boolean; kind: string; hood: string }
+const NO_FILTER: Filter = { city: '', rooms: '', price: '', deal: '', renewal: false, kind: '', hood: '' }
+/** a neighbourhood in the filter: "city|key", the key being one way of writing its name (config/places.ts) */
+const hoodValue = (city: string, hood: string) => `${city}|${nameKey(hood)}`
 /** the kind of property in the filter: "home|דירה" is one kind, "home|" is the whole group */
 const kindKey = (group: PropGroup, kind = '') => `${group}|${kind}`
 const readKind = (key: string) => {
@@ -73,6 +76,7 @@ function passes(it: CommunityItem, f: Filter) {
     const p = it.property
     const rooms = parseFloat(p.rooms)
     if (f.city && it.city !== f.city) return false
+    if (f.hood && hoodValue(it.city, hoodOf(p)) !== f.hood) return false
     if (f.kind) {
       const want = readKind(f.kind)
       const has = propertyKind(p, it.title)
@@ -88,6 +92,7 @@ function passes(it: CommunityItem, f: Filter) {
   if (it.search) {
     const s = it.search
     if (f.city && !s.cities.includes(f.city)) return false
+    if (f.hood && !(s.neighborhoods ?? []).some((h) => s.cities.some((c) => hoodValue(c, h) === f.hood))) return false
     // a buyer who looks for this kind of property (a buyer who named no kind takes every kind of the group)
     if (f.kind) {
       const want = readKind(f.kind)
@@ -405,6 +410,14 @@ export default function Community() {
               onChange={setFilter}
               count={visible.length}
               cities={[...new Set(items.filter((it) => it.topicId === view).flatMap((it) => (it.search ? it.search.cities : [it.city])))].sort((a, b) => a.localeCompare(b, 'he'))}
+              hoods={(() => {
+                const seen = new Map<string, { value: string; label: string; city: string }>()
+                for (const it of items.filter((x) => x.topicId === view)) {
+                  const pairs = it.property ? [[it.city, hoodOf(it.property)]] : (it.search?.neighborhoods ?? []).map((h) => [it.search!.cities[0] ?? it.city, h])
+                  for (const [c, h] of pairs) if (h && c && !seen.has(hoodValue(c, h))) seen.set(hoodValue(c, h), { value: hoodValue(c, h), label: h, city: c })
+                }
+                return [...seen.values()].sort((a, b) => a.city.localeCompare(b.city, 'he') || a.label.localeCompare(b.label, 'he'))
+              })()}
             />
           )}
 
@@ -713,15 +726,15 @@ export default function Community() {
 
 /* ============================================================ small parts */
 
-function FilterBar({ kind, filter, onChange, count, cities }: { kind: 'properties' | 'buyers'; filter: Filter; onChange: (f: Filter) => void; count: number; cities: string[] }) {
+function FilterBar({ kind, filter, onChange, count, cities, hoods }: { kind: 'properties' | 'buyers'; filter: Filter; onChange: (f: Filter) => void; count: number; cities: string[]; hoods: { value: string; label: string; city: string }[] }) {
   const set = (patch: Partial<Filter>) => onChange({ ...filter, ...patch })
   const prices = filter.deal === 'rent' ? RENT_PRICES : SALE_PRICES
-  const on = filter.city || filter.rooms || filter.price || filter.deal || filter.renewal || filter.kind
+  const on = filter.city || filter.rooms || filter.price || filter.deal || filter.renewal || filter.kind || filter.hood
   return (
     <section className="flt" aria-label={kind === 'properties' ? 'סינון נכסים' : 'סינון קונים'} data-filters={kind}>
       <label>
         <span>עיר</span>
-        <select value={filter.city} onChange={(e) => set({ city: e.target.value })} data-filter="city">
+        <select value={filter.city} onChange={(e) => set({ city: e.target.value, hood: filter.hood && e.target.value && !filter.hood.startsWith(`${e.target.value}|`) ? '' : filter.hood })} data-filter="city">
           <option value="">כל הערים</option>
           {cities.map((c) => (
             <option key={c} value={c}>
@@ -730,6 +743,22 @@ function FilterBar({ kind, filter, onChange, count, cities }: { kind: 'propertie
           ))}
         </select>
       </label>
+      {/* the neighbourhoods of the posts in this room, written one way (22.11.2026); of the city picked, when there is one */}
+      {hoods.length > 0 && (
+        <label>
+          <span>שכונה</span>
+          <select value={filter.hood} onChange={(e) => set({ hood: e.target.value })} data-filter="hood">
+            <option value="">כל השכונות</option>
+            {hoods
+              .filter((h) => !filter.city || h.city === filter.city)
+              .map((h) => (
+                <option key={h.value} value={h.value}>
+                  {filter.city ? h.label : `${h.label}, ${h.city}`}
+                </option>
+              ))}
+          </select>
+        </label>
+      )}
       {/* the same two lists as in the property form: the whole group, or one kind of it */}
       <label>
         <span>סוג נכס</span>
