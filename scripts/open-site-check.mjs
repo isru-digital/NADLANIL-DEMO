@@ -48,6 +48,11 @@ process.on('uncaughtException', () => {})
 
 const FONTS = /^fonts\.(googleapis|gstatic)\.com$/
 const outside = new Set() // every address a page asked for that is not this computer's copy of the site
+// Since 22.11.2026 the site may be closed again ("האתר בבנייה"): then everything here is walked as Itzik's own
+// browser, the one that holds his key's fingerprint, and scripts/closed-site-check.mjs checks what a visitor sees
+const CLOSED = /^export const UNDER_CONSTRUCTION = true\r?$/m.test(fs.readFileSync('src/config/construction.ts', 'utf8'))
+const KEY_HASH = fs.readFileSync('src/config/construction.ts', 'utf8').match(/KEY_HASH = '([0-9a-f]{64})'/)[1]
+if (CLOSED) console.log('the switch says the site is closed: walked as the owner of the preview key')
 const fresh = async (vp, before) => {
   const ctx = await browser.createBrowserContext()
   const page = await ctx.newPage()
@@ -63,6 +68,7 @@ const fresh = async (vp, before) => {
     r.abort()
   })
   await page.setViewport(vp)
+  if (CLOSED) await page.evaluateOnNewDocument((h) => { try { localStorage.setItem('nadlanup-preview-v1', h) } catch {} }, KEY_HASH)
   // the look follows the hour; the pictures are always taken by day (MODE=night for the other one), so two runs match
   await page.evaluateOnNewDocument((m) => {
     try {
@@ -151,7 +157,7 @@ for (const [dev, vp] of [['desktop', DESK], ['phone', PHONE]]) {
 // ---------------------------------------------------------------- 3. the switch is only off: the page and its key are still there
 const built = fs.readdirSync(path.join(dist, 'assets')).filter((f) => f.endsWith('.js')).map((f) => fs.readFileSync(path.join(dist, 'assets', f), 'utf8')).join('\n')
 const source = fs.readFileSync('src/config/construction.ts', 'utf8')
-check('the switch is one line, and it says the site is open', /^export const UNDER_CONSTRUCTION = false\r?$/m.test(source) && (source.match(/^export const UNDER_CONSTRUCTION = (?:true|false)\r?$/gm) ?? []).length === 1)
+check(`the switch is one line (it says the site is ${CLOSED ? 'closed' : 'open'})`, /^export const UNDER_CONSTRUCTION = (?:true|false)\r?$/m.test(source) && (source.match(/^export const UNDER_CONSTRUCTION = (?:true|false)\r?$/gm) ?? []).length === 1)
 check('"האתר בבנייה", the five taps and the key\'s check are still in the built site, only switched off', built.includes('האתר בבנייה') && built.includes('אנחנו משדרגים את המערכת') && built.includes('nadlanup-preview-v1') && /[0-9a-f]{64}/.test(source) && fs.existsSync('src/construction/Construction.tsx'))
 
 // ---------------------------------------------------------------- 4. privacy in the feed, the open demo

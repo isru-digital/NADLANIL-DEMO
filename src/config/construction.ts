@@ -7,13 +7,14 @@
  *   true  = "the site is being upgraded": every visitor sees the one page, on every address.
  * 21.11.2026: Itzik opened the site ("open the site") to show it to the partners. The page, its code, the key and
  * the five taps on its logo all stay as they were, so `true` brings the page back exactly as it was.
+ * 22.11.2026: after the meeting Itzik closed it again (`true`), the page exactly as it was before.
  *
  * Itzik's own way in: the link with ?preview=<his key> once, and this browser remembers it (localStorage). The key
  * itself is not in the code, only its SHA-256, so reading the code does not give it away. ?preview=off forgets it.
  * This is a curtain, not a lock: the site's code is public (GitHub Pages, a public repo), so someone determined can
  * still read it. The server checks every sign-in and every admin screen on its own, as before.
  */
-export const UNDER_CONSTRUCTION = false
+export const UNDER_CONSTRUCTION = true
 
 const KEY_HASH = '6d5eaaca072bf02f647051d8688d1337a4ab7a6cb92a2a8b3924cf91fda89e8b'
 const STORE = 'nadlanup-preview-v1'
