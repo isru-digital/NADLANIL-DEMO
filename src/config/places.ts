@@ -14,8 +14,8 @@ export type CityPlaces = {
   hoods: string[]
   map?: { w: number; h: number; outline: string; hoods: { n: string; d: string; c: [number, number] }[]; credit: string }
 }
-type IndexRow = { code: number; streets: number; hoods: number; map: boolean; mapped: number; covered: number }
-const index = INDEX as Record<string, IndexRow>
+type IndexRow = { code: number; streets: number; hoods: number; map: boolean; mapped: number }
+const index = INDEX as unknown as Record<string, IndexRow>
 
 export const hasPlaces = (city: string) => !!index[city]
 export const hasMap = (city: string) => !!index[city]?.map
