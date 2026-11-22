@@ -121,13 +121,10 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
   s = await picker(page)
   check(`${d} ... and a third can be added again`, s.n === 3 && !s.add)
 
-  // a client who is looking has no photos
-  await page.evaluate(() => [...document.querySelectorAll('.ga-fields .ga-pick')].find((c) => c.textContent.includes('לקוח שמחפש')).click())
-  await wait(300)
-  check(`${d} photos are for a property only`, !(await picker(page)).there)
-  await page.evaluate(() => [...document.querySelectorAll('.ga-fields .ga-pick')].find((c) => c.textContent.trim() === 'נכס').click())
-  await wait(300)
-  check(`${d} going back to "נכס" keeps the photos`, (await picker(page)).n === 3)
+  // the card is a property, and only that (23.11.2026: the choice "נכס / לקוח שמחפש" was taken out of the card)
+  const asked = await page.evaluate(() => ({ what: [...document.querySelectorAll('.ga-fields .field-label')].some((l) => l.textContent.trim() === 'מה זה?'), buyer: [...document.querySelectorAll('.ga-fields .ga-pick')].some((c) => c.textContent.includes('לקוח שמחפש')) }))
+  check(`${d} the card does not ask "מה זה?" any more, and there is no "לקוח שמחפש" in it`, !asked.what && !asked.buyer, JSON.stringify(asked))
+  check(`${d} and the photos of the property are still there`, (await picker(page)).n === 3)
 
   // a property needs its kind since 22.11.2026: "מגורים", then "דירה"
   await page.evaluate(() => document.querySelector('.ga [data-cat="home"]')?.click())

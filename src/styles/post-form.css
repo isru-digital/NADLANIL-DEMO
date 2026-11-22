@@ -784,7 +784,7 @@ html[dir='ltr'] .ss-marks span {
   translate: -50% 0;
 }
 
-/* ---------------------------------------------------------------- the red tag "עמלת שת"פ 0.5%" */
+/* ------------------------------------------- the tag of the fee: red for a fee, light green for "שת"פ מלא" (0%) */
 .coop-badge {
   display: inline-flex;
   align-items: center;
@@ -798,6 +798,15 @@ html[dir='ltr'] .ss-marks span {
   font-weight: 800;
   line-height: 1.2;
   white-space: nowrap;
+}
+/* 0%: nothing is asked of the broker who brings a buyer, which is the best there is, so it is light and green */
+.coop-badge.is-full {
+  background: #c8f0dc;
+  color: #06452c;
+}
+html[data-mode='night'] .coop-badge.is-full {
+  background: #a9e9cc;
+  color: #04301e;
 }
 /* on a photo: in its corner, away from the price tag, with a shadow that lifts it off any picture */
 .coop-badge.is-photo {

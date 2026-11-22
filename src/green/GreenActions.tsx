@@ -162,7 +162,12 @@ function CityPick({ city, onPick }: { city: string; onPick: (c: string) => void 
 }
 
 /** The fields a property or a request is made of; shared by the CRM card and the WhatsApp confirmation. */
-function Fields({ draft, set, kinds, categories = false, full = false, missing = false, missingCoop = false }: { draft: Draft; set: (d: Partial<Draft>) => void; kinds: [string, string]; categories?: boolean; full?: boolean; missing?: boolean; missingCoop?: boolean }) {
+/**
+ * The fields of a card. `kinds` are the two words of the "מה זה?" choice; without them the choice is not shown at
+ * all and the card is a property (Itzik 23.11.2026: a card in the CRM is a property. A client who is looking is
+ * added in "לקוחות", where the form asks everything a search needs).
+ */
+function Fields({ draft, set, kinds, categories = false, full = false, missing = false, missingCoop = false }: { draft: Draft; set: (d: Partial<Draft>) => void; kinds?: [string, string]; categories?: boolean; full?: boolean; missing?: boolean; missingCoop?: boolean }) {
   const property = draft.kind === 'property'
   // a commercial property (and a plot of land) is measured in square metres; a commercial one has its own extras
   const commercial = categories && bySize(draft)
@@ -174,17 +179,19 @@ function Fields({ draft, set, kinds, categories = false, full = false, missing =
   const roomsOn = (r: string) => (r === '6+' ? num(draft.rooms) >= 6 : draft.rooms === r)
   return (
     <div className="ga-fields">
-      <div className="field">
-        <span className="field-label">מה זה?</span>
-        <div className="ga-picks is-two" role="group" aria-label="מה זה">
-          <button type="button" className="ga-pick is-big" aria-pressed={property} onClick={() => set({ kind: 'property' })}>
-            <Home /> {kinds[0]}
-          </button>
-          <button type="button" className="ga-pick is-big" aria-pressed={!property} onClick={() => set({ kind: 'request' })}>
-            <Search /> {kinds[1]}
-          </button>
+      {kinds && (
+        <div className="field">
+          <span className="field-label">מה זה?</span>
+          <div className="ga-picks is-two" role="group" aria-label="מה זה">
+            <button type="button" className="ga-pick is-big" aria-pressed={property} onClick={() => set({ kind: 'property' })}>
+              <Home /> {kinds[0]}
+            </button>
+            <button type="button" className="ga-pick is-big" aria-pressed={!property} onClick={() => set({ kind: 'request' })}>
+              <Search /> {kinds[1]}
+            </button>
+          </div>
         </div>
-      </div>
+      )}
       {categories && property && (
         <div className="field pf-step" data-f="category">
           <span className="field-label">סוג הנכס</span>
@@ -384,7 +391,8 @@ export default function GreenActions() {
   useEffect(() => {
     if (!ask) return
     const d = ask.kind === 'card' ? readDraft() : null
-    setCard(d?.card ?? emptyDraft)
+    // a draft kept from before the choice was taken out could say "request": a card is a property (23.11.2026)
+    setCard(d?.card ? { ...d.card, kind: 'property' } : emptyDraft)
     setClient(d?.client ?? '')
     setPhotos(d?.photos ?? [])
     setRestored(!!d)
@@ -618,7 +626,8 @@ export default function GreenActions() {
                   className="btn btn-gold btn-sm"
                   disabled={!paste.trim()}
                   onClick={() => {
-                    setCard(toCard(parseWhatsapp(paste), paste))
+                    // a card in the CRM is a property, whatever the message turns out to be (23.11.2026)
+                    setCard({ ...toCard(parseWhatsapp(paste), paste), kind: 'property' })
                     setPasting(false)
                     toast('הפרטים מולאו מההודעה. בדקו ושמרו')
                   }}
@@ -656,7 +665,7 @@ export default function GreenActions() {
               )}
             </div>
           )}
-          <Fields draft={card} set={(d) => setCard((c) => ({ ...c, ...d }))} kinds={['נכס', 'לקוח שמחפש']} categories full missing={!!cardMiss.kind} missingCoop={!!cardMiss.coop} />
+          <Fields draft={card} set={(d) => setCard((c) => ({ ...c, ...d }))} categories full missing={!!cardMiss.kind} missingCoop={!!cardMiss.coop} />
           {card.kind === 'property' && (adDone || card.notes) && (
             <label className="field">
               <span className="field-label">עוד מהמודעה (נשאר אצלכם בכרטיס)</span>

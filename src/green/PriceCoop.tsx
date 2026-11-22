@@ -1,21 +1,8 @@
 import { type ChangeEvent, useEffect, useRef, useState } from 'react'
 import { ArrowUp, X } from 'lucide-react'
 import { SnapSlider } from '../components/SnapSlider'
-import { COOP_STOPS, PRICE_LIKELY_LOW, PRICE_TYPED_MAX, coopAmount, coopStop, coopText, priceDigits, priceGroups, priceWords, shekels } from '../config/coop'
+import { COOP_STOPS, PRICE_LIKELY_LOW, PRICE_TYPED_MAX, coopAmount, coopStop, coopText, priceCaret, priceDigits, priceGroups, priceWords, shekels } from '../config/coop'
 import '../styles/post-form.css'
-
-/** where the caret should sit once the digits were grouped again: right after the same digit it was after */
-function caretFor(shown: string, digitsBefore: number): number {
-  if (digitsBefore <= 0) return 0
-  let seen = 0
-  for (let i = 0; i < shown.length; i++) {
-    if (/\d/.test(shown[i])) {
-      seen++
-      if (seen === digitsBefore) return i + 1
-    }
-  }
-  return shown.length
-}
 
 /**
  * The price of a property (Itzik 22.11.2026, in place of the slider): one box, the amount is typed into it. The
@@ -45,7 +32,7 @@ export function PriceField({ price, onPrice }: { price: number; onPrice: (n: num
     const before = el.value.slice(0, el.selectionStart ?? el.value.length).replace(/\D/g, '').length
     const n = priceDigits(el.value)
     const shown = priceGroups(n)
-    caret.current = caretFor(shown, before)
+    caret.current = priceCaret(shown, before)
     setText(shown)
     onPrice(n)
   }

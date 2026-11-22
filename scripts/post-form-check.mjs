@@ -454,6 +454,34 @@ for (const [dev, vp] of DEVICES) {
   }, post?.id)
   check(`${dev}: the post says "עמלת שת"פ 0.5%" in red (no photo here: in the line of facts), and "חלוקת עמלה" is nowhere in the feed`, feedCoop.tag === 'עמלת שת"פ 0.5%' && feedCoop.line && feedCoop.old === false, feedCoop)
   await t.shot(`${dev}-7-post-in-feed`)
+  // 0% is not "nothing": it is said in words, in light green, and never in the red of a fee (Itzik 23.11.2026)
+  const setCoop = async (pct) => {
+    await page.evaluate(
+      (id, p) => {
+        const s = JSON.parse(localStorage.getItem('brokers-demo-state-v5') ?? '{}')
+        const it = (s.items ?? []).find((x) => x.id === id)
+        if (it?.property) it.property.coopPct = p
+        localStorage.setItem('brokers-demo-state-v5', JSON.stringify(s))
+      },
+      post?.id,
+      pct,
+    )
+    await page.reload({ waitUntil: 'networkidle0' })
+    await wait(900)
+    await page.evaluate((id) => document.getElementById(`ci-${id}`)?.scrollIntoView({ block: 'center' }), post?.id)
+    await wait(300)
+  }
+  await setCoop(0)
+  const fullTag = await page.evaluate((id) => {
+    const b = document.getElementById(`ci-${id}`)?.querySelector('.coop-badge')
+    if (!b) return null
+    const css = getComputedStyle(b)
+    return { text: b.textContent.replace(/\s+/g, ' ').trim(), full: b.classList.contains('is-full'), bg: css.backgroundColor, said: b.dataset.coop }
+  }, post?.id)
+  const fullInk = await t.contrast(`#ci-${post?.id} .coop-badge`)
+  check(`${dev}: a property with 0% says "שת"פ מלא" in a light green, not "0%" in red, and can be read`, fullTag?.text === 'שת"פ מלא' && fullTag.full && fullTag.said === '0' && fullTag.bg === 'rgb(200, 240, 220)' && fullInk >= 4.5, { fullTag, fullInk })
+  await t.shot(`${dev}-7b-coop-full`)
+  await setCoop(0.5)
   // what is kept of the post itself (this is all another broker's browser would ever get)
   const kept = await page.evaluate((id) => {
     const s = JSON.parse(localStorage.getItem('brokers-demo-state-v5') ?? '{}')

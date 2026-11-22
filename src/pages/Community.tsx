@@ -32,6 +32,7 @@ import type { CommunityItem } from '../data/demo'
 import { GROUPS, KINDS, kindFits, searchGroup } from '../config/propertyTypes'
 import type { PropGroup } from '../config/propertyTypes'
 import { hoodOf, propertyKind } from '../community/match'
+import { MoneyInput } from '../components/MoneyInput'
 import { nameKey } from '../config/places'
 import { streetOf } from '../community/place'
 import { Toggle } from '../components/Toggle'
@@ -55,9 +56,13 @@ import '../styles/property.css'
 
 type View = TopicId | 'all'
 
-/** The filters of properties and of buyers: city, rooms, price and sale or rent. Empty means "all". */
-type Filter = { city: string; rooms: string; price: string; deal: '' | 'sale' | 'rent'; renewal: boolean; kind: string; hood: string }
-const NO_FILTER: Filter = { city: '', rooms: '', price: '', deal: '', renewal: false, kind: '', hood: '' }
+/**
+ * The filters of properties and of buyers: city, rooms, money and sale or rent. Empty means "all".
+ * The money is a range since 22.11.2026 (Itzik: two boxes, the least and the most, written like the price of a
+ * property, with quick ranges beside them). Both are plain numbers as text; "" is "no end on this side".
+ */
+type Filter = { city: string; rooms: string; priceMin: string; priceMax: string; deal: '' | 'sale' | 'rent'; renewal: boolean; kind: string; hood: string }
+const NO_FILTER: Filter = { city: '', rooms: '', priceMin: '', priceMax: '', deal: '', renewal: false, kind: '', hood: '' }
 /** a neighbourhood in the filter: "city|key", the key being one way of writing its name (config/places.ts) */
 const hoodValue = (city: string, hood: string) => `${city}|${nameKey(hood)}`
 /** the kind of property in the filter: "home|דירה" is one kind, "home|" is the whole group */
@@ -66,8 +71,19 @@ const readKind = (key: string) => {
   const [group, kind] = key.split('|') as [PropGroup, string]
   return { group, kind }
 }
-const SALE_PRICES = [1500000, 2000000, 2500000, 3000000, 4000000, 6000000, 10000000]
-const RENT_PRICES = [4000, 6000, 8000, 10000]
+/** the quick ranges beside the two boxes: [what it is called, the least, the most] ("" = no end on that side) */
+const SALE_BANDS: [label: string, min: string, max: string][] = [
+  ['עד 2 מיליון', '', '2000000'],
+  ['2 עד 4 מיליון', '2000000', '4000000'],
+  ['4 עד 7 מיליון', '4000000', '7000000'],
+  ['7 מיליון ומעלה', '7000000', ''],
+]
+const RENT_BANDS: [label: string, min: string, max: string][] = [
+  ['עד 4,000', '', '4000'],
+  ['4,000 עד 6,000', '4000', '6000'],
+  ['6,000 עד 9,000', '6000', '9000'],
+  ['9,000 ומעלה', '9000', ''],
+]
 const ROOMS = ['2', '3', '4', '5']
 
 /** does a property or a buyer's search pass the filter? */
@@ -86,7 +102,9 @@ function passes(it: CommunityItem, f: Filter) {
     if (f.deal && (p.deal ?? 'sale') !== f.deal) return false
     if (f.rooms && (f.rooms === '5' ? rooms < 5 : Math.floor(rooms) !== Number(f.rooms))) return false
     // a price is a sale price unless "השכרה" is chosen, so a rent never passes a sale price
-    if (f.price && ((p.deal ?? 'sale') !== (f.deal || 'sale') || p.price > Number(f.price))) return false
+    if ((f.priceMin || f.priceMax) && (p.deal ?? 'sale') !== (f.deal || 'sale')) return false
+    if (f.priceMin && p.price < Number(f.priceMin)) return false
+    if (f.priceMax && p.price > Number(f.priceMax)) return false
     return true
   }
   if (it.search) {
@@ -100,7 +118,9 @@ function passes(it: CommunityItem, f: Filter) {
     }
     if (f.deal && (s.deal ?? 'sale') !== f.deal) return false
     if (f.rooms && (f.rooms === '5' ? s.roomsMax < 5 : Number(f.rooms) < s.roomsMin || Number(f.rooms) > s.roomsMax)) return false
-    if (f.price && ((s.deal ?? 'sale') !== (f.deal || 'sale') || s.budget > Number(f.price))) return false
+    if ((f.priceMin || f.priceMax) && (s.deal ?? 'sale') !== (f.deal || 'sale')) return false
+    if (f.priceMin && s.budget < Number(f.priceMin)) return false
+    if (f.priceMax && s.budget > Number(f.priceMax)) return false
     return true
   }
   return true
@@ -795,8 +815,9 @@ export default function Community() {
 
 function FilterBar({ kind, filter, onChange, count, cities, hoods }: { kind: 'properties' | 'buyers'; filter: Filter; onChange: (f: Filter) => void; count: number; cities: string[]; hoods: { value: string; label: string; city: string }[] }) {
   const set = (patch: Partial<Filter>) => onChange({ ...filter, ...patch })
-  const prices = filter.deal === 'rent' ? RENT_PRICES : SALE_PRICES
-  const on = filter.city || filter.rooms || filter.price || filter.deal || filter.renewal || filter.kind || filter.hood
+  const bands = filter.deal === 'rent' ? RENT_BANDS : SALE_BANDS
+  const money = filter.deal === 'rent' ? 'שכירות לחודש' : kind === 'buyers' ? 'תקציב' : 'מחיר'
+  const on = filter.city || filter.rooms || filter.priceMin || filter.priceMax || filter.deal || filter.renewal || filter.kind || filter.hood
   return (
     <section className="flt" aria-label={kind === 'properties' ? 'סינון נכסים' : 'סינון קונים'} data-filters={kind}>
       <label>
@@ -854,17 +875,32 @@ function FilterBar({ kind, filter, onChange, count, cities, hoods }: { kind: 'pr
           ))}
         </select>
       </label>
-      <label>
-        <span>{filter.deal === 'rent' ? 'שכירות עד' : kind === 'buyers' ? 'תקציב עד' : 'מחיר עד'}</span>
-        <select value={filter.price} onChange={(e) => set({ price: e.target.value })} data-filter="price">
-          <option value="">כל מחיר</option>
-          {prices.map((p) => (
-            <option key={p} value={p}>
-              {filter.deal === 'rent' ? `${p.toLocaleString('he-IL')} ₪ לחודש` : formatPriceShort(p)}
-            </option>
-          ))}
-        </select>
-      </label>
+      {/* the money: two boxes written by hand, and the usual ranges in one tap (22.11.2026, in place of one list) */}
+      <div className="flt-money" data-filter="price">
+        <span className="flt-money-name" id="flt-money-name">
+          {filter.deal === 'rent' ? 'שכירות לחודש' : kind === 'buyers' ? 'תקציב' : 'מחיר'}
+        </span>
+        <div className="flt-money-pair" role="group" aria-labelledby="flt-money-name">
+          <label className="flt-money-one">
+            <span>החל מ</span>
+            <MoneyInput value={Number(filter.priceMin) || 0} onValue={(n) => set({ priceMin: n ? String(n) : '' })} label={`${money}, החל מ`} placeholder="הכול" name="price-min" />
+          </label>
+          <label className="flt-money-one">
+            <span>עד</span>
+            <MoneyInput value={Number(filter.priceMax) || 0} onValue={(n) => set({ priceMax: n ? String(n) : '' })} label={`${money}, עד`} placeholder="הכול" name="price-max" />
+          </label>
+        </div>
+        <div className="flt-bands" role="group" aria-label={`טווחים של ${money}`}>
+          {bands.map(([label, min, max]) => {
+            const on = filter.priceMin === min && filter.priceMax === max
+            return (
+              <button key={label} type="button" aria-pressed={on} data-band={label} onClick={() => set(on ? { priceMin: '', priceMax: '' } : { priceMin: min, priceMax: max })}>
+                {label}
+              </button>
+            )
+          })}
+        </div>
+      </div>
       <div className="flt-deal" role="group" aria-label="מכירה או השכרה">
         {(
           [
@@ -873,7 +909,7 @@ function FilterBar({ kind, filter, onChange, count, cities, hoods }: { kind: 'pr
             ['rent', 'השכרה'],
           ] as const
         ).map(([v, label]) => (
-          <button key={v} type="button" aria-pressed={filter.deal === v} data-deal={v || 'all'} onClick={() => set({ deal: v, price: '' })}>
+          <button key={v} type="button" aria-pressed={filter.deal === v} data-deal={v || 'all'} onClick={() => set({ deal: v, priceMin: '', priceMax: '' })}>
             {label}
           </button>
         ))}

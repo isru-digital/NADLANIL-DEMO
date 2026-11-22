@@ -25,6 +25,19 @@ export const priceGroups = (n: number) => (n > 0 ? n.toLocaleString('he-IL') : '
 /** "2,475,000 ₪" */
 export const shekels = (n: number) => `${Math.round(n).toLocaleString('he-IL')} ₪`
 
+/** where the caret should sit once the digits were grouped again: right after the same digit it was after */
+export function priceCaret(shown: string, digitsBefore: number): number {
+  if (digitsBefore <= 0) return 0
+  let seen = 0
+  for (let i = 0; i < shown.length; i++) {
+    if (/\d/.test(shown[i])) {
+      seen++
+      if (seen === digitsBefore) return i + 1
+    }
+  }
+  return shown.length
+}
+
 /** the size of the price in words, so a missing zero is seen at once: "2.79 מיליון שקלים", "850 אלף שקלים" */
 export function priceWords(n: number): string {
   if (n <= 0) return ''

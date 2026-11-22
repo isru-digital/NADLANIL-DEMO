@@ -237,6 +237,16 @@
   height: 17px;
   color: var(--gold-soft);
 }
+/* 0%: the best there is, so the handshake is green and the words are the page's own ink (23.11.2026) */
+.pp-split.is-full {
+  color: var(--text);
+}
+.pp-split.is-full svg {
+  color: #0c7f52;
+}
+html[data-mode='night'] .pp-split.is-full svg {
+  color: #4fd3a0;
+}
 .pp-broker {
   display: flex;
   align-items: center;
@@ -368,6 +378,126 @@
 .flt select:focus {
   outline: 0;
   border-color: var(--gold);
+}
+/* the money of the filter: two boxes written by hand, and the usual ranges in one tap (23.11.2026) */
+.flt-money {
+  display: grid;
+  gap: 6px;
+  flex: 1 1 100%;
+  min-width: 0;
+}
+.flt-money-name {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-faint);
+}
+.flt-money-pair {
+  display: flex;
+  gap: 8px;
+}
+.flt-money-one {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1 1 0;
+  min-width: 0;
+}
+.flt-money-one > span {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+.mny {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 10px;
+  border-radius: 12px;
+  border: 1.5px solid var(--line);
+  background: var(--bg);
+  transition:
+    border-color var(--t) var(--ease),
+    box-shadow var(--t) var(--ease);
+}
+.mny.is-filled {
+  border-color: color-mix(in srgb, var(--gold) 55%, var(--line));
+}
+.mny:focus-within {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgb(var(--g) / 0.16);
+}
+.mny-in {
+  width: 100%;
+  min-width: 0;
+  min-height: 40px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  direction: ltr;
+  text-align: right;
+}
+.mny-in:focus {
+  outline: none;
+}
+.mny-in::placeholder {
+  font-weight: 500;
+  color: var(--text-faint);
+}
+.mny-cur {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-faint);
+}
+.mny.is-filled .mny-cur {
+  color: var(--gold);
+}
+.flt-bands {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.flt-bands button {
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 99px;
+  border: 1.5px solid var(--line);
+  background: var(--bg);
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-dim);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition:
+    background-color var(--t) var(--ease),
+    border-color var(--t) var(--ease),
+    color var(--t) var(--ease);
+}
+.flt-bands button:hover {
+  border-color: var(--gold-soft);
+  color: var(--text);
+}
+.flt-bands button[aria-pressed='true'] {
+  border-color: var(--gold);
+  background: rgb(var(--g) / 0.14);
+  color: var(--text);
+}
+.flt-bands button:focus-visible,
+.mny-in:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+@media (min-width: 720px) {
+  .flt-money {
+    flex: 1 1 320px;
+  }
 }
 .flt-deal {
   display: flex;

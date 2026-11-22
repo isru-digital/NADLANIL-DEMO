@@ -194,18 +194,24 @@ export default function PropertyPage() {
           <p className="pp-body">{item.body}</p>
           {/* "עמלת שת"פ" took the place of the old "חלוקת עמלה": what working together earns, in shekels too */}
           {hasCoop(p.coopPct) && (
-            <p className="pp-split" data-coop-line>
+            <p className={`pp-split${p.coopPct === 0 ? ' is-full' : ''}`} data-coop-line>
               <Handshake />
               {/* one run of words, so the comma sits right after the percent */}
-              <span>
-                עמלת שת"פ{' '}
-                <b>
-                  <bdi dir="ltr" className="num">
-                    {coopText(p.coopPct)}
-                  </bdi>
-                </b>
-                {p.price > 0 && <span className="num">, בערך {shekels(coopAmount(p.price, p.coopPct))}</span>}
-              </span>
+              {p.coopPct === 0 ? (
+                <span>
+                  <b>שת"פ מלא</b>
+                </span>
+              ) : (
+                <span>
+                  עמלת שת"פ{' '}
+                  <b>
+                    <bdi dir="ltr" className="num">
+                      {coopText(p.coopPct)}
+                    </bdi>
+                  </b>
+                  {p.price > 0 && <span className="num">, בערך {shekels(coopAmount(p.price, p.coopPct))}</span>}
+                </span>
+              )}
             </p>
           )}
 
