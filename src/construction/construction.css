@@ -268,7 +268,8 @@
   gap: 8px;
   min-height: 54px;
   border-radius: 16px;
-  background: linear-gradient(150deg, #07643f, #0fa46b);
+  /* white reads on both ends of it: 5 to 1 and more (22.11.2026) */
+  background: linear-gradient(150deg, #06573a, #097f52);
   color: #fff;
   font-family: var(--font-display, 'Heebo', sans-serif);
   font-size: 17.5px;
@@ -347,4 +348,64 @@
   .uc-key.is-wrong .uc-input input {
     animation: none;
   }
+}
+
+/* ---------------------------------------------------------------- "כניסת צוות" (Itzik 22.11.2026) */
+/* small and quiet under the dots: it says nothing of who may come in */
+.uc-staff {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 44px;
+  margin-top: 6px;
+  padding: 0 16px;
+  border-radius: 99px;
+  border: 0;
+  background: transparent;
+  font-family: var(--font-display, 'Heebo', sans-serif);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--uc-dim);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition:
+    background-color 0.18s ease,
+    color 0.18s ease;
+}
+.uc-staff:hover {
+  background: rgba(10, 90, 62, 0.08);
+  color: var(--uc-ink);
+}
+.uc-staff:focus-visible {
+  outline: 2px solid #0fa46b;
+  outline-offset: 2px;
+}
+.uc-staff svg {
+  width: 17px;
+  height: 17px;
+}
+/* the gentle word to an address that is not on the list */
+.uc-key-mark.is-soft {
+  background: linear-gradient(150deg, #cf9a2a, #e9c46a);
+  box-shadow: 0 16px 30px -16px rgba(120, 86, 10, 0.7);
+}
+/* the six boxes of the code, inside the card */
+.uc-key .cb6 {
+  margin-top: 4px;
+}
+.uc-key .cb6-box {
+  background: #fff;
+  border-color: rgba(10, 60, 44, 0.18);
+  color: var(--uc-ink);
+}
+.uc-key .cb6-box.is-at {
+  border-color: #0fa46b;
+  box-shadow: 0 0 0 3px rgba(15, 164, 107, 0.16);
+}
+
+/* the clock of the code is not an alarm: red is kept for what went wrong */
+.uc-msg.is-quiet {
+  color: var(--uc-dim);
+  font-weight: 600;
+  text-align: center;
 }

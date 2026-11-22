@@ -257,7 +257,8 @@ export async function recheck() {
   if (r.status === 401 || r.status === 403) {
     set(KEY, null)
     go('/kehila/login')
-  } else if (r.ok) {
+  } else if (r.ok && (r.data.member !== undefined || r.data.staff !== undefined)) {
+    // an answer cut off halfway (the page moved on while it was asked) comes back empty: what is known stays
     set(KEY, JSON.stringify({ token: s.token, member: r.data.member, staff: r.data.staff }))
   }
 }

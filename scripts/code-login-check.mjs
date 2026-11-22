@@ -1,7 +1,7 @@
 // The iPhone fix before phone notices (Itzik 18.11.2026), against the LOCAL test server (server/, TEST_MODE=1, mail
 // kept in the local outbox, never sent) and the green dev server:
-//  A. the construction curtain: five quick taps on the logo open a field for the preview key, nothing hints at it,
-//     a wrong key is refused, the right key opens the site and is remembered (with the local-only test key)
+//  A. the construction curtain: one quiet way in, "כניסת צוות", which opens a mail field (since 22.11.2026, in
+//     place of the preview key; scripts/staff-entry-check.mjs walks the sign-in itself)
 //  B. sign-in with a 6-digit code: the mail, wrong tries, the fifth wrong try, a new code ending the old one, one use,
 //     expiry, unknown addresses answered alike, the link still working; and the screen on a computer and a phone,
 //     day and night. Saves screenshots.
@@ -59,60 +59,25 @@ for (const [dev, vp] of [
   // on this computer the curtain shows only when asked (?gate=on)
   await page.goto(`${green}/app/community?gate=on`, { waitUntil: 'load' })
   await page.waitForSelector('[data-construction]', { timeout: 15000 })
-  const plain = await page.evaluate(() => ({ panel: !!document.querySelector('[data-key-panel]'), hint: /קוד|כניסה|מפתח/.test(document.body.innerText), links: document.querySelectorAll('[data-construction] a, [data-construction] button, [data-construction] input').length }))
-  check(`${dev} curtain: nothing on it hints at a way in (no field, no link, no button, no word about a code)`, !plain.panel && !plain.hint && plain.links === 0, plain)
-
-  const logo = await page.$('[data-logo]')
-  const taps = async (n, gap = 120) => {
-    for (let i = 0; i < n; i++) {
-      await logo.click()
-      await wait(gap)
-    }
-  }
-  await taps(4)
-  await wait(2800)
-  await taps(1)
-  check(`${dev} curtain: four taps, a pause, one more: still closed`, !(await page.$('[data-key-panel]')))
-  await wait(2800)
-  await taps(5)
-  await page.waitForSelector('[data-key-panel]', { timeout: 3000 }).catch(() => {})
-  const opened = await page.evaluate(() => ({ panel: !!document.querySelector('[data-key-panel]'), focus: document.activeElement?.dataset.f, type: document.querySelector('[data-f="preview-key"]')?.type }))
-  check(`${dev} curtain: five quick taps on the logo open the key field, ready to type, hidden like a password`, opened.panel && opened.focus === 'preview-key' && opened.type === 'password', opened)
-  await wait(600)
-  await page.screenshot({ path: `${out}/${dev}-curtain-key.png` })
-
-  await page.type('[data-f="preview-key"]', 'not-the-key')
-  await page.click('[data-act="key-go"]')
-  await page.waitForSelector('[data-msg="wrong"]', { timeout: 4000 }).catch(() => {})
-  const wrong = await page.evaluate(() => ({ msg: document.querySelector('.uc-msg')?.textContent, invalid: document.querySelector('[data-f="preview-key"]').getAttribute('aria-invalid'), stored: localStorage.getItem('nadlanup-preview-v1') }))
-  check(`${dev} curtain: a wrong key is refused, said plainly, and nothing is remembered`, wrong.msg === 'הקוד לא נכון. בודקים ומנסים שוב.' && wrong.invalid === 'true' && !wrong.stored, wrong)
+  // since 22.11.2026 the way in is "כניסת צוות" (scripts/staff-entry-check.mjs walks it end to end); the preview
+  // key and the five taps on the logo are gone
+  const plain = await page.evaluate(() => ({
+    panel: !!document.querySelector('[data-key-panel]'),
+    key: !!document.querySelector('[data-f="preview-key"]'),
+    logo: !!document.querySelector('[data-logo]'),
+    entry: document.querySelector('[data-act="staff-entry"]')?.textContent.trim() ?? null,
+    links: document.querySelectorAll('a').length,
+  }))
+  check(`${dev} curtain: one quiet way in, "כניסת צוות", and nothing of the preview key`, plain.entry === 'כניסת צוות' && !plain.panel && !plain.key && !plain.logo && plain.links === 0, plain)
+  await page.click('[data-act="staff-entry"]')
+  await page.waitForSelector('[data-staff-panel]', { timeout: 3000 }).catch(() => {})
+  const opened = await page.evaluate(() => ({ panel: !!document.querySelector('[data-staff-panel]'), focus: document.activeElement?.dataset.f, type: document.querySelector('[data-f="staff-email"]')?.type }))
+  check(`${dev} curtain: it opens a mail field, ready to type`, opened.panel && opened.focus === 'staff-email' && opened.type === 'email', opened)
   await wait(500)
-  await page.screenshot({ path: `${out}/${dev}-curtain-wrong.png` })
-
-  if (dev === 'phone') {
-    // after five wrong keys, a pause
-    for (let i = 0; i < 4; i++) {
-      await page.click('[data-act="key-go"]')
-      await wait(250)
-    }
-    const paused = await page.evaluate(() => ({ msg: document.querySelector('.uc-msg')?.textContent, off: document.querySelector('[data-act="key-go"]').disabled }))
-    check('phone curtain: after five wrong keys, a pause of 30 seconds', /יותר מדי ניסיונות/.test(paused.msg ?? '') && paused.off, paused)
-    // closing goes back to the plain curtain
-    await page.click('[data-act="key-close"]')
-    await wait(300)
-    check('phone curtain: "ביטול" goes back to the plain curtain', !(await page.$('[data-key-panel]')) && (await page.$eval('[data-construction] h1', (h) => h.textContent)) === 'האתר בבנייה')
-  } else {
-    await page.click('[data-f="preview-key"]', { clickCount: 3 })
-    await page.type('[data-f="preview-key"]', 'local-test-key')
-    await page.click('[data-act="key-go"]')
-    await page.waitForSelector('.uc-key.is-ok', { timeout: 3000 }).catch(() => {})
-    await wait(350)
-    await page.screenshot({ path: `${out}/${dev}-curtain-ok.png` })
-    await page.waitForNavigation({ timeout: 6000 }).catch(() => {})
-    await page.waitForFunction(() => !document.querySelector('[data-construction]') && document.querySelector('#root')?.children.length, { timeout: 15000 }).catch(() => {})
-    const inside = await page.evaluate(() => ({ curtain: !!document.querySelector('[data-construction]'), stored: localStorage.getItem('nadlanup-preview-v1'), path: location.pathname }))
-    check(`${dev} curtain: the right key opens the site on the same screen, and this browser remembers it`, !inside.curtain && inside.stored === '6d5eaaca072bf02f647051d8688d1337a4ab7a6cb92a2a8b3924cf91fda89e8b' && inside.path.endsWith('/app/community'), inside)
-  }
+  await page.screenshot({ path: `${out}/${dev}-curtain-staff.png` })
+  await page.click('[data-act="staff-close"]')
+  await wait(300)
+  check(`${dev} curtain: "ביטול" goes back to the plain page`, !(await page.$('[data-staff-panel]')) && (await page.$eval('[data-construction] h1', (h) => h.textContent.trim())) === 'האתר בבנייה')
   check(`${dev} curtain: no errors`, errors.length === 0, errors)
   await ctx.close()
 }

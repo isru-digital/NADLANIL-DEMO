@@ -1,6 +1,6 @@
 // Three fixes from Itzik's iPhone (18.11.2026), on the green dev server:
-//  1. five taps on the logo of "האתר בבנייה" open the preview key field with a FINGER (touch), not only a mouse;
-//     a touch is never counted twice, a calm rhythm works, a long stop starts again
+//  1. "כניסת צוות" of "האתר בבנייה" opens the mail field with a FINGER (touch), not only a mouse (since
+//     22.11.2026, in place of the five taps on the logo and the preview key)
 //  2. the home page's "100% גב קהילתי | 0% גזירות בעמלה" sits inside its frame, centred, on a phone and a computer
 //  3. "הורדת האפליקציה" in the menu (side menu, "עוד"), at the foot of the home page and on the app's bottom line,
 //     all to /install, and none of it inside the installed app
@@ -42,60 +42,35 @@ async function fresh(vp, { ua, demo, mode = 'day', app = false } = {}) {
   return { ctx, page, errors }
 }
 
-// ================================================================== 1. five taps with a finger
+// ================================================================== 1. "כניסת צוות" with a finger
+// (22.11.2026 the five taps on the logo and the preview key gave way to it; scripts/staff-entry-check.mjs walks the
+// sign-in itself, against the local test server)
 {
   const { ctx, page, errors } = await fresh(PHONE, { ua: IPHONE })
-  const curtain = async () => {
-    await page.goto(`${green}/app/community?gate=on`, { waitUntil: 'load' })
-    await page.waitForSelector('[data-construction] [data-logo]', { timeout: 15000 })
-    await wait(800)
-    const r = await page.$eval('[data-logo]', (e) => {
-      const b = e.getBoundingClientRect()
-      return { x: b.left + b.width / 2, y: b.top + b.height / 2, w: b.width, h: b.height }
-    })
-    return r
-  }
-  const fingers = async (at, n, gap) => {
-    for (let i = 0; i < n; i++) {
-      await page.touchscreen.tap(at.x + (i % 2 ? 6 : -6), at.y)
-      await wait(gap)
-    }
-  }
-  const open = () => page.$('[data-key-panel]').then(Boolean)
-
-  let at = await curtain()
-  check('the logo gives a finger a wide target (44px at least each way)', at.w >= 200 && at.h >= 44, at)
-  await fingers(at, 3, 150)
-  check('three quick finger taps: still closed (a touch is not counted twice)', !(await open()))
-  at = await curtain()
-  await fingers(at, 5, 130)
-  await page.waitForSelector('[data-key-panel]', { timeout: 2500 }).catch(() => {})
-  const quick = await page.evaluate(() => ({ open: !!document.querySelector('[data-key-panel]'), zoom: visualViewport.scale }))
-  check('five quick finger taps open the key field, and the page did not zoom', quick.open && quick.zoom === 1, quick)
-  await wait(500)
-  await page.screenshot({ path: `${out}/phone-curtain-taps.png` })
-
-  at = await curtain()
-  await fingers(at, 5, 900)
-  check('five calm taps (almost a second apart) open it too', await open())
-  at = await curtain()
-  await fingers(at, 4, 200)
-  await wait(1900)
-  await fingers(at, 1, 100)
-  check('four taps, a long stop, one more: still closed', !(await open()))
+  await page.goto(`${green}/app/community?gate=on`, { waitUntil: 'load' })
+  await page.waitForSelector('[data-construction] [data-act="staff-entry"]', { timeout: 15000 })
+  await wait(800)
+  const at = await page.$eval('[data-act="staff-entry"]', (e) => {
+    const b = e.getBoundingClientRect()
+    return { x: b.left + b.width / 2, y: b.top + b.height / 2, w: Math.round(b.width), h: Math.round(b.height), text: e.textContent.trim() }
+  })
+  check('the curtain has "כניסת צוות", a full finger high', at.text === 'כניסת צוות' && at.h >= 44 && at.w >= 100, at)
+  const taps = await page.evaluate(() => ({ logo: !!document.querySelector('[data-logo]'), key: !!document.querySelector('[data-key-panel]') }))
+  check('the preview key and the five taps on the logo are gone', !taps.logo && !taps.key, taps)
+  await page.touchscreen.tap(at.x, at.y)
+  await page.waitForSelector('[data-staff-panel]', { timeout: 3000 }).catch(() => {})
+  const opened = await page.evaluate(() => ({ panel: !!document.querySelector('[data-staff-panel]'), focus: document.activeElement?.dataset.f, zoom: visualViewport.scale }))
+  check('one tap with a finger opens the mail field, ready to type, and the page did not zoom', opened.panel && opened.focus === 'staff-email' && opened.zoom === 1, opened)
+  await page.screenshot({ path: `${out}/phone-curtain-staff.png` })
   check('curtain: no errors', errors.length === 0, errors)
   await ctx.close()
 }
 {
   const { ctx, page } = await fresh(DESK)
   await page.goto(`${green}/app/community?gate=on`, { waitUntil: 'load' })
-  await page.waitForSelector('[data-logo]', { timeout: 15000 })
-  const logo = await page.$('[data-logo]')
-  for (let i = 0; i < 5; i++) {
-    await logo.click()
-    await wait(150)
-  }
-  check('on a computer, five mouse clicks still open it', !!(await page.waitForSelector('[data-key-panel]', { timeout: 2500 }).catch(() => null)))
+  await page.waitForSelector('[data-act="staff-entry"]', { timeout: 15000 })
+  await page.click('[data-act="staff-entry"]')
+  check('on a computer a click opens it too', !!(await page.waitForSelector('[data-staff-panel]', { timeout: 2500 }).catch(() => null)))
   await ctx.close()
 }
 

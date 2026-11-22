@@ -247,6 +247,27 @@ async function login(env, request) {
   return json({ ok: true })
 }
 
+/**
+ * "כניסת צוות" on the page of the upgrade (Itzik 22.11.2026): while the site is closed, only the partners get in.
+ * The code is sent ONLY to an address of the `staff` table. Nothing at all is sent to any other address, not even
+ * to an approved broker (that is what /api/login does, and it is untouched).
+ * It answers whether a code was sent, because Itzik asked that another address be told, in a gentle word, that the
+ * site is still being built. So typing an address does say whether it is one of the staff: the three addresses are
+ * work addresses, and the rate limits below (5 an hour for an address, 20 an hour from a place) keep anyone from
+ * running through a list.
+ */
+async function staffLogin(env, request) {
+  const ip = request.headers.get('cf-connecting-ip') ?? 'local'
+  const b = await request.json().catch(() => null)
+  const email = emailOf(b?.email)
+  if (!isEmail(email)) return json({ error: 'כתובת המייל לא נראית תקינה.' }, 400)
+  if (!(await allowed(env, `login-ip:${ip}`, 20, HOUR)) || !(await allowed(env, `login:${email}`, 5, HOUR))) return json({ error: 'יותר מדי בקשות. נסו שוב בעוד שעה.' }, 429)
+  const staff = await env.DB.prepare('SELECT email FROM staff WHERE email = ?').bind(email).first()
+  if (!staff) return json({ ok: true, sent: false })
+  await sendLogin(env, email)
+  return json({ ok: true, sent: true })
+}
+
 /** A sign-in link, or the address and its code, is traded for a session, once. */
 async function openSession(env, request) {
   const b = await request.json().catch(() => null)
@@ -460,6 +481,7 @@ export default {
 
       if (path === '/api/register' && request.method === 'POST') return withCors(await register(env, request, origin))
       if (path === '/api/login' && request.method === 'POST') return withCors(await login(env, request))
+      if (path === '/api/staff-login' && request.method === 'POST') return withCors(await staffLogin(env, request))
       if (path === '/api/session' && request.method === 'POST') return withCors(await openSession(env, request))
 
       // local testing only: the e-mails that would have gone out

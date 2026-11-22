@@ -6,7 +6,7 @@
 //   1. a visitor, on a computer and a phone: the home page, the community's page, the sign-up form and the sign-in
 //      page all open with no curtain, no error and nothing spilling sideways; the app itself stays closed to a visitor
 //   2. the phone's top bar on the home page has "כניסה" next to "הצטרפות", each a full finger's height
-//   3. the switch: the page "האתר בבנייה" and its key field are still in the built site (they are only switched off)
+//   3. the switch: the page "האתר בבנייה" and "כניסת צוות" are still in the built site (only switched off)
 //   4. privacy in the feed (the open demo): no phone number and no call link in the feed or the list of brokers,
 //      no street in a post, and the example user is not on a visitor's pages
 //   5. nothing of Yad2: no link to it, no picture from it, no request to it, on any page that was opened
@@ -48,11 +48,12 @@ process.on('uncaughtException', () => {})
 
 const FONTS = /^fonts\.(googleapis|gstatic)\.com$/
 const outside = new Set() // every address a page asked for that is not this computer's copy of the site
-// Since 22.11.2026 the site may be closed again ("האתר בבנייה"): then everything here is walked as Itzik's own
-// browser, the one that holds his key's fingerprint, and scripts/closed-site-check.mjs checks what a visitor sees
+// Since 22.11.2026 the site may be closed again ("האתר בבנייה"): then everything here is walked as a partner who
+// signed in with "כניסת צוות", and scripts/closed-site-check.mjs checks what a visitor sees
 const CLOSED = /^export const UNDER_CONSTRUCTION = true\r?$/m.test(fs.readFileSync('src/config/construction.ts', 'utf8'))
-const KEY_HASH = fs.readFileSync('src/config/construction.ts', 'utf8').match(/KEY_HASH = '([0-9a-f]{64})'/)[1]
-if (CLOSED) console.log('the switch says the site is closed: walked as the owner of the preview key')
+/** since 22.11.2026 the site opens for a session of the staff, given by the server for a code it mailed */
+const STAFF = JSON.stringify({ token: 'test-session', member: null, staff: { name: 'בדיקה', email: 'itzik@test.local', approver: true } })
+if (CLOSED) console.log('the switch says the site is closed: walked as a partner who signed in')
 const fresh = async (vp, before) => {
   const ctx = await browser.createBrowserContext()
   const page = await ctx.newPage()
@@ -68,7 +69,7 @@ const fresh = async (vp, before) => {
     r.abort()
   })
   await page.setViewport(vp)
-  if (CLOSED) await page.evaluateOnNewDocument((h) => { try { localStorage.setItem('nadlanup-preview-v1', h) } catch {} }, KEY_HASH)
+  if (CLOSED) await page.evaluateOnNewDocument((v) => { try { localStorage.setItem('nadlanup-session-v1', v) } catch {} }, STAFF)
   // the look follows the hour; the pictures are always taken by day (MODE=night for the other one), so two runs match
   await page.evaluateOnNewDocument((m) => {
     try {
@@ -123,7 +124,9 @@ for (const [dev, vp] of [['desktop', DESK], ['phone', PHONE]]) {
   await page.goto(site + '/app/community', { waitUntil: 'load' })
   await wait(1800)
   const door = await look(page)
-  check(`${dev}, a visitor at /app/community: no curtain, and the feed stays closed (the way in is offered)`, !door.curtain && door.feed === 0 && door.chars > 60, door)
+  // while the site is closed this page is walked as a partner who signed in, so the feed is open to them: what a
+  // visitor sees of it is checked when the site is open again
+  if (!CLOSED) check(`${dev}, a visitor at /app/community: no curtain, and the feed stays closed (the way in is offered)`, !door.curtain && door.feed === 0 && door.chars > 60, door)
   await page.screenshot({ path: `${out}/${dev}-door.png` })
 
   if (dev === 'phone') {
@@ -137,7 +140,8 @@ for (const [dev, vp] of [['desktop', DESK], ['phone', PHONE]]) {
       const logo = document.querySelector('.hg-nav-in > a')
       return { login: box(login), join: box(join), logo: box(logo), text: login?.textContent.trim(), to: login?.getAttribute('href'), heroTop: Math.round(document.querySelector('.hg-pill').getBoundingClientRect().top), cta: Math.round(document.querySelector('.hg-cta').getBoundingClientRect().bottom), vh: innerHeight }
     })
-    check('phone, home: "כניסה" is in the top bar next to "הצטרפות", each a full finger high, and none of them touch', bar.text === 'כניסה' && bar.login.h >= 44 && bar.join.h >= 44 && bar.login.w > 30 && bar.login.right <= bar.logo.left - 4 && bar.join.right <= bar.login.left + 1 && /\/kehila\/login$/.test(bar.to), bar)
+    // signed in as a partner the bar's "כניסה" leads inside, so where it points is checked when the site is open
+    if (!CLOSED) check('phone, home: "כניסה" is in the top bar next to "הצטרפות", each a full finger high, and none of them touch', bar.text === 'כניסה' && bar.login.h >= 44 && bar.join.h >= 44 && bar.login.w > 30 && bar.login.right <= bar.logo.left - 4 && bar.join.right <= bar.login.left + 1 && /\/kehila\/login$/.test(bar.to), bar)
     check('phone, home: the promise starts right under the bar and both buttons are in the first screen', bar.heroTop < 130 && bar.cta < bar.vh * 0.62, bar)
     for (const w of [350, 360, 430]) {
       await page.setViewport({ ...PHONE, width: w })
@@ -158,7 +162,7 @@ for (const [dev, vp] of [['desktop', DESK], ['phone', PHONE]]) {
 const built = fs.readdirSync(path.join(dist, 'assets')).filter((f) => f.endsWith('.js')).map((f) => fs.readFileSync(path.join(dist, 'assets', f), 'utf8')).join('\n')
 const source = fs.readFileSync('src/config/construction.ts', 'utf8')
 check(`the switch is one line (it says the site is ${CLOSED ? 'closed' : 'open'})`, /^export const UNDER_CONSTRUCTION = (?:true|false)\r?$/m.test(source) && (source.match(/^export const UNDER_CONSTRUCTION = (?:true|false)\r?$/gm) ?? []).length === 1)
-check('"האתר בבנייה", the five taps and the key\'s check are still in the built site, only switched off', built.includes('האתר בבנייה') && built.includes('אנחנו משדרגים את המערכת') && built.includes('nadlanup-preview-v1') && /[0-9a-f]{64}/.test(source) && fs.existsSync('src/construction/Construction.tsx'))
+check('"האתר בבנייה" and "כניסת צוות" are still in the built site, only switched off', built.includes('האתר בבנייה') && built.includes('אנחנו משדרגים את המערכת') && built.includes('כניסת צוות') && built.includes('/api/staff-login') && fs.existsSync('src/construction/Construction.tsx'))
 
 // ---------------------------------------------------------------- 4. privacy in the feed, the open demo
 const PHONE_NO = /(?:\+972|0)(?:[23489]|5\d|7\d)[\s-]?\d{3}[\s-]?\d{4}/

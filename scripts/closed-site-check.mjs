@@ -3,13 +3,14 @@
 //   A. the built site (./dist), served the way GitHub Pages serves it, under a name that is not this computer's
 //      (nadlanup.test, mapped here inside the browser only), so the code decides exactly as on the real address:
 //      a visitor gets the one page on every path, on a computer and a phone, and nothing asks the community's server
-//   B. five taps on the logo open the key's field (a finger on a phone, a mouse on a computer); a wrong key is refused
+//   B. "כניסת צוות" opens the mail field (a finger on a phone, a mouse on a computer), and the page decides nothing
+//      by itself: it asks the server, whose list is in D1 and never in the built site
 //   C. the browser that holds the key's fingerprint (what the right key, or ?preview=, leaves behind) gets the real
 //      site, and what was built on 22.11.2026 is there: the kinds in two steps, the street's switch, the story's
 //      switch, the price slider and "עמלת שת"פ"
-//   D. on this computer (the dev server, ?gate=on) the key is typed in the field: the checks' own test key, which opens
-//      nothing on the real site. The real key is never written anywhere: it is not needed for any of this.
-// Usage: npm run build:site && node scripts/closed-site-check.mjs [outDir]    (D needs the green dev server, :5240)
+//   D. the sign-in itself (a code to a partner's address) is walked by scripts/staff-entry-check.mjs, which has the
+//      local test server; nothing here ever mails a real address.
+// Usage: npm run build:site && node scripts/closed-site-check.mjs [outDir]
 import http from 'node:http'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -19,12 +20,12 @@ const PORT = 5297
 const PREFIX = '/NADLANIL-DEMO'
 const HOST = 'nadlanup.test'
 const site = `http://${HOST}:${PORT}${PREFIX}`
-const dev = 'http://localhost:5240/NADLANIL-DEMO/green'
 const out = process.argv[2] ?? '_shots/closed-site'
 fs.mkdirSync(out, { recursive: true })
 const wait = (ms) => new Promise((r) => setTimeout(r, ms))
 const source = fs.readFileSync('src/config/construction.ts', 'utf8')
-const KEY_HASH = source.match(/KEY_HASH = '([0-9a-f]{64})'/)[1]
+/** since 22.11.2026 the site opens for a session of the staff, given by the server for a code it mailed */
+const STAFF = JSON.stringify({ token: 'test-session', member: null, staff: { name: 'בדיקה', email: 'itzik@test.local', approver: true } })
 const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.mp4': 'video/mp4', '.svg': 'image/svg+xml', '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.woff2': 'font/woff2' }
 const dist = path.resolve('dist')
 const server = http.createServer((req, res) => {
@@ -63,7 +64,7 @@ const fresh = async (vp, { owner = false, mode = 'day' } = {}) => {
   page.on('request', (r) => {
     const h = new URL(r.url()).hostname
     if (/nadlanup-api/.test(h)) {
-      api.push(h)
+      api.push(h + new URL(r.url()).pathname)
       return r.abort()
     }
     r.continue()
@@ -72,12 +73,12 @@ const fresh = async (vp, { owner = false, mode = 'day' } = {}) => {
   await page.evaluateOnNewDocument(
     (o, h, m) => {
       try {
-        if (o) localStorage.setItem('nadlanup-preview-v1', h)
+        if (o) localStorage.setItem('nadlanup-session-v1', h)
         localStorage.setItem('nadlanup-mode-v1', JSON.stringify({ mode: m, until: Date.now() + 9e9 }))
       } catch {}
     },
     owner,
-    KEY_HASH,
+    STAFF,
     mode,
   )
   return { ctx, page, errors, api }
@@ -116,29 +117,29 @@ for (const [d, vp] of DEVICES) {
   check(`${d}: the page has its logo, and nothing spills sideways`, s.logo && s.wide <= 1, s)
   check(`${d}: not one request to the community's server, and no errors`, t.api.length === 0 && t.errors.length === 0, { api: t.api.length, errors: t.errors.slice(0, 2) })
 
-  // ---------------------------------------------------------------- B. five taps on the logo, a wrong key
+  // ---------------------------------------------------------------- B. "כניסת צוות": the client only asks the server
   await t.page.goto(site + '/', { waitUntil: 'load' })
-  await t.page.waitForSelector('[data-construction] [data-logo]', { timeout: 15000 })
+  await t.page.waitForSelector('[data-construction] [data-act="staff-entry"]', { timeout: 15000 })
   await wait(500)
-  const at = await t.page.$eval('[data-logo]', (e) => {
+  const btn = await t.page.$eval('[data-act="staff-entry"]', (e) => {
     const r = e.getBoundingClientRect()
-    return { x: r.left + r.width / 2, y: r.top + r.height / 2 }
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2, h: Math.round(r.height), text: e.textContent.trim() }
   })
-  for (let i = 0; i < 5; i++) {
-    if (d === 'phone') await t.page.touchscreen.tap(at.x, at.y)
-    else await t.page.mouse.click(at.x, at.y)
-    await wait(260)
-  }
-  const panel = await t.page.waitForSelector('[data-key-panel]', { timeout: 3000 }).then(() => true).catch(() => false)
-  check(`${d}: five ${d === 'phone' ? 'finger taps' : 'clicks'} on the logo open the key's field`, panel)
+  check(`${d}: the page has "כניסת צוות", a full finger high, and nothing of the preview key`, btn.text === 'כניסת צוות' && btn.h >= 44 && !(await t.page.$('[data-key-panel]')) && !(await t.page.$('[data-f="preview-key"]')), btn)
+  if (d === 'phone') await t.page.touchscreen.tap(btn.x, btn.y)
+  else await t.page.mouse.click(btn.x, btn.y)
+  const panel = await t.page.waitForSelector('[data-staff-panel]', { timeout: 3000 }).then(() => true).catch(() => false)
+  check(`${d}: it opens the mail field`, panel)
   await wait(400)
-  await t.page.screenshot({ path: `${out}/${d}-3-key-field.png` })
-  await t.page.type('[data-f="preview-key"]', 'not-the-key')
-  await t.page.click('[data-act="key-go"]')
+  await t.page.screenshot({ path: `${out}/${d}-3-staff-field.png` })
+  // the page decides nothing by itself: the list is the server's, and this build asks it (the request is stopped here)
+  t.api.length = 0
+  await t.page.type('[data-f="staff-email"]', 'someone@example.com')
+  await t.page.click('[data-act="staff-send"]')
   await wait(900)
-  const wrong = await t.page.evaluate(() => ({ msg: document.querySelector('[data-msg="wrong"]')?.textContent.trim() ?? null, still: !!document.querySelector('[data-construction]'), kept: localStorage.getItem('nadlanup-preview-v1') }))
-  check(`${d}: a wrong key is refused, says so, and opens nothing`, !!wrong.msg && wrong.still && wrong.kept === null, wrong)
-  await t.page.screenshot({ path: `${out}/${d}-4-wrong-key.png` })
+  const asked = await t.page.evaluate(() => ({ still: !!document.querySelector('[data-construction]'), session: localStorage.getItem('nadlanup-session-v1') }))
+  check(`${d}: the address goes to the server (/api/staff-login), the curtain stays and no session is made`, t.api.some((u) => u.includes('/api/staff-login')) && asked.still && asked.session === null, { asked: t.api.slice(0, 2), ...asked })
+  check(`${d}: no list of addresses in the built site itself`, !built.includes('@gmail.com') && !/staff\s*=\s*\[/.test(built))
   await t.ctx.close()
 
   // ---------------------------------------------------------------- C. the owner's browser: the real site, and what was built
@@ -179,36 +180,9 @@ for (const [d, vp] of DEVICES) {
   check(`${d}: no errors behind the curtain either`, o.errors.length === 0, o.errors.slice(0, 2))
   await o.ctx.close()
 
-  // ---------------------------------------------------------------- D. the key typed in the field (this computer only)
-  const k = await fresh(vp)
-  let devUp = true
-  await k.page.goto(dev + '/?gate=on', { waitUntil: 'load' }).catch(() => (devUp = false))
-  if (devUp) {
-    await k.page.waitForSelector('[data-construction] [data-logo]', { timeout: 15000 })
-    await wait(500)
-    const at2 = await k.page.$eval('[data-logo]', (e) => {
-      const r = e.getBoundingClientRect()
-      return { x: r.left + r.width / 2, y: r.top + r.height / 2 }
-    })
-    for (let i = 0; i < 5; i++) {
-      if (d === 'phone') await k.page.touchscreen.tap(at2.x, at2.y)
-      else await k.page.mouse.click(at2.x, at2.y)
-      await wait(260)
-    }
-    await k.page.waitForSelector('[data-f="preview-key"]', { visible: true, timeout: 3000 })
-    // the checks' own key (src/config/construction.ts accepts it on this computer only), never the real one
-    await k.page.type('[data-f="preview-key"]', 'local-test-key')
-    await wait(200)
-    await k.page.screenshot({ path: `${out}/${d}-6-key-typed.png` })
-    await k.page.click('[data-act="key-go"]')
-    await wait(700)
-    await k.page.screenshot({ path: `${out}/${d}-7-key-ok.png` })
-    await wait(2500)
-    const inside = await look(k.page)
-    check(`${d}: the key typed in the field opens the real site, and the browser keeps it`, !inside.curtain && inside.app && (await k.page.evaluate(() => localStorage.getItem('nadlanup-preview-v1'))) === KEY_HASH, inside)
-    await k.page.screenshot({ path: `${out}/${d}-8-inside.png` })
-  } else check(`${d}: the green dev server is up for part D`, false)
-  await k.ctx.close()
+  // ---------------------------------------------------------------- D. the sign-in itself
+  // The way in of a partner, end to end (a code to the local outbox, never to a real address), is walked by
+  // scripts/staff-entry-check.mjs, which has the local test server. Part C above checks what its session opens.
 }
 
 console.log(fails ? `\nSOME CHECKS FAILED (${fails} of ${total})` : `\nALL CHECKS PASSED (${total})`)
