@@ -8,6 +8,8 @@
 //      and in the match
 //   4. the kind of property in two steps (מגורים / מסחרי, then one of that group's list), the same list in the form,
 //      the community's filter, the CRM, the buyer's form and the match; older kinds are read as the closest one
+//   5. the price on a slider (25,000 ₪ steps up to 5,000,000 ₪, a typed price kept exact) and 6. "עמלת שת"פ", a must,
+//      0% to 1% every 0.05%, shown as a red tag on the post's photo and the property's page (22.11.2026)
 // Nothing here touches a server: the demo keeps everything in this browser. Saves screenshots.
 // Usage: node scripts/post-form-check.mjs [outDir]     (BASE_GREEN overrides the address; ONLY=phone|desktop)
 import puppeteer from 'puppeteer-core'
@@ -130,6 +132,136 @@ const storyRow = (page) =>
     add: document.querySelector('.stories [data-act="new-story"]')?.textContent.trim(),
   }))
 const feedHas = (page, words) => page.evaluate((w) => [...document.querySelectorAll('article')].some((a) => a.innerText.includes(w)), words)
+// ---- the price and "עמלת שת"פ" (22.11.2026)
+const setPrice = async (t, value) => {
+  await t.click('.ga [data-price-show]')
+  await t.page.waitForSelector('.ga [data-f="price"]', { visible: true })
+  // the box opens with the price that is there: it is cleared first
+  await t.page.$eval('.ga [data-f="price"]', (el) => el.select())
+  await t.page.keyboard.press('Backspace')
+  await t.page.type('.ga [data-f="price"]', String(value))
+  await t.page.keyboard.press('Enter')
+  await wait(200)
+}
+/** "+" once picks the slider's waiting point (0.5%); then `steps` more "+" (or "−" when negative) */
+const pickCoop = async (t, steps = 0) => {
+  await t.click('.ga [data-slider="coop"] [data-step="more"]')
+  for (let i = 0; i < Math.abs(steps); i++) await t.click(`.ga [data-slider="coop"] [data-step="${steps > 0 ? 'more' : 'less'}"]`)
+}
+const priceState = (page) =>
+  page.evaluate(() => {
+    const f = document.querySelector('.ga [data-f="price-field"]')
+    const th = f?.querySelector('[data-thumb]')
+    return { value: f?.dataset.priceValue ?? null, show: f?.querySelector('[data-price-show]')?.textContent.trim() ?? null, typing: !!f?.querySelector('[data-typing]'), now: Number(th?.getAttribute('aria-valuenow')), max: Number(th?.getAttribute('aria-valuemax')), text: th?.getAttribute('aria-valuetext'), hint: f?.querySelector('.pf-hint')?.textContent.trim(), waiting: !!f?.querySelector('.ss.is-waiting'), label: f?.querySelector('.field-label')?.textContent.trim() }
+  })
+const coopState = (page) =>
+  page.evaluate(() => {
+    const f = document.querySelector('.ga [data-f="coop"]')
+    const th = f?.querySelector('[data-thumb]')
+    return { show: f?.querySelector('[data-coop-show]')?.textContent.trim(), now: Number(th?.getAttribute('aria-valuenow')), max: Number(th?.getAttribute('aria-valuemax')), line: f?.querySelector('[data-coop-line]')?.textContent.trim(), marks: [...(f?.querySelectorAll('.ss-marks span') ?? [])].map((s) => s.textContent.trim()), err: f?.querySelector('[data-err="coop"]')?.textContent.trim() ?? null, label: f?.querySelector('.field-label')?.textContent.trim(), steps: [...(f?.querySelectorAll('.ss-step') ?? [])].map((b) => Math.round(b.getBoundingClientRect().height)) }
+  })
+/** drags the round handle by a number of stops, with a finger on a phone and a mouse on a computer */
+const slide = async (t, which, steps, touch) => {
+  const { page } = t
+  await page.$eval(`.ga [data-slider="${which}"] [data-track]`, (el) => el.scrollIntoView({ block: 'center' }))
+  await wait(350)
+  const g = await page.evaluate((w) => {
+    const h = document.querySelector(`.ga [data-slider="${w}"] [data-track]`)
+    const th = h.querySelector('[data-thumb]')
+    const r = h.getBoundingClientRect()
+    const b = th.getBoundingClientRect()
+    return { x: b.left + b.width / 2, y: b.top + b.height / 2, per: r.width / Number(th.getAttribute('aria-valuemax')), rtl: getComputedStyle(h).direction === 'rtl', top: document.querySelector('.modal')?.scrollTop ?? 0, win: scrollY }
+  }, which)
+  const dx = steps * g.per * (g.rtl ? -1 : 1)
+  const parts = 10
+  if (touch) {
+    await page.touchscreen.touchStart(g.x, g.y)
+    for (let i = 1; i <= parts; i++) await page.touchscreen.touchMove(g.x + (dx * i) / parts, g.y + (i % 2 ? 1 : -1))
+    await page.touchscreen.touchEnd()
+  } else {
+    await page.mouse.move(g.x, g.y)
+    await page.mouse.down()
+    for (let i = 1; i <= parts; i++) await page.mouse.move(g.x + (dx * i) / parts, g.y + (i % 2 ? 1 : -1))
+    await page.mouse.up()
+  }
+  await wait(250)
+  const after = await page.evaluate((w) => {
+    const th = document.querySelector(`.ga [data-slider="${w}"] [data-thumb]`).getBoundingClientRect()
+    return { x: th.left + th.width / 2, top: document.querySelector('.modal')?.scrollTop ?? 0, win: scrollY }
+  }, which)
+  return { finger: g.x + dx, thumb: after.x, per: g.per, moved: Math.abs(after.top - g.top) + Math.abs(after.win - g.win) }
+}
+/** a finger that goes up the page and starts on the slider's track, away from the handle */
+const swipeOver = async (t, which, touch) => {
+  const { page } = t
+  await page.$eval(`.ga [data-slider="${which}"] [data-track]`, (el) => el.scrollIntoView({ block: 'center' }))
+  await wait(300)
+  const g = await page.evaluate((w) => {
+    const r = document.querySelector(`.ga [data-slider="${w}"] [data-track]`).getBoundingClientRect()
+    return { x: r.right - r.width * 0.75, y: r.top + r.height / 2 }
+  }, which)
+  if (touch) {
+    await page.touchscreen.touchStart(g.x, g.y)
+    for (let i = 1; i <= 10; i++) await page.touchscreen.touchMove(g.x + (i % 2 ? 2 : -2), g.y - i * 14)
+    await page.touchscreen.touchEnd()
+  } else {
+    await page.mouse.move(g.x, g.y)
+    await page.mouse.down()
+    for (let i = 1; i <= 10; i++) await page.mouse.move(g.x + (i % 2 ? 2 : -2), g.y - i * 14)
+    await page.mouse.up()
+  }
+  await wait(300)
+}
+/** taps the track at a share of its length from where it starts (0 the least, 1 the most) */
+const tapTrack = async (t, which, frac, touch) => {
+  const { page } = t
+  await page.$eval(`.ga [data-slider="${which}"] [data-track]`, (el) => el.scrollIntoView({ block: 'center' }))
+  await wait(300)
+  const g = await page.evaluate((w, f) => {
+    const h = document.querySelector(`.ga [data-slider="${w}"] [data-track]`)
+    const r = h.getBoundingClientRect()
+    const rtl = getComputedStyle(h).direction === 'rtl'
+    return { x: rtl ? r.right - r.width * f : r.left + r.width * f, y: r.top + r.height / 2 }
+  }, which, frac)
+  if (touch) {
+    await page.touchscreen.touchStart(g.x, g.y)
+    await page.touchscreen.touchEnd()
+  } else await page.mouse.click(g.x, g.y)
+  await wait(300)
+}
+/** where the red tag sits on a photo: inside it, in its corner, away from the price tag, and small */
+const tagOnPhoto = (page, sel) =>
+  page.evaluate((sel) => {
+    const tag = document.querySelector(sel)
+    if (!tag) return null
+    const photo = tag.parentElement.getBoundingClientRect()
+    const r = tag.getBoundingClientRect()
+    const price = tag.closest('.fb-prop')?.querySelector('.fb-facts > strong')?.getBoundingClientRect()
+    const deal = tag.parentElement.querySelector('.pp-deal')?.getBoundingClientRect()
+    const hit = (a, b) => !!a && !!b && a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom
+    return {
+      text: tag.textContent.replace(/\s+/g, ' ').trim(),
+      inside: r.left >= photo.left - 0.5 && r.right <= photo.right + 0.5 && r.top >= photo.top - 0.5 && r.bottom <= photo.bottom + 0.5,
+      corner: r.left - photo.left < 30 && r.top - photo.top < 30,
+      share: Math.round(((r.width * r.height) / (photo.width * photo.height)) * 1000) / 10,
+      overPrice: hit(r, price),
+      overDeal: hit(r, deal),
+      font: parseFloat(getComputedStyle(tag).fontSize),
+      bg: getComputedStyle(tag).backgroundColor,
+    }
+  }, sel)
+/** picks a kind in the community's filter, and waits until the list has followed it (once it missed, 22.11.2026) */
+const pickKind = async (page, v) => {
+  for (let i = 0; i < 3; i++) {
+    await page.select('[data-filter="kind"]', v)
+    const ok = await page
+      .waitForFunction((v) => document.querySelector('[data-filter="kind"]')?.value === v && document.querySelectorAll('article').length === Number(document.querySelector('[data-count]')?.textContent), { timeout: 3000 }, v)
+      .then(() => true)
+      .catch(() => false)
+    if (ok) break
+  }
+  await wait(400)
+}
 const toAll = async (t) => {
   await t.page.goto(green + '/app/community', { waitUntil: 'networkidle0' })
   await wait(700)
@@ -187,7 +319,9 @@ for (const [dev, vp] of DEVICES) {
   await t.type('.ga [data-f="house"]', '12')
   await t.type('.ga [data-f="apt"]', '7')
   await t.click('.ga [data-rooms="5"]')
-  await t.type('.ga [data-f="price"]', '4200000')
+  await setPrice(t, '4200000')
+  const pr0 = await priceState(page)
+  check(`${dev}: a typed price shows in full, "4,200,000 ₪", and the handle moves to it`, pr0.show === '4,200,000 ₪' && pr0.value === '4200000' && pr0.now === 167, pr0)
 
   // ---------------------------------------------------------------- 3. ממ"ק, next to ממ"ד
   const extras = await page.evaluate(() => [...document.querySelectorAll('.ga [aria-label="תוספות"] .ga-pick')].map((b) => b.textContent.trim()))
@@ -220,6 +354,39 @@ for (const [dev, vp] of DEVICES) {
 
   const story0 = await page.evaluate(() => ({ on: document.querySelector('[data-toggle="as-story"]')?.getAttribute('aria-checked'), label: document.querySelector('[data-toggle="as-story"] b')?.textContent.trim() }))
   check(`${dev}: the property form has "להעלות גם כסטורי", off by default`, story0.label === 'להעלות גם כסטורי' && story0.on === 'false', story0)
+  // ---------------------------------------------------------------- 6. "עמלת שת"פ", a must
+  let coop = await coopState(page)
+  check(`${dev}: "עמלת שת"פ" is in the form, marked "חובה", nothing chosen yet; its slider has 21 stops with 0%, 0.5% and 1% under it`, coop.label?.startsWith('עמלת שת"פ') && coop.label.includes('חובה') && coop.show === 'בוחרים אחוז' && coop.max === 20 && coop.marks.join('|') === '0%|0.5%|1%' && coop.steps.every((h) => h >= 44), coop)
+  await saveCard(t)
+  coop = await coopState(page)
+  const inView = await page.evaluate(() => { const r = document.querySelector('.ga [data-f="coop"]').getBoundingClientRect(); return r.top < innerHeight && r.bottom > 0 && !!document.querySelector('.ga-fields') })
+  check(`${dev}: a property cannot be saved without "עמלת שת"פ": it says so at the field, and brings the field into view`, coop.err === 'בוחרים עמלת שת"פ לפני השמירה. אפשר גם 0%.' && inView, { coop, inView })
+  await t.shot(`${dev}-15-coop-missing`)
+  await pickCoop(t)
+  coop = await coopState(page)
+  check(`${dev}: "+" picks 0.5%, in big, and the line under it says it in shekels at this price`, coop.show === '0.5%' && coop.now === 10 && coop.line === 'בנכס של 4,200,000 ₪ זה בערך 21,000 ₪' && coop.err === null, coop)
+  await t.click('.ga [data-slider="coop"] [data-step="more"]')
+  let c1 = (await coopState(page)).show
+  await t.click('.ga [data-slider="coop"] [data-step="less"]')
+  await t.click('.ga [data-slider="coop"] [data-step="less"]')
+  let c2 = await coopState(page)
+  check(`${dev}: "+" and "−" move it by 0.05%`, c1 === '0.55%' && c2.show === '0.45%' && c2.line === 'בנכס של 4,200,000 ₪ זה בערך 18,900 ₪', { c1, c2 })
+  const d1 = await slide(t, 'coop', 3, dev === 'phone')
+  c1 = await coopState(page)
+  check(`${dev}: dragging the handle by three stops moves it by 0.15%, and the handle stays under the ${dev === 'phone' ? 'finger' : 'mouse'}`, c1.show === '0.6%' && Math.abs(d1.thumb - d1.finger) <= d1.per * 0.6 + 2 && d1.moved === 0, { c1: c1.show, d1 })
+  await page.$eval('.ga [data-slider="coop"] [data-thumb]', (el) => el.focus())
+  await page.keyboard.press('End')
+  c1 = (await coopState(page)).show
+  await page.keyboard.press('Home')
+  c2 = await coopState(page)
+  check(`${dev}: from the keyboard: End is 1%, Home is 0% (0% is a choice too)`, c1 === '1%' && c2.show === '0%' && c2.line === 'בנכס של 4,200,000 ₪ זה בערך 0 ₪', { c1, c2: c2.show })
+  for (let i = 0; i < 10; i++) await page.keyboard.press('ArrowUp')
+  await wait(150)
+  coop = await coopState(page)
+  check(`${dev}: ten steps up from 0% is 0.5%`, coop.show === '0.5%', coop.show)
+  await page.$eval('.ga [data-f="coop"]', (el) => el.scrollIntoView({ block: 'center' }))
+  await wait(250)
+  await t.shot(`${dev}-16-coop-chosen`)
   await saveCard(t)
   const TITLE = 'פנטהאוז 5 חדרים בחיפה'
   const card = await page.evaluate((title) => {
@@ -227,6 +394,8 @@ for (const [dev, vp] of DEVICES) {
     return c ? { tag: c.querySelector('.kan-top .tag')?.dataset.kind, cat: c.querySelector('.kan-top .tag')?.dataset.cat, exact: c.querySelector('[data-exact]')?.textContent.replace(/\s+/g, ' ').trim(), note: c.innerText.includes('ממ"ק') } : null
   }, TITLE)
   check(`${dev}: the CRM card: its tag is the kind, and the broker's own line has the full address with the flat`, card && card.tag === 'פנטהאוז' && card.cat === 'home' && card.exact === 'הרצל 12, דירה 7, נווה שאנן' && card.note, card)
+  const crmCoop = await page.evaluate((title) => [...document.querySelectorAll('.kan-card')].find((x) => x.querySelector('h3')?.textContent.trim() === title)?.querySelector('.coop-badge')?.textContent.replace(/\s+/g, ' ').trim() ?? null, TITLE)
+  check(`${dev}: the CRM card shows "עמלת שת"פ 0.5%"`, crmCoop === 'עמלת שת"פ 0.5%', crmCoop)
   await t.shot(`${dev}-6-crm-card`)
 
   await page.goto(green + '/app/community?topic=coop', { waitUntil: 'networkidle0' })
@@ -236,6 +405,11 @@ for (const [dev, vp] of DEVICES) {
   check(`${dev}: the post carries its kind, and "ממ"ק" among what the property has`, post && post.kind === 'פנטהאוז' && post.extras.includes('ממ"ק') && post.extras.includes('ממ"ד'), post)
   await page.evaluate((id) => document.getElementById(`ci-${id}`)?.scrollIntoView({ block: 'center' }), post?.id)
   await wait(400)
+  const feedCoop = await page.evaluate((id) => {
+    const a = document.getElementById(`ci-${id}`)
+    return { tag: a?.querySelector('.coop-badge')?.textContent.replace(/\s+/g, ' ').trim() ?? null, line: !!a?.querySelector('.coop-badge.is-line'), old: document.querySelector('main')?.innerText.includes('חלוקת עמלה') }
+  }, post?.id)
+  check(`${dev}: the post says "עמלת שת"פ 0.5%" in red (no photo here: in the line of facts), and "חלוקת עמלה" is nowhere in the feed`, feedCoop.tag === 'עמלת שת"פ 0.5%' && feedCoop.line && feedCoop.old === false, feedCoop)
   await t.shot(`${dev}-7-post-in-feed`)
   // what is kept of the post itself (this is all another broker's browser would ever get)
   const kept = await page.evaluate((id) => {
@@ -258,7 +432,16 @@ for (const [dev, vp] of DEVICES) {
   }))
   check(`${dev}: the property's page: the street for everyone, the full address marked as mine alone`, pp.area === 'חיפה - נווה שאנן, רחוב הרצל' && pp.exact === 'הרצל 12, דירה 7, נווה שאנן, חיפה' && pp.exactNote.includes('רק אתם רואים') && pp.exactNote.includes('בלי מספר הבניין'), pp)
   check(`${dev}: the property's page shows the kind and "ממ"ק"`, pp.kind === 'פנטהאוז' && pp.group === 'home' && pp.extra.includes('ממ"ק'), pp)
+  const ppCoop = await page.evaluate(() => ({ tag: document.querySelector('.pp-main .coop-badge')?.textContent.replace(/\s+/g, ' ').trim() ?? null, line: document.querySelector('[data-coop-line]')?.textContent.replace(/\s+/g, ' ').trim() ?? null, old: document.body.innerText.includes('חלוקת עמלה') }))
+  check(`${dev}: the property's page: the red tag on the main picture, and "עמלת שת"פ 0.5%, בערך 21,000 ₪" in place of "חלוקת עמלה"`, ppCoop.tag === 'עמלת שת"פ 0.5%' && ppCoop.line === 'עמלת שת"פ 0.5%, בערך 21,000 ₪' && !ppCoop.old, ppCoop)
+  const ppTag = await tagOnPhoto(page, '.pp-main .coop-badge')
+  check(`${dev}: on the page's picture the tag sits in a corner, away from "למכירה", and covers little of it`, ppTag && ppTag.inside && ppTag.corner && !ppTag.overDeal && ppTag.share < 8 && ppTag.font >= 13, ppTag)
   await t.shot(`${dev}-8-property-page`)
+  // a property published before the fee existed: no number is made up for it
+  await page.goto(`${green}/app/property/p1`, { waitUntil: 'networkidle0' })
+  await wait(600)
+  const oldOne = await page.evaluate(() => ({ title: document.querySelector('.pp h1')?.textContent.trim(), tag: !!document.querySelector('.coop-badge'), line: !!document.querySelector('[data-coop-line]'), old: document.body.innerText.includes('חלוקת עמלה') }))
+  check(`${dev}: an older property shows no fee at all: no red tag, no line, and not the old "חלוקת עמלה"`, !!oldOne.title && !oldOne.tag && !oldOne.line && !oldOne.old, oldOne)
 
   // a commercial one, with the building's number shown
   await openCard(t)
@@ -272,7 +455,12 @@ for (const [dev, vp] of DEVICES) {
   await t.type('.ga [data-f="house"]', '40')
   await t.type('.ga [data-f="apt"]', '3')
   await t.type('.ga [data-f="sqm"]', '120')
-  await t.type('.ga [data-f="price"]', '1900000')
+  await setPrice(t, '1900000')
+  // "עמלת שת"פ" from the keyboard: 0%, then fifteen steps up
+  await page.$eval('.ga [data-slider="coop"] [data-thumb]', (el) => el.focus())
+  await page.keyboard.press('Home')
+  for (let i = 0; i < 15; i++) await page.keyboard.press('ArrowUp')
+  await wait(150)
   await t.click('[data-toggle="house-no"]')
   const seen2 = await page.evaluate(() => document.querySelector('[data-seen] b').textContent.trim())
   check(`${dev}: a street that already says what it is ("שדרות...") is not called "רחוב" again`, seen2 === 'חיפה - הדר, שדרות הנשיא 40', seen2)
@@ -283,6 +471,9 @@ for (const [dev, vp] of DEVICES) {
   const office = await myPost(page, OFFICE)
   check(`${dev}: with the switch on, the feed shows the building's number too, and still not the flat`, office && office.street === ', שדרות הנשיא 40' && office.kind === 'משרד' && !office.text.includes('דירה 3'), office)
 
+  const officeCoop = await page.evaluate((title) => [...document.querySelectorAll('article')].find((a) => a.querySelector('h3')?.textContent.trim() === title)?.querySelector('.coop-badge')?.textContent.replace(/\s+/g, ' ').trim() ?? null, OFFICE)
+  check(`${dev}: a commercial property carries its own fee: "עמלת שת"פ 0.75%"`, officeCoop === 'עמלת שת"פ 0.75%', officeCoop)
+
   // ---------------------------------------------------------------- 4. the same list in the community's filter
   const filter = await page.evaluate(() => {
     const s = document.querySelector('[data-filter="kind"]')
@@ -292,21 +483,17 @@ for (const [dev, vp] of DEVICES) {
   const kindsShown = () => page.evaluate(() => ({ kinds: [...document.querySelectorAll('article .fb-kind')].map((k) => k.dataset.kind), titles: [...document.querySelectorAll('article h3')].map((h) => h.textContent.trim()), count: Number(document.querySelector('[data-count]')?.textContent) }))
   const all = await kindsShown()
   check(`${dev}: every property in the feed has a kind of the list (older words were read as the closest one), none was lost`, all.kinds.length >= 13 && all.kinds.every((k) => HOME.includes(k) || BIZ.includes(k)), all.kinds)
-  await page.select('[data-filter="kind"]', 'home|פנטהאוז')
-  await wait(500)
+  await pickKind(page, 'home|פנטהאוז')
   let f = await kindsShown()
   check(`${dev}: the filter by one kind: only penthouses, mine among them`, f.kinds.length >= 1 && f.kinds.every((k) => k === 'פנטהאוז') && f.titles.includes(TITLE) && f.count === f.kinds.length, f)
   await t.shot(`${dev}-9-filter-kind`)
-  await page.select('[data-filter="kind"]', 'business|')
-  await wait(500)
+  await pickKind(page, 'business|')
   f = await kindsShown()
   check(`${dev}: the filter by the whole group "מסחרי": commercial kinds only, my office among them`, f.kinds.length >= 1 && f.kinds.every((k) => BIZ.includes(k)) && f.titles.includes(OFFICE) && !f.titles.includes(TITLE), f)
-  await page.select('[data-filter="kind"]', 'business|חנות')
-  await wait(500)
+  await pickKind(page, 'business|חנות')
   f = await kindsShown()
   check(`${dev}: a kind nobody posted shows nothing, and says so with a count of 0`, f.kinds.length === 0 && f.count === 0, f)
-  await page.select('[data-filter="kind"]', '')
-  await wait(400)
+  await pickKind(page, '')
 
   // older records: the demo's own properties were written before the list
   const old = await page.evaluate(() => {
@@ -490,6 +677,8 @@ for (const [dev, vp] of DEVICES) {
   await wait(250)
   await t.shot(`${dev}-14-new-post`)
   await t.click('[data-act="publish"]')
+  // the window closes once it is published (it missed once on a computer: tried again, never twice published)
+  if (!(await page.waitForSelector('[data-composer]', { hidden: true, timeout: 2500 }).then(() => true).catch(() => false))) await t.click('[data-act="publish"]')
   await wait(1300)
   await toAll(t)
   const row3 = await storyRow(page)
@@ -527,7 +716,10 @@ for (const [dev, vp] of DEVICES) {
   await t.click('.ga [data-cat="home"]')
   await wait(350)
   await t.click('.ga .pf-kind[data-kind="דירת גן"]')
-  await t.type('.ga [data-f="price"]', '3100000')
+  await setPrice(t, '3100000')
+  await pickCoop(t)
+  await page.$eval('.ga [data-slider="coop"] [data-thumb]', (el) => el.focus())
+  await page.keyboard.press('End')
   await t.click('[data-toggle="as-story"]')
   await saveCard(t)
   const warn = await page.evaluate(() => ({ text: document.querySelector('[data-warn="as-story"]')?.textContent.trim(), open: !!document.querySelector('.ga-fields') }))
@@ -544,6 +736,149 @@ for (const [dev, vp] of DEVICES) {
     return { show: it?.show, id: it?.id, image: !!it?.image }
   }, GARDEN)
   check(`${dev}: a property with the story switch on is a post in the feed and a story too`, garden.show === 'both' && garden.image && row5.ids.includes(garden.id) && row5.n === row4.n + 1, { garden, n: row5.n })
+
+  // the red tag on the post's photo
+  await page.goto(green + '/app/community?topic=coop', { waitUntil: 'networkidle0' })
+  await wait(800)
+  await page.evaluate((id) => document.getElementById(`ci-${id}`)?.scrollIntoView({ block: 'center' }), garden.id)
+  await wait(500)
+  const feedTag = await tagOnPhoto(page, `#ci-${garden.id} .coop-badge`)
+  check(`${dev}: on the post's photo the red tag "עמלת שת"פ 1%" sits in the corner, not over the price tag, and covers little of the picture`, feedTag && feedTag.text === 'עמלת שת"פ 1%' && feedTag.inside && feedTag.corner && !feedTag.overPrice && feedTag.share < 8 && feedTag.font >= 13 && feedTag.bg === 'rgb(198, 40, 40)', feedTag)
+  await t.shot(`${dev}-17-coop-on-photo`)
+  await page.goto(`${green}/app/property/${garden.id}`, { waitUntil: 'networkidle0' })
+  await wait(700)
+  await t.shot(`${dev}-18-coop-property-page`)
+
+  // ---------------------------------------------------------------- 5. the price on a slider
+  await openCard(t)
+  await t.click('.ga [data-cat="home"]')
+  await wait(350)
+  await t.click('.ga .pf-kind[data-kind="דירה"]')
+  let pr = await priceState(page)
+  check(`${dev}: the price: "בוחרים מחיר" in big until one is chosen, and a slider of 440 stops waiting at 2,000,000 ₪`, pr.label === 'מחיר' && pr.show === 'בוחרים מחיר' && pr.value === '' && pr.waiting && pr.max === 439 && pr.now === 79, pr)
+  await t.shot(`${dev}-19-price-empty`)
+  await t.click('.ga [data-slider="price"] [data-step="more"]')
+  const p1 = (await priceState(page)).show
+  await t.click('.ga [data-slider="price"] [data-step="more"]')
+  pr = await priceState(page)
+  check(`${dev}: "+" picks 2,000,000 ₪, and the next "+" is 25,000 ₪ more, written in full`, p1 === '2,000,000 ₪' && pr.show === '2,025,000 ₪' && pr.value === '2025000' && !pr.waiting && pr.hint.includes('25,000 ₪'), { p1, pr })
+  const d2 = await slide(t, 'price', 8, dev === 'phone')
+  pr = await priceState(page)
+  check(`${dev}: dragging the handle eight stops is 200,000 ₪ more, on a 25,000 ₪ step, the handle under the ${dev === 'phone' ? 'finger' : 'mouse'} and the page still`, pr.value === '2225000' && Number(pr.value) % 25000 === 0 && Math.abs(d2.thumb - d2.finger) <= d2.per + 2 && d2.moved === 0, { pr: pr.value, d2 })
+  await swipeOver(t, 'price', dev === 'phone')
+  const pr2 = await priceState(page)
+  check(`${dev}: a finger that moves up the page over the track does not move the price`, pr2.value === '2225000', pr2.value)
+  await page.$eval('.ga [data-f="price-field"]', (el) => el.scrollIntoView({ block: 'center' }))
+  await wait(300)
+  await t.shot(`${dev}-20-price-slider`)
+  await t.click('.ga [data-price-show]')
+  pr = await priceState(page)
+  const box = await page.evaluate(() => { const i = document.querySelector('.ga [data-f="price"]'); return { focus: document.activeElement === i, mode: i?.inputMode, size: parseFloat(getComputedStyle(i).fontSize) } })
+  check(`${dev}: a tap on the price opens a box to type, ready to type into, with a number keyboard`, pr.typing && box.focus && box.mode === 'numeric' && box.size >= 16, box)
+  await page.$eval('.ga [data-f="price"]', (el) => el.select())
+  await page.keyboard.press('Backspace')
+  await page.type('.ga [data-f="price"]', '999')
+  await page.keyboard.press('Escape')
+  await wait(200)
+  pr = await priceState(page)
+  check(`${dev}: Escape closes the box and keeps the price that was there`, !pr.typing && pr.value === '2225000' && !!(await page.$('.ga-fields')), pr)
+  await setPrice(t, '0')
+  pr = await priceState(page)
+  check(`${dev}: an empty or 0 price typed is not kept`, pr.value === '2225000', pr.value)
+  await t.click('.ga [data-price-show]')
+  await page.$eval('.ga [data-f="price"]', (el) => el.select())
+  await page.keyboard.press('Backspace')
+  await page.type('.ga [data-f="price"]', '2379000')
+  await wait(150)
+  const say = await page.evaluate(() => document.querySelector('.ga .pf-typed-say')?.textContent.trim())
+  await t.shot(`${dev}-21-price-typing`)
+  await page.keyboard.press('Enter')
+  await wait(200)
+  pr = await priceState(page)
+  check(`${dev}: a price typed by hand (2,379,000) is kept exactly, and the handle sits at the nearest stop (2,375,000)`, say === '2,379,000 ₪' && pr.show === '2,379,000 ₪' && pr.value === '2379000' && pr.now === 94, { say, pr })
+  await page.$eval('.ga [data-slider="price"] [data-thumb]', (el) => el.focus())
+  await page.keyboard.press('End')
+  const top = await priceState(page)
+  await page.keyboard.press('ArrowDown')
+  const below = await priceState(page)
+  check(`${dev}: high prices stay usable: the end is 30,000,000 ₪, moved in steps of 250,000 ₪ there`, top.show === '30,000,000 ₪' && top.hint.includes('250,000 ₪') && below.show === '29,750,000 ₪', { top: top.show, hint: top.hint, below: below.show })
+  const stops = await page.evaluate(async () => {
+    const src = [...document.querySelectorAll('script[type="module"]')].map((s) => s.src).find((s) => /main-green/.test(s))
+    const root = src.slice(0, src.indexOf('/src/'))
+    const c = await import(`${root}/src/config/coop.ts`)
+    const S = c.PRICE_STOPS
+    const after = (v) => S[S.indexOf(v) + 1]
+    return {
+      n: S.length,
+      first: S[0],
+      last: S[S.length - 1],
+      under5: S.filter((v) => v <= 5_000_000).every((v, i, a) => v % 25_000 === 0 && (i === 0 || v - a[i - 1] === 25_000)),
+      steps: [after(5_000_000) - 5_000_000, after(10_000_000) - 10_000_000, after(20_000_000) - 20_000_000],
+      coop: c.COOP_STOPS.map(c.coopText).join(' '),
+      amount: [c.coopAmount(2_500_000, 0.5), c.coopAmount(2_479_000, 0.45), c.coopAmount(1_000_000, 0)],
+      old: [c.hasCoop(undefined), c.hasCoop(null), c.hasCoop(0), c.hasCoop(0.5), c.hasCoop(1.5)],
+    }
+  })
+  check(`${dev}: the stops: every 25,000 ₪ up to 5,000,000 ₪, then 50,000, 100,000 and 250,000 ₪ (440 stops, 25,000 to 30,000,000 ₪)`, stops.n === 440 && stops.first === 25000 && stops.last === 30000000 && stops.under5 && stops.steps.join() === '50000,100000,250000', stops)
+  check(`${dev}: the fee's stops are 0% to 1% every 0.05%, and its shekels are rounded to 100 ₪`, stops.coop === '0% 0.05% 0.1% 0.15% 0.2% 0.25% 0.3% 0.35% 0.4% 0.45% 0.5% 0.55% 0.6% 0.65% 0.7% 0.75% 0.8% 0.85% 0.9% 0.95% 1%' && stops.amount.join() === '12500,11200,0' && stops.old.join() === 'false,false,true,true,false', stops)
+  // a tap on the fee's track puts the handle there
+  await tapTrack(t, 'coop', 1, dev === 'phone')
+  coop = await coopState(page)
+  check(`${dev}: a tap on the fee's track (with no drag) puts the handle there: 1%`, coop.show === '1%', coop.show)
+  await t.click('.ga [data-slider="coop"] [data-step="more"]')
+  check(`${dev}: "+" stops at 1%`, (await coopState(page)).show === '1%' && (await page.$eval('.ga [data-slider="coop"] [data-step="more"]', (b) => b.disabled)))
+  // the exact price again, and a home a buyer of the demo is looking for: the match screen shows the fee
+  await setPrice(t, '2379000')
+  for (let i = 0; i < 10; i++) await t.click('.ga [data-slider="coop"] [data-step="less"]')
+  await t.click('.ga [data-parking="1"]')
+  await page.evaluate(() => [...document.querySelectorAll('.ga [aria-label="תוספות"] .ga-pick')].find((b) => b.textContent.trim() === 'מעלית').click())
+  await t.click('.ga-go')
+  await page.waitForSelector('[data-match-screen]', { visible: true, timeout: 6000 }).catch(() => {})
+  await wait(1500)
+  const mm = await page.evaluate(() => ({ open: !!document.querySelector('[data-match-screen]'), mine: document.querySelector('.mm-meet-card.is-mine .coop-badge')?.textContent.replace(/\s+/g, ' ').trim() ?? null, price: document.querySelector('.mm-meet-card.is-mine strong')?.textContent.trim() }))
+  check(`${dev}: the match screen shows my property with its "עמלת שת"פ 0.5%"`, mm.open && mm.mine === 'עמלת שת"פ 0.5%', mm)
+  await t.shot(`${dev}-22-match-coop`)
+  await page.$eval('[data-act="close-match"]', (b) => b.click()).catch(() => {})
+  await wait(600)
+  const exact = await page.evaluate(() => {
+    const s = JSON.parse(localStorage.getItem('brokers-demo-state-v5') ?? '{}')
+    const card = (s.crm ?? []).find((c) => c.price === 2379000)
+    const post = card && (s.items ?? []).find((x) => x.sourceId === card.id)
+    const tag = [...document.querySelectorAll('.kan-card')].find((c) => c.querySelector('h3')?.textContent.trim() === card?.title)?.querySelector('.coop-badge')?.textContent.replace(/\s+/g, ' ').trim()
+    return { card: card ? { price: card.price, coop: card.coopPct } : null, post: post ? { price: post.property.price, coop: post.property.coopPct, split: post.property.split ?? null } : null, tag }
+  })
+  check(`${dev}: what is kept: the price exactly as typed and the fee, on the card and on the post (with no old "חלוקת עמלה")`, exact.card?.price === 2379000 && exact.card?.coop === 0.5 && exact.post?.price === 2379000 && exact.post?.coop === 0.5 && exact.post?.split === null, exact)
+  check(`${dev}: the CRM card shows "עמלת שת"פ 0.5%"`, exact.tag === 'עמלת שת"פ 0.5%', exact.tag)
+  await page.evaluate((p) => [...document.querySelectorAll('.kan-card')].find((c) => c.textContent.includes('2.38'))?.scrollIntoView({ block: 'center' }), 0)
+  await wait(300)
+  await t.shot(`${dev}-23-crm-coop`)
+
+  // the WhatsApp confirmation of a property asks for the fee too
+  await page.goto(green + '/app/community', { waitUntil: 'networkidle0' })
+  await wait(700)
+  await page.evaluate(async () => {
+    const src = [...document.querySelectorAll('script[type="module"]')].map((s) => s.src).find((s) => /main-green/.test(s))
+    const { greenUi } = await import(`${src.slice(0, src.indexOf('/src/'))}/src/green/ui.ts`)
+    greenUi.open({ kind: 'whatsapp' })
+  })
+  await page.waitForSelector('.ga-samples', { visible: true, timeout: 8000 })
+  await page.evaluate(() => [...document.querySelectorAll('.ga-samples .tl-alt')].find((b) => b.textContent.includes('נכס לדוגמה')).click())
+  await wait(250)
+  await t.click('.ga-go')
+  await page.waitForSelector('.ga [data-f="coop"]', { visible: true, timeout: 8000 })
+  const waPrice = await priceState(page)
+  await page.evaluate(() => document.querySelector('.ga-actions .btn-gold').click())
+  await wait(400)
+  const waErr = await coopState(page)
+  check(`${dev}: from a WhatsApp message: the price (2,650,000 ₪) is on the slider, and the property is not published without "עמלת שת"פ"`, waPrice.show === '2,650,000 ₪' && waErr.err === 'בוחרים עמלת שת"פ לפני השמירה. אפשר גם 0%.' && !!(await page.$('.ga-actions')), { waPrice: waPrice.show, err: waErr.err })
+  await pickCoop(t, 1)
+  await page.evaluate(() => document.querySelector('.ga-actions .btn-gold').click())
+  await wait(1500)
+  const waPost = await page.evaluate(() => {
+    const id = new URLSearchParams(location.search).get('item')
+    return { id, tag: document.getElementById(`ci-${id}`)?.querySelector('.coop-badge')?.textContent.replace(/\s+/g, ' ').trim() ?? null }
+  })
+  check(`${dev}: ... with it, it goes up with "עמלת שת"פ 0.55%"`, waPost.tag === 'עמלת שת"פ 0.55%', waPost)
 
   check(`${dev}: no errors, and nothing was asked of any address outside this computer (no server, nothing of Yad2)`, t.errors.length === 0 && t.outside.length === 0, { errors: t.errors.slice(0, 3), outside: [...new Set(t.outside)] })
   await t.ctx.close()
@@ -575,6 +910,14 @@ for (const [dev, vp] of DEVICES) {
       ['"כך יראו": the address', '.ga [data-seen] b'],
       ['"כך יראו": its name', '.ga [data-seen] > span'],
       ['the line about what stays private', '.ga .ga-address .ga-private'],
+      ['the price, not chosen', '.ga [data-price-show]'],
+      ['the line under the price', '.ga [data-f="price-field"] .pf-hint'],
+      ['"עמלת שת"פ": its name', '.ga [data-f="coop"] .field-label'],
+      ['"חובה"', '.ga [data-f="coop"] .pf-must'],
+      ['the percent, not chosen', '.ga [data-coop-show]'],
+      ['the line under the percent', '.ga [data-coop-line]'],
+      ['the marks under the fee', '.ga [data-f="coop"] .ss-marks span'],
+      ['"בוחרים עמלת שת"פ"', '.ga [data-err="coop"]'],
     ]) ratios[name] = await n.contrast(sel)
     const low = Object.entries(ratios).filter(([, r]) => r === null || r < 4.5)
     check(`${dev}, ${mode}: every word of the property form can be read (4.5 to 1 at least)`, at === mode && low.length === 0, { at, low, ratios })
@@ -587,6 +930,31 @@ for (const [dev, vp] of DEVICES) {
     await n.page.$eval('[data-toggle="as-story"]', (el) => el.scrollIntoView({ block: 'center' }))
     await wait(300)
     await n.shot(`${dev}-${mode}-form-story-switch`)
+    await n.page.$eval('.ga [data-f="coop"]', (el) => el.scrollIntoView({ block: 'center' }))
+    await wait(300)
+    await n.shot(`${dev}-${mode}-form-price-coop-empty`)
+    // chosen: the big numbers and the red tag
+    await setPrice(n, '2475000')
+    await pickCoop(n)
+    const r3 = {}
+    for (const [name, sel] of [
+      ['the price, chosen', '.ga [data-price-show]'],
+      ['the percent, chosen', '.ga [data-coop-show]'],
+      ['the shekels under it', '.ga [data-coop-line]'],
+    ]) r3[name] = await n.contrast(sel)
+    await n.page.$eval('.ga [data-f="price-field"]', (el) => el.scrollIntoView({ block: 'start' }))
+    await wait(300)
+    await n.shot(`${dev}-${mode}-form-price-coop`)
+    await n.click('[data-toggle="as-story"]')
+    await saveCard(n)
+    await n.page.goto(green + '/app/community?topic=coop', { waitUntil: 'networkidle0' })
+    await wait(800)
+    await n.page.evaluate(() => document.querySelector('article .coop-badge')?.closest('article')?.scrollIntoView({ block: 'center' }))
+    await wait(400)
+    r3['the red tag'] = await n.contrast('article .coop-badge')
+    const low3 = Object.entries(r3).filter(([, r]) => r === null || r < 4.5)
+    check(`${dev}, ${mode}: the chosen price, the percent, its shekels and the red tag can be read`, low3.length === 0, { low3, r3 })
+    await n.shot(`${dev}-${mode}-feed-coop-tag`)
 
     await toAll(n)
     await n.click('[data-act="new-story"]')

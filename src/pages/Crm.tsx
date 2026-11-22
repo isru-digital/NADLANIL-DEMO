@@ -1,3 +1,6 @@
+import { CoopBadge } from '../components/CoopBadge'
+import { CoopField } from '../green/PriceCoop'
+import { hasCoop } from '../config/coop'
 import { useEffect, useState } from 'react'
 import type { DragEvent } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
@@ -45,7 +48,7 @@ const draftFor = (item: CrmItem, topicId: TopicId, authorId: string): CommunityI
       body: 'נכס בבלעדיות אצלי. פתוח לשיתוף פעולה עם מתווך שיש לו קונה מתאים.',
       image: item.image,
       // city and neighbourhood only: the street and the house number stay in the CRM
-      property: { area: item.area, rooms: item.rooms, price: item.price, split: 'חלוקת עמלה שווה', showPrice: true, parking: item.parking, renewal: item.renewal || undefined },
+      property: { area: item.area, rooms: item.rooms, price: item.price, coopPct: item.coopPct, showPrice: true, parking: item.parking, renewal: item.renewal || undefined },
     }
   }
   if (topicId === 'seeking' && item.search) {
@@ -258,6 +261,8 @@ export default function Crm() {
               <span>{isProperty ? 'מחיר' : 'תקציב עד'}</span>
               <strong className="num">{formatPriceShort(it.price)}</strong>
             </div>
+            {/* "עמלת שת"פ" as the broker chose it; a card from before has none */}
+            {isProperty && <CoopBadge pct={it.coopPct} at="line" />}
             <div className="kan-client">
               <Lock />
               <span>{it.client}</span>
@@ -473,12 +478,15 @@ function PublishModal({
   const [step, setStep] = useState<Step>('form')
   const [draft, setDraft] = useState<CommunityItem | null>(null)
   const [alert, setAlert] = useState<MatchAlert | null>(null)
+  // a property goes up with its "עמלת שת"פ": without one it is said at the field, not published
+  const [coopMissing, setCoopMissing] = useState(false)
 
   useEffect(() => {
     if (!request) return
     setShown(request)
     setStep('form')
     setAlert(null)
+    setCoopMissing(false)
     setDraft(draftFor(request.item, request.topicId, me.id))
   }, [request, me.id])
 
@@ -490,6 +498,10 @@ function PublishModal({
   const patch = (p: Partial<CommunityItem>) => setDraft((d) => (d ? { ...d, ...p } : d))
 
   const publish = () => {
+    if (draft.property && !hasCoop(draft.property.coopPct)) {
+      setCoopMissing(true)
+      return
+    }
     setStep('sending')
     window.setTimeout(() => {
       setAlert(publishNow(item, draft))
@@ -557,22 +569,8 @@ function PublishModal({
                         />
                       )}
                     </fieldset>
-                    <div className="field">
-                      <span className="field-label">חלוקת עמלה</span>
-                      <div className="chip-row">
-                        {['חלוקת עמלה שווה', 'חלוקה לפי סיכום'].map((s) => (
-                          <button
-                            key={s}
-                            type="button"
-                            className="chip"
-                            aria-pressed={draft.property!.split === s}
-                            onClick={() => patch({ property: { ...draft.property!, split: s } })}
-                          >
-                            {s}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
+                    {/* "עמלת שת"פ" in place of the old "חלוקת עמלה" (22.11.2026); a must, like in the property form */}
+                    <CoopField pct={hasCoop(draft.property.coopPct) ? draft.property.coopPct : null} price={item.price} onPct={(coopPct) => patch({ property: { ...draft.property!, coopPct } })} missing={coopMissing} />
                   </>
                 )}
 

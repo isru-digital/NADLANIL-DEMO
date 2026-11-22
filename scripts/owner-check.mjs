@@ -66,6 +66,9 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
   await wait(500)
   await page.evaluate(() => [...document.querySelectorAll('.modal label, .modal .field')].find((l) => l.textContent.includes('שם בעל הנכס'))?.querySelector('input')?.focus())
   await page.keyboard.type(OWNER)
+  // "עמלת שת"פ" is a must since 22.11.2026: its "+" picks 0.5% (post-form-check walks the slider itself)
+  await page.evaluate(() => document.querySelector('[data-slider="coop"] [data-step="more"]')?.click())
+  await wait(200)
   await clickText(page, '.ga-go', 'הוספה ל-CRM')
   await wait(1600)
   st = await page.evaluate((owner) => {

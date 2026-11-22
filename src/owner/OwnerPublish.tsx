@@ -29,7 +29,8 @@ const pending = new Set<string>()
 export const postOf = (item: CrmItem, authorId: string): CommunityItem => {
   const group = categoryOf(item)
   const kind = cardKind(item)
-  const shared = { price: item.price, split: 'חלוקת עמלה שווה', showPrice: true, kind, group, parking: item.parking, extra: item.extras?.length ? item.extras : undefined, ...publicPlace(item) }
+  // "עמלת שת"פ" in place of the old "חלוקת עמלה": as the broker chose it; a card from before has none, and none is made up
+  const shared = { price: item.price, coopPct: item.coopPct, showPrice: true, kind, group, parking: item.parking, extra: item.extras?.length ? item.extras : undefined, ...publicPlace(item) }
   return {
     id: `m-${item.id}-${Date.now()}`,
     topicId: 'coop',

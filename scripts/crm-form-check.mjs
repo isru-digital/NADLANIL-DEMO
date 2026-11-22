@@ -94,7 +94,12 @@ for (const [tag, vp] of [
   await page.type('[data-f="street"]', STREET)
   await page.type('[data-f="house"]', '12')
   await click('[data-rooms="4"]')
+  // the price is a slider since 22.11.2026; a tap on the number opens the box for an exact price
+  await page.evaluate(() => document.querySelector('[data-price-show]')?.click())
+  await wait(250)
   await page.type('[data-f="price"]', '1690000')
+  await page.keyboard.press('Enter')
+  await wait(150)
   await click('[data-parking="2"]')
   await click('[data-f="renewal"]')
   await wait(900)
@@ -126,6 +131,9 @@ for (const [tag, vp] of [
   await page.evaluate(() => document.querySelector('.ga [data-cat="home"]')?.click())
   await wait(500)
   await page.evaluate(() => document.querySelector('.ga .pf-kind[data-kind="דירה"]')?.click())
+  await wait(200)
+  // "עמלת שת"פ" is a must since 22.11.2026: its "+" picks 0.5% (post-form-check walks the slider itself)
+  await page.evaluate(() => document.querySelector('[data-slider="coop"] [data-step="more"]')?.click())
   await wait(200)
   // ---- save
   await click('.ga-go')

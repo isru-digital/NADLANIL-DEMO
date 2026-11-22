@@ -11,6 +11,7 @@ import { Avatar } from '../components/ui'
 import ChatWindow from './ChatWindow'
 import { matchStore, matchUi, matchesFor, otherSideInterested, isMutual, placeOf, propertyKind, scoreOf } from './match'
 import { DEFAULT_KIND, hasRooms, isKind, searchGroup } from '../config/propertyTypes'
+import { CoopBadge } from '../components/CoopBadge'
 import type { Match, Pair } from './match'
 import '../styles/match.css'
 
@@ -273,7 +274,6 @@ function counterpartOf(mine: CommunityItem): CommunityItem | null {
         area: hood ? `${city} - ${hood}` : city,
         rooms,
         price: Math.floor((s.budget * 0.96) / step) * step,
-        split: 'חלוקת עמלה שווה',
         showPrice: true,
         deal: rent ? 'rent' : 'sale',
         kind,
@@ -333,6 +333,7 @@ function MiniCard({ it, tag }: { it: CommunityItem; tag: string }) {
         <MapPin aria-hidden /> {placeOf(it)}
       </small>
       <strong className="num">{priceOf(it)}</strong>
+      {it.property && <CoopBadge pct={it.property.coopPct} at="line" />}
     </div>
   )
 }
@@ -615,6 +616,7 @@ function CardBody({ m }: { m: Match }) {
         <p className="mm-card-facts">
           <strong className="num">{priceOf(it)}</strong>
           {roomsOf(it) && <span className="num">{roomsOf(it)}</span>}
+          {it.property && <CoopBadge pct={it.property.coopPct} at="line" />}
         </p>
         <ul className="mm-reasons" aria-label="למה זה מתאים">
           {m.reasons.slice(0, 7).map((r) => (

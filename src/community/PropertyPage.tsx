@@ -12,6 +12,8 @@ import ChatWindow from './ChatWindow'
 import { IconHome } from './KhIcons'
 import { propertyKind } from './match'
 import { fullAddress, streetOf } from './place'
+import { CoopBadge } from '../components/CoopBadge'
+import { coopAmount, coopText, hasCoop, shekels } from '../config/coop'
 import '../styles/property.css'
 import '../styles/post-form.css'
 
@@ -123,6 +125,7 @@ export default function PropertyPage() {
               </>
             )}
             <span className={`pp-deal${rent ? ' is-rent' : ''}`}>{rent ? 'להשכרה' : 'למכירה'}</span>
+            <CoopBadge pct={p.coopPct} />
           </div>
           {photos.length > 1 && (
             <div className="pp-thumbs" role="group" aria-label="בחירת תמונה">
@@ -189,9 +192,22 @@ export default function PropertyPage() {
           )}
 
           <p className="pp-body">{item.body}</p>
-          <p className="pp-split">
-            <Handshake /> {p.split}
-          </p>
+          {/* "עמלת שת"פ" took the place of the old "חלוקת עמלה": what working together earns, in shekels too */}
+          {hasCoop(p.coopPct) && (
+            <p className="pp-split" data-coop-line>
+              <Handshake />
+              {/* one run of words, so the comma sits right after the percent */}
+              <span>
+                עמלת שת"פ{' '}
+                <b>
+                  <bdi dir="ltr" className="num">
+                    {coopText(p.coopPct)}
+                  </bdi>
+                </b>
+                {p.price > 0 && <span className="num">, בערך {shekels(coopAmount(p.price, p.coopPct))}</span>}
+              </span>
+            </p>
+          )}
 
           {/* the broker who shares it */}
           <div className="pp-broker">

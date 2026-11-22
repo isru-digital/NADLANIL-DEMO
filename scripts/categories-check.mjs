@@ -24,10 +24,11 @@ const board = (page) =>
     cards: [...document.querySelectorAll('.kan-card')].map((c) => ({ title: c.querySelector('h3')?.textContent.trim(), tag: c.querySelector('.kan-top .tag')?.textContent.trim(), cat: c.querySelector('.kan-top .tag')?.dataset.cat, meta: c.querySelector('.kan-meta')?.textContent.replace(/\s+/g, ' ').trim() })),
     ov: document.documentElement.scrollWidth - document.documentElement.clientWidth,
   }))
+// since 22.11.2026 the price is a slider under the name "מחיר" (scripts/post-form-check.mjs)
 const form = (page) =>
   page.evaluate(() => ({
     cats: [...document.querySelectorAll('[data-f="category"] .pf-group')].map((c) => `${c.textContent.trim()}${c.getAttribute('aria-pressed') === 'true' ? '*' : ''}`),
-    labels: [...document.querySelectorAll('.ga-fields > .field > .field-label')].map((l) => l.textContent.trim()).filter((t) => ['עיר', 'חדרים', 'שטח, במ"ר', 'מחיר, בשקלים'].includes(t)),
+    labels: [...document.querySelectorAll('.ga-fields > .field > .field-label')].map((l) => l.textContent.trim()).filter((t) => ['עיר', 'חדרים', 'שטח, במ"ר', 'מחיר, בשקלים', 'מחיר'].includes(t)),
     extras: [...document.querySelectorAll('.ga-fields > .field:last-child .ga-pick')].map((c) => c.textContent.trim()),
     photos: !!document.querySelector('.ga-photos'),
   }))
@@ -77,19 +78,26 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
   await wait(800)
   let f = await form(page)
   check(`${d} the new property form opens with the two groups, none picked yet`, f.cats.join() === 'מגורים,מסחרי', f.cats.join())
-  check(`${d} a home asks for rooms`, f.labels.join() === 'עיר,חדרים,מחיר, בשקלים' && f.extras.includes('מרפסת שמש'), f.labels.join())
+  check(`${d} a home asks for rooms`, f.labels.join() === 'עיר,חדרים,מחיר' && f.extras.includes('מרפסת שמש'), f.labels.join())
   await pickCat(page, 'business', 'משרד')
   f = await form(page)
-  check(`${d} an office asks for its size in square metres, and has its own extras`, f.labels.join() === 'עיר,שטח, במ"ר,מחיר, בשקלים' && f.extras.includes('נגישות') && f.extras.includes('חזית לרחוב') && !f.extras.includes('מרפסת שמש') && !f.extras.includes('ממ"ד'), `${f.labels.join()} / ${f.extras.join()}`)
+  check(`${d} an office asks for its size in square metres, and has its own extras`, f.labels.join() === 'עיר,שטח, במ"ר,מחיר' && f.extras.includes('נגישות') && f.extras.includes('חזית לרחוב') && !f.extras.includes('מרפסת שמש') && !f.extras.includes('ממ"ד'), `${f.labels.join()} / ${f.extras.join()}`)
   check(`${d} photos can be added to an office too`, f.photos)
   await page.evaluate(() => document.querySelector('[data-f="category"]').scrollIntoView({ block: 'start' }))
   await wait(300)
   await page.screenshot({ path: `${out}/${d}-3-form-office.png` })
 
   await page.type('[data-f="sqm"]', '85')
-  await page.evaluate(() => document.querySelector('[data-f="price"]')?.focus())
-  await page.keyboard.type('1400000')
+  // the price is a slider since 22.11.2026; a tap on the number opens the box for an exact price
+  await page.evaluate(() => document.querySelector('[data-price-show]')?.click())
+  await wait(250)
+  await page.type('[data-f="price"]', '1400000')
+  await page.keyboard.press('Enter')
+  await wait(150)
   await page.evaluate(() => { document.querySelector('[data-parking="1"]')?.click(); [...document.querySelectorAll('.ga-fields > .field:last-child .ga-pick')].filter((c) => ['מעלית'].includes(c.textContent.trim())).forEach((c) => c.click()) })
+  // "עמלת שת"פ" is a must since 22.11.2026: its "+" picks 0.5% (post-form-check walks the slider itself)
+  await page.evaluate(() => document.querySelector('[data-slider="coop"] [data-step="more"]')?.click())
+  await wait(200)
   await page.evaluate(() => [...document.querySelectorAll('.ga-go')].find((x) => x.textContent.includes('הוספה ל-CRM')).click())
   await wait(1700)
   b = await board(page)
@@ -102,6 +110,9 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
   await wait(800)
   await pickCat(page, 'business', 'חנות')
   await page.type('[data-f="sqm"]', '60')
+  // "עמלת שת"פ" is a must since 22.11.2026: its "+" picks 0.5% (post-form-check walks the slider itself)
+  await page.evaluate(() => document.querySelector('[data-slider="coop"] [data-step="more"]')?.click())
+  await wait(200)
   await page.evaluate(() => [...document.querySelectorAll('.ga-go')].find((x) => x.textContent.includes('הוספה ל-CRM')).click())
   await wait(1700)
   b = await board(page)

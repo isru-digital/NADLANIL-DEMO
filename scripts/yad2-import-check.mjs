@@ -64,7 +64,7 @@ const card = (page) =>
       house: val('house'),
       rooms: on('[data-rooms]'),
       sqm: val('sqm'),
-      price: val('price'),
+      price: m.querySelector('[data-price-value]')?.dataset.priceValue ?? val('price'),
       parking: on('[data-parking]'),
       extras: on('[aria-label="תוספות"] .ga-pick'),
       notes: val('ad-notes'),
@@ -152,6 +152,9 @@ for (const [tag, vp, mode] of [
   await page.screenshot({ path: `${out}/${tag}-4-notes-photos.png` })
 
   // ---- saved to the CRM, with the note; the street stays on the broker's own card
+  // "עמלת שת"פ" is a must since 22.11.2026: its "+" picks 0.5% (post-form-check walks the slider itself)
+  await page.evaluate(() => document.querySelector('[data-slider="coop"] [data-step="more"]')?.click())
+  await wait(200)
   await tap(page, '.ga-go')
   await wait(900)
   const saved = await page.evaluate(() => {

@@ -134,6 +134,9 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
   await wait(500)
   await page.evaluate(() => document.querySelector('.ga .pf-kind[data-kind="דירה"]')?.click())
   await wait(200)
+  // "עמלת שת"פ" is a must since 22.11.2026: its "+" picks 0.5% (post-form-check walks the slider itself)
+  await page.evaluate(() => document.querySelector('[data-slider="coop"] [data-step="more"]')?.click())
+  await wait(200)
   await page.evaluate(() => [...document.querySelectorAll('.ga-go')].find((b) => b.textContent.includes('הוספה ל-CRM')).click())
   await wait(1700)
   const card = () =>

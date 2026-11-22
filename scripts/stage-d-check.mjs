@@ -26,7 +26,7 @@ const fields = (page) =>
       kind: m.querySelector('.ga-fields .ga-pick.is-big[aria-pressed="true"]')?.textContent.trim(),
       city: pressed('[data-city]')?.dataset.city,
       rooms: pressed('[data-rooms]')?.dataset.rooms,
-      price: m.querySelector('[data-f="price"]')?.value,
+      price: (m.querySelector('[data-price-value]')?.dataset.priceValue ?? m.querySelector('[data-f="price"]')?.value),
       extras: [...m.querySelectorAll('.ga-fields .field:last-child .ga-pick[aria-pressed="true"]')].map((c) => c.textContent.trim()),
       // the CRM card asks for parking as a number; "חניה" in a message is one space there
       parking: m.querySelector('[data-parking][aria-checked="true"]')?.dataset.parking,
@@ -75,6 +75,9 @@ for (const [label, vp, phone] of [
   let f = await fields(page)
   check(`${tag}: the card can be filled from a WhatsApp message (city, rooms, price, extras)`, f?.kind === 'נכס' && f.city === 'פתח תקווה' && f.rooms === '4' && f.price === '2650000' && ['מרפסת שמש', 'מעלית', 'משופצת'].every((x) => f.extras.includes(x)) && f.parking === '1', JSON.stringify(f))
   await shot('1-new-card')
+  // "עמלת שת"פ" is a must since 22.11.2026: its "+" picks 0.5% (post-form-check walks the slider itself)
+  await page.evaluate(() => document.querySelector('[data-slider="coop"] [data-step="more"]')?.click())
+  await wait(200)
   await clickText(page, '.ga-go', 'הוספה ל-CRM')
   await wait(1200)
   let st = await page.evaluate(() => ({ n: document.querySelectorAll('.kan-card').length, first: document.querySelector('.kan-card h3')?.textContent, text: document.querySelector('.kan-flat, .kanban')?.textContent ?? '', modal: !!document.querySelector('.modal') }))
@@ -91,7 +94,8 @@ for (const [label, vp, phone] of [
   await go('/app/community', 1900)
   check(`${tag}: no sideways overflow in the feed`, (await overflow(page)) <= 1, `${await overflow(page)}px`)
   const posts = await page.evaluate(() => document.querySelectorAll('.fb.ci').length)
-  await page.evaluate(() => document.querySelector('[data-act="share"]')?.click())
+  // a post's own "שיתוף" (since 19.11.2026 the top of the feed has a share field of its own, with the same mark)
+  await page.evaluate(() => document.querySelector('.fb.ci [data-act="share"]')?.click())
   await wait(800)
   check(`${tag}: "שיתוף" opens a share box (not a note that sharing is off)`, (await modal(page)).includes('שיתוף עם הקהילה') && !(await toast(page)).includes('אינו פעיל') && (await modalFits(page)))
   await page.type('.modal textarea', 'שווה לראות')

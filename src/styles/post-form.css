@@ -451,3 +451,303 @@ html[data-mode='night'] .pf-upload {
     transition: none;
   }
 }
+
+/* ================================================================ the price and "עמלת שת"פ" (Itzik 22.11.2026) */
+
+/* the big number above each slider */
+.pf-money {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+.pf-big {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: 10px;
+  min-height: 48px;
+  padding: 0 4px;
+  border-radius: 12px;
+  font-family: var(--font-display);
+  font-size: clamp(30px, 8vw, 36px);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.pf-big svg {
+  width: 20px;
+  height: 20px;
+  color: var(--text-dim);
+}
+.pf-big:hover svg {
+  color: var(--pf-on);
+}
+.pf-big:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+.pf-big.is-empty {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+.pf-big.is-coop {
+  cursor: default;
+}
+.pf-hint {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+.pf-coop .pf-hint {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+.pf-must {
+  margin-inline-start: 6px;
+  padding: 1px 8px;
+  border-radius: 99px;
+  background: rgb(var(--g) / 0.12);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text);
+}
+.pf-coop.is-missing {
+  padding: 12px;
+  margin-inline: -12px;
+  border-radius: 16px;
+  background: color-mix(in srgb, #c62828 7%, transparent);
+}
+
+/* typing an exact price */
+.pf-typed {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 48px 48px;
+  gap: 8px;
+  align-items: center;
+}
+.pf-typed .input {
+  min-height: 52px;
+  font-size: 20px;
+  font-weight: 700;
+}
+.pf-typed-ok,
+.pf-typed-no {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.pf-typed-ok {
+  background: var(--pf-on);
+  color: #fff;
+}
+.pf-typed-ok:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.pf-typed-no {
+  border: 1.5px solid var(--line);
+  color: var(--text-dim);
+}
+.pf-typed-ok svg,
+.pf-typed-no svg {
+  width: 20px;
+  height: 20px;
+}
+.pf-typed-say {
+  grid-column: 1 / -1;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* ---------------------------------------------------------------- the slider */
+.ss {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  align-items: start;
+  gap: 6px;
+}
+.ss-step {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1.5px solid var(--line);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition:
+    background-color var(--t) var(--ease),
+    transform var(--t-fast) var(--ease);
+}
+.ss-step:hover:not(:disabled) {
+  background: rgb(var(--g) / 0.1);
+}
+.ss-step:active:not(:disabled) {
+  transform: scale(0.94);
+}
+.ss-step:disabled {
+  opacity: 0.38;
+  cursor: default;
+}
+.ss-step:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+.ss-step svg {
+  width: 18px;
+  height: 18px;
+}
+.ss-body {
+  position: relative;
+  min-width: 0;
+  padding-inline: 16px;
+}
+/* the place a finger lands: tall, and the page may still scroll up and down from it */
+.ss-hit {
+  position: relative;
+  height: 44px;
+  touch-action: pan-y;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.ss-track {
+  position: absolute;
+  inset-inline: 0;
+  top: 50%;
+  height: 8px;
+  margin-top: -4px;
+  border-radius: 99px;
+  background: rgb(var(--w) / 0.14);
+  overflow: hidden;
+}
+.ss-fill {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  border-radius: 99px;
+  background: var(--pf-on);
+}
+.ss-thumb {
+  position: absolute;
+  top: 50%;
+  width: 30px;
+  height: 30px;
+  margin-top: -15px;
+  margin-inline-start: -15px;
+  border-radius: 50%;
+  border: 3px solid var(--pf-on);
+  background: #fff;
+  box-shadow: 0 3px 10px rgb(0 0 0 / 0.22);
+  /* taken at once by a finger: the page does not scroll from the handle */
+  touch-action: none;
+  cursor: grab;
+  transition: transform 0.12s var(--ease);
+}
+/* a bigger place to grab than the round handle itself */
+.ss-thumb::before {
+  content: '';
+  position: absolute;
+  inset: -10px;
+  border-radius: 50%;
+}
+.ss-thumb:active {
+  cursor: grabbing;
+  transform: scale(1.12);
+}
+.ss-thumb:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 3px;
+}
+.ss.is-waiting .ss-thumb {
+  border-color: rgb(var(--w) / 0.35);
+  box-shadow: 0 2px 6px rgb(0 0 0 / 0.14);
+}
+.ss-marks {
+  position: relative;
+  height: 18px;
+  margin-top: -4px;
+}
+.ss-marks span {
+  position: absolute;
+  top: 0;
+  translate: 50% 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+html[dir='ltr'] .ss-marks span {
+  translate: -50% 0;
+}
+
+/* ---------------------------------------------------------------- the red tag "עמלת שת"פ 0.5%" */
+.coop-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: 10px;
+  background: #c62828;
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+/* on a photo: in its corner, away from the price tag, with a shadow that lifts it off any picture */
+.coop-badge.is-photo {
+  position: absolute;
+  z-index: 2;
+  inset-block-start: 14px;
+  inset-inline-end: 14px;
+  box-shadow:
+    0 0 0 2px rgb(255 255 255 / 0.9),
+    0 10px 24px -8px rgb(0 0 0 / 0.55);
+  pointer-events: none;
+}
+.coop-badge.is-line {
+  padding: 4px 10px;
+  font-size: 13.5px;
+}
+/* Chrome's scroll anchoring moved the property form by a whole screen when a slider took its first value (seen on a
+   phone, 22.11.2026). The form is scrolled by the broker alone */
+.modal:has(.ga-fields) {
+  overflow-anchor: none;
+}
+
+/* the photo of a post holds its tag */
+.fb-media-wrap {
+  position: relative;
+}
+@media (max-width: 560px) {
+  .coop-badge.is-photo {
+    inset-block-start: 12px;
+    inset-inline-end: 12px;
+    padding: 5px 10px;
+    font-size: 14px;
+  }
+  .ss {
+    gap: 4px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ss-step,
+  .ss-thumb {
+    transition: none;
+  }
+}

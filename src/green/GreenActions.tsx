@@ -21,6 +21,7 @@ import type { PropCategory } from '../crm/categories'
 import { DEFAULT_KIND, KINDS, closestKind, hasRooms, isKind, kindTitle } from '../config/propertyTypes'
 import { streetName } from '../community/place'
 import { Toggle } from '../components/Toggle'
+import { CoopField, PriceField } from './PriceCoop'
 import '../styles/green-actions.css'
 import '../styles/post-form.css'
 
@@ -47,13 +48,15 @@ type Draft = {
   showHouseNo: boolean
   /** "להעלות גם כסטורי" */
   asStory: boolean
+  /** "עמלת שת"פ" in percent (0 to 1); null until it is chosen, and a property cannot be saved without it */
+  coopPct: number | null
   /** parking spaces: null = not chosen yet, 3 = three or more */
   parking: number | null
   renewal: boolean
   /** what an ad pasted from Yad2 says and the card has no field for (floor, size, entry, the description): the card's note */
   notes: string
 }
-const emptyDraft: Draft = { kind: 'property', city: 'פתח תקווה', rooms: '4', price: '', extras: [], category: '', ptype: '', sqm: '', hood: '', street: '', houseNo: '', aptNo: '', showHouseNo: false, asStory: false, parking: null, renewal: false, notes: '' }
+const emptyDraft: Draft = { kind: 'property', city: 'פתח תקווה', rooms: '4', price: '', extras: [], category: '', ptype: '', sqm: '', hood: '', street: '', houseNo: '', aptNo: '', showHouseNo: false, asStory: false, coopPct: null, parking: null, renewal: false, notes: '' }
 /** no rooms, a size in square metres: a commercial property, or a plot of land */
 const bySize = (d: Draft) => d.kind === 'property' && !!d.category && !hasRooms(d.category, d.ptype || DEFAULT_KIND[d.category])
 const toDraft = (p: Parsed): Draft => ({ ...emptyDraft, kind: p.kind, city: p.city || 'פתח תקווה', rooms: p.rooms ? String(p.rooms) : '', price: p.price ? String(p.price) : '', extras: p.extras })
@@ -156,7 +159,7 @@ function CityPick({ city, onPick }: { city: string; onPick: (c: string) => void 
 }
 
 /** The fields a property or a request is made of; shared by the CRM card and the WhatsApp confirmation. */
-function Fields({ draft, set, kinds, categories = false, full = false, missing = false }: { draft: Draft; set: (d: Partial<Draft>) => void; kinds: [string, string]; categories?: boolean; full?: boolean; missing?: boolean }) {
+function Fields({ draft, set, kinds, categories = false, full = false, missing = false, missingCoop = false }: { draft: Draft; set: (d: Partial<Draft>) => void; kinds: [string, string]; categories?: boolean; full?: boolean; missing?: boolean; missingCoop?: boolean }) {
   const property = draft.kind === 'property'
   // a commercial property (and a plot of land) is measured in square metres; a commercial one has its own extras
   const commercial = categories && bySize(draft)
@@ -283,11 +286,19 @@ function Fields({ draft, set, kinds, categories = false, full = false, missing =
         </div>
       )}
 
-      <label className="field">
-        <span className="field-label">{property ? 'מחיר, בשקלים' : 'תקציב, בשקלים'}</span>
-        <input className="input num" inputMode="numeric" value={draft.price} onChange={(e) => set({ price: e.target.value })} placeholder="2650000" data-f="price" />
-        {num(draft.price) > 0 && <small className="ga-price-say">{formatPriceShort(num(draft.price))}</small>}
-      </label>
+      {/* a property: the price on a slider, and "עמלת שת"פ" (a must) right under it; a buyer's budget stays a box */}
+      {property ? (
+        <>
+          <PriceField price={num(draft.price)} onPrice={(n) => set({ price: String(n) })} />
+          <CoopField pct={draft.coopPct} price={num(draft.price)} onPct={(coopPct) => set({ coopPct })} missing={missingCoop} />
+        </>
+      ) : (
+        <label className="field">
+          <span className="field-label">תקציב, בשקלים</span>
+          <input className="input num" inputMode="numeric" value={draft.price} onChange={(e) => set({ price: e.target.value })} placeholder="2650000" data-f="price" />
+          {num(draft.price) > 0 && <small className="ga-price-say">{formatPriceShort(num(draft.price))}</small>}
+        </label>
+      )}
 
       {full && property && (
         <div className="field" data-f="parking">
@@ -351,7 +362,9 @@ export default function GreenActions() {
   const [paste, setPaste] = useState('')
   const [pasting, setPasting] = useState(false)
   // what stops the card from being saved, shown at its field: no kind of property, or a story with no photo
-  const [cardMiss, setCardMiss] = useState<{ kind?: boolean; story?: boolean }>({})
+  const [cardMiss, setCardMiss] = useState<{ kind?: boolean; coop?: boolean; story?: boolean }>({})
+  // the WhatsApp confirmation of a property needs its "עמלת שת"פ" too
+  const [waMiss, setWaMiss] = useState(false)
   // ---- an ad pasted from Yad2: the text, and what was filled from it
   const [adText, setAdText] = useState('')
   const [adOpen, setAdOpen] = useState(false)
@@ -383,6 +396,7 @@ export default function GreenActions() {
     setWa('')
     setWaDraft(null)
     setWaPhone(false)
+    setWaMiss(false)
     setWords('')
   }, [ask])
 
@@ -417,10 +431,11 @@ export default function GreenActions() {
     const rooms = num(card.rooms)
     const property = card.kind === 'property'
     // a property needs its kind, and a story needs a picture: said at the field itself, and brought into view
-    const miss = { kind: property && (!card.category || !card.ptype), story: property && card.asStory && photos.length === 0 }
-    if (miss.kind || miss.story) {
+    const miss = { kind: property && (!card.category || !card.ptype), coop: property && card.coopPct === null, story: property && card.asStory && photos.length === 0 }
+    if (miss.kind || miss.coop || miss.story) {
       setCardMiss(miss)
-      window.setTimeout(() => document.querySelector(miss.kind ? '.ga [data-f="category"]' : '.ga [data-toggle="as-story"]')?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 60)
+      const first = miss.kind ? '.ga [data-f="category"]' : miss.coop ? '.ga [data-f="coop"]' : '.ga [data-toggle="as-story"]'
+      window.setTimeout(() => document.querySelector(first)?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 60)
       return
     }
     const group = card.category || 'home'
@@ -444,6 +459,7 @@ export default function GreenActions() {
             renewal: card.renewal || undefined,
             extras: card.extras.length ? card.extras : undefined,
             asStory: card.asStory || undefined,
+            coopPct: card.coopPct ?? undefined,
           }
         : {}),
       rooms: commercial ? '-' : card.rooms || '-',
@@ -471,6 +487,11 @@ export default function GreenActions() {
 
   const publishWa = () => {
     if (!waDraft) return
+    if (waDraft.kind === 'property' && waDraft.coopPct === null) {
+      setWaMiss(true)
+      window.setTimeout(() => document.querySelector('.ga [data-f="coop"]')?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 60)
+      return
+    }
     const rooms = num(waDraft.rooms)
     const price = num(waDraft.price)
     const id = `w${Date.now()}`
@@ -485,7 +506,7 @@ export default function GreenActions() {
             topicId: 'coop',
             title: titleOf('property', rooms || null, waDraft.city),
             body: waDraft.extras.length ? `${waDraft.extras.join(', ')}.` : 'פרטים נוספים אצלי.',
-            property: { area: waDraft.city, rooms: waDraft.rooms || '-', price, split: 'חלוקת עמלה שווה', showPrice: price > 0, kind: waKind, group: 'home', extra: waDraft.extras.length ? waDraft.extras : undefined },
+            property: { area: waDraft.city, rooms: waDraft.rooms || '-', price, coopPct: waDraft.coopPct ?? undefined, showPrice: price > 0, kind: waKind, group: 'home', extra: waDraft.extras.length ? waDraft.extras : undefined },
           }
         : {
             ...base,
@@ -506,6 +527,7 @@ export default function GreenActions() {
         category: 'home',
         ptype: waKind,
         extras: waDraft.extras.length ? waDraft.extras : undefined,
+        coopPct: waDraft.coopPct ?? undefined,
         price,
         status: 'new',
         client: 'בעל הנכס',
@@ -631,7 +653,7 @@ export default function GreenActions() {
               )}
             </div>
           )}
-          <Fields draft={card} set={(d) => setCard((c) => ({ ...c, ...d }))} kinds={['נכס', 'לקוח שמחפש']} categories full missing={!!cardMiss.kind} />
+          <Fields draft={card} set={(d) => setCard((c) => ({ ...c, ...d }))} kinds={['נכס', 'לקוח שמחפש']} categories full missing={!!cardMiss.kind} missingCoop={!!cardMiss.coop} />
           {card.kind === 'property' && (adDone || card.notes) && (
             <label className="field">
               <span className="field-label">עוד מהמודעה (נשאר אצלכם בכרטיס)</span>
@@ -711,7 +733,7 @@ export default function GreenActions() {
                   </small>
                 </div>
               </div>
-              <Fields draft={waDraft} set={(d) => setWaDraft((c) => (c ? { ...c, ...d } : c))} kinds={['נכס לשיתוף פעולה', 'מחפש לקונה']} />
+              <Fields draft={waDraft} set={(d) => setWaDraft((c) => (c ? { ...c, ...d } : c))} kinds={['נכס לשיתוף פעולה', 'מחפש לקונה']} missingCoop={waMiss} />
               <p className="ga-privacy">
                 <ShieldCheck /> {waPhone ? 'מצאנו מספר טלפון בהודעה, והוא לא יתפרסם. ' : ''}שמות ומספרי טלפון של לקוחות לא מתפרסמים בקהילה.
               </p>

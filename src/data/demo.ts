@@ -59,6 +59,8 @@ export type CrmItem = {
   extras?: string[]
   /** "להעלות גם כסטורי": the post of this property is in the row of stories too (it needs a photo) */
   asStory?: boolean
+  /** "עמלת שת"פ" (22.11.2026), in percent of the price: 0 to 1, every 0.05. A card from before has none */
+  coopPct?: number
   /** how many parking spaces (0 = none, 3 = three or more) */
   parking?: number
   /** marked for urban renewal (תמ"א 38 or פינוי בינוי) */
@@ -624,7 +626,11 @@ export type PropertyInfo = {
   area: string
   rooms: string
   price: number
-  split: string
+  /** the old "חלוקת עמלה" line. Kept on what was published with it, and no longer shown (22.11.2026): "עמלת שת"פ"
+      took its place */
+  split?: string
+  /** "עמלת שת"פ" in percent of the price (0 to 1, every 0.05). A post from before has none, and no tag */
+  coopPct?: number
   showPrice?: boolean
   deal?: 'sale' | 'rent'
   /** the kind of property (config/propertyTypes.ts) and its group; an older post is read through `kindOf` */

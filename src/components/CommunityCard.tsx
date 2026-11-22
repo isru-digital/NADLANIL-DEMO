@@ -10,7 +10,6 @@ import {
   ChevronLeft,
   Flag,
   Globe2,
-  Handshake,
   Info,
   Link2,
   MapPin,
@@ -41,6 +40,7 @@ import '../styles/post-form.css'
 import { propertyKind } from '../community/match'
 import { searchGroup } from '../config/propertyTypes'
 import { streetOf } from '../community/place'
+import { CoopBadge } from './CoopBadge'
 
 /**
  * One community post, Facebook-style. The same component renders the feed and the
@@ -253,11 +253,13 @@ export default function CommunityCard({
         <div className="fb-embed fb-prop">
           {(() => {
             // a property shared in the community has a page of its own: its photos and every detail
-            const inner = (
-              <>
-                {item.image && <Photo src={item.image} alt={item.title ?? ''} ratio="16 / 9" className="fb-media" eager={preview} />}
-              </>
-            )
+            // the photo, with the red "עמלת שת"פ" tag in its corner (a property from before has no fee, and no tag)
+            const inner = item.image ? (
+              <div className="fb-media-wrap">
+                <Photo src={item.image} alt={item.title ?? ''} ratio="16 / 9" className="fb-media" eager={preview} />
+                <CoopBadge pct={item.property.coopPct} />
+              </div>
+            ) : null
             return preview ? inner : (
               <Link to={`/app/property/${item.id}`} className="fb-prop-link" aria-label={`לדף הנכס: ${item.title}`} data-open-property={item.id}>
                 {inner}
@@ -304,10 +306,8 @@ export default function CommunityCard({
                   </span>
                 )}
                 {item.property.showPrice !== false && <strong className="num">{priceText(item.property)}</strong>}
-                <span className="fb-split">
-                  <Handshake />
-                  {item.property.split}
-                </span>
+                {/* no photo to carry the tag: it stands in the line of facts */}
+                {!item.image && <CoopBadge pct={item.property.coopPct} at="line" />}
               </div>
               {/* what the property has: a safe room, a lift... (the first few; the property's page has them all) */}
               {(item.property.extra?.length ?? 0) > 0 && (
