@@ -96,9 +96,12 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
   check(`${d} properties: "השכרה" across the country shows the 3 rentals`, c.n === 3, JSON.stringify(c))
   await page.evaluate(() => document.querySelector('[data-deal="all"]').click())
   await page.select('[data-filter="rooms"]', '5')
-  // the money is two boxes that are written into since 23.11.2026, with the usual ranges beside them
-  await page.click('[data-f="price-max"]')
-  await page.type('[data-f="price-max"]', '2000000')
+  // the money is two boxes that are written into since 23.11.2026, with the usual ranges beside them.
+  // The box is brought to the middle of the screen first: at the foot of a phone it sits under the bar of the app
+  await page.evaluate(() => document.querySelector('[data-f="price-max"]').scrollIntoView({ block: 'center' }))
+  await wait(400)
+  await page.focus('[data-f="price-max"]')
+  await page.keyboard.type('2000000')
   await wait(1400)
   c = await count()
   const written = await page.evaluate(() => document.querySelector('[data-f="price-max"]').value)
@@ -114,6 +117,64 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
   await wait(1200)
   const cleared = await page.evaluate(() => ({ min: document.querySelector('[data-f="price-min"]').value, max: document.querySelector('[data-f="price-max"]').value, on: !!document.querySelector('.flt-bands button[aria-pressed="true"]') }))
   check(`${d} properties: tapping the same range again empties both boxes`, cleared.min === '' && cleared.max === '' && !cleared.on, JSON.stringify(cleared))
+
+  // the small slider above the boxes (23.11.2026): the same range, dragged. Whichever is touched, both say the same
+  const rng = await page.evaluate(() => {
+    const t = [...document.querySelectorAll('[data-range="price"] [data-thumb]')]
+    return { n: t.length, say: document.querySelector('[data-range-say]')?.textContent.trim() ?? null, aria: t.map((x) => ({ role: x.getAttribute('role'), now: Number(x.getAttribute('aria-valuenow')), max: Number(x.getAttribute('aria-valuemax')), text: x.getAttribute('aria-valuetext'), label: x.getAttribute('aria-label'), tab: x.tabIndex })), big: t.map((x) => { const r = x.getBoundingClientRect(); const i = parseFloat(getComputedStyle(x, '::before').inset); return Math.round(r.width - 2 * i) }) }
+  })
+  check(`${d}: above the boxes there is a slider of two handles, each one a slider of its own that says where it is`, rng.n === 2 && rng.aria.every((a) => a.role === 'slider' && a.tab === 0 && a.max === 10000000) && rng.aria[0].now === 0 && rng.aria[1].now === 10000000 && rng.aria[1].text === "10 מ' ₪ ומעלה" && rng.say === 'כל המחירים', JSON.stringify(rng))
+  check(`${d}: and a finger has at least 44 pixels to take a handle by`, rng.big.every((w) => w >= 44), JSON.stringify(rng.big))
+  // dragging the upper handle: the box under it fills, and the feed follows
+  const drag = async (which, by) => {
+    const box = await page.evaluate((w) => { const r = document.querySelector(`[data-thumb="${w}"]`).getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 } }, which)
+    await page.mouse.move(box.x, box.y)
+    await page.mouse.down()
+    await page.mouse.move(box.x + by / 2, box.y, { steps: 4 })
+    await page.mouse.move(box.x + by, box.y, { steps: 4 })
+    await page.mouse.up()
+    await wait(700)
+  }
+  await page.evaluate(() => document.querySelector('[data-range="price"]').scrollIntoView({ block: 'center' }))
+  await wait(300)
+  await drag('to', 220)
+  const dragged = await page.evaluate(() => ({ max: document.querySelector('[data-f="price-max"]').value, say: document.querySelector('[data-range-say]').textContent.trim(), now: Number(document.querySelector('[data-thumb="to"]').getAttribute('aria-valuenow')) }))
+  const maxNow = Number(dragged.max.replace(/\D/g, ''))
+  check(`${d}: dragging the upper handle writes the amount in the box under it, and says it in words`, maxNow > 0 && maxNow < 10000000 && maxNow === dragged.now && dragged.say.startsWith('עד '), JSON.stringify(dragged))
+  await shot('2b-price-slider', '.flt')
+  // writing in a box moves the handle, and an amount above the end of the track is kept whole
+  await page.evaluate(() => {
+    const set = (el, v) => { Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set.call(el, v); el.dispatchEvent(new Event('input', { bubbles: true })) }
+    set(document.querySelector('[data-f="price-min"]'), '3000000')
+    set(document.querySelector('[data-f="price-max"]'), '30000000')
+  })
+  await wait(700)
+  const typed = await page.evaluate(() => ({ from: Number(document.querySelector('[data-thumb="from"]').getAttribute('aria-valuenow')), to: Number(document.querySelector('[data-thumb="to"]').getAttribute('aria-valuenow')), box: document.querySelector('[data-f="price-max"]').value, say: document.querySelector('[data-range-say]').textContent.trim() }))
+  check(`${d}: writing in a box moves the handle, and an amount above the end of the track stays whole (30,000,000)`, typed.from === 3000000 && typed.to === 10000000 && typed.box === '30,000,000' && typed.say === "3 מ' ₪ עד 30 מ' ₪", JSON.stringify(typed))
+  // a finger that moves up the page over the track does not move the slider
+  const stayed = await page.evaluate(async () => {
+    const hit = document.querySelector('[data-range="price"] [data-track]')
+    const r = hit.getBoundingClientRect()
+    const x = r.left + r.width / 2
+    const y = r.top + r.height / 2
+    const fire = (t, cx, cy) => hit.dispatchEvent(new PointerEvent(t, { bubbles: true, clientX: cx, clientY: cy, pointerId: 9, pointerType: 'touch', isPrimary: true }))
+    const before = document.querySelector('[data-f="price-max"]').value
+    fire('pointerdown', x, y)
+    fire('pointermove', x + 3, y - 45)
+    fire('pointermove', x + 5, y - 95)
+    fire('pointerup', x + 5, y - 95)
+    await new Promise((r2) => setTimeout(r2, 300))
+    return { before, after: document.querySelector('[data-f="price-max"]').value }
+  })
+  check(`${d}: a finger that moves up the page over the track does not move the slider`, stayed.before === stayed.after, JSON.stringify(stayed))
+  // the keyboard moves a handle too
+  await page.evaluate(() => document.querySelector('[data-thumb="from"]').focus())
+  await page.keyboard.press('Home')
+  await wait(400)
+  const home = await page.evaluate(() => ({ min: document.querySelector('[data-f="price-min"]').value, now: Number(document.querySelector('[data-thumb="from"]').getAttribute('aria-valuenow')) }))
+  check(`${d}: from the keyboard: Home on the lower handle empties the box under it`, home.min === '' && home.now === 0, JSON.stringify(home))
+  await page.evaluate(() => [...document.querySelectorAll('.flt-foot button')].find((b) => b.textContent.includes('ניקוי'))?.click())
+  await wait(1000)
   await page.goto(green + '/app/community?topic=seeking', { waitUntil: 'load' })
   await wait(1200)
   c = await count()

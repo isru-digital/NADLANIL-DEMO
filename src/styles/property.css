@@ -395,6 +395,97 @@ html[data-mode='night'] .pp-split.is-full svg {
   display: flex;
   gap: 8px;
 }
+/* the small slider with two handles above the boxes: the same range, dragged (23.11.2026) */
+.rng {
+  display: grid;
+  gap: 2px;
+  padding-block: 2px;
+}
+.rng-hit {
+  position: relative;
+  height: 32px;
+  /* a finger that moves up or down the page scrolls it; sideways is the slider's (the handles take their own) */
+  touch-action: pan-y;
+  cursor: pointer;
+}
+.rng-track {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline: 10px;
+  height: 6px;
+  translate: 0 -50%;
+  border-radius: 99px;
+  background: rgb(var(--w) / 0.16);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.rng-fill {
+  position: absolute;
+  inset-block: 0;
+  border-radius: 99px;
+  background: linear-gradient(to left, var(--gold), var(--gold-soft));
+  transition: opacity var(--t) var(--ease);
+}
+.rng.is-open .rng-fill {
+  opacity: 0.45;
+}
+.rng-thumb {
+  position: absolute;
+  inset-block-start: 50%;
+  width: 18px;
+  height: 18px;
+  margin-inline-start: -9px;
+  translate: 0 -50%;
+  border-radius: 50%;
+  border: 2px solid var(--gold);
+  background: var(--card);
+  box-shadow: 0 2px 8px -2px rgb(0 0 0 / 0.35);
+  /* the handle itself is taken at once: the page does not scroll from it */
+  touch-action: none;
+  cursor: grab;
+  transition:
+    scale var(--t) var(--ease),
+    box-shadow var(--t) var(--ease);
+}
+/* the finger's share, bigger than what the eye sees, so no one has to aim */
+.rng-thumb::before {
+  content: '';
+  position: absolute;
+  inset: -14px;
+  border-radius: 50%;
+}
+.rng-thumb:hover,
+.rng-thumb:active {
+  scale: 1.15;
+}
+.rng-thumb:active {
+  cursor: grabbing;
+}
+.rng-thumb:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+}
+.rng-say {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+html[data-mode='night'] .rng-track {
+  background: rgb(var(--w) / 0.14);
+}
+html[data-mode='night'] .rng-thumb {
+  background: var(--bg);
+}
+@media (prefers-reduced-motion: reduce) {
+  .rng-thumb,
+  .rng-fill {
+    transition: none;
+  }
+  .rng-thumb:hover,
+  .rng-thumb:active {
+    scale: 1;
+  }
+}
 .flt-money-one {
   display: flex;
   align-items: center;

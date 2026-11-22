@@ -33,6 +33,7 @@ import { GROUPS, KINDS, kindFits, searchGroup } from '../config/propertyTypes'
 import type { PropGroup } from '../config/propertyTypes'
 import { hoodOf, propertyKind } from '../community/match'
 import { MoneyInput } from '../components/MoneyInput'
+import { RangeSlider } from '../components/RangeSlider'
 import { nameKey } from '../config/places'
 import { streetOf } from '../community/place'
 import { Toggle } from '../components/Toggle'
@@ -84,6 +85,9 @@ const RENT_BANDS: [label: string, min: string, max: string][] = [
   ['6,000 עד 9,000', '6000', '9000'],
   ['9,000 ומעלה', '9000', ''],
 ]
+/** the ends of the small slider above the two boxes (23.11.2026). An amount written by hand may pass them */
+const SALE_TOP = 10_000_000
+const RENT_TOP = 15_000
 const ROOMS = ['2', '3', '4', '5']
 
 /** does a property or a buyer's search pass the filter? */
@@ -815,8 +819,12 @@ export default function Community() {
 
 function FilterBar({ kind, filter, onChange, count, cities, hoods }: { kind: 'properties' | 'buyers'; filter: Filter; onChange: (f: Filter) => void; count: number; cities: string[]; hoods: { value: string; label: string; city: string }[] }) {
   const set = (patch: Partial<Filter>) => onChange({ ...filter, ...patch })
-  const bands = filter.deal === 'rent' ? RENT_BANDS : SALE_BANDS
-  const money = filter.deal === 'rent' ? 'שכירות לחודש' : kind === 'buyers' ? 'תקציב' : 'מחיר'
+  const rentNow = filter.deal === 'rent'
+  const bands = rentNow ? RENT_BANDS : SALE_BANDS
+  const money = rentNow ? 'שכירות לחודש' : kind === 'buyers' ? 'תקציב' : 'מחיר'
+  // what the handles say in words: "הכול", "עד 4 מ' ₪", "מ-2 מ' ₪ ומעלה", "2 מ' ₪ עד 4 מ' ₪"
+  const short = (s: string) => (rentNow ? `${Number(s).toLocaleString('he-IL')} ₪` : formatPriceShort(Number(s)))
+  const rangeWords = !filter.priceMin && !filter.priceMax ? `כל ה${money === 'מחיר' ? 'מחירים' : 'סכומים'}` : !filter.priceMin ? `עד ${short(filter.priceMax)}` : !filter.priceMax ? `מ-${short(filter.priceMin)} ומעלה` : `${short(filter.priceMin)} עד ${short(filter.priceMax)}`
   const on = filter.city || filter.rooms || filter.priceMin || filter.priceMax || filter.deal || filter.renewal || filter.kind || filter.hood
   return (
     <section className="flt" aria-label={kind === 'properties' ? 'סינון נכסים' : 'סינון קונים'} data-filters={kind}>
@@ -880,6 +888,19 @@ function FilterBar({ kind, filter, onChange, count, cities, hoods }: { kind: 'pr
         <span className="flt-money-name" id="flt-money-name">
           {filter.deal === 'rent' ? 'שכירות לחודש' : kind === 'buyers' ? 'תקציב' : 'מחיר'}
         </span>
+        {/* the same range, dragged: whichever is touched, the boxes and the handles say the same thing */}
+        <RangeSlider
+          id="price"
+          max={rentNow ? RENT_TOP : SALE_TOP}
+          step={rentNow ? 250 : 100_000}
+          from={filter.priceMin ? Number(filter.priceMin) : null}
+          to={filter.priceMax ? Number(filter.priceMax) : null}
+          onChange={(a, b) => set({ priceMin: a ? String(a) : '', priceMax: b ? String(b) : '' })}
+          text={rangeWords}
+          fromLabel={`${money}, החל מ`}
+          toLabel={`${money}, עד`}
+          say={(n, top) => (top ? `${formatPriceShort(n)} ומעלה` : n === 0 ? 'בלי מינימום' : formatPriceShort(n))}
+        />
         <div className="flt-money-pair" role="group" aria-labelledby="flt-money-name">
           <label className="flt-money-one">
             <span>החל מ</span>
