@@ -21,12 +21,12 @@ import {
   Sparkles,
   ThumbsUp,
   Trophy,
-  Wallet, Building2 } from 'lucide-react'
+  Wallet, Building2, ArrowUp } from 'lucide-react'
 import { CURRENT_BROKER_ID } from '../config'
 import { reactionById, reactions, topicReactions } from '../config/reactions'
 import type { ReactionId } from '../config/reactions'
 import { REFERRAL_DISCLAIMER, topicById } from '../config/topics'
-import { brokerById, formatPrice, roomsLabel } from '../data/demo'
+import { brokerById, bumpReadyAt, canBump, formatPrice, roomsLabel, waitWords } from '../data/demo'
 import { priceText } from '../community/PropertyPage'
 import type { Comment, CommunityItem } from '../data/demo'
 import { useStore } from '../store'
@@ -56,7 +56,7 @@ export default function CommunityCard({
   /** shown when this post fits something of mine (a saved search or a property) */
   match?: string
 }) {
-  const { liked, react, interested, toggleInterested, toast, addComment } = useStore()
+  const { liked, react, interested, toggleInterested, toast, addComment, bumpItem } = useStore()
   const topic = topicById(item.topicId)
   const author = brokerById(item.authorId)
   const me = brokerById(CURRENT_BROKER_ID)
@@ -117,13 +117,42 @@ export default function CommunityCard({
   const mineReaction = myReaction ? reactionById(myReaction) : null
   const LikeIcon = mineReaction?.icon ?? ThumbsUp
 
+  /**
+   * "הקפצה למעלה" (Itzik 22.11.2026): my own property goes back to the top of the feed, as if it were published now,
+   * once in two days. Before the two days are up the button is quiet and grey and says how long is left, so nobody
+   * presses it for nothing. Only the broker who shared the property sees it: `mine`.
+   */
+  const ready = canBump(item)
+  const bump = mine && !preview && item.property && (
+    <button
+      type="button"
+      className={`ci-bump${ready ? '' : ' is-waiting'}`}
+      onClick={() => {
+        if (!ready) return
+        bumpItem(item.id)
+        toast('הנכס עלה לראש הפיד')
+      }}
+      disabled={!ready}
+      aria-disabled={!ready}
+      title={ready ? 'הנכס יחזור לראש הפיד' : 'אפשר להקפיץ פעם ביומיים'}
+      data-act="bump"
+      data-ready={ready ? '1' : '0'}
+    >
+      <ArrowUp aria-hidden />
+      {ready ? 'הקפצה למעלה' : `אפשר להקפיץ ${waitWords(bumpReadyAt(item) - Date.now())}`}
+    </button>
+  )
+
   const cta = topic.cta && !preview && (
     <div className="fb-embed-cta">
       {mine ? (
-        <span className="tag tag-green">
-          <Check />
-          הפרסום שלך באוויר
-        </span>
+        <>
+          <span className="tag tag-green">
+            <Check />
+            הפרסום שלך באוויר
+          </span>
+          {bump}
+        </>
       ) : (
         <button
           className={`btn btn-sm ci-cta ${sent ? 'btn-ghost is-sent' : 'btn-gold'}`}
@@ -175,7 +204,18 @@ export default function CommunityCard({
             {/* in the line under the name (19.11.2026): hanging from the top of the post it covered the topic's name
                 on a phone. The older look still places it at the top of the post, through its own style. */}
             {item.fresh && !preview && <span className="fb-new">חדש</span>}
+            {/* the date stays the day it was published, also after "הקפצה למעלה": a post that was lifted says so, so
+                that nobody reads it as brand new (22.11.2026) */}
             <span>{item.time}</span>
+            {!!item.bumpedAt && !preview && (
+              <>
+                <i aria-hidden>·</i>
+                <span className="fb-bumped" data-bumped>
+                  <ArrowUp aria-hidden />
+                  הוקפץ
+                </span>
+              </>
+            )}
             <i aria-hidden>·</i>
             {/* a post by one of the staff, who work in no city, has none */}
             {item.city && (

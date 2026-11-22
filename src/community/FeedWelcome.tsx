@@ -44,14 +44,18 @@ const MORE: { id: Intent; icon: LucideIcon; label: string }[] = [
  * in one line. The last two have no room of their own: on a computer they are in the side list, so their chips show
  * only where that list is not (a phone, a tablet), at the end of the row.
  */
-const ROOMS: { id: TopicId; label: string; short: string; extra?: boolean }[] = [
+const ROOMS: { id: TopicId; label: string; short: string; extra?: boolean; offRow?: boolean }[] = [
   { id: 'coop', label: 'נכסים לשיתוף', short: 'נכסים' },
   { id: 'seeking', label: 'מחפש לקונה', short: 'קונים' },
   { id: 'referrals', label: 'מתווך בעיר אחרת', short: 'עיר אחרת' },
   { id: 'knowledge', label: 'ידע ושאלות', short: 'שאלות' },
-  { id: 'posts', label: 'פוסטים', short: 'פוסטים', extra: true },
+  // "פוסטים" is off the row (Itzik 22.11.2026): on a phone the row was crowded, and this is the room it can spare,
+  // because the posts are in the feed of "הכול" anyway. The room itself was not removed: on a computer it is in the
+  // side list, as it always was, and ?topic=posts still opens it from anywhere.
+  { id: 'posts', label: 'פוסטים', short: 'פוסטים', extra: true, offRow: true },
   { id: 'wins', label: 'עסקאות שנסגרו', short: 'עסקאות', extra: true },
 ]
+const ROW = ROOMS.filter((r) => !r.offRow)
 
 export default function FeedWelcome({ items, view, onView, onIntent }: { items: CommunityItem[]; view: View; onView: (v: View) => void; onIntent?: (i: Intent) => void }) {
   const me = brokerById(CURRENT_BROKER_ID)
@@ -214,7 +218,7 @@ export default function FeedWelcome({ items, view, onView, onIntent }: { items: 
             {fresh && <i className="wl-dot" aria-label="יש עדכונים חדשים" />}
             הכול
           </button>
-          {ROOMS.map((r) => (
+          {ROW.map((r) => (
             <button
               key={r.id}
               type="button"

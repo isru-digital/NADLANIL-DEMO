@@ -1044,6 +1044,86 @@ a.fb-topic:hover {
 .fb-embed-cta .btn {
   min-height: 40px;
 }
+
+/* ---------------------------------------------------- "הקפצה למעלה" (Itzik 22.11.2026)
+   On my own property, beside "הפרסום שלך באוויר": a small quiet pill, the green of the page. Before the two days
+   are up it is flat and grey and carries the wait in words, and it is readable by day and by night (the colours are
+   the page's own tokens, which both modes set). 44px high, so a thumb hits it. */
+.ci-bump {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--gold) 9%, var(--panel));
+  color: var(--gold-lo2);
+  font: 600 13.5px/1 var(--font-body, inherit);
+  cursor: pointer;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.18s ease;
+}
+.ci-bump svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2.2;
+}
+.ci-bump:hover {
+  background: color-mix(in srgb, var(--gold) 16%, var(--panel));
+  border-color: color-mix(in srgb, var(--gold) 70%, transparent);
+}
+.ci-bump:active {
+  transform: scale(0.97);
+}
+.ci-bump.is-waiting {
+  border-color: var(--line);
+  background: var(--surface);
+  color: var(--text-dim);
+  cursor: default;
+  font-weight: 500;
+}
+.ci-bump.is-waiting:hover {
+  background: var(--surface);
+  border-color: var(--line);
+}
+.ci-bump.is-waiting:active {
+  transform: none;
+}
+html[data-mode='night'] .ci-bump {
+  color: var(--gold-hi3);
+  background: color-mix(in srgb, var(--gold) 14%, transparent);
+}
+html[data-mode='night'] .ci-bump.is-waiting {
+  color: var(--text-dim);
+  background: var(--surface-2);
+}
+/* a lifted post says so in its date line, quietly */
+.fb-bumped {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--gold-lo2);
+  font-weight: 600;
+}
+.fb-bumped svg {
+  width: 13px;
+  height: 13px;
+  stroke-width: 2.4;
+}
+html[data-mode='night'] .fb-bumped {
+  color: var(--gold-hi3);
+}
+@media (prefers-reduced-motion: reduce) {
+  .ci-bump {
+    transition: none;
+  }
+  .ci-bump:active {
+    transform: none;
+  }
+}
 .fb-search,
 .fb-ref {
   margin: 0 16px 12px;

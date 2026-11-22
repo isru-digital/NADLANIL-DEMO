@@ -678,6 +678,16 @@ export type CommunityItem = {
   sourceId?: string
   fresh?: boolean
   /**
+   * When it was published, in milliseconds (22.11.2026, with the order of the feed). The demo's posts tell their age
+   * in words ("לפני 3 שעות") and have none: `atOf` reads those. `time` is the one shown, always, and never changes.
+   */
+  at?: number
+  /**
+   * "הקפצה למעלה" (22.11.2026): when its writer last lifted it to the top of the feed. It changes the post's place
+   * in the feed and nothing else: the date on the property's page stays the day it was published.
+   */
+  bumpedAt?: number
+  /**
    * Where it shows (22.11.2026): a post is in the feed only, a story in the row of stories only, unless its writer
    * turned on "להעלות גם כסטורי" / "לפרסם גם כפוסט בפיד". What was published before this had no such choice and
    * stays where it was: in the feed, and in the stories when it has a photo.
@@ -736,6 +746,35 @@ export function ageOf(time: string): number {
   if (time === 'לפני יומיים') return 2880
   if (/ימים/.test(time)) return n(/(\d+)/) * 1440
   return 1440 * 9
+}
+
+// ---------------------------------------------------------- the order of the feed (Itzik 22.11.2026)
+// The feed is newest first, always. A post written in the app carries the moment it was published (`at`); the demo's
+// posts tell their age in words, and `atOf` turns those words into a moment, counted back from when the page opened.
+// "הקפצה למעלה" sets `bumpedAt`, and the post sits in the feed by that moment, while the words of its own date
+// ("פורסם לפני 9 ימים") stay as they were, on the card and on the property's page.
+const OPENED = Date.now()
+/** when a post was published, in milliseconds */
+export const atOf = (it: Pick<CommunityItem, 'at' | 'time'>) => it.at ?? OPENED - ageOf(it.time) * 60000
+/** what puts a post in its place in the feed: when it was published, or when it was last lifted */
+export const feedAt = (it: Pick<CommunityItem, 'at' | 'time' | 'bumpedAt'>) => Math.max(it.bumpedAt ?? 0, atOf(it))
+/** newest first, by the moment that puts each post in its place */
+export const sortFeed = <T extends Pick<CommunityItem, 'at' | 'time' | 'bumpedAt'>>(list: T[]): T[] => [...list].sort((a, b) => feedAt(b) - feedAt(a))
+
+/** how long a post waits between one lift and the next: two days */
+export const BUMP_GAP = 48 * 60 * 60 * 1000
+/** the moment this post may be lifted again: two days after it was published, or after the last lift */
+export const bumpReadyAt = (it: Pick<CommunityItem, 'at' | 'time' | 'bumpedAt'>) => feedAt(it) + BUMP_GAP
+/** may it be lifted now? */
+export const canBump = (it: Pick<CommunityItem, 'at' | 'time' | 'bumpedAt'>, now = Date.now()) => now >= bumpReadyAt(it)
+/** the wait, in the words the button says: "בעוד 13 שעות" */
+export function waitWords(ms: number): string {
+  const mins = Math.max(1, Math.ceil(ms / 60000))
+  if (mins < 60) return mins === 1 ? 'בעוד דקה' : `בעוד ${mins} דקות`
+  const hours = Math.ceil(mins / 60)
+  if (hours === 1) return 'בעוד שעה'
+  if (hours === 2) return 'בעוד שעתיים'
+  return `בעוד ${hours} שעות`
 }
 
 const home = (
@@ -799,6 +838,11 @@ function moreItems(): CommunityItem[] {
     home('p13', 'b17', 'תל אביב', 'לפני 4 ימים', 'פנטהאוז 5 חדרים בצפון הישן', 'מרפסת גג של 60 מ"ר ונוף פתוח לים ולעיר. ללקוחות רציניים, דרך מתווך מלווה.', 19,
       { area: 'תל אביב - הצפון הישן', rooms: '5', price: 8900000, kind: 'פנטהאוז', sqm: 170, floor: '8 מתוך 8', parking: 2, elevator: true, images: [img('prop-01'), img('prop-07'), img('prop-06')], extra: ['מרפסת גג 60 מ"ר', 'שתי חניות', 'מחסן'] },
       [{ authorId: 'b2', time: 'לפני 4 ימים', body: 'יש לי לקוח שמחפש בדיוק את זה. חוזר אלייך עד הערב.' }]),
+    // my own property in the feed (Itzik 22.11.2026): the demo needs one, so that "הקפצה למעלה" can be seen at all.
+    // It is five days old, so it may be lifted now; after a lift the same button shows the two days it waits.
+    home('p14', 'b1', 'רמת גן', 'לפני 5 ימים', 'דירת 4 חדרים משופצת ליד הבורסה', 'קומה רביעית עם מעלית וחניה בטאבו. הבעלים גמישים במועד הכניסה.', 6,
+      { area: 'רמת גן - ליד הבורסה', rooms: '4', price: 2790000, kind: 'דירה', coopPct: 0.5, street: 'ביאליק', sqm: 104, floor: '4 מתוך 7', parking: 1, elevator: true, images: [img('prop-03'), img('prop-08'), img('il-kitchen')], extra: ['ממ"ד', 'מרפסת שמש', 'מחסן'] },
+      [{ authorId: 'b2', time: 'לפני 4 ימים', body: 'יש לי זוג שמחפש בדיוק באזור. אשלח להם הערב.' }]),
 
     // ------------------------------------------------------------ buyers
     buyer('s1', 'b12', 'פתח תקווה', 'לפני 50 דקות', 'זוג צעיר מחפש 3 עד 4 חדרים', 'אישור עקרוני למשכנתה ביד. חשוב להם מעלית וחניה, גמישים על הקומה.', 3,

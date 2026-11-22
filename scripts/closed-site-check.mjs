@@ -28,6 +28,13 @@ const source = fs.readFileSync('src/config/construction.ts', 'utf8')
 const STAFF = JSON.stringify({ token: 'test-session', member: null, staff: { name: 'בדיקה', email: 'itzik@test.local', approver: true } })
 const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.mp4': 'video/mp4', '.svg': 'image/svg+xml', '.json': 'application/json', '.webmanifest': 'application/manifest+json', '.woff2': 'font/woff2' }
 const dist = path.resolve('dist')
+/** everything the built site ships to a browser (every js and html of ./dist), as one text to look through */
+const built = fs
+  .readdirSync(path.join(dist, 'assets'), { withFileTypes: true })
+  .filter((f) => f.isFile() && /\.(js|css)$/.test(f.name))
+  .map((f) => fs.readFileSync(path.join(dist, 'assets', f.name), 'utf8'))
+  .concat(fs.readdirSync(dist, { withFileTypes: true }).filter((f) => f.isFile() && f.name.endsWith('.html')).map((f) => fs.readFileSync(path.join(dist, f.name), 'utf8')))
+  .join(' ')
 const server = http.createServer((req, res) => {
   const url = decodeURIComponent((req.url ?? '/').split('?')[0])
   let file = url.startsWith(PREFIX) ? path.join(dist, url.slice(PREFIX.length)) : ''

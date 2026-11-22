@@ -25,7 +25,8 @@ const CHOICES = ['נכס לשיתוף', 'מחפש לקונה', 'מתווך בע�
 const ROOMS = ['הכול', 'נכסים לשיתוף', 'מחפש לקונה', 'מתווך בעיר אחרת', 'ידע ושאלות']
 const SHORT = ['הכול', 'נכסים', 'קונים', 'עיר אחרת', 'שאלות']
 // on a phone the row is swiped, so the full names are there, and after them the two topics that have no room
-const PHONE_ROW = [...ROOMS, 'פוסטים', 'עסקאות שנסגרו']
+// "פוסטים" left the row on 22.11.2026 (Itzik), so one topic with no room of its own is left at the end
+const PHONE_ROW = [...ROOMS, 'עסקאות שנסגרו']
 
 const fresh = async (vp, mode = 'day') => {
   const page = await browser.newPage()
@@ -135,7 +136,7 @@ for (const [tag, vp] of [
   check(`${tag}: small to the eye, full to the finger: each chip takes a tap 44px high`, w.rooms.every((r) => r.tap >= 44), w.rooms.map((r) => r.tap))
   check(`${tag}: "הכול" is first and chosen: full green with white words; the others are one light grey`, w.rooms[0].id === 'all' && w.rooms[0].on && w.rooms[0].bg === 'rgb(10, 122, 79)' && w.rooms[0].ink === 'rgb(255, 255, 255)' && w.rooms[0].right >= Math.max(...w.rooms.map((r) => r.right)) && grey.length === w.rooms.length - 1 && grey.every((r) => r.bg === grey[0].bg && /rgba\(.*, 0\.0\d+\)/.test(r.bg)), w.rooms.map((r) => [r.id, r.on, r.bg, r.ink]))
   if (phone) {
-    check('phone: the row is swiped sideways: the full names, then the two topics with no room; the page itself does not slide', w.rooms.map((r) => r.shown).join('|') === PHONE_ROW.join('|') && w.row.swipes && w.wide <= 1, { row: w.row, names: w.rooms.map((r) => r.shown) })
+    check('phone: the row is swiped sideways: the full names, then the topic with no room of its own; the page itself does not slide', w.rooms.map((r) => r.shown).join('|') === PHONE_ROW.join('|') && w.row.swipes && w.wide <= 1, { row: w.row, names: w.rooms.map((r) => r.shown) })
     check('phone: it opens with "הכול" in full view at the start of the row', w.rooms[0].right <= w.row.vw && w.rooms[0].left >= 0, w.rooms[0])
     check('phone: the first post is seen without scrolling (its top is well above the bottom bar)', !!w.post && w.post.scrolled === 0 && w.post.navTop - w.post.top >= 120, w.post)
   } else {

@@ -218,9 +218,12 @@ export default function PropertyPage() {
                 {nameSlots.Badge && <nameSlots.Badge brokerId={broker.id} />}
               </strong>
               <span>{[broker.title, broker.area].filter(Boolean).join(' · ')}</span>
-              <small>
+              <small data-posted>
                 {/* a real person's card has no invented years */}
                 {broker.years > 0 ? `${broker.years} שנות ניסיון · ` : ''}פורסם {item.time}
+                {/* "הקפצה למעלה" moves the property in the feed, not its date: the day it was published stays here,
+                    and the lift is said beside it (22.11.2026) */}
+                {!!item.bumpedAt && <em className="pp-bumped" data-bumped> · הוקפץ לראש הפיד</em>}
               </small>
             </div>
           </div>

@@ -1,7 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { TopicId } from './config/topics'
-import { builderDefaults, communityItems as seedItems, crmItems as seedCrm, notices as seedNotices } from './data/demo'
+import { CURRENT_BROKER_ID } from './config'
+import { builderDefaults, canBump, communityItems as seedItems, crmItems as seedCrm, notices as seedNotices } from './data/demo'
 import type { BuilderState, Comment, CommunityItem, CrmItem, CrmStatus, Notice } from './data/demo'
 
 // Client-side demo state only. Nothing here talks to a server.
@@ -66,6 +67,8 @@ type Store = State & {
   /** set my reaction on a post; the same reaction again (or null) removes it */
   react: (itemId: string, reaction: string | null) => void
   addItem: (item: CommunityItem, sourceId?: string) => void
+  /** "הקפצה למעלה" (22.11.2026): my own post goes to the top of the feed, once in two days */
+  bumpItem: (id: string) => void
   addComment: (itemId: string, comment: Comment, parentIndex?: number) => void
   clearFresh: () => void
   toggleInterested: (itemId: string) => void
@@ -120,8 +123,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       addItem: (item: CommunityItem, sourceId?: string) =>
         setState((s) => ({
           ...s,
-          items: [item, ...s.items.map((c) => (c.fresh ? { ...c, fresh: false } : c))],
+          // the moment it was published (22.11.2026): it is what puts the post at the top of the feed, and what the
+          // two days before it may be lifted are counted from. Every way of publishing passes through here.
+          items: [{ at: Date.now(), ...item }, ...s.items.map((c) => (c.fresh ? { ...c, fresh: false } : c))],
           publishedIds: sourceId ? { ...s.publishedIds, [sourceId]: item.topicId } : s.publishedIds,
+        })),
+      /**
+       * "הקפצה למעלה": the post goes to the top of the feed, as if it were published now. Its own date does not move.
+       * The two days are asked here as well, not only of the button, so that a second press (or two devices at once)
+       * cannot lift it early.
+       */
+      bumpItem: (id: string) =>
+        setState((s) => ({
+          ...s,
+          items: s.items.map((it) => (it.id === id && it.authorId === CURRENT_BROKER_ID && canBump(it) ? { ...it, bumpedAt: Date.now() } : it)),
         })),
       addComment: (itemId: string, comment: Comment, parentIndex?: number) =>
         setState((s) => ({

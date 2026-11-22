@@ -27,7 +27,7 @@ import {
 import { CURRENT_BROKER_ID, asset } from '../config'
 import { topicById, topics } from '../config/topics'
 import type { TopicId } from '../config/topics'
-import { brokerById, brokers, cities, fitsSearch, formatPriceShort, inFeed, inStories, roomsLabel } from '../data/demo'
+import { brokerById, brokers, cities, fitsSearch, formatPriceShort, inFeed, inStories, roomsLabel, sortFeed } from '../data/demo'
 import type { CommunityItem } from '../data/demo'
 import { GROUPS, KINDS, kindFits, searchGroup } from '../config/propertyTypes'
 import type { PropGroup } from '../config/propertyTypes'
@@ -111,8 +111,9 @@ const demoPhotos = ['img/win-01.webp', 'img/prop-07.webp', 'img/prop-05.webp', '
 export default function Community() {
   const [params, setParams] = useSearchParams()
   const { items: everything, myCities, setMyCities, notices, markNoticesRead, clearFresh, addItem, toast, crm } = useStore()
-  // the feed and every list made of it hold posts only: a story that was not also published as a post is not in them
-  const items = useMemo(() => everything.filter(inFeed), [everything])
+  // the feed and every list made of it hold posts only: a story that was not also published as a post is not in them.
+  // The order is newest first, always (22.11.2026): what was lifted by "הקפצה למעלה" counts as published then.
+  const items = useMemo(() => sortFeed(everything.filter(inFeed)), [everything])
   const me = brokerById(CURRENT_BROKER_ID)
   const firstName = me.name.split(' ')[0]
   const raw = params.get('topic')
@@ -126,6 +127,8 @@ export default function Community() {
   // properties and buyers have their own filters: moving between them starts clean
   useEffect(() => setFilter(NO_FILTER), [view])
   const [citiesOpen, setCitiesOpen] = useState(false)
+  // what was typed in the box of the cities picker, and the cities it leaves
+  const [cityFind, setCityFind] = useState('')
   const [noticesOpen, setNoticesOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   // the search and the bell are icons of the app's top bar now (community/TopActions.tsx): they come here with
@@ -196,7 +199,31 @@ export default function Community() {
     return () => window.clearTimeout(t)
   }, [focusId, view])
 
-  const toggleCity = (c: string) => setMyCities(myCities.includes(c) ? myCities.filter((x) => x !== c) : [...myCities, c])
+  /**
+   * The cities of the filter (Itzik 22.11.2026). Removing the last one used to leave nothing to press, and no city to
+   * come back to: an empty list means the whole country, which is also where a broker starts, so the feed cannot tell
+   * the two apart by itself. `emptied` remembers that the broker emptied the list here, and only then the gentle line
+   * with "הוספת עיר" takes the row's place. Adding a city puts the row back.
+   */
+  const [emptied, setEmptied] = useState(false)
+  const toggleCity = (c: string) => {
+    const next = myCities.includes(c) ? myCities.filter((x) => x !== c) : [...myCities, c]
+    setEmptied(next.length === 0)
+    setMyCities(next)
+  }
+  const clearCities = () => {
+    setEmptied(true)
+    setMyCities([])
+  }
+  // one letter or more narrows the list; a city already chosen stays in it, with its tick, so it can be removed there
+  const cityHits = useMemo(() => {
+    const typed = cityFind.trim()
+    return typed ? cities.filter((c) => c.includes(typed)) : cities
+  }, [cityFind])
+  // the box starts empty every time the picker opens
+  useEffect(() => {
+    if (!citiesOpen) setCityFind('')
+  }, [citiesOpen])
   // sharing a property or a buyer: pick from the CRM, or add a new one (saved in the CRM and published)
   const [pick, setPick] = useState<'property' | 'buyer' | 'new-buyer' | 'referral' | null>(null)
   const [refCity, setRefCity] = useState('')
@@ -452,7 +479,7 @@ export default function Community() {
           )}
 
           {(myCities.length > 0 || q) && (
-            <div className="city-bar">
+            <div className="city-bar" data-city-bar>
               <span>מוצג לפי:</span>
               {q && (
                 <button className="tag tag-blue city-chip" onClick={() => setQuery('')}>
@@ -461,16 +488,35 @@ export default function Community() {
                 </button>
               )}
               {myCities.map((c) => (
-                <button key={c} className="tag tag-gold city-chip" onClick={() => toggleCity(c)} aria-label={`הסרת ${c}`}>
+                <button key={c} className="tag tag-gold city-chip" onClick={() => toggleCity(c)} aria-label={`הסרת ${c}`} data-city-chip={c}>
                   {c}
                   <X />
                 </button>
               ))}
+              {/* a city that was removed comes back from here (22.11.2026): the list of the platform's cities, with a
+                  box to type in, the way the streets are picked */}
+              <button className="city-add" onClick={() => setCitiesOpen(true)} data-act="add-city">
+                <Plus />
+                הוספת עיר
+              </button>
               {myCities.length > 0 && (
-                <button className="city-clear" onClick={() => setMyCities([])}>
+                <button className="city-clear" onClick={clearCities}>
                   הצגת כל הארץ
                 </button>
               )}
+            </div>
+          )}
+          {/* the broker removed the last city: one gentle line, and the way back */}
+          {myCities.length === 0 && emptied && (
+            <div className="city-none" role="status" data-city-none>
+              <MapPin aria-hidden />
+              <p>
+                אין עיר בסינון, ומוצג כל הארץ. אפשר להוסיף עיר ולראות רק מה שרלוונטי אליה.
+              </p>
+              <button className="city-add" onClick={() => setCitiesOpen(true)} data-act="add-city-empty">
+                <Plus />
+                הוספת עיר
+              </button>
             </div>
           )}
 
@@ -663,11 +709,31 @@ export default function Community() {
         subtitle="בוחרים עיר אחת או כמה ערים, ורואים רק מה שרלוונטי אליהן."
       >
         <div className="modal-body">
-          <div className="city-grid">
-            {cities.map((c) => {
+          {/* typing narrows the list (22.11.2026), as in the picking of a street: the platform's cities are many, and
+              on a phone a long list is a long scroll */}
+          <label className="city-find">
+            <Search aria-hidden />
+            <span className="sr-only">חיפוש עיר</span>
+            <input
+              type="search"
+              className="input"
+              placeholder="חיפוש עיר"
+              value={cityFind}
+              onChange={(e) => setCityFind(e.target.value)}
+              autoComplete="off"
+              data-f="city-find"
+            />
+            {cityFind && (
+              <button type="button" aria-label="ניקוי החיפוש" onClick={() => setCityFind('')}>
+                <X />
+              </button>
+            )}
+          </label>
+          <div className="city-grid" data-city-list>
+            {cityHits.map((c) => {
               const on = myCities.includes(c)
               return (
-                <button key={c} className={`city-opt${on ? ' is-on' : ''}`} role="checkbox" aria-checked={on} onClick={() => toggleCity(c)}>
+                <button key={c} className={`city-opt${on ? ' is-on' : ''}`} role="checkbox" aria-checked={on} onClick={() => toggleCity(c)} data-city-opt={c}>
                   <span className="pick-check">{on && <Check />}</span>
                   {c}
                   <b className="num">{items.filter((it) => it.city === c).length}</b>
@@ -675,13 +741,14 @@ export default function Community() {
               )
             })}
           </div>
+          {cityHits.length === 0 && <p className="city-empty">לא נמצאה עיר בשם הזה. אפשר לנקות את החיפוש ולבחור מהרשימה.</p>}
         </div>
         <div className="modal-foot">
           <button className="btn btn-gold" onClick={() => setCitiesOpen(false)}>
             {myCities.length === 0 ? 'הצגת כל הארץ' : `הצגת ${myCities.length} ערים`}
           </button>
           {myCities.length > 0 && (
-            <button className="btn btn-quiet" onClick={() => setMyCities([])}>
+            <button className="btn btn-quiet" onClick={clearCities}>
               ניקוי
             </button>
           )}

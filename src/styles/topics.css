@@ -245,6 +245,118 @@
   text-decoration: underline;
   text-underline-offset: 3px;
 }
+
+/* ------------------------------------- bringing a city back (Itzik 22.11.2026)
+   A city removed by its X comes back from here: a clear button beside the chips, and, once the last city is gone, one
+   gentle line in the row's place. Both open the same picker, which now has a box to type a city's name in. The colours
+   are the page's tokens, so both read by day and by night; 44px high on a phone, for the thumb. */
+.city-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px dashed color-mix(in srgb, var(--gold) 55%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--gold) 7%, transparent);
+  color: var(--gold-lo2);
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.city-add svg {
+  width: 14px;
+  height: 14px;
+  stroke-width: 2.4;
+}
+.city-add:hover {
+  background: color-mix(in srgb, var(--gold) 14%, transparent);
+  border-style: solid;
+}
+html[data-mode='night'] .city-add {
+  color: var(--gold-hi3);
+  background: color-mix(in srgb, var(--gold) 16%, transparent);
+}
+.city-none {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--text-dim);
+}
+.city-none > svg {
+  width: 18px;
+  height: 18px;
+  color: var(--gold-lo2);
+}
+.city-none p {
+  flex: 1 1 200px;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+html[data-mode='night'] .city-none {
+  background: var(--surface-2);
+  color: var(--text-dim);
+}
+html[data-mode='night'] .city-none > svg {
+  color: var(--gold-hi3);
+}
+/* the box of the picker */
+.city-find {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+.city-find > svg {
+  position: absolute;
+  inset-inline-start: 12px;
+  width: 17px;
+  height: 17px;
+  color: var(--text-faint);
+  pointer-events: none;
+}
+.city-find input {
+  width: 100%;
+  min-height: 46px;
+  padding-inline-start: 38px;
+}
+.city-find button {
+  position: absolute;
+  inset-inline-end: 6px;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+.city-find button svg {
+  width: 15px;
+  height: 15px;
+}
+.city-empty {
+  margin: 12px 2px 0;
+  color: var(--text-dim);
+  font-size: 14px;
+}
+@media (max-width: 760px) {
+  .city-add {
+    min-height: 44px;
+    padding: 0 14px;
+  }
+  .city-none button.city-add {
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+}
 .city-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

@@ -29,7 +29,9 @@ const check = (name, ok, info) => {
 }
 const PREVIEW = '6d5eaaca072bf02f647051d8688d1337a4ab7a6cb92a2a8b3924cf91fda89e8b'
 const IPHONE = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1'
-const ALL = ['הכול', 'נכסים לשיתוף', 'מחפש לקונה', 'מתווך בעיר אחרת', 'ידע ושאלות', 'פוסטים', 'עסקאות שנסגרו']
+// "פוסטים" left the row on 22.11.2026 (Itzik: the row was crowded on a phone). The room is still in the side list on a
+// computer and at ?topic=posts, and the posts are in the feed as they were: scripts/feed-order-check.mjs asks that.
+const ALL = ['הכול', 'נכסים לשיתוף', 'מחפש לקונה', 'מתווך בעיר אחרת', 'ידע ושאלות', 'עסקאות שנסגרו']
 const DEVICES = [
   { name: 'iphone', label: 'a regular iPhone (390x844)', vp: { width: 390, height: 844, deviceScaleFactor: 3, isMobile: true, hasTouch: true }, phone: true },
   { name: 'iphone-small', label: 'a small iPhone (375x667)', vp: { width: 375, height: 667, deviceScaleFactor: 2, isMobile: true, hasTouch: true }, phone: true },

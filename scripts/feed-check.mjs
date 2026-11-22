@@ -71,7 +71,7 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
   await page.goto(green + '/app/community', { waitUntil: 'load' })
   await wait(2000)
   let s = await state(page)
-  check(`${d} the feed opens with the share line and the rooms`, s.hello && s.rooms.map((r) => r.id).join() === 'all,coop,seeking,referrals,knowledge,posts,wins' && s.rooms[0].on, JSON.stringify(s.rooms))
+  check(`${d} the feed opens with the share line and the rooms`, s.hello && s.rooms.map((r) => r.id).join() === 'all,coop,seeking,referrals,knowledge,wins' && s.rooms[0].on, JSON.stringify(s.rooms))
   check(`${d} the old plain title stays for screen readers, out of sight`, s.h1 === 'קהילה' && !s.h1Seen)
   check(`${d} nothing scrolls sideways`, s.ov <= 1, `${s.ov}px`)
   check(`${d} a community member's card does not lead to the landing page (it belongs to the office)`, !s.meLink || d === 'phone')

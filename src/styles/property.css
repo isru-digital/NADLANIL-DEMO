@@ -661,3 +661,13 @@ html[data-mode='night'] .pp-nophoto strong {
 html[data-mode='night'] .pp-nophoto small {
   color: rgba(225, 245, 236, 0.76);
 }
+
+/* "הוקפץ לראש הפיד" beside the day it was published (Itzik 22.11.2026): the date itself never moves */
+.pp-bumped {
+  color: var(--gold-lo2);
+  font-style: normal;
+  font-weight: 600;
+}
+html[data-mode='night'] .pp-bumped {
+  color: var(--gold-hi3);
+}
