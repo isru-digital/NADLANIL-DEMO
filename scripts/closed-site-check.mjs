@@ -177,10 +177,10 @@ for (const [d, vp] of DEVICES) {
     houseNo: document.querySelector('[data-toggle="house-no"]')?.getAttribute('aria-checked'),
     story: document.querySelector('[data-toggle="as-story"]')?.getAttribute('aria-checked'),
     mamak: [...document.querySelectorAll('.ga [aria-label="תוספות"] .ga-pick')].some((b) => b.textContent.trim() === 'ממ"ק'),
-    price: !!document.querySelector('.ga [data-slider="price"]'),
+    price: !!document.querySelector('.ga [data-f="price-field"] [data-f="price"]'),
     coop: document.querySelector('.ga [data-f="coop"] .field-label')?.textContent.trim(),
   }))
-  check(`${d}: and the new property form is all there: the two steps, the street's switch, the story's switch, ממ"ק, the price slider and "עמלת שת"פ"`, form && parts.groups === 'מגורים|מסחרי' && parts.kinds === 15 && parts.houseNo === 'false' && parts.story === 'false' && parts.mamak && parts.price && parts.coop?.startsWith('עמלת שת"פ'), parts)
+  check(`${d}: and the new property form is all there: the two steps, the street's switch, the story's switch, ממ"ק, the price box and "עמלת שת"פ"`, form && parts.groups === 'מגורים|מסחרי' && parts.kinds === 15 && parts.houseNo === 'false' && parts.story === 'false' && parts.mamak && parts.price && parts.coop?.startsWith('עמלת שת"פ'), parts)
   await o.page.$eval('.ga [data-f="price-field"]', (el) => el.scrollIntoView({ block: 'start' }))
   await wait(400)
   await o.page.screenshot({ path: `${out}/${d}-5-behind-the-curtain.png` })

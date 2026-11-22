@@ -1,62 +1,40 @@
 /**
  * The price of a property and the co-operation fee ("עמלת שת"פ"), Itzik 22.11.2026.
  *
- * THE PRICE moves in steps that grow with it, so the slider stays usable from a storage room to a penthouse:
- *   up to 5,000,000 ₪          every 25,000 ₪   (as he asked; most homes are here, so they get most of the track)
- *   5,000,000 to 10,000,000    every 50,000 ₪
- *   10,000,000 to 20,000,000   every 100,000 ₪
- *   20,000,000 to 30,000,000   every 250,000 ₪
- * A price that is not on these steps (2,479,000), or above 30,000,000, is typed by hand and kept exactly as typed.
+ * THE PRICE is typed, nothing is dragged (Itzik, 22.11.2026: "אין צורך בחלק הזה, רק לרשום סכום"). The slider that
+ * stopped every 25,000 ₪ was taken out of the form, and in its place there is one box: the digits are grouped while
+ * they are typed (2790000 -> 2,790,000), what was typed is kept EXACTLY, and it is kept as a plain number, so the
+ * filter of the feed and the shekels of the fee read it as they always did.
+ * A price under 100,000 ₪ is almost always a missing zero, so the box offers, quietly, the price times a thousand.
  *
  * THE FEE is a share of the price that the broker gives the broker who brings the buyer: 0% to 1%, every 0.05%.
  * It is a must for a new property. A property published before it existed has none, and none is made up for it:
  * nothing about a fee shows on it.
  */
 
-const BANDS: [upTo: number, step: number][] = [
-  [5_000_000, 25_000],
-  [10_000_000, 50_000],
-  [20_000_000, 100_000],
-  [30_000_000, 250_000],
-]
-export const PRICE_MIN = 25_000
-/** where the slider waits before a price is picked: a usual home */
-export const PRICE_START = 2_000_000
-/** the most that can be typed by hand */
+/** the most that can be typed */
 export const PRICE_TYPED_MAX = 999_999_999
+/** under this, a price is almost certainly a zero short (a storage room is 100,000 ₪ and up) */
+export const PRICE_LIKELY_LOW = 100_000
 
-/** every price the slider stops at, from the least to the most */
-export const PRICE_STOPS: number[] = (() => {
-  const out = [PRICE_MIN]
-  let v = PRICE_MIN
-  for (const [upTo, step] of BANDS) {
-    while (v + step <= upTo) {
-      v += step
-      out.push(v)
-    }
-  }
-  return out
-})()
-export const PRICE_MAX = PRICE_STOPS[PRICE_STOPS.length - 1]
-
-/** the stop at or nearest to a price (a typed price that is between two stops sits at the nearer one) */
-export function priceStop(price: number): number {
-  if (price <= PRICE_MIN) return 0
-  if (price >= PRICE_MAX) return PRICE_STOPS.length - 1
-  let lo = 0
-  let hi = PRICE_STOPS.length - 1
-  while (hi - lo > 1) {
-    const mid = (lo + hi) >> 1
-    if (PRICE_STOPS[mid] <= price) lo = mid
-    else hi = mid
-  }
-  return price - PRICE_STOPS[lo] <= PRICE_STOPS[hi] - price ? lo : hi
-}
-/** the step the slider moves by around a price, said in words: "25,000 ₪" */
-export const stepAt = (price: number) => (BANDS.find(([upTo]) => price < upTo) ?? BANDS[BANDS.length - 1])[1]
+/** only the digits of what was typed, as a number, never more than can be kept: "2,790,00x" -> 2790000 */
+export const priceDigits = (text: string) => Math.min(PRICE_TYPED_MAX, Number(text.replace(/\D/g, '')) || 0)
+/** the digits, grouped the way they are read: 2790000 -> "2,790,000" ("" for nothing) */
+export const priceGroups = (n: number) => (n > 0 ? n.toLocaleString('he-IL') : '')
 
 /** "2,475,000 ₪" */
 export const shekels = (n: number) => `${Math.round(n).toLocaleString('he-IL')} ₪`
+
+/** the size of the price in words, so a missing zero is seen at once: "2.79 מיליון שקלים", "850 אלף שקלים" */
+export function priceWords(n: number): string {
+  if (n <= 0) return ''
+  if (n >= 1_000_000) {
+    const m = Number((n / 1_000_000).toFixed(2))
+    return m === 1 ? 'מיליון שקלים' : `${m.toLocaleString('he-IL')} מיליון שקלים`
+  }
+  if (n >= 1_000 && n % 1_000 === 0) return `${(n / 1_000).toLocaleString('he-IL')} אלף שקלים`
+  return `${n.toLocaleString('he-IL')} שקלים`
+}
 
 /* ---------------------------------------------------------------- the fee */
 

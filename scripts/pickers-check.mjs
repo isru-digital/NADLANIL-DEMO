@@ -119,12 +119,9 @@ for (const [tag, vp] of [
   await pickPlace(page, 'hood', 'נווה שאנן')
   await pickPlace(page, 'street', 'סמטת הכרמים')
   await page.type('[data-f="house"]', '12')
-  // the price is a slider since 22.11.2026; a tap on the number opens the box for an exact price
-  await page.evaluate(() => document.querySelector('[data-price-show]')?.click())
-  await wait(250)
+  // the price is one box that is typed into (22.11.2026, in place of the slider)
   await page.type('[data-f="price"]', '1690000')
-  await page.keyboard.press('Enter')
-  await wait(150)
+  await wait(200)
   // a property needs its kind since 22.11.2026: "מגורים", then "דירה"
   await page.evaluate(() => document.querySelector('.ga [data-cat="home"]')?.click())
   await wait(500)

@@ -8,7 +8,8 @@
 //      and in the match
 //   4. the kind of property in two steps (מגורים / מסחרי, then one of that group's list), the same list in the form,
 //      the community's filter, the CRM, the buyer's form and the match; older kinds are read as the closest one
-//   5. the price on a slider (25,000 ₪ steps up to 5,000,000 ₪, a typed price kept exact) and 6. "עמלת שת"פ", a must,
+//   5. the price in one box, typed (22.11.2026, in place of the slider: grouped while typed, kept exactly, a price
+//      that is a zero short is offered times a thousand) and 6. "עמלת שת"פ", a must,
 //      0% to 1% every 0.05%, shown as a red tag on the post's photo and the property's page (22.11.2026)
 // Nothing here touches a server: the demo keeps everything in this browser. Saves screenshots.
 // Usage: node scripts/post-form-check.mjs [outDir]     (BASE_GREEN overrides the address; ONLY=phone|desktop)
@@ -134,13 +135,13 @@ const storyRow = (page) =>
 const feedHas = (page, words) => page.evaluate((w) => [...document.querySelectorAll('article')].some((a) => a.innerText.includes(w)), words)
 // ---- the price and "עמלת שת"פ" (22.11.2026)
 const setPrice = async (t, value) => {
-  await t.click('.ga [data-price-show]')
   await t.page.waitForSelector('.ga [data-f="price"]', { visible: true })
-  // the box opens with the price that is there: it is cleared first
+  await t.page.$eval('.ga [data-f="price"]', (el) => el.scrollIntoView({ block: 'center' }))
+  await t.click('.ga [data-f="price"]')
+  // the box holds the price that is there: it is cleared first
   await t.page.$eval('.ga [data-f="price"]', (el) => el.select())
   await t.page.keyboard.press('Backspace')
-  await t.page.type('.ga [data-f="price"]', String(value))
-  await t.page.keyboard.press('Enter')
+  if (String(value) !== '0') await t.page.type('.ga [data-f="price"]', String(value))
   await wait(200)
 }
 /** "+" once picks the slider's waiting point (0.5%); then `steps` more "+" (or "−" when negative) */
@@ -151,8 +152,17 @@ const pickCoop = async (t, steps = 0) => {
 const priceState = (page) =>
   page.evaluate(() => {
     const f = document.querySelector('.ga [data-f="price-field"]')
-    const th = f?.querySelector('[data-thumb]')
-    return { value: f?.dataset.priceValue ?? null, show: f?.querySelector('[data-price-show]')?.textContent.trim() ?? null, typing: !!f?.querySelector('[data-typing]'), now: Number(th?.getAttribute('aria-valuenow')), max: Number(th?.getAttribute('aria-valuemax')), text: th?.getAttribute('aria-valuetext'), hint: f?.querySelector('.pf-hint')?.textContent.trim(), waiting: !!f?.querySelector('.ss.is-waiting'), label: f?.querySelector('.field-label')?.textContent.trim() }
+    const i = f?.querySelector('[data-f="price"]')
+    return {
+      value: f?.dataset.priceValue ?? null,
+      shown: i?.value ?? null,
+      caret: i?.selectionStart ?? null,
+      say: f?.querySelector('[data-price-say]')?.textContent.trim() ?? null,
+      lift: f?.querySelector('[data-act="price-x1000"]')?.textContent.replace(/\s+/g, ' ').trim() ?? null,
+      clear: !!f?.querySelector('[data-act="price-clear"]'),
+      slider: !!f?.querySelector('[data-slider="price"]'),
+      label: f?.querySelector('.field-label')?.textContent.trim() ?? null,
+    }
   })
 const coopState = (page) =>
   page.evaluate(() => {
@@ -353,7 +363,7 @@ for (const [dev, vp] of DEVICES) {
   await t.click('.ga [data-rooms="5"]')
   await setPrice(t, '4200000')
   const pr0 = await priceState(page)
-  check(`${dev}: a typed price shows in full, "4,200,000 ₪", and the handle moves to it`, pr0.show === '4,200,000 ₪' && pr0.value === '4200000' && pr0.now === 167, pr0)
+  check(`${dev}: a typed price is grouped in the box, "4,200,000", and kept as 4200000`, pr0.shown === '4,200,000' && pr0.value === '4200000' && pr0.say === '4.2 מיליון שקלים', pr0)
 
   // ---------------------------------------------------------------- 3. ממ"ק, next to ממ"ד
   const extras = await page.evaluate(() => [...document.querySelectorAll('.ga [aria-label="תוספות"] .ga-pick')].map((b) => b.textContent.trim()))
@@ -782,77 +792,76 @@ for (const [dev, vp] of DEVICES) {
   await wait(700)
   await t.shot(`${dev}-18-coop-property-page`)
 
-  // ---------------------------------------------------------------- 5. the price on a slider
+  // ---------------------------------------------------------------- 5. the price, typed into one box
   await openCard(t)
   await t.click('.ga [data-cat="home"]')
   await wait(350)
   await t.click('.ga .pf-kind[data-kind="דירה"]')
-  let pr = await priceState(page)
-  check(`${dev}: the price: "בוחרים מחיר" in big until one is chosen, and a slider of 440 stops waiting at 2,000,000 ₪`, pr.label === 'מחיר' && pr.show === 'בוחרים מחיר' && pr.value === '' && pr.waiting && pr.max === 439 && pr.now === 79, pr)
-  await t.shot(`${dev}-19-price-empty`)
-  await t.click('.ga [data-slider="price"] [data-step="more"]')
-  const p1 = (await priceState(page)).show
-  await t.click('.ga [data-slider="price"] [data-step="more"]')
-  pr = await priceState(page)
-  check(`${dev}: "+" picks 2,000,000 ₪, and the next "+" is 25,000 ₪ more, written in full`, p1 === '2,000,000 ₪' && pr.show === '2,025,000 ₪' && pr.value === '2025000' && !pr.waiting && pr.hint.includes('25,000 ₪'), { p1, pr })
-  const d2 = await slide(t, 'price', 8, dev === 'phone')
-  pr = await priceState(page)
-  check(`${dev}: dragging the handle eight stops is 200,000 ₪ more, on a 25,000 ₪ step, the handle under the ${dev === 'phone' ? 'finger' : 'mouse'} and the page still`, pr.value === '2225000' && Number(pr.value) % 25000 === 0 && Math.abs(d2.thumb - d2.finger) <= d2.per + 2 && d2.moved === 0, { pr: pr.value, d2 })
-  await swipeOver(t, 'price', dev === 'phone')
-  const pr2 = await priceState(page)
-  check(`${dev}: a finger that moves up the page over the track does not move the price`, pr2.value === '2225000', pr2.value)
   await page.$eval('.ga [data-f="price-field"]', (el) => el.scrollIntoView({ block: 'center' }))
-  await wait(300)
-  await t.shot(`${dev}-20-price-slider`)
-  await t.click('.ga [data-price-show]')
+  await wait(250)
+  let pr = await priceState(page)
+  const hole = await page.evaluate(() => {
+    const i = document.querySelector('.ga [data-f="price"]')
+    return { mode: i?.inputMode, type: i?.type, hint: i?.placeholder, size: parseFloat(getComputedStyle(i).fontSize), tall: i?.getBoundingClientRect().height, label: document.querySelector('.ga label[for="pf-price"]')?.getAttribute('for'), named: i?.getAttribute('aria-label') }
+  })
+  check(`${dev}: the price is one box with a number keyboard, nothing to drag, and its name is tied to it`, pr.label === 'מחיר' && !pr.slider && pr.shown === '' && pr.value === '' && hole.mode === 'numeric' && hole.hint === '2,790,000' && hole.size >= 16 && hole.tall >= 44 && hole.label === 'pf-price' && hole.named === 'מחיר הנכס, בשקלים', { pr, hole })
+  check(`${dev}: until a price is written, the line under the box says what to do, and there is nothing to clear`, pr.say === 'כותבים את הסכום בספרות, והוא יסתדר לבד.' && !pr.clear && pr.lift === null, pr)
+  await t.shot(`${dev}-19-price-empty`)
+  // the digits are grouped while they are typed
+  await t.click('.ga [data-f="price"]')
+  await page.type('.ga [data-f="price"]', '2790')
+  const mid = await priceState(page)
+  await page.type('.ga [data-f="price"]', '000')
   pr = await priceState(page)
-  const box = await page.evaluate(() => { const i = document.querySelector('.ga [data-f="price"]'); return { focus: document.activeElement === i, mode: i?.inputMode, size: parseFloat(getComputedStyle(i).fontSize) } })
-  check(`${dev}: a tap on the price opens a box to type, ready to type into, with a number keyboard`, pr.typing && box.focus && box.mode === 'numeric' && box.size >= 16, box)
-  await page.$eval('.ga [data-f="price"]', (el) => el.select())
-  await page.keyboard.press('Backspace')
-  await page.type('.ga [data-f="price"]', '999')
-  await page.keyboard.press('Escape')
+  check(`${dev}: the digits are grouped as they are typed: 2790 is "2,790", and 2790000 is "2,790,000"`, mid.shown === '2,790' && pr.shown === '2,790,000' && pr.value === '2790000', { mid: mid.shown, pr })
+  check(`${dev}: under the box the size is said in words, so a zero that is short is seen: "2.79 מיליון שקלים"`, pr.say === '2.79 מיליון שקלים' && pr.clear, pr)
+  check(`${dev}: the caret stays at the end of what was typed (the grouping does not throw it to the front)`, pr.caret === pr.shown.length, { caret: pr.caret, shown: pr.shown })
+  await t.shot(`${dev}-20-price-typed`)
+  // a digit put in the middle: the caret stays right after it
+  await page.$eval('.ga [data-f="price"]', (el) => el.setSelectionRange(1, 1))
+  await page.keyboard.type('5')
+  const inside = await priceState(page)
+  check(`${dev}: a digit written inside the number keeps its place: "25,790,000", the caret right after the 5`, inside.shown === '25,790,000' && inside.value === '25790000' && inside.caret === 2, inside)
+  // nothing but digits, and never more than can be kept
+  await setPrice(t, 'abc1,2a3')
+  const only = await priceState(page)
+  await setPrice(t, '123456789012')
+  const big = await priceState(page)
+  check(`${dev}: only digits are taken ("abc1,2a3" is 123), and the most that can be written is 999,999,999`, only.value === '123' && big.shown === '999,999,999' && big.value === '999999999', { only: only.shown, big: big.shown })
+  // a price that is a zero short: the full amount, one tap away
+  await setPrice(t, '2790')
+  const low = await priceState(page)
+  await t.shot(`${dev}-21-price-x1000`)
+  await t.click('.ga [data-act="price-x1000"]')
   await wait(200)
+  const lifted = await priceState(page)
+  check(`${dev}: a price under 100,000 ₪ is offered times a thousand, and one tap writes it in`, low.lift === 'התכוונתם ל-2,790,000 ₪?' && lifted.shown === '2,790,000' && lifted.value === '2790000' && lifted.lift === null, { low: low.lift, lifted })
+  // what was typed is kept exactly, and the X empties the box
+  await setPrice(t, '2379000')
   pr = await priceState(page)
-  check(`${dev}: Escape closes the box and keeps the price that was there`, !pr.typing && pr.value === '2225000' && !!(await page.$('.ga-fields')), pr)
-  await setPrice(t, '0')
-  pr = await priceState(page)
-  check(`${dev}: an empty or 0 price typed is not kept`, pr.value === '2225000', pr.value)
-  await t.click('.ga [data-price-show]')
-  await page.$eval('.ga [data-f="price"]', (el) => el.select())
-  await page.keyboard.press('Backspace')
-  await page.type('.ga [data-f="price"]', '2379000')
-  await wait(150)
-  const say = await page.evaluate(() => document.querySelector('.ga .pf-typed-say')?.textContent.trim())
-  await t.shot(`${dev}-21-price-typing`)
-  await page.keyboard.press('Enter')
+  check(`${dev}: a price that is on no round step (2,379,000) is kept exactly as it was typed`, pr.shown === '2,379,000' && pr.value === '2379000' && pr.say === '2.38 מיליון שקלים', pr)
+  await t.click('.ga [data-act="price-clear"]')
   await wait(200)
-  pr = await priceState(page)
-  check(`${dev}: a price typed by hand (2,379,000) is kept exactly, and the handle sits at the nearest stop (2,375,000)`, say === '2,379,000 ₪' && pr.show === '2,379,000 ₪' && pr.value === '2379000' && pr.now === 94, { say, pr })
-  await page.$eval('.ga [data-slider="price"] [data-thumb]', (el) => el.focus())
-  await page.keyboard.press('End')
+  const empty = await priceState(page)
+  check(`${dev}: the X empties the box, and the box is ready to write into again`, empty.shown === '' && empty.value === '' && !empty.clear && (await page.evaluate(() => document.activeElement === document.querySelector('.ga [data-f="price"]'))), empty)
+  await setPrice(t, '30000000')
   const top = await priceState(page)
-  await page.keyboard.press('ArrowDown')
-  const below = await priceState(page)
-  check(`${dev}: high prices stay usable: the end is 30,000,000 ₪, moved in steps of 250,000 ₪ there`, top.show === '30,000,000 ₪' && top.hint.includes('250,000 ₪') && below.show === '29,750,000 ₪', { top: top.show, hint: top.hint, below: below.show })
+  check(`${dev}: a big price is written the same way: "30,000,000", and said as "30 מיליון שקלים"`, top.shown === '30,000,000' && top.value === '30000000' && top.say === '30 מיליון שקלים', top)
   const stops = await page.evaluate(async () => {
     const src = [...document.querySelectorAll('script[type="module"]')].map((s) => s.src).find((s) => /main-green/.test(s))
     const root = src.slice(0, src.indexOf('/src/'))
     const c = await import(`${root}/src/config/coop.ts`)
-    const S = c.PRICE_STOPS
-    const after = (v) => S[S.indexOf(v) + 1]
     return {
-      n: S.length,
-      first: S[0],
-      last: S[S.length - 1],
-      under5: S.filter((v) => v <= 5_000_000).every((v, i, a) => v % 25_000 === 0 && (i === 0 || v - a[i - 1] === 25_000)),
-      steps: [after(5_000_000) - 5_000_000, after(10_000_000) - 10_000_000, after(20_000_000) - 20_000_000],
+      digits: [c.priceDigits('2,790,000'), c.priceDigits('abc'), c.priceDigits('999999999999')],
+      groups: [c.priceGroups(2790000), c.priceGroups(0)],
+      words: [c.priceWords(2790000), c.priceWords(1000000), c.priceWords(850000), c.priceWords(2379000), c.priceWords(0)],
       coop: c.COOP_STOPS.map(c.coopText).join(' '),
       amount: [c.coopAmount(2_500_000, 0.5), c.coopAmount(2_479_000, 0.45), c.coopAmount(1_000_000, 0)],
       old: [c.hasCoop(undefined), c.hasCoop(null), c.hasCoop(0), c.hasCoop(0.5), c.hasCoop(1.5)],
     }
   })
-  check(`${dev}: the stops: every 25,000 ₪ up to 5,000,000 ₪, then 50,000, 100,000 and 250,000 ₪ (440 stops, 25,000 to 30,000,000 ₪)`, stops.n === 440 && stops.first === 25000 && stops.last === 30000000 && stops.under5 && stops.steps.join() === '50000,100000,250000', stops)
+  check(`${dev}: the price is read as a plain number, grouped and said in words, the same everywhere`, stops.digits.join() === '2790000,0,999999999' && stops.groups.join() === '2,790,000,' && stops.words.join('|') === '2.79 מיליון שקלים|מיליון שקלים|850 אלף שקלים|2.38 מיליון שקלים|', stops)
+  await setPrice(t, '2225000')
   check(`${dev}: the fee's stops are 0% to 1% every 0.05%, and its shekels are rounded to 100 ₪`, stops.coop === '0% 0.05% 0.1% 0.15% 0.2% 0.25% 0.3% 0.35% 0.4% 0.45% 0.5% 0.55% 0.6% 0.65% 0.7% 0.75% 0.8% 0.85% 0.9% 0.95% 1%' && stops.amount.join() === '12500,11200,0' && stops.old.join() === 'false,false,true,true,false', stops)
   // a tap on the fee's track puts the handle there
   await tapTrack(t, 'coop', 1, dev === 'phone')
@@ -903,7 +912,7 @@ for (const [dev, vp] of DEVICES) {
   await page.evaluate(() => document.querySelector('.ga-actions .btn-gold').click())
   await wait(400)
   const waErr = await coopState(page)
-  check(`${dev}: from a WhatsApp message: the price (2,650,000 ₪) is on the slider, and the property is not published without "עמלת שת"פ"`, waPrice.show === '2,650,000 ₪' && waErr.err === 'בוחרים עמלת שת"פ לפני השמירה. אפשר גם 0%.' && !!(await page.$('.ga-actions')), { waPrice: waPrice.show, err: waErr.err })
+  check(`${dev}: from a WhatsApp message: the price (2,650,000) is in the box, and the property is not published without "עמלת שת"פ"`, waPrice.shown === '2,650,000' && waPrice.value === '2650000' && waErr.err === 'בוחרים עמלת שת"פ לפני השמירה. אפשר גם 0%.' && !!(await page.$('.ga-actions')), { waPrice: waPrice.shown, err: waErr.err })
   await pickCoop(t, 1)
   await page.evaluate(() => document.querySelector('.ga-actions .btn-gold').click())
   await wait(1500)
@@ -943,8 +952,8 @@ for (const [dev, vp] of DEVICES) {
       ['"כך יראו": the address', '.ga [data-seen] b'],
       ['"כך יראו": its name', '.ga [data-seen] > span'],
       ['the line about what stays private', '.ga .ga-address .ga-private'],
-      ['the price, not chosen', '.ga [data-price-show]'],
-      ['the line under the price', '.ga [data-f="price-field"] .pf-hint'],
+      ['the line under the price box', '.ga [data-price-say]'],
+      ['the price box itself', '.ga [data-f="price"]'],
       ['"עמלת שת"פ": its name', '.ga [data-f="coop"] .field-label'],
       ['"חובה"', '.ga [data-f="coop"] .pf-must'],
       ['the percent, not chosen', '.ga [data-coop-show]'],
@@ -971,7 +980,9 @@ for (const [dev, vp] of DEVICES) {
     await pickCoop(n)
     const r3 = {}
     for (const [name, sel] of [
-      ['the price, chosen', '.ga [data-price-show]'],
+      ['the price, written', '.ga [data-f="price"]'],
+      ['the price in words', '.ga [data-price-say]'],
+      ['the "₪" of the box', '.ga .pf-cur'],
       ['the percent, chosen', '.ga [data-coop-show]'],
       ['the shekels under it', '.ga [data-coop-line]'],
     ]) r3[name] = await n.contrast(sel)

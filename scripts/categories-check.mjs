@@ -88,12 +88,9 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
   await page.screenshot({ path: `${out}/${d}-3-form-office.png` })
 
   await page.type('[data-f="sqm"]', '85')
-  // the price is a slider since 22.11.2026; a tap on the number opens the box for an exact price
-  await page.evaluate(() => document.querySelector('[data-price-show]')?.click())
-  await wait(250)
+  // the price is one box that is typed into (22.11.2026, in place of the slider)
   await page.type('[data-f="price"]', '1400000')
-  await page.keyboard.press('Enter')
-  await wait(150)
+  await wait(200)
   await page.evaluate(() => { document.querySelector('[data-parking="1"]')?.click(); [...document.querySelectorAll('.ga-fields > .field:last-child .ga-pick')].filter((c) => ['מעלית'].includes(c.textContent.trim())).forEach((c) => c.click()) })
   // "עמלת שת"פ" is a must since 22.11.2026: its "+" picks 0.5% (post-form-check walks the slider itself)
   await page.evaluate(() => document.querySelector('[data-slider="coop"] [data-step="more"]')?.click())

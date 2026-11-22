@@ -4,6 +4,11 @@
 
 :root {
   --pf-on: #0c7f52;
+  /* the price box leans on the accent; by night the green of the night is the one that can be read */
+  --pf-accent: var(--pf-on);
+}
+html[data-mode='night'] {
+  --pf-accent: var(--gold);
 }
 
 /* ---------------------------------------------------------------- a small switch with its words */
@@ -522,51 +527,136 @@ html[data-mode='night'] .pf-upload {
   background: color-mix(in srgb, #c62828 7%, transparent);
 }
 
-/* typing an exact price */
-.pf-typed {
+/* the price: one box, the amount is typed into it (22.11.2026, in place of the slider) */
+.pf-amount {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 48px 48px;
-  gap: 8px;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
+  gap: 10px;
+  min-height: 64px;
+  padding: 6px 16px;
+  border-radius: 18px;
+  border: 1.5px solid var(--line-strong);
+  background: rgb(var(--k1) / 0.5);
+  transition:
+    border-color var(--t) var(--ease),
+    box-shadow var(--t) var(--ease),
+    background-color var(--t) var(--ease);
 }
-.pf-typed .input {
-  min-height: 52px;
-  font-size: 20px;
+.pf-amount.is-filled {
+  border-color: color-mix(in srgb, var(--pf-accent) 45%, var(--line-strong));
+  background: color-mix(in srgb, var(--pf-accent) 5%, rgb(var(--k1) / 0.5));
+}
+.pf-amount:focus-within {
+  border-color: var(--pf-accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--pf-accent) 16%, transparent);
+}
+.pf-cur {
+  font-family: var(--font-display);
+  font-size: 24px;
   font-weight: 700;
+  line-height: 1;
+  color: var(--text-faint);
+  transition: color var(--t) var(--ease);
 }
-.pf-typed-ok,
-.pf-typed-no {
+.pf-amount.is-filled .pf-cur {
+  color: var(--pf-accent);
+}
+.pf-amount-in {
+  width: 100%;
+  min-width: 0;
+  /* the number keeps its own direction, and sits at the start of the box (the right, in Hebrew) */
+  direction: ltr;
+  text-align: right;
+  min-height: 52px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font-family: var(--font-display);
+  font-size: clamp(26px, 7vw, 34px);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  text-align: start;
+}
+.pf-amount-in:focus {
+  outline: none;
+}
+.pf-amount-in::placeholder {
+  font-weight: 700;
+  color: var(--text-faint);
+  opacity: 1;
+}
+.pf-amount-clear {
   display: grid;
   place-items: center;
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  color: var(--text-dim);
   cursor: pointer;
   touch-action: manipulation;
+  transition:
+    background-color var(--t) var(--ease),
+    color var(--t) var(--ease);
 }
-.pf-typed-ok {
-  background: var(--pf-on);
-  color: #fff;
+.pf-amount-clear:hover {
+  background: rgb(var(--g) / 0.1);
+  color: var(--text);
 }
-.pf-typed-ok:disabled {
-  opacity: 0.4;
-  cursor: default;
+.pf-amount-clear:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
 }
-.pf-typed-no {
-  border: 1.5px solid var(--line);
-  color: var(--text-dim);
-}
-.pf-typed-ok svg,
-.pf-typed-no svg {
+.pf-amount-clear svg {
   width: 20px;
   height: 20px;
 }
-.pf-typed-say {
-  grid-column: 1 / -1;
+.pf-say.is-filled {
   font-family: var(--font-display);
   font-size: 15px;
   font-weight: 700;
   color: var(--text);
+}
+/* a price that is a zero short: the full amount, one tap away */
+.pf-lift {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 99px;
+  border: 1.5px dashed color-mix(in srgb, var(--pf-accent) 55%, transparent);
+  background: color-mix(in srgb, var(--pf-accent) 7%, transparent);
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--text);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition:
+    background-color var(--t) var(--ease),
+    border-color var(--t) var(--ease);
+}
+.pf-lift:hover {
+  background: color-mix(in srgb, var(--pf-accent) 14%, transparent);
+  border-color: var(--pf-accent);
+}
+.pf-lift:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+.pf-lift svg {
+  width: 17px;
+  height: 17px;
+  color: var(--pf-accent);
+}
+.pf-lift .num {
+  font-variant-numeric: tabular-nums;
+}
+html[data-mode='night'] .pf-amount {
+  background: rgb(var(--k1) / 0.6);
 }
 
 /* ---------------------------------------------------------------- the slider */
@@ -639,7 +729,7 @@ html[data-mode='night'] .pf-upload {
   inset-block: 0;
   inset-inline-start: 0;
   border-radius: 99px;
-  background: var(--pf-on);
+  background: var(--pf-accent);
 }
 .ss-thumb {
   position: absolute;
@@ -649,7 +739,7 @@ html[data-mode='night'] .pf-upload {
   margin-top: -15px;
   margin-inline-start: -15px;
   border-radius: 50%;
-  border: 3px solid var(--pf-on);
+  border: 3px solid var(--pf-accent);
   background: #fff;
   box-shadow: 0 3px 10px rgb(0 0 0 / 0.22);
   /* taken at once by a finger: the page does not scroll from the handle */

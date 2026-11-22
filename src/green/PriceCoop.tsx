@@ -1,94 +1,107 @@
-import { useEffect, useRef, useState } from 'react'
-import { Check, Pencil, X } from 'lucide-react'
+import { type ChangeEvent, useEffect, useRef, useState } from 'react'
+import { ArrowUp, X } from 'lucide-react'
 import { SnapSlider } from '../components/SnapSlider'
-import { COOP_STOPS, PRICE_START, PRICE_STOPS, PRICE_TYPED_MAX, coopAmount, coopStop, coopText, priceStop, shekels, stepAt } from '../config/coop'
+import { COOP_STOPS, PRICE_LIKELY_LOW, PRICE_TYPED_MAX, coopAmount, coopStop, coopText, priceDigits, priceGroups, priceWords, shekels } from '../config/coop'
 import '../styles/post-form.css'
 
+/** where the caret should sit once the digits were grouped again: right after the same digit it was after */
+function caretFor(shown: string, digitsBefore: number): number {
+  if (digitsBefore <= 0) return 0
+  let seen = 0
+  for (let i = 0; i < shown.length; i++) {
+    if (/\d/.test(shown[i])) {
+      seen++
+      if (seen === digitsBefore) return i + 1
+    }
+  }
+  return shown.length
+}
+
 /**
- * The price of a property (Itzik 22.11.2026): a big number, and a slider under it that stops every 25,000 ₪ up to
- * 5,000,000 ₪ (then in bigger steps, see config/coop.ts). A tap on the number opens a box to type an exact price,
- * which is kept exactly as it was typed. 0 means "not chosen yet".
+ * The price of a property (Itzik 22.11.2026, in place of the slider): one box, the amount is typed into it. The
+ * digits are grouped while they are typed, under the box the size is said in words ("2.79 מיליון שקלים") so a zero
+ * that is short is seen at once, and a price under 100,000 ₪ is offered, quietly, times a thousand. What is kept is
+ * a plain number, exactly as it was typed, which is what the filter of the feed and the fee's shekels read.
+ * 0 means "not chosen yet".
  */
 export function PriceField({ price, onPrice }: { price: number; onPrice: (n: number) => void }) {
-  const [typing, setTyping] = useState(false)
-  const [text, setText] = useState('')
+  const [text, setText] = useState(() => priceGroups(price))
   const box = useRef<HTMLInputElement>(null)
+  const caret = useRef<number | null>(null)
+  // the form can be filled from elsewhere (a WhatsApp message, a sample): the box follows the price it is given
   useEffect(() => {
-    if (typing) window.setTimeout(() => box.current?.focus(), 30)
-  }, [typing])
-  const typed = Math.min(PRICE_TYPED_MAX, Number(text.replace(/\D/g, '')) || 0)
-  const open = () => {
-    setText(price ? String(price) : '')
-    setTyping(true)
+    if (priceDigits(text) !== price) setText(priceGroups(price))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [price])
+  // put the caret back where it was, after the digits were grouped again
+  useEffect(() => {
+    if (caret.current !== null && box.current) {
+      box.current.setSelectionRange(caret.current, caret.current)
+      caret.current = null
+    }
+  })
+  const type = (e: ChangeEvent<HTMLInputElement>) => {
+    const el = e.target
+    const before = el.value.slice(0, el.selectionStart ?? el.value.length).replace(/\D/g, '').length
+    const n = priceDigits(el.value)
+    const shown = priceGroups(n)
+    caret.current = caretFor(shown, before)
+    setText(shown)
+    onPrice(n)
   }
-  const keep = () => {
-    if (typed > 0) onPrice(typed)
-    setTyping(false)
+  const clear = () => {
+    setText('')
+    onPrice(0)
+    box.current?.focus()
   }
-  // a typed price between two stops: the handle sits at the nearer one, the number stays exact
-  const index = priceStop(price || PRICE_START)
+  const times = price > 0 && price < PRICE_LIKELY_LOW ? price * 1000 : 0
   return (
     <div className="field pf-money" data-f="price-field" data-price-value={price || ''}>
-      <span className="field-label" id="pf-price-label">
+      <label className="field-label" htmlFor="pf-price">
         מחיר
-      </span>
-      {typing ? (
-        <div className="pf-typed" data-typing>
-          <input
-            ref={box}
-            className="input num"
-            inputMode="numeric"
-            enterKeyHint="done"
-            value={text}
-            onChange={(e) => setText(e.target.value.replace(/[^\d,]/g, ''))}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault()
-                keep()
-              }
-              if (e.key === 'Escape') {
-                e.preventDefault()
-                e.stopPropagation()
-                setTyping(false)
-              }
-            }}
-            placeholder="למשל 2479000"
-            aria-label="מחיר מדויק, בשקלים"
-            data-f="price"
-          />
-          <button type="button" className="pf-typed-ok" onClick={keep} disabled={typed === 0} aria-label="שמירת המחיר" data-act="price-ok">
-            <Check aria-hidden />
-          </button>
-          <button type="button" className="pf-typed-no" onClick={() => setTyping(false)} aria-label="ביטול" data-act="price-cancel">
+      </label>
+      <div className={`pf-amount${price ? ' is-filled' : ''}`} data-price-box>
+        <span className="pf-cur" aria-hidden>
+          ₪
+        </span>
+        <input
+          ref={box}
+          id="pf-price"
+          className="pf-amount-in num"
+          type="text"
+          inputMode="numeric"
+          autoComplete="off"
+          enterKeyHint="done"
+          value={text}
+          onChange={type}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              box.current?.blur()
+            }
+          }}
+          placeholder="2,790,000"
+          aria-label="מחיר הנכס, בשקלים"
+          aria-describedby="pf-price-say"
+          data-f="price"
+        />
+        {price > 0 && (
+          <button type="button" className="pf-amount-clear" onClick={clear} aria-label="ניקוי המחיר" data-act="price-clear">
             <X aria-hidden />
           </button>
-          <small className="pf-typed-say num" aria-live="polite">
-            {typed > 0 ? shekels(typed) : 'מקלידים את המחיר בשקלים'}
-          </small>
-        </div>
-      ) : (
-        <button type="button" className={`pf-big${price ? '' : ' is-empty'}`} onClick={open} aria-label={price ? `המחיר ${shekels(price)}. לחיצה להקלדת מחיר מדויק` : 'הקלדת מחיר'} data-price-show>
-          <span className="num">{price ? shekels(price) : 'בוחרים מחיר'}</span>
-          <Pencil aria-hidden />
+        )}
+      </div>
+      <small className={`pf-hint pf-say${price ? ' is-filled' : ''}`} id="pf-price-say" data-price-say aria-live="polite">
+        {price ? priceWords(price) : 'כותבים את הסכום בספרות, והוא יסתדר לבד.'}
+      </small>
+      {times > 0 && times <= PRICE_TYPED_MAX && (
+        <button type="button" className="pf-lift" onClick={() => onPrice(times)} data-act="price-x1000">
+          <ArrowUp aria-hidden />
+          <span>
+            התכוונתם ל-<bdi className="num">{shekels(times)}</bdi>?
+          </span>
         </button>
       )}
-      <SnapSlider
-        id="price"
-        count={PRICE_STOPS.length}
-        index={index}
-        chosen={price > 0}
-        onChange={(i) => {
-          setTyping(false)
-          onPrice(PRICE_STOPS[i])
-        }}
-        label="מחיר"
-        valueText={price ? shekels(price) : 'לא נבחר מחיר'}
-        less="מחיר נמוך יותר"
-        more="מחיר גבוה יותר"
-      />
-      <small className="pf-hint">
-        {price ? `גוררים בקפיצות של ${shekels(stepAt(price))}. לחיצה על המחיר: הקלדה מדויקת.` : 'גוררים את העיגול, או לוחצים על המחיר ומקלידים.'}
-      </small>
     </div>
   )
 }
