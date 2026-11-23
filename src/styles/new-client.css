@@ -14,9 +14,10 @@
 }
 .nc-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  /* the phone's column is the wider of the two, so the line under it holds in one line (23.11.2026) */
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
   gap: 12px;
-  /* the line under the phone belongs to it alone: the other field keeps its own height (23.11.2026) */
+  /* that line belongs to the phone alone: the other field keeps its own height */
   align-items: start;
 }
 /* the phone is not a must (23.11.2026): one quiet line under the field itself, about the number and nothing else */

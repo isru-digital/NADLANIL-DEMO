@@ -92,8 +92,10 @@ for (const [dev, vp] of [
       under: document.querySelector('[data-f="phone-note"]')?.closest('label')?.contains(document.querySelector('[data-f="phone"]')) ?? false,
       plain: getComputedStyle(document.querySelector('[data-f="phone-note"]')).backgroundColor,
       narrow: Math.round((document.querySelector('[data-f="phone-note"]')?.getBoundingClientRect().width ?? 0) / (document.querySelector('.nc-row')?.getBoundingClientRect().width ?? 1) * 100),
+      // on a computer it holds in one line (its height is one line of its own line-height)
+      lines: Math.round((document.querySelector('[data-f="phone-note"]')?.getBoundingClientRect().height ?? 0) / (parseFloat(getComputedStyle(document.querySelector('[data-f="phone-note"]')).lineHeight) || 18)),
     }))
-    check(`${dev}, ${mode}: the form says only the name is a must, the field says "טלפון (לא חובה)", and a plain lock line under that field alone says where the number stays`, words.sub === 'מה הוא מחפש, בכמה לחיצות. רק שם חובה.' && words.label === 'טלפון (לא חובה)' && words.note === 'המספר נשמר רק אצלך. מתווכים אחרים לא רואים אותו.' && words.lock && words.under && /rgba\(0, 0, 0, 0\)|transparent/.test(words.plain) && (dev === 'phone' || words.narrow <= 60), words)
+    check(`${dev}, ${mode}: the form says only the name is a must, the field says "טלפון (לא חובה)", and a plain lock line under that field alone says where the number stays`, words.sub === 'מה הוא מחפש, בכמה לחיצות. רק שם חובה.' && words.label === 'טלפון (לא חובה)' && words.note === 'המספר נשמר רק אצלך. מתווכים אחרים לא רואים אותו.' && words.lock && words.under && /rgba\(0, 0, 0, 0\)|transparent/.test(words.plain) && (dev === 'phone' || (words.narrow <= 65 && words.lines === 1)), words)
     await shot('1-new-client')
     // half a number is still said, so it is not kept by mistake
     await type('.nc [data-f="name"]', NAME)
