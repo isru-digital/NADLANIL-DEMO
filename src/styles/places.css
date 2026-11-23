@@ -251,32 +251,61 @@ html[data-mode='night'] .pl-manual {
   width: 16px;
   height: 16px;
 }
+/* "בחירה מהמפה" (23.11.2026): the site's own green, a map on it, and a second line that says what it opens, so it
+   is not missed among the fields */
 .pl-map-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  min-height: 46px;
-  border-radius: 14px;
-  border: 1.5px solid var(--pl-blue);
-  background: var(--pl-blue-soft);
+  gap: 9px;
+  min-height: 52px;
+  padding: 0 16px;
+  border-radius: 16px;
+  border: 0;
+  background-color: #0a5e3e;
+  background-image: linear-gradient(135deg, #0a5e3e, #0c7a50);
   font-family: var(--font-display);
-  font-size: 15.5px;
-  font-weight: 700;
-  color: var(--text);
+  font-size: 16px;
+  font-weight: 800;
+  color: #fff;
   cursor: pointer;
   touch-action: manipulation;
+  box-shadow: 0 10px 24px -14px rgb(var(--g) / 0.9);
+  transition: filter 0.2s ease;
+}
+.pl-map-btn:hover {
+  filter: brightness(1.06);
+}
+.pl-map-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 .pl-map-btn svg {
-  width: 19px;
-  height: 19px;
-  color: var(--pl-blue);
+  width: 21px;
+  height: 21px;
+  color: #fff;
 }
-html[data-mode='night'] .pl-map-btn svg {
-  color: #9dbdf7;
+.pl-map-btn b {
+  padding: 2px 9px;
+  border-radius: 99px;
+  background: rgb(255 255 255 / 0.22);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.pl-map-btn:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .pl-map-btn {
+    transition: none;
+  }
 }
 
-/* ---------------------------------------------------------------- the map, over the whole screen */
+/* ---------------------------------------------------------------- the map, over the whole screen
+   Made clear and big (Itzik 23.11.2026): the map fills the window, the colours are the site's own green, a
+   neighbourhood has an edge you can see, and the part of the city the open data has no boundary for is a quiet
+   hatch instead of a white hole. */
 .hm {
   position: fixed;
   inset: 0;
@@ -317,10 +346,22 @@ html[data-mode='night'] .pl-map-btn svg {
 .hm-x:hover {
   background: rgb(var(--w) / 0.08);
 }
+/* the line that says what to do (dark enough to read, right for a property and for a client), and under it what
+   the colours of the map mean. Both are above the map, so nothing of the city is covered. */
+.hm-head {
+  padding: 9px 16px 10px;
+  background: var(--card);
+  border-bottom: 1px solid var(--line);
+}
 .hm-tip {
   margin: 0;
-  padding: 8px 16px;
-  font-size: 14px;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--text);
+}
+.hm-tip span {
+  font-weight: 500;
   color: var(--text-dim);
 }
 .hm-stage {
@@ -330,40 +371,61 @@ html[data-mode='night'] .pl-map-btn svg {
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
-  background: color-mix(in srgb, var(--card) 70%, #d9e6f7);
+  background: color-mix(in srgb, var(--card) 62%, #cfe3f5);
   cursor: grab;
 }
 html[data-mode='night'] .hm-stage {
-  background: #0d1a22;
+  background: #0b1720;
 }
-/* the map itself (not the icons of its buttons) */
+/* the map itself (not the icons of its buttons): it fills the stage, and the city is drawn as big as it fits */
 .hm-stage > svg {
   position: absolute;
-  inset: 12px;
-  width: calc(100% - 24px);
-  height: calc(100% - 24px);
+  inset: 4px;
+  width: calc(100% - 8px);
+  height: calc(100% - 8px);
   transform-origin: center;
   overflow: visible;
 }
 .hm-city {
-  fill: var(--card);
-  stroke: rgb(var(--w) / 0.35);
+  fill: url(#hm-gap);
+  stroke: rgb(var(--w) / 0.5);
   stroke-width: 2;
 }
-.hm-hood {
-  fill: rgb(var(--g) / 0.08);
-  stroke: rgb(var(--w) / 0.45);
-  stroke-width: 1.2;
-  cursor: pointer;
-  transition: fill 0.15s ease;
+.hm-gap-bg {
+  fill: color-mix(in srgb, var(--card) 88%, var(--text-faint));
 }
-.hm-hood:hover {
-  fill: rgb(31 95 207 / 0.16);
+.hm-gap-line {
+  stroke: rgb(var(--w) / 0.5);
+  stroke-width: 2.4;
+}
+html[data-mode='night'] .hm-gap-bg {
+  fill: #16242c;
+}
+html[data-mode='night'] .hm-gap-line {
+  stroke: rgb(255 255 255 / 0.12);
+}
+.hm-hood {
+  fill: rgb(var(--g) / 0.2);
+  stroke: var(--gold);
+  stroke-width: 1.4;
+  stroke-linejoin: round;
+  cursor: pointer;
+  transition:
+    fill 0.15s ease,
+    stroke-width 0.15s ease;
+}
+/* :not, so the night's own shade never beats the one picked or the one under the mouse */
+html[data-mode='night'] .hm-hood:not(.is-on):not(.is-near) {
+  fill: rgb(var(--g) / 0.26);
+}
+.hm-hood.is-near {
+  fill: rgb(var(--g) / 0.42);
+  stroke-width: 2.6;
 }
 .hm-hood.is-on {
-  fill: rgb(31 95 207 / 0.62);
-  stroke: var(--pl-blue);
-  stroke-width: 2.2;
+  fill: var(--gold);
+  stroke: var(--gold-ink, #0a5e3e);
+  stroke-width: 2.6;
 }
 .hm-label {
   fill: var(--text);
@@ -371,65 +433,120 @@ html[data-mode='night'] .hm-stage {
   font-weight: 700;
   paint-order: stroke;
   stroke: var(--card);
-  stroke-width: 3px;
+  stroke-width: 3.5px;
   stroke-linejoin: round;
   pointer-events: none;
 }
+.hm-label.is-near {
+  fill: var(--text);
+  stroke-width: 4.5px;
+}
 .hm-label.is-on {
   fill: #fff;
-  stroke: var(--pl-blue);
+  stroke: #0a5e3e;
+  stroke-width: 3.5px;
 }
+/* big enough for a thumb, and away from the credit line */
 .hm-zoom {
   position: absolute;
-  inset-inline-end: 12px;
-  bottom: 34px;
+  right: 12px;
+  bottom: 14px;
   display: grid;
-  gap: 8px;
+  gap: 10px;
 }
 .hm-zoom button {
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
-  border: 1px solid var(--line);
+  border: 1.5px solid var(--line);
   background: var(--card);
   color: var(--text);
-  box-shadow: var(--shadow-1);
+  box-shadow: 0 6px 18px -8px rgb(0 0 0 / 0.5);
   cursor: pointer;
+  touch-action: manipulation;
+}
+.hm-zoom button:hover {
+  border-color: var(--gold);
 }
 .hm-zoom button:disabled {
   opacity: 0.4;
+  cursor: default;
 }
 .hm-zoom button svg {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
+}
+.hm-zoom button:focus-visible,
+.hm-ok:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+/* what the colours mean, so the hatch is read as "no data" and not as a broken map */
+.hm-legend {
+  display: flex;
+  align-items: center;
+  gap: 4px 14px;
+  flex-wrap: wrap;
+  margin-block-start: 7px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+.hm-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.hm-key {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  border: 1.5px solid var(--gold);
+  background: rgb(var(--g) / 0.2);
+}
+.hm-key.is-on {
+  background: var(--gold);
+}
+.hm-key.is-gap {
+  border-color: var(--line-strong, var(--line));
+  background: repeating-linear-gradient(45deg, color-mix(in srgb, var(--card) 88%, var(--text-faint)) 0 3px, rgb(var(--w) / 0.5) 3px 4px);
 }
 .hm-credit {
   position: absolute;
   inset-inline-start: 10px;
   bottom: 8px;
-  padding: 2px 8px;
-  border-radius: 6px;
+  padding: 3px 9px;
+  border-radius: 7px;
+  border: 1px solid var(--line);
   background: var(--card);
-  font-size: 11.5px;
-  color: var(--text-dim);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
   direction: ltr;
 }
 .hm-chips {
   display: flex;
   align-items: center;
   gap: 7px;
-  min-height: 58px;
+  min-height: 56px;
   overflow-x: auto;
-  padding: 10px 14px 0;
+  padding: 9px 14px 0;
 }
 .hm-none {
   font-size: 14px;
   color: var(--text-dim);
 }
+/* inside the map everything that is "picked" is the site's green, the same as the neighbourhood on the map itself
+   (the picker's own blue, outside the map, was not touched) */
 .hm-chips .pl-chip {
   flex: none;
+  background: #0a5e3e;
+}
+.hm .pl-city {
+  background: #0a5e3e;
 }
 .hm-foot {
   padding: 10px 14px 14px;
@@ -437,11 +554,24 @@ html[data-mode='night'] .hm-stage {
   border-top: 1px solid var(--line);
 }
 .hm-ok {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   width: 100%;
 }
+.hm-ok:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.hm-ok svg {
+  width: 19px;
+  height: 19px;
+}
+/* on a computer: a tall panel, the shape of a city, so the map fills it with little to spare */
 @media (min-width: 900px) {
   .hm {
-    inset: 40px max(40px, calc(50% - 460px));
+    inset: 18px max(18px, calc(50% - 330px));
     border-radius: 22px;
     overflow: hidden;
     box-shadow: 0 30px 80px -20px rgb(0 0 0 / 0.5);

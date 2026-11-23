@@ -210,7 +210,7 @@ function Form({ onClose }: { onClose: () => void }) {
         <legend>
           שכונות עבודה <i>לא חובה</i>
         </legend>
-        <PlacePicker id="profile" cities={cities} value={{ streets: [], hoods, manual }} onChange={(next) => setPlaces({ hoods: next.hoods, manual: next.manual })} many streets={false} />
+        <PlacePicker id="profile" what="client" cities={cities} value={{ streets: [], hoods, manual }} onChange={(next) => setPlaces({ hoods: next.hoods, manual: next.manual })} many streets={false} />
       </fieldset>
 
       {/* ------------------------------------------------------------ one button */}

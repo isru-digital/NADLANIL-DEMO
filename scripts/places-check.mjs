@@ -2,7 +2,8 @@
 // demo on the green dev server:
 //   1. the list: the city as a blue chip, "רחוב" / "שכונה", a letter opens a list with boxes to tick, a choice is a
 //      blue chip with an X; a property has one of each; "לא מצאתי, להוסיף ידנית" keeps a name marked "ידני"
-//   2. the map: the city's neighbourhoods; a tap paints one blue and adds it, a second tap lets it go; "אישור N
+//   2. the map: the city's neighbourhoods; a tap paints one in the site's green and adds it, a second tap lets it
+//      go (the whole look of the map is checked by scripts/hood-map-check.mjs, 23.11.2026); "אישור N
 //      שכונות" at the bottom; one finger moves the map, two fingers zoom it, the page does not scroll
 //   3. where: the property form, the buyer's form (several of each, two cities), the feed's filter, the match
 //   5. a name typed freely before the lists stays; when it is clearly one of the list, the list's name is offered
@@ -265,7 +266,7 @@ for (const [dev, vp] of DEVICES) {
   await page.waitForSelector('[data-hood-map]', { visible: true, timeout: 8000 })
   await wait(700)
   let m = await mapState(page)
-  check(`${dev}: the map of Tel Aviv: its neighbourhoods drawn, the credit to OpenStreetMap, "אישור 0 שכונות" in reach, fingers for the map only`, m.city === 'תל אביב' && m.hoods >= 20 && m.credit?.includes('OpenStreetMap') && m.ok === 'אישור 0 שכונות' && m.okVisible && m.touch === 'none', m)
+  check(`${dev}: the map of Tel Aviv: its neighbourhoods drawn, the credit to OpenStreetMap, the button in reach and off while nothing is picked, fingers for the map only`, m.city === 'תל אביב' && m.hoods >= 20 && m.credit?.includes('OpenStreetMap') && m.ok === 'בוחרים שכונה' && m.okVisible && m.touch === 'none', m)
   await t.shot(`${dev}-4-map`)
   const names = await page.evaluate(() => [...document.querySelectorAll('[data-hood-map] [data-hood]')].map((x) => x.dataset.hood))
   // two neighbourhoods that can be hit on screen
@@ -277,13 +278,13 @@ for (const [dev, vp] of DEVICES) {
   }
   await tapAt(page, pts[0][1], touch)
   m = await mapState(page)
-  check(`${dev}: a tap paints the neighbourhood blue and adds it`, m.on.join() === pts[0][0] && m.chips.join() === pts[0][0] && m.fill.startsWith('rgba(31, 95, 207') && m.ok === 'אישור שכונה אחת', m)
+  check(`${dev}: a tap paints the neighbourhood in the site's green and adds it`, m.on.join() === pts[0][0] && m.chips.join() === pts[0][0] && /rgb\(1?[0-9]{1,2}, 1[0-9]{2}, [0-9]{2,3}\)/.test(m.fill ?? '') && m.ok === 'אישור שכונה אחת', m)
   await tapAt(page, (await hoodPoint(page, pts[1][0])) ?? pts[1][1], touch)
   m = await mapState(page)
   check(`${dev}: for a property a second neighbourhood takes the place of the first`, m.on.join() === pts[1][0], m.on)
   await tapAt(page, (await hoodPoint(page, pts[1][0])) ?? pts[1][1], touch)
   m = await mapState(page)
-  check(`${dev}: a second tap on it lets it go`, m.on.length === 0 && m.ok === 'אישור 0 שכונות', m)
+  check(`${dev}: a second tap on it lets it go`, m.on.length === 0 && m.ok === 'בוחרים שכונה', m)
   // moving and zooming
   const stage = await page.$eval('[data-map-stage]', (el) => {
     const r = el.getBoundingClientRect()

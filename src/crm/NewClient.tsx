@@ -252,6 +252,7 @@ export default function NewClient({ open, onClose, isOffice, onAdd, searchOnly =
                 <PlacePicker
                   id="buyer"
                   many
+                  what="client"
                   cities={cities}
                   value={{ streets: streetList, hoods, manual }}
                   onChange={(p) => {

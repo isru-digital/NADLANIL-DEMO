@@ -23,6 +23,7 @@ export function PlacePicker({
   onChange,
   many = false,
   streets = true,
+  what = 'property',
 }: {
   id: string
   cities: string[]
@@ -32,6 +33,8 @@ export function PlacePicker({
   many?: boolean
   /** a field that asks for neighbourhoods only */
   streets?: boolean
+  /** what the place is being picked for, so the map says the right thing (23.11.2026) */
+  what?: 'property' | 'client'
 }) {
   const [kind, setKind] = useState<Kind>(streets ? 'street' : 'hood')
   const [typed, setTyped] = useState('')
@@ -198,6 +201,7 @@ export function PlacePicker({
           {kind === 'hood' && cities.some(hasMap) && (
             <button type="button" className="pl-map-btn" onClick={() => mapCity && setMapOf(mapCity)} disabled={!mapCity} data-act="open-map">
               <MapIcon aria-hidden /> בחירה מהמפה
+              <b>{many ? 'אפשר כמה שכונות' : 'השכונה על המפה'}</b>
             </button>
           )}
         </>
@@ -205,6 +209,7 @@ export function PlacePicker({
       {mapOf?.map && (
         <HoodMap
           open
+          what={what}
           places={mapOf}
           picked={value.hoods.filter((h) => mapOf.map!.hoods.some((m) => m.n === h))}
           many={many}
