@@ -7,21 +7,30 @@ import '../styles/post-form.css'
  * before the fee existed) shows nothing: no number is made up for it.
  * 0% is not "nothing" but the best there is (Itzik 23.11.2026): each side takes from its own client, so it is said
  * in words, "שת"פ מלא", in a light green, and only a fee that is asked for is said in red.
+ * A few properties of the demo are marked that way so the filter has what to show; those carry a "דוגמה" tag of
+ * their own beside the fee, so no one takes them for a real property of a real broker.
  */
-export function CoopBadge({ pct, at = 'photo' }: { pct: unknown; at?: 'photo' | 'line' }) {
+export function CoopBadge({ pct, at = 'photo', sample = false }: { pct: unknown; at?: 'photo' | 'line'; sample?: boolean }) {
   if (!hasCoop(pct)) return null
   const full = pct === 0
   return (
-    <span className={`coop-badge is-${at}${full ? ' is-full' : ''}`} data-coop={pct}>
-      {full ? (
-        'שת"פ מלא'
-      ) : (
-        <>
-          עמלת שת"פ{' '}
-          <bdi dir="ltr" className="num">
-            {coopText(pct)}
-          </bdi>
-        </>
+    <span className={`coop-wrap is-${at}`}>
+      <span className={`coop-badge is-${at}${full ? ' is-full' : ''}`} data-coop={pct}>
+        {full ? (
+          'שת"פ מלא'
+        ) : (
+          <>
+            עמלת שת"פ{' '}
+            <bdi dir="ltr" className="num">
+              {coopText(pct)}
+            </bdi>
+          </>
+        )}
+      </span>
+      {sample && (
+        <span className={`coop-badge is-${at} is-sample`} data-sample>
+          דוגמה
+        </span>
       )}
     </span>
   )

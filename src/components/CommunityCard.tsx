@@ -297,7 +297,7 @@ export default function CommunityCard({
             const inner = item.image ? (
               <div className="fb-media-wrap">
                 <Photo src={item.image} alt={item.title ?? ''} ratio="16 / 9" className="fb-media" eager={preview} />
-                <CoopBadge pct={item.property.coopPct} />
+                <CoopBadge pct={item.property.coopPct} sample={item.property.sample} />
               </div>
             ) : null
             return preview ? inner : (
@@ -347,7 +347,7 @@ export default function CommunityCard({
                 )}
                 {item.property.showPrice !== false && <strong className="num">{priceText(item.property)}</strong>}
                 {/* no photo to carry the tag: it stands in the line of facts */}
-                {!item.image && <CoopBadge pct={item.property.coopPct} at="line" />}
+                {!item.image && <CoopBadge pct={item.property.coopPct} at="line" sample={item.property.sample} />}
               </div>
               {/* what the property has: a safe room, a lift... (the first few; the property's page has them all) */}
               {(item.property.extra?.length ?? 0) > 0 && (

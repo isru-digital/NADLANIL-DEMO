@@ -169,38 +169,41 @@ for (const [dev, vp] of [
       return b ? { pressed: b.getAttribute('aria-pressed'), anim: getComputedStyle(b).animationName, say: b.parentElement.querySelector('.flt-full-say')?.textContent.trim() } : null
     })
     check(`${dev} ${mode}: there is a "שת"פ מלא" button, and beside it what it means`, !!btn && btn.pressed === 'false' && !!btn.say && btn.say.includes('בלי תשלום בין המתווכים'), btn)
-    // one property of the room is marked as a full co-operation, as the form would mark it, and only it is left
-    const seeded = await page.evaluate((k) => {
-      const s = JSON.parse(localStorage.getItem(k) ?? '{}')
-      const first = (s.items ?? []).find((x) => x.topicId === 'coop' && x.property)
-      if (!first) return null
-      const copy = JSON.parse(JSON.stringify(first))
-      copy.id = 'full-coop-check'
-      copy.title = 'נכס בשת"פ מלא לבדיקה'
-      copy.property.coopPct = 0
-      s.items = [copy, ...s.items]
-      localStorage.setItem(k, JSON.stringify(s))
-      return copy.title
-    }, STATE)
+    // four properties of the demo are marked as a full co-operation (23.11.2026), each with a "דוגמה" tag of its own
+    const seeded = await page.evaluate((k) => (JSON.parse(localStorage.getItem(k) ?? '{}').items ?? []).filter((x) => x.property?.sample).map((x) => x.id), STATE)
+    // a clean filter first: the amounts written above are still in the boxes
     await open('/app/community?topic=coop')
     await page.evaluate(() => document.querySelector('[data-filter="full-coop"]').click())
     await wait(1200)
     const only = await page.evaluate(() => ({
       count: Number(document.querySelector('[data-count]')?.textContent),
+      cards: document.querySelectorAll('.ci').length,
       badges: [...document.querySelectorAll('[data-coop]')].map((b) => b.getAttribute('data-coop')),
       words: [...document.querySelectorAll('[data-coop="0"]')].map((b) => b.textContent.trim()),
+      samples: [...document.querySelectorAll('[data-sample]')].map((b) => b.textContent.trim()),
     }))
     check(
-      `${dev} ${mode}: the button leaves only the properties of a full co-operation, and they say so in words`,
-      !!seeded && only.count === 1 && only.badges.length > 0 && only.badges.every((b) => b === '0') && only.words.every((w) => w === 'שת"פ מלא'),
+      `${dev} ${mode}: the button leaves only the four properties of a full co-operation, said in words and tagged דוגמה`,
+      seeded.length === 4 && only.count === 4 && only.badges.length === 4 && only.badges.every((b) => b === '0') && only.words.every((w) => w === 'שת"פ מלא') && only.samples.length === 4 && only.samples.every((w) => w === 'דוגמה'),
       { seeded, only },
     )
+    await page.evaluate(() => {
+      const c = document.querySelector('.ci')
+      if (c) document.scrollingElement.scrollTop += c.getBoundingClientRect().top - 60
+    })
+    await wait(500)
     await shot('5-full-coop')
     // pressing it again brings everything back
     await page.evaluate(() => document.querySelector('[data-filter="full-coop"]').click())
     await wait(1100)
     const back = await page.evaluate(() => Number(document.querySelector('[data-count]')?.textContent))
     check(`${dev} ${mode}: pressing it again brings every property back`, back > only.count, { back, was: only.count })
+    // a property that asks for a fee is not one of them, and carries no "דוגמה" tag
+    const other = await page.evaluate(() => {
+      const paid = [...document.querySelectorAll('[data-coop]')].find((b) => b.getAttribute('data-coop') !== '0')
+      return paid ? { pct: paid.getAttribute('data-coop'), sample: !!paid.parentElement.querySelector('[data-sample]') } : null
+    })
+    check(`${dev} ${mode}: a property with a real fee keeps its fee and has no "דוגמה" tag`, !!other && other.pct !== '0' && !other.sample, other)
 
     /* ---------------------------------------------------------------- 4. the calm line of the co-operation room */
     const calm = await text('[data-banner="calm"]')

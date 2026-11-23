@@ -53,10 +53,24 @@ const initial = (): State => ({
   pagePublished: false,
 })
 
+/**
+ * The few properties of the demo that are marked "שת"פ מלא" with a "דוגמה" tag (Itzik 23.11.2026) are refreshed
+ * onto what a browser already keeps, so a broker who was here before the mark existed sees them too. Only those two
+ * marks are taken from the seed; everything else of the saved post (its likes, its comments, a lift) stays as it is,
+ * and nothing is removed.
+ */
+const withSamples = (saved: CommunityItem[]): CommunityItem[] => {
+  const marks = new Map(seedItems.filter((i) => i.property?.sample).map((i) => [i.id, i.property!]))
+  return saved.map((it) => (it.property && marks.has(it.id) ? { ...it, property: { ...it.property, coopPct: marks.get(it.id)!.coopPct, sample: true } } : it))
+}
+
 const load = (): State => {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) return { ...initial(), ...JSON.parse(raw) }
+    if (raw) {
+      const kept = { ...initial(), ...(JSON.parse(raw) as Partial<State>) }
+      return { ...kept, items: withSamples(kept.items) }
+    }
   } catch {
     /* storage unavailable: start clean */
   }

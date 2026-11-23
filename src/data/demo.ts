@@ -635,6 +635,9 @@ export type PropertyInfo = {
   split?: string
   /** "עמלת שת"פ" in percent of the price (0 to 1, every 0.05). A post from before has none, and no tag */
   coopPct?: number
+  /** one of the few properties of the demo that are marked "שת"פ מלא" so the filter has what to show
+      (Itzik 23.11.2026). They carry a "דוגמה" tag beside the fee, so no one takes them for a real property. */
+  sample?: boolean
   showPrice?: boolean
   deal?: 'sale' | 'rent'
   /** the kind of property (config/propertyTypes.ts) and its group; an older post is read through `kindOf` */
@@ -811,9 +814,9 @@ function moreItems(): CommunityItem[] {
     home('p9', 'b15', 'תל אביב', 'לפני 40 דקות', 'להשכרה: 2 חדרים משופצים בלב העיר', 'בניין ישן ומטופח, ריצוף מקורי ותריסי עץ. מתאים לזוג או לשוכר אחד. כניסה מיידית.', 5,
       { area: 'תל אביב - לב העיר', rooms: '2', price: 6900, deal: 'rent', kind: 'דירה להשכרה', sqm: 52, floor: '2 מתוך 3', parking: 0, elevator: false, renewal: true, images: [img('il-tlv-rental'), img('il-bathroom')], extra: ['משופצת', 'מזגן בכל חדר', 'מרוהטת חלקית'] }),
     home('p2', 'b9', 'באר שבע', 'לפני שעה', 'דירת 5 חדרים ברמות, קומה גבוהה', 'בניין חדש יחסית, ממ"ד ושתי חניות. מתאים למשפחה או למשקיע שרוצה תשואה יציבה.', 6,
-      { area: 'באר שבע - רמות', rooms: '5', price: 1850000, kind: 'דירה', sqm: 125, floor: '7 מתוך 9', parking: 2, elevator: true, images: [img('il-beersheva'), img('il-kitchen'), img('il-mamad-kids'), img('il-bathroom')], extra: ['ממ"ד', 'שתי חניות', 'מרפסת שמש'] }),
+      { area: 'באר שבע - רמות', rooms: '5', price: 1850000, kind: 'דירה', coopPct: 0, sample: true, sqm: 125, floor: '7 מתוך 9', parking: 2, elevator: true, images: [img('il-beersheva'), img('il-kitchen'), img('il-mamad-kids'), img('il-bathroom')], extra: ['ממ"ד', 'שתי חניות', 'מרפסת שמש'] }),
     home('p3', 'b11', 'אשדוד', 'לפני שעתיים', 'דירת 4 חדרים במגדל ליד הים', 'חמש דקות הליכה לחוף, נוף חלקי לים ולובי מטופח.', 12,
-      { area: 'אשדוד - רובע י"א', rooms: '4', price: 2450000, kind: 'דירה במגדל', sqm: 110, floor: '12 מתוך 20', parking: 1, elevator: true, images: [img('il-ashdod'), img('il-ramat-gan-living'), img('il-bedroom'), img('il-bathroom')], extra: ['נוף לים', 'ממ"ד', 'מחסן'] },
+      { area: 'אשדוד - רובע י"א', rooms: '4', price: 2450000, kind: 'דירה במגדל', coopPct: 0, sample: true, sqm: 110, floor: '12 מתוך 20', parking: 1, elevator: true, images: [img('il-ashdod'), img('il-ramat-gan-living'), img('il-bedroom'), img('il-bathroom')], extra: ['נוף לים', 'ממ"ד', 'מחסן'] },
       [{ authorId: 'b19', time: 'לפני שעה', body: 'מכיר את הבניין, מתוחזק מצוין. יש לי משפחה שמחפשת שם.' }]),
     home('p4', 'b12', 'פתח תקווה', 'לפני 3 שעות', 'דירת 5 חדרים חדשה באם המושבות', 'מפתח בעוד חודש. מטבח חדש, שתי חניות ומחסן, מרפסת לנוף פתוח.', 9,
       { area: 'פתח תקווה - אם המושבות', rooms: '5', price: 3250000, kind: 'דירה חדשה', sqm: 130, floor: '9 מתוך 16', parking: 2, elevator: true, images: [img('il-petah-tikva'), img('il-kitchen'), img('il-mamad-kids'), img('il-bathroom')], extra: ['שתי חניות', 'מחסן', 'מרפסת 14 מ"ר'] }),
@@ -821,14 +824,14 @@ function moreItems(): CommunityItem[] {
       { area: 'נתניה - עיר ימים', rooms: '4', price: 3390000, kind: 'דירה', sqm: 112, floor: '14 מתוך 18', parking: 1, elevator: true, images: [img('il-netanya-balcony'), img('prop-05'), img('il-bedroom'), img('il-kitchen')], extra: ['נוף לים', 'מרפסת 12 מ"ר', 'ממ"ד'] },
       [{ authorId: 'b1', time: 'לפני 3 שעות', body: 'יש לי זוג שחוזר מחו"ל וזה בדיוק בשבילם. מתקשרת אלייך.' }]),
     home('p10', 'b8', 'רמת גן', 'לפני 5 שעות', 'להשכרה: 4 חדרים ליד הבורסה', 'דירה מוארת עם מרפסת שמש, מעלית וחניה. מתאים למשפחה או לזוג שעובד מהבית.', 4,
-      { area: 'רמת גן - הבורסה', rooms: '4', price: 8200, deal: 'rent', kind: 'דירה להשכרה', sqm: 100, floor: '5 מתוך 8', parking: 1, elevator: true, images: [img('il-ramat-gan-living'), img('il-kitchen'), img('il-bedroom')], extra: ['מרפסת שמש', 'ממ"ד', 'מחסן'] }),
+      { area: 'רמת גן - הבורסה', rooms: '4', price: 8200, deal: 'rent', kind: 'דירה להשכרה', coopPct: 0, sample: true, sqm: 100, floor: '5 מתוך 8', parking: 1, elevator: true, images: [img('il-ramat-gan-living'), img('il-kitchen'), img('il-bedroom')], extra: ['מרפסת שמש', 'ממ"ד', 'מחסן'] }),
     home('p6', 'b13', 'חדרה', 'הבוקר', 'בית פרטי 6 חדרים עם גינה', 'בית של שתי קומות על מגרש של 400 מ"ר, ברחוב שקט וקרוב לבתי ספר. מוכרים כי הילדים גדלו.', 11,
       { area: 'חדרה - בית אליעזר', rooms: '6', price: 3100000, kind: 'בית פרטי', sqm: 190, floor: 'שתי קומות, מגרש 400 מ"ר', parking: 2, elevator: false, images: [img('il-hadera-house'), img('il-garden'), img('il-kitchen'), img('il-bedroom')], extra: ['גינה', 'מרתף', 'שתי חניות'] },
       [{ authorId: 'b22', time: 'לפני שעתיים', body: 'מחיר טוב לבית בגודל הזה. יש לי משפחה מכפר סבא שמחפשת לעבור צפונה.' }]),
     home('p7', 'b14', 'עפולה', 'אתמול', 'דו משפחתי 5 חדרים עם נוף לעמק', 'בית חדש יחסית בעפולה עילית, חצר קדמית ונוף לגלבוע. מתאים לקונים ראשונים שרוצים בית.', 7,
       { area: 'עפולה - עפולה עילית', rooms: '5', price: 2150000, kind: 'דו משפחתי', sqm: 160, floor: 'שתי קומות', parking: 2, elevator: false, images: [img('il-afula-cottage'), img('il-ramat-gan-living'), img('il-mamad-kids'), img('il-bathroom')], extra: ['חצר', 'נוף לעמק', 'ממ"ד'] }),
     home('p8', 'b10', 'מודיעין', 'אתמול', 'דירת גן 5 חדרים עם גינה של 80 מ"ר', 'כניסה פרטית לגינה, פרגולה ומקום לילדים. קרוב לבית ספר ולפארק.', 10,
-      { area: 'מודיעין - מוריה', rooms: '5', price: 3650000, kind: 'דירת גן', sqm: 128, floor: 'קרקע, גינה 80 מ"ר', parking: 2, elevator: true, images: [img('il-modiin-building'), img('il-garden'), img('il-kitchen'), img('il-mamad-kids')], extra: ['גינה 80 מ"ר', 'פרגולה', 'ממ"ד'] },
+      { area: 'מודיעין - מוריה', rooms: '5', price: 3650000, kind: 'דירת גן', coopPct: 0, sample: true, sqm: 128, floor: 'קרקע, גינה 80 מ"ר', parking: 2, elevator: true, images: [img('il-modiin-building'), img('il-garden'), img('il-kitchen'), img('il-mamad-kids')], extra: ['גינה 80 מ"ר', 'פרגולה', 'ממ"ד'] },
       [{ authorId: 'b25', time: 'אתמול', body: 'יש לי זוג קונים ראשונים שזה מעל התקציב שלהם, אבל שווה להם לראות.' }]),
     home('p11', 'b16', 'באר שבע', 'לפני יומיים', 'להשכרה: 3 חדרים ליד האוניברסיטה', 'שלושה חדרי שינה שווים, מתאים לסטודנטים. משכיר עם ניסיון ושקט.', 3,
       { area: 'באר שבע - שכונה ד\'', rooms: '3', price: 3600, deal: 'rent', kind: 'דירה להשכרה', sqm: 75, floor: '2 מתוך 4', parking: 1, elevator: false, images: [img('il-beersheva'), img('il-bedroom'), img('il-bathroom')], extra: ['מרוהטת', 'קרוב לאוניברסיטה', 'מזגנים'] }),

@@ -861,20 +861,42 @@ html[data-mode='night'] .coop-badge.is-full {
   background: #a9e9cc;
   color: #04301e;
 }
-/* on a photo: in its corner, away from the price tag, with a shadow that lifts it off any picture */
-.coop-badge.is-photo {
+/* on a photo: in its corner, away from the price tag, with a shadow that lifts it off any picture. The corner
+   holds the fee and, on the demo's sample properties, the "דוגמה" tag under it (23.11.2026) */
+.coop-wrap.is-photo {
   position: absolute;
   z-index: 2;
   inset-block-start: 14px;
   inset-inline-end: 14px;
+  display: grid;
+  gap: 6px;
+  justify-items: end;
+  pointer-events: none;
+}
+.coop-badge.is-photo {
   box-shadow:
     0 0 0 2px rgb(255 255 255 / 0.9),
     0 10px 24px -8px rgb(0 0 0 / 0.55);
-  pointer-events: none;
+}
+.coop-wrap.is-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 .coop-badge.is-line {
   padding: 4px 10px;
   font-size: 13.5px;
+}
+/* "דוגמה": a quiet grey tag, never the colour of a fee, so a sample property of the demo is never taken for a
+   property of a real broker */
+.coop-badge.is-sample {
+  background: #e4e9e7;
+  color: #37474f;
+  font-weight: 700;
+}
+html[data-mode='night'] .coop-badge.is-sample {
+  background: #2f3b36;
+  color: #dbe7e0;
 }
 /* Chrome's scroll anchoring moved the property form by a whole screen when a slider took its first value (seen on a
    phone, 22.11.2026). The form is scrolled by the broker alone */

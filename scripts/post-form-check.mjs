@@ -244,10 +244,12 @@ const tagOnPhoto = (page, sel) =>
   page.evaluate((sel) => {
     const tag = document.querySelector(sel)
     if (!tag) return null
-    const photo = tag.parentElement.getBoundingClientRect()
+    // the picture itself, not the corner that holds the tag and, on a sample property, the "דוגמה" tag (23.11.2026)
+    const photoEl = tag.closest('.fb-media-wrap, .pp-main') ?? tag.parentElement
+    const photo = photoEl.getBoundingClientRect()
     const r = tag.getBoundingClientRect()
     const price = tag.closest('.fb-prop')?.querySelector('.fb-facts > strong')?.getBoundingClientRect()
-    const deal = tag.parentElement.querySelector('.pp-deal')?.getBoundingClientRect()
+    const deal = photoEl.querySelector('.pp-deal')?.getBoundingClientRect()
     const hit = (a, b) => !!a && !!b && a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom
     return {
       text: tag.textContent.replace(/\s+/g, ' ').trim(),

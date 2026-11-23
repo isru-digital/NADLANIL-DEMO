@@ -333,7 +333,7 @@ function MiniCard({ it, tag }: { it: CommunityItem; tag: string }) {
         <MapPin aria-hidden /> {placeOf(it)}
       </small>
       <strong className="num">{priceOf(it)}</strong>
-      {it.property && <CoopBadge pct={it.property.coopPct} at="line" />}
+      {it.property && <CoopBadge pct={it.property.coopPct} at="line" sample={it.property.sample} />}
     </div>
   )
 }
@@ -616,7 +616,7 @@ function CardBody({ m }: { m: Match }) {
         <p className="mm-card-facts">
           <strong className="num">{priceOf(it)}</strong>
           {roomsOf(it) && <span className="num">{roomsOf(it)}</span>}
-          {it.property && <CoopBadge pct={it.property.coopPct} at="line" />}
+          {it.property && <CoopBadge pct={it.property.coopPct} at="line" sample={it.property.sample} />}
         </p>
         <ul className="mm-reasons" aria-label="למה זה מתאים">
           {m.reasons.slice(0, 7).map((r) => (

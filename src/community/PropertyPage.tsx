@@ -125,7 +125,7 @@ export default function PropertyPage() {
               </>
             )}
             <span className={`pp-deal${rent ? ' is-rent' : ''}`}>{rent ? 'להשכרה' : 'למכירה'}</span>
-            <CoopBadge pct={p.coopPct} />
+            <CoopBadge pct={p.coopPct} sample={p.sample} />
           </div>
           {photos.length > 1 && (
             <div className="pp-thumbs" role="group" aria-label="בחירת תמונה">
