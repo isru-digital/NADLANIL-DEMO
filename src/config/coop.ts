@@ -61,3 +61,43 @@ export const coopText = (pct: number) => `${Number(pct.toFixed(2))}%`
 export const coopAmount = (price: number, pct: number) => Math.round((price * pct) / 100 / 100) * 100
 /** is this a fee that was really chosen (a number from 0 to 1)? A property from before has none. */
 export const hasCoop = (pct: unknown): pct is number => typeof pct === 'number' && Number.isFinite(pct) && pct >= 0 && pct <= COOP_MAX
+
+/* ------------------------------------------------- the ladder of the filter's slider (Itzik 23.11.2026) */
+
+/**
+ * THE SLIDER OF THE FEED'S FILTER goes from 0 to 100,000,000 ₪, and its jumps are not one size.
+ * A slider of one step cannot do both ends of that range: 50,000 ₪ a step needs 2,000 drags to cross it, and
+ * 1,000,000 ₪ a step cannot be set on 2,750,000 ₪ at all. So the track is a ladder: small steps where the prices
+ * are (a flat in Israel), bigger ones where they are rare, and the handle moves one rung per step, so every rung
+ * is the same number of pixels and a finger travels the whole range in one go.
+ *   0 to 5M      every 50,000 ₪   (where almost every home is: 2,750,000 ₪ is a rung of its own)
+ *   5M to 10M    every 250,000 ₪
+ *   10M to 20M   every 500,000 ₪
+ *   20M to 50M   every 1M ₪
+ *   50M to 100M  every 2.5M ₪     (a building, a project: the end of the track, said "ומעלה")
+ * An amount written by hand in the boxes is kept exactly as it was written, rung or not: only a handle that is
+ * dragged lands on a rung.
+ */
+const ladder = (bands: [upTo: number, step: number][]) => {
+  const out = [0]
+  for (const [upTo, step] of bands) for (let v = out[out.length - 1] + step; v <= upTo; v += step) out.push(v)
+  return out
+}
+export const SALE_LADDER = ladder([
+  [5_000_000, 50_000],
+  [10_000_000, 250_000],
+  [20_000_000, 500_000],
+  [50_000_000, 1_000_000],
+  [100_000_000, 2_500_000],
+])
+/** a rent for a month: every 100 ₪ up to 10,000 ₪, then every 500 ₪ up to 30,000 ₪ */
+export const RENT_LADDER = ladder([
+  [10_000, 100],
+  [30_000, 500],
+])
+/** which rung an amount sits on (the nearest one): where the handle of an amount typed by hand is drawn */
+export function nearestStop(stops: number[], v: number): number {
+  let best = 0
+  for (let i = 1; i < stops.length; i++) if (Math.abs(stops[i] - v) < Math.abs(stops[best] - v)) best = i
+  return best
+}

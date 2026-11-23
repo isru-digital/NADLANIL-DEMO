@@ -1,0 +1,167 @@
+/* The two quiet banners of the feed (Itzik 23.11.2026): the one that asks a broker to bring their properties in,
+   and the calm line of the co-operation room while no match has come yet. Both are built out of the page's own
+   colours (--gold follows the version, green or gold, and day or night), so they read in both modes. */
+
+/* a slow breath, eight seconds: the hairline and the glow only, nothing moves place */
+@keyframes bnr-breathe {
+  0%,
+  100% {
+    border-color: color-mix(in srgb, var(--gold) 34%, var(--line));
+    box-shadow: 0 0 0 0 rgb(var(--g) / 0);
+  }
+  50% {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 4px rgb(var(--g) / 0.14);
+  }
+}
+
+.bnr {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  border: 1.5px solid var(--line);
+  background: var(--card);
+}
+.bnr-share {
+  animation: bnr-breathe 8s var(--ease) infinite;
+}
+.bnr-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: rgb(var(--g) / 0.14);
+  color: var(--gold);
+}
+.bnr-icon svg {
+  width: 20px;
+  height: 20px;
+}
+.bnr-text {
+  flex: 1 1 170px;
+  min-width: 0;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--text);
+}
+.bnr-go {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex: none;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--gold);
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 14.5px;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: filter var(--t) var(--ease);
+}
+.bnr-go:hover {
+  filter: brightness(1.06);
+}
+.bnr-go svg {
+  width: 17px;
+  height: 17px;
+}
+.bnr-x {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-faint);
+  cursor: pointer;
+}
+.bnr-x:hover {
+  background: rgb(var(--w) / 0.1);
+  color: var(--text);
+}
+.bnr-x svg {
+  width: 17px;
+  height: 17px;
+}
+.bnr-go:focus-visible,
+.bnr-x:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+/* the calm line of the co-operation room: no match yet, and nothing has to be done about it */
+.bnr-calm {
+  gap: 9px;
+  padding: 11px 13px;
+  border-style: dashed;
+  background: var(--surface);
+}
+.bnr-calm .bnr-text {
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+.bnr-calm .bnr-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: rgb(var(--g) / 0.1);
+}
+.bnr-calm .bnr-icon svg {
+  width: 17px;
+  height: 17px;
+}
+
+@media (max-width: 560px) {
+  .bnr {
+    padding: 11px 12px;
+    border-radius: 16px;
+  }
+  .bnr-text {
+    flex-basis: 100%;
+    order: 2;
+    font-size: 14.5px;
+  }
+  .bnr-icon {
+    order: 1;
+  }
+  .bnr-x {
+    order: 1;
+    margin-inline-start: auto;
+  }
+  .bnr-go {
+    order: 3;
+    width: 100%;
+  }
+  .bnr-calm .bnr-text {
+    flex-basis: auto;
+    order: 0;
+  }
+}
+
+/* less motion: the breath stops, the hairline stays the lit one so the banner is still noticed */
+@media (prefers-reduced-motion: reduce) {
+  .bnr-share {
+    animation: none;
+    border-color: var(--gold);
+  }
+  .bnr-go {
+    transition: none;
+  }
+}

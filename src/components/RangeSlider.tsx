@@ -1,21 +1,26 @@
 import { useRef } from 'react'
 import type { KeyboardEvent, PointerEvent } from 'react'
+import { nearestStop } from '../config/coop'
 
 /**
  * A small slider with two handles, for a range of money (Itzik 23.11.2026: "גם וגם" - the amount can be dragged
  * here or written in the two boxes under it; whichever is touched, the other follows).
+ * It moves on RUNGS, not on one step (Itzik 23.11.2026, for a track that reaches 100,000,000 ₪): `stops` is the
+ * ladder, from 0 up, small steps where the prices are and bigger ones higher up (config/coop.ts). Every rung is the
+ * same number of pixels, so the whole range is crossed in one drag and the common prices can still be set exactly.
  * It keeps the manners of SnapSlider, which a thumb on a phone already knows:
  *  - the handle follows the finger from where it was grabbed, so it never jumps under it;
  *  - on the track, a sideways move of a few pixels takes the slider, and an up or down move is left to the page;
  *  - a tap on the track moves the nearer handle there;
- *  - the arrow keys move a handle one step, Page one tenth, Home and End to its ends;
+ *  - the arrow keys move a handle one rung, Page ten rungs, Home and End to its ends;
  *  - it reads from the start of the line: in Hebrew the least is on the right.
  * `from` and `to` are null when that side has no end. The top of the track is "ומעלה": a `to` at the top is null.
+ * An amount typed by hand that is not a rung keeps its own value; its handle is drawn on the nearest rung.
  */
 type Props = {
   id: string
-  max: number
-  step: number
+  /** the ladder of amounts, ascending, starting at 0 */
+  stops: number[]
   from: number | null
   to: number | null
   onChange: (from: number | null, to: number | null) => void
@@ -29,20 +34,24 @@ type Props = {
 /** a move shorter than this is a tap; a longer one decides who it belongs to, the slider or the page */
 const SLOP = 7
 
-export function RangeSlider({ id, max, step, from, to, onChange, text, fromLabel, toLabel, say }: Props) {
+export function RangeSlider({ id, stops, from, to, onChange, text, fromLabel, toLabel, say }: Props) {
   const wrap = useRef<HTMLDivElement>(null)
   const drag = useRef<{ id: number; x: number; y: number; which: 'from' | 'to' | null; start: number; mine: boolean; moved: boolean } | null>(null)
+  const last = stops.length - 1
+  const max = stops[last]
   const lo = Math.max(0, Math.min(max, from ?? 0))
   const hi = Math.max(lo, Math.min(max, to ?? max))
-  const pc = (v: number) => (max > 0 ? (v / max) * 100 : 0)
-  const round = (v: number) => Math.max(0, Math.min(max, Math.round(v / step) * step))
+  const iLo = nearestStop(stops, lo)
+  const iHi = nearestStop(stops, hi)
+  const pc = (i: number) => (last > 0 ? (i / last) * 100 : 0)
+  const clamp = (i: number) => Math.max(0, Math.min(last, Math.round(i)))
   /**
    * 0 on the least side is "no floor", and the top on the other is "no ceiling": both mean "everything".
-   * The side that was not moved is sent back exactly as it came, so an amount written by hand that is bigger than
-   * the end of the track (30,000,000) is not quietly cut by a drag of the other handle.
+   * The side that was not moved is sent back exactly as it came, so an amount written by hand that is not a rung
+   * (2,790,000) is not quietly rounded by a drag of the other handle.
    */
-  const go = (which: 'from' | 'to', v: number) => {
-    const n = round(v)
+  const go = (which: 'from' | 'to', i: number) => {
+    const n = stops[clamp(i)]
     if (which === 'from') {
       const next = Math.min(n, hi)
       onChange(next <= 0 ? null : next, to)
@@ -55,19 +64,20 @@ export function RangeSlider({ id, max, step, from, to, onChange, text, fromLabel
     const el = wrap.current!
     const r = el.getBoundingClientRect()
     const rtl = getComputedStyle(el).direction === 'rtl'
-    return { r, rtl, per: r.width / Math.max(1, max / step) }
+    return { r, rtl, per: r.width / Math.max(1, last) }
   }
-  const fracAt = (clientX: number) => {
+  /** which rung the point under the finger is nearest to */
+  const rungAt = (clientX: number) => {
     const { r, rtl } = geometry()
     const f = rtl ? (r.right - clientX) / r.width : (clientX - r.left) / r.width
-    return Math.max(0, Math.min(1, f))
+    return clamp(Math.max(0, Math.min(1, f)) * last)
   }
 
   const down = (e: PointerEvent<HTMLDivElement>) => {
     if (e.pointerType === 'mouse' && e.button !== 0) return
     const thumb = (e.target as HTMLElement).closest('[data-thumb]') as HTMLElement | null
     const which = thumb ? ((thumb.dataset.thumb as 'from' | 'to') ?? null) : null
-    drag.current = { id: e.pointerId, x: e.clientX, y: e.clientY, which, start: which === 'to' ? hi : lo, mine: !!which, moved: false }
+    drag.current = { id: e.pointerId, x: e.clientX, y: e.clientY, which, start: which === 'to' ? iHi : iLo, mine: !!which, moved: false }
     if (which) {
       wrap.current?.setPointerCapture(e.pointerId)
       thumb?.focus({ preventScroll: true })
@@ -86,45 +96,45 @@ export function RangeSlider({ id, max, step, from, to, onChange, text, fromLabel
         return
       }
       // a sideways move that started on the track takes the handle nearer to where it started
-      const f = fracAt(d.x) * max
-      d.which = Math.abs(f - lo) <= Math.abs(f - hi) ? 'from' : 'to'
-      d.start = d.which === 'to' ? hi : lo
+      const i = rungAt(d.x)
+      d.which = Math.abs(i - iLo) <= Math.abs(i - iHi) ? 'from' : 'to'
+      d.start = d.which === 'to' ? iHi : iLo
       d.mine = true
       wrap.current?.setPointerCapture(e.pointerId)
     }
     d.moved = true
     e.preventDefault()
     const { rtl, per } = geometry()
-    go(d.which!, d.start + Math.round(((rtl ? -dx : dx) / per)) * step)
+    go(d.which!, d.start + Math.round((rtl ? -dx : dx) / per))
   }
   const up = (e: PointerEvent<HTMLDivElement>) => {
     const d = drag.current
     drag.current = null
     if (!d || d.id !== e.pointerId || d.moved || d.which) return
     // a tap on the track: the handle nearer to it goes there
-    const v = fracAt(e.clientX) * max
-    go(Math.abs(v - lo) <= Math.abs(v - hi) ? 'from' : 'to', v)
+    const i = rungAt(e.clientX)
+    go(Math.abs(i - iLo) <= Math.abs(i - iHi) ? 'from' : 'to', i)
   }
-  const key = (which: 'from' | 'to', now: number) => (e: KeyboardEvent<HTMLSpanElement>) => {
+  const key = (which: 'from' | 'to', nowAt: number) => (e: KeyboardEvent<HTMLSpanElement>) => {
     const rtl = getComputedStyle(e.currentTarget).direction === 'rtl'
-    const big = Math.max(step, Math.round(max / 10 / step) * step)
+    const big = Math.max(1, Math.round(last / 10))
     const steps: Record<string, number> = {
-      ArrowUp: step,
-      ArrowDown: -step,
-      ArrowRight: rtl ? -step : step,
-      ArrowLeft: rtl ? step : -step,
+      ArrowUp: 1,
+      ArrowDown: -1,
+      ArrowRight: rtl ? -1 : 1,
+      ArrowLeft: rtl ? 1 : -1,
       PageUp: big,
       PageDown: -big,
     }
     if (e.key in steps) {
       e.preventDefault()
-      go(which, now + steps[e.key])
+      go(which, nowAt + steps[e.key])
     } else if (e.key === 'Home') {
       e.preventDefault()
-      go(which, which === 'from' ? 0 : lo)
+      go(which, which === 'from' ? 0 : iLo)
     } else if (e.key === 'End') {
       e.preventDefault()
-      go(which, max)
+      go(which, last)
     }
   }
 
@@ -133,7 +143,7 @@ export function RangeSlider({ id, max, step, from, to, onChange, text, fromLabel
     <div className={`rng${open ? ' is-open' : ''}`} data-range={id}>
       <div ref={wrap} className="rng-hit" onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={() => (drag.current = null)} data-track>
         <span className="rng-track" aria-hidden>
-          <i className="rng-fill" style={{ insetInlineStart: `${pc(lo)}%`, inlineSize: `${pc(hi - lo)}%` }} />
+          <i className="rng-fill" style={{ insetInlineStart: `${pc(iLo)}%`, inlineSize: `${pc(iHi - iLo)}%` }} />
         </span>
         <span
           className="rng-thumb"
@@ -144,8 +154,8 @@ export function RangeSlider({ id, max, step, from, to, onChange, text, fromLabel
           aria-valuemax={max}
           aria-valuenow={lo}
           aria-valuetext={say(lo, false)}
-          onKeyDown={key('from', lo)}
-          style={{ insetInlineStart: `${pc(lo)}%` }}
+          onKeyDown={key('from', iLo)}
+          style={{ insetInlineStart: `${pc(iLo)}%` }}
           data-thumb="from"
         />
         <span
@@ -157,8 +167,8 @@ export function RangeSlider({ id, max, step, from, to, onChange, text, fromLabel
           aria-valuemax={max}
           aria-valuenow={hi}
           aria-valuetext={say(hi, hi >= max)}
-          onKeyDown={key('to', hi)}
-          style={{ insetInlineStart: `${pc(hi)}%` }}
+          onKeyDown={key('to', iHi)}
+          style={{ insetInlineStart: `${pc(iHi)}%` }}
           data-thumb="to"
         />
       </div>

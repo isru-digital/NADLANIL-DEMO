@@ -9,6 +9,7 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
+  Handshake,
   HelpCircle,
   Home,
   ImagePlus,
@@ -34,6 +35,8 @@ import type { PropGroup } from '../config/propertyTypes'
 import { hoodOf, propertyKind } from '../community/match'
 import { MoneyInput } from '../components/MoneyInput'
 import { RangeSlider } from '../components/RangeSlider'
+import { RENT_LADDER, SALE_LADDER, hasCoop } from '../config/coop'
+import { ShareBanner } from '../community/ShareBanner'
 import { nameKey } from '../config/places'
 import { streetOf } from '../community/place'
 import { Toggle } from '../components/Toggle'
@@ -49,11 +52,12 @@ import { BuyerPicker, PropertyPicker, ReferralSheet } from '../community/Publish
 import BrokerFinder from '../community/BrokerFinder'
 import { VALUE_LINES } from '../community/FeedWelcome'
 import type { Intent } from '../community/FeedWelcome'
-import { isMutual, matchUi } from '../community/match'
+import { anyMutual, isMutual, matchUi } from '../community/match'
 import '../styles/match.css'
 import '../styles/community.css'
 import '../styles/feed.css'
 import '../styles/property.css'
+import '../styles/banners.css'
 
 type View = TopicId | 'all'
 
@@ -62,8 +66,8 @@ type View = TopicId | 'all'
  * The money is a range since 22.11.2026 (Itzik: two boxes, the least and the most, written like the price of a
  * property, with quick ranges beside them). Both are plain numbers as text; "" is "no end on this side".
  */
-type Filter = { city: string; rooms: string; priceMin: string; priceMax: string; deal: '' | 'sale' | 'rent'; renewal: boolean; kind: string; hood: string }
-const NO_FILTER: Filter = { city: '', rooms: '', priceMin: '', priceMax: '', deal: '', renewal: false, kind: '', hood: '' }
+type Filter = { city: string; rooms: string; priceMin: string; priceMax: string; deal: '' | 'sale' | 'rent'; renewal: boolean; kind: string; hood: string; fullCoop: boolean }
+const NO_FILTER: Filter = { city: '', rooms: '', priceMin: '', priceMax: '', deal: '', renewal: false, kind: '', hood: '', fullCoop: false }
 /** a neighbourhood in the filter: "city|key", the key being one way of writing its name (config/places.ts) */
 const hoodValue = (city: string, hood: string) => `${city}|${nameKey(hood)}`
 /** the kind of property in the filter: "home|דירה" is one kind, "home|" is the whole group */
@@ -85,9 +89,8 @@ const RENT_BANDS: [label: string, min: string, max: string][] = [
   ['6,000 עד 9,000', '6000', '9000'],
   ['9,000 ומעלה', '9000', ''],
 ]
-/** the ends of the small slider above the two boxes (23.11.2026). An amount written by hand may pass them */
-const SALE_TOP = 10_000_000
-const RENT_TOP = 15_000
+/** the ladders of the slider above the two boxes: 0 to 100,000,000 ₪ for a price, 0 to 30,000 ₪ for a rent,
+    with small steps where the prices are (config/coop.ts). An amount written by hand may be between two rungs. */
 const ROOMS = ['2', '3', '4', '5']
 
 /** does a property or a buyer's search pass the filter? */
@@ -103,6 +106,9 @@ function passes(it: CommunityItem, f: Filter) {
       if (has.group !== want.group || (want.kind && has.kind !== want.kind)) return false
     }
     if (f.renewal && !p.renewal) return false
+    // "שת"פ מלא": no fee between the brokers, each takes from its own client. It is the fee at 0% (config/coop.ts),
+    // so a property published before the fee existed, which has no fee at all, is not one of them.
+    if (f.fullCoop && !(hasCoop(p.coopPct) && p.coopPct === 0)) return false
     if (f.deal && (p.deal ?? 'sale') !== f.deal) return false
     if (f.rooms && (f.rooms === '5' ? rooms < 5 : Math.floor(rooms) !== Number(f.rooms))) return false
     // a price is a sale price unless "השכרה" is chosen, so a rent never passes a sale price
@@ -376,6 +382,8 @@ export default function Community() {
           {/* the green version's top of the feed: the share line and the rooms (Itzik 19.11.2026: light, the first
               post seen without scrolling) */}
           {communitySlots.Top && <communitySlots.Top items={scoped} view={view} onView={setView as (v: never) => void} onIntent={onIntent} />}
+          {/* the call to bring your own properties in (23.11.2026), closed for the day with its X */}
+          <ShareBanner onAdd={newProperty} />
           {/* "מציאת מתווך בעיר אחרת": the referrals room opens with a search of brokers by city */}
           {topic?.id === 'referrals' && communitySlots.Top && (
             <BrokerFinder
@@ -470,6 +478,17 @@ export default function Community() {
                 return [...seen.values()].sort((a, b) => a.city.localeCompare(b.city, 'he') || a.label.localeCompare(b.label, 'he'))
               })()}
             />
+          )}
+
+          {/* no match of this broker's has happened yet, and nothing has to be done about it: they are told it will
+              come to them (23.11.2026). It goes as soon as the first match is made. */}
+          {view === 'coop' && !anyMutual() && (
+            <section className="bnr bnr-calm" data-banner="calm">
+              <span className="bnr-icon" aria-hidden>
+                <Bell />
+              </span>
+              <p className="bnr-text">אל דאגה, ברגע שיהיה מאצ' יישלח לך עדכון</p>
+            </section>
           )}
 
           {/* with the share line at the top (above), this older line would say the same thing twice */}
@@ -572,8 +591,19 @@ export default function Community() {
             {visible.length === 0 && (
               <div className="empty fb">
                 <Search />
-                <strong>{q ? 'לא נמצאו פוסטים שמתאימים לחיפוש' : 'אין כרגע פוסטים בנושא הזה בערים שבחרת'}</strong>
-                <span>אפשר להרחיב את רשימת הערים או לעבור לנושא אחר.</span>
+                {/* the full co-operation filter says what it is on its own: nothing was marked that way yet (23.11.2026) */}
+                <strong>
+                  {filter.fullCoop && filterable
+                    ? 'עוד אין כאן נכסים שסומנו שת"פ מלא'
+                    : q
+                      ? 'לא נמצאו פוסטים שמתאימים לחיפוש'
+                      : 'אין כרגע פוסטים בנושא הזה בערים שבחרת'}
+                </strong>
+                <span>
+                  {filter.fullCoop && filterable
+                    ? 'מעלים נכס, ובשורת עמלת השת"פ לוחצים "שת"פ מלא". הנכס יופיע כאן מיד.'
+                    : 'אפשר להרחיב את רשימת הערים או לעבור לנושא אחר.'}
+                </span>
                 <button
                   className="btn btn-ghost btn-sm"
                   onClick={() => {
@@ -822,10 +852,20 @@ function FilterBar({ kind, filter, onChange, count, cities, hoods }: { kind: 'pr
   const rentNow = filter.deal === 'rent'
   const bands = rentNow ? RENT_BANDS : SALE_BANDS
   const money = rentNow ? 'שכירות לחודש' : kind === 'buyers' ? 'תקציב' : 'מחיר'
-  // what the handles say in words: "הכול", "עד 4 מ' ₪", "מ-2 מ' ₪ ומעלה", "2 מ' ₪ עד 4 מ' ₪"
+  // what the handles say, short, for a screen reader: "עד 4 מ' ₪", "מ-2 מ' ₪ ומעלה"
   const short = (s: string) => (rentNow ? `${Number(s).toLocaleString('he-IL')} ₪` : formatPriceShort(Number(s)))
-  const rangeWords = !filter.priceMin && !filter.priceMax ? `כל ה${money === 'מחיר' ? 'מחירים' : 'סכומים'}` : !filter.priceMin ? `עד ${short(filter.priceMax)}` : !filter.priceMax ? `מ-${short(filter.priceMin)} ומעלה` : `${short(filter.priceMin)} עד ${short(filter.priceMax)}`
-  const on = filter.city || filter.rooms || filter.priceMin || filter.priceMax || filter.deal || filter.renewal || filter.kind || filter.hood
+  /* The range the broker sees, big and in full digits (Itzik 23.11.2026: "1,500,000 - 2,750,000 ₪"). The two
+     amounts are read from the start of the line, so they sit in one bdi of their own; the ₪ is said once, at the end. */
+  const digits = (s: string) => Number(s).toLocaleString('he-IL')
+  const rangeBig =
+    !filter.priceMin && !filter.priceMax
+      ? `כל ה${money === 'מחיר' ? 'מחירים' : 'סכומים'}`
+      : !filter.priceMin
+        ? `עד ${digits(filter.priceMax)} ₪`
+        : !filter.priceMax
+          ? `מ-${digits(filter.priceMin)} ₪ ומעלה`
+          : `${digits(filter.priceMin)} - ${digits(filter.priceMax)} ₪`
+  const on = filter.city || filter.rooms || filter.priceMin || filter.priceMax || filter.deal || filter.renewal || filter.kind || filter.hood || filter.fullCoop
   return (
     <section className="flt" aria-label={kind === 'properties' ? 'סינון נכסים' : 'סינון קונים'} data-filters={kind}>
       <label>
@@ -891,12 +931,11 @@ function FilterBar({ kind, filter, onChange, count, cities, hoods }: { kind: 'pr
         {/* the same range, dragged: whichever is touched, the boxes and the handles say the same thing */}
         <RangeSlider
           id="price"
-          max={rentNow ? RENT_TOP : SALE_TOP}
-          step={rentNow ? 250 : 100_000}
+          stops={rentNow ? RENT_LADDER : SALE_LADDER}
           from={filter.priceMin ? Number(filter.priceMin) : null}
           to={filter.priceMax ? Number(filter.priceMax) : null}
           onChange={(a, b) => set({ priceMin: a ? String(a) : '', priceMax: b ? String(b) : '' })}
-          text={rangeWords}
+          text={rangeBig}
           fromLabel={`${money}, החל מ`}
           toLabel={`${money}, עד`}
           say={(n, top) => (top ? `${formatPriceShort(n)} ומעלה` : n === 0 ? 'בלי מינימום' : formatPriceShort(n))}
@@ -935,6 +974,17 @@ function FilterBar({ kind, filter, onChange, count, cities, hoods }: { kind: 'pr
           </button>
         ))}
       </div>
+      {/* שת"פ מלא (23.11.2026): the fee at 0%, which is no fee at all between the two brokers. Its hairline
+          breathes slowly so it is noticed, and stands still for a device that asked for less motion. */}
+      {kind === 'properties' && (
+        <div className="flt-full-wrap">
+          <button type="button" className="flt-full" aria-pressed={filter.fullCoop} data-filter="full-coop" onClick={() => set({ fullCoop: !filter.fullCoop })}>
+            <Handshake aria-hidden />
+            שת"פ מלא
+          </button>
+          <small className="flt-full-say">בלי תשלום בין המתווכים: כל אחד מקבל את העמלה מהלקוח שלו</small>
+        </div>
+      )}
       {kind === 'properties' && (
         <button type="button" className="flt-renew" aria-pressed={filter.renewal} data-filter="renewal" onClick={() => set({ renewal: !filter.renewal })}>
           <span className="flt-box" aria-hidden>

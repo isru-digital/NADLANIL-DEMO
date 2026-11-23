@@ -1,5 +1,5 @@
 import { type ChangeEvent, useEffect, useRef, useState } from 'react'
-import { ArrowUp, X } from 'lucide-react'
+import { ArrowUp, Handshake, X } from 'lucide-react'
 import { SnapSlider } from '../components/SnapSlider'
 import { COOP_STOPS, PRICE_LIKELY_LOW, PRICE_TYPED_MAX, coopAmount, coopStop, coopText, priceCaret, priceDigits, priceGroups, priceWords, shekels } from '../config/coop'
 import '../styles/post-form.css'
@@ -99,21 +99,36 @@ export function PriceField({ price, onPrice }: { price: number; onPrice: (n: num
  */
 export function CoopField({ pct, price, onPct, missing }: { pct: number | null; price: number; onPct: (p: number) => void; missing?: boolean }) {
   const chosen = pct !== null
+  const full = pct === 0
   const line = !chosen
     ? 'כמה ירוויח המתווך שיביא קונה, באחוזים מהמחיר.'
-    : price > 0
-      ? `בנכס של ${shekels(price)} זה בערך ${shekels(coopAmount(price, pct))}`
-      : 'בוחרים מחיר, ונראה כאן כמה זה בשקלים.'
+    : full
+      ? 'אין תשלום בין המתווכים: כל אחד מקבל את העמלה מהלקוח שלו.'
+      : price > 0
+        ? `בנכס של ${shekels(price)} זה בערך ${shekels(coopAmount(price, pct))}`
+        : 'בוחרים מחיר, ונראה כאן כמה זה בשקלים.'
   return (
     <div className={`field pf-money pf-coop${missing && !chosen ? ' is-missing' : ''}`} data-f="coop">
       <span className="field-label">
         עמלת שת"פ <b className="pf-must">חובה</b>
       </span>
-      <strong className={`pf-big is-coop${chosen ? '' : ' is-empty'}`} data-coop-show aria-live="polite">
-        <bdi dir="ltr" className="num">
-          {chosen ? coopText(pct) : 'בוחרים אחוז'}
-        </bdi>
-      </strong>
+      <div className="pf-coop-head">
+        <strong className={`pf-big is-coop${chosen ? '' : ' is-empty'}`} data-coop-show aria-live="polite">
+          {full ? (
+            'שת"פ מלא'
+          ) : (
+            <bdi dir="ltr" className="num">
+              {chosen ? coopText(pct) : 'בוחרים אחוז'}
+            </bdi>
+          )}
+        </strong>
+        {/* one tap for the fee that brokers ask for most (Itzik 23.11.2026). It IS the fee at 0%: the slider moves
+            to its start, nothing else is kept, so the feed's "שת"פ מלא" button and the tag on the photo read it. */}
+        <button type="button" className="pf-full" aria-pressed={full} onClick={() => onPct(0)} data-act="coop-full">
+          <Handshake aria-hidden />
+          שת"פ מלא
+        </button>
+      </div>
       <SnapSlider
         id="coop"
         count={COOP_STOPS.length}

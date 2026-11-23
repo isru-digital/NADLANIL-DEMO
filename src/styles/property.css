@@ -464,11 +464,22 @@ html[data-mode='night'] .pp-split.is-full svg {
   outline: 2px solid var(--gold);
   outline-offset: 3px;
 }
+/* the range the broker reads, big and in full digits (23.11.2026): "1,500,000 - 2,750,000 ₪" */
 .rng-say {
-  font-size: 12.5px;
-  font-weight: 700;
-  color: var(--text-dim);
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -0.2px;
+  color: var(--text);
   font-variant-numeric: tabular-nums;
+  direction: rtl;
+  unicode-bidi: isolate;
+}
+@media (max-width: 400px) {
+  .rng-say {
+    font-size: 17px;
+  }
 }
 html[data-mode='night'] .rng-track {
   background: rgb(var(--w) / 0.14);
@@ -588,6 +599,70 @@ html[data-mode='night'] .rng-thumb {
 @media (min-width: 720px) {
   .flt-money {
     flex: 1 1 320px;
+  }
+}
+/* שת"פ מלא (23.11.2026): the fee at 0%, no payment between the brokers. A hairline that breathes, eight
+   seconds a breath, so the eye finds it once; it stands still where less motion was asked for. */
+.flt-full-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  flex: 1 1 100%;
+}
+.flt-full {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 42px;
+  padding: 0 16px;
+  border-radius: 99px;
+  border: 1.5px solid color-mix(in srgb, var(--gold) 34%, var(--line));
+  background: var(--bg);
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  cursor: pointer;
+  touch-action: manipulation;
+  animation: flt-breathe 8s var(--ease) infinite;
+}
+.flt-full svg {
+  width: 18px;
+  height: 18px;
+  color: var(--gold);
+}
+.flt-full[aria-pressed='true'] {
+  border-color: var(--gold);
+  background: rgb(var(--g) / 0.16);
+  animation: none;
+}
+.flt-full:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+.flt-full-say {
+  flex: 1 1 180px;
+  min-width: 0;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--text-faint);
+}
+@keyframes flt-breathe {
+  0%,
+  100% {
+    border-color: color-mix(in srgb, var(--gold) 34%, var(--line));
+    box-shadow: 0 0 0 0 rgb(var(--g) / 0);
+  }
+  50% {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 4px rgb(var(--g) / 0.14);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .flt-full {
+    animation: none;
+    border-color: var(--gold);
   }
 }
 .flt-deal {

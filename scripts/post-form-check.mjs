@@ -422,7 +422,9 @@ for (const [dev, vp] of DEVICES) {
   c1 = (await coopState(page)).show
   await page.keyboard.press('Home')
   c2 = await coopState(page)
-  check(`${dev}: from the keyboard: End is 1%, Home is 0% (0% is a choice too)`, c1 === '1%' && c2.show === '0%' && c2.line === 'בנכס של 4,200,000 ₪ זה בערך 0 ₪', { c1, c2: c2.show })
+  // 0% is not "nothing" but the best there is (23.11.2026): it is said in words, and the chip beside it is lit
+  const full = await page.$eval('.ga [data-act="coop-full"]', (b) => b.getAttribute('aria-pressed'))
+  check(`${dev}: from the keyboard: End is 1%, Home is a full co-operation (0% is a choice too)`, c1 === '1%' && c2.show === 'שת"פ מלא' && c2.line === 'אין תשלום בין המתווכים: כל אחד מקבל את העמלה מהלקוח שלו.' && full === 'true', { c1, c2: c2.show, full })
   for (let i = 0; i < 10; i++) await page.keyboard.press('ArrowUp')
   await wait(150)
   coop = await coopState(page)

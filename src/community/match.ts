@@ -144,6 +144,9 @@ export const matchStore = {
  */
 export const otherSideInterested = (m: Match) => m.score >= 70
 
+/** has any match of this broker's been made yet? (the calm line of the co-operation room, 23.11.2026) */
+export const anyMutual = () => read().mutual.length > 0
+
 /** both sides said yes on this pair (kept so the notice's button opens the chat the second time) */
 export const isMutual = (mine: string, theirs: string) => read().mutual.includes(pairKey(mine, theirs))
 
