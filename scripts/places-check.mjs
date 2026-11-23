@@ -72,6 +72,9 @@ async function fresh(vp, mode = 'day', before) {
     (m, b) => {
       localStorage.clear()
       localStorage.setItem('nadlanup-demo-v1', '1')
+      // the map in this check is the flat one (the fallback, drawn by the page itself): the 3D map, which asks
+      // OpenFreeMap for tiles, is checked by scripts/hood-map-check.mjs (part 4)
+      localStorage.setItem('nadlanup-map-flat', '1')
       localStorage.setItem('nadlanup-mode-v1', JSON.stringify({ mode: m, until: Date.now() + 9e9 }))
       if (b) for (const [k, v] of Object.entries(b)) localStorage.setItem(k, v)
     },
@@ -192,6 +195,13 @@ for (const [dev, vp] of DEVICES) {
   const cities = Object.keys(INDEX)
   check(`${dev}: the lists are there for all ${cities.length} cities of the platform, from the open sources`, cities.length >= 31 && cities.every((c) => INDEX[c].streets > 20 && INDEX[c].hoods > 3), cities.filter((c) => !(INDEX[c].streets > 20 && INDEX[c].hoods > 3)))
   check(`${dev}: a map for the cities whose neighbourhoods OpenStreetMap draws (${cities.filter((c) => INDEX[c].map).join(', ')})`, cities.some((c) => INDEX[c].map) && INDEX['תל אביב'].map)
+  // 23.11.2026: maps for ראשון לציון, בת ים and חולון too, with the few boundaries OpenStreetMap has there (the rest is
+  // the hatch, and picked from the list); every map also in longitude and latitude, for the 3D map
+  const files = Object.fromEntries(cities.filter((c) => INDEX[c].map).map((c) => [c, JSON.parse(readFileSync(`public/geo/${INDEX[c].code}.json`, 'utf8'))]))
+  const NEW = ['ראשון לציון', 'בת ים', 'חולון']
+  check(`${dev}: ראשון לציון, בת ים and חולון have a map now (${NEW.map((c) => `${c} ${INDEX[c].mapped}`).join(', ')} boundaries from OpenStreetMap), and still the full list (${NEW.map((c) => INDEX[c].hoods).join(', ')})`, NEW.every((c) => INDEX[c].map && files[c]?.map && files[c].map.hoods.length === INDEX[c].mapped && INDEX[c].hoods >= 20), NEW.map((c) => INDEX[c]))
+  check(`${dev}: every map has its 3D shapes (longitude, latitude), the same neighbourhoods as the flat one, each with a spot for its name`, Object.values(files).every((f) => f.map.geo && f.map.geo.outline.length > 10 && f.map.geo.hoods.length === f.map.hoods.length && f.map.geo.hoods.every((h, i) => h.n === f.map.hoods[i].n && h.r.length > 3 && h.l.length === 2)), Object.keys(files).filter((c) => !files[c].map.geo))
+  check(`${dev}: the OpenStreetMap files hold OpenStreetMap only: no official layer mixed in (that would be a file of its own, public/geo/official)`, Object.values(files).every((f) => f.map.source !== 'official' && /OpenStreetMap/.test(f.map.credit)) && cities.every((c) => !INDEX[c].official))
 
   // ---------------------------------------------------------------- 1. the list, in the property form
   await openCard(t, 'תל אביב')

@@ -73,8 +73,8 @@
     "code": 8300,
     "streets": 1271,
     "hoods": 83,
-    "map": false,
-    "mapped": 0
+    "map": true,
+    "mapped": 3
   },
   "באר שבע": {
     "code": 9000,
@@ -115,7 +115,7 @@
     "code": 6600,
     "streets": 598,
     "hoods": 59,
-    "map": false,
+    "map": true,
     "mapped": 0
   },
   "כפר סבא": {
@@ -136,7 +136,7 @@
     "code": 6200,
     "streets": 268,
     "hoods": 25,
-    "map": false,
+    "map": true,
     "mapped": 0
   },
   "אשקלון": {

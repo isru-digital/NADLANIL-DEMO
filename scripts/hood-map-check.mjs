@@ -7,8 +7,18 @@
 //   2. several neighbourhoods: in a client's form every tap adds one and a second tap lets it go, each is a chip,
 //      the button counts them and is off while nothing is picked; the map and the list of the search say the same.
 //      A property keeps one neighbourhood: it is in one place.
-// Tel Aviv and Ramat Gan, day and night, computer and phone.
-// Usage: node scripts/hood-map-check.mjs [outDir]     (BASE_GREEN overrides the address)
+// Tel Aviv and Ramat Gan, day and night, computer and phone. Parts 1-3 run on the FLAT map (the SVG one), which is
+// now the fallback for a device without WebGL: they switch it on with localStorage 'nadlanup-map-flat'.
+//
+// Part 4 (Itzik 23.11.2026, the map in 3D on MapLibre + OpenFreeMap, and maps for ראשון לציון, בת ים, חולון), in
+// scripts/hood-map-3d.mjs: nothing of the map is fetched with the page, only when it is opened; it opens in 3D with a
+// short flight into the city that ends tilted (45 to 60 degrees); plates in the site's soft green, the picked one
+// higher in the full green; buildings in 3D only close in; the credits of OpenStreetMap, OpenFreeMap and OpenMapTiles
+// readable; one neighbourhood for a property, several for a client, chips, the search and the map in sync; the mouse
+// lights a neighbourhood and its name; on a phone a drag, a pinch and a twist move the map and never the page; a tap
+// picks; less motion asked for gives a flat map with no flight; no WebGL gives the flat SVG map; all five cities,
+// day and night, computer and phone (screenshots of each).
+// Usage: node scripts/hood-map-check.mjs [outDir]     (BASE_GREEN overrides the address; ONLY=flat|3d)
 import puppeteer from 'puppeteer-core'
 import { mkdirSync } from 'node:fs'
 
@@ -113,10 +123,11 @@ const tapHood = async (page, name, touch) => {
   return name
 }
 
-for (const [dev, vp] of [
+const DEVICES = [
   ['desktop', { width: 1440, height: 900 }],
   ['phone', { width: 390, height: 844, isMobile: true, hasTouch: true, deviceScaleFactor: 2 }],
-]) {
+]
+for (const [dev, vp] of process.env.ONLY === '3d' ? [] : DEVICES) {
   const touch = dev === 'phone'
   for (const mode of ['day', 'night']) {
     const ctx = await browser.createBrowserContext()
@@ -128,6 +139,8 @@ for (const [dev, vp] of [
       try {
         localStorage.setItem('nadlanup-demo-v1', '1')
         localStorage.setItem('nadlanup-mode-v1', JSON.stringify({ mode: m, until: Date.now() + 9e9 }))
+        // parts 1-3 are about the flat map (the fallback); the 3D map has part 4
+        localStorage.setItem('nadlanup-map-flat', '1')
       } catch {}
     }, mode)
     const shot = (n) => page.screenshot({ path: `${out}/${dev}-${mode}-${n}.png` })
@@ -319,6 +332,11 @@ for (const [dev, vp] of [
     check(`${dev} ${mode}: no page errors`, errors.length === 0, errors.slice(0, 2))
     await ctx.close()
   }
+}
+
+if (process.env.ONLY !== 'flat') {
+  const { part4 } = await import('./hood-map-3d.mjs')
+  await part4({ browser, check, wait, out, CONTRAST, DEVICES, green })
 }
 
 console.log(`\n${total - fails} passed, ${fails} failed`)

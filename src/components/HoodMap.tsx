@@ -1,27 +1,41 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import type { PointerEvent, WheelEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { Check, Minus, Plus, X } from 'lucide-react'
-import type { CityPlaces } from '../config/places'
+import type { CityMap, CityPlaces } from '../config/places'
 import '../styles/places.css'
 
 /**
- * The neighbourhoods of a city on its own map (Itzik 22.11.2026, made clear and big on 23.11.2026): the city's
- * outline and the neighbourhoods' boundaries from OpenStreetMap, drawn by the page itself (no map tiles from
- * anywhere, so nothing is asked of another server).
- *  - the map fills the window, and the city is drawn as large as it fits;
- *  - a neighbourhood is a soft green with a clear edge, and the one picked is the site's own green;
- *  - a name shows on every neighbourhood with room for it, and on the one under the mouse or the finger, and more
- *    names appear as the map is made bigger;
- *  - a tap picks a neighbourhood, a second tap lets it go; where several are allowed, each tap adds one;
- *  - one finger moves the map, two fingers zoom it, the wheel zooms it, and the page under it never scrolls;
- *  - the parts of the city that OpenStreetMap has no neighbourhood boundary for are drawn as a quiet hatch, with a
- *    line that says so, so an empty place does not read as a broken map.
+ * The neighbourhoods of a city on a map (Itzik 22.11.2026, made clear and big on 23.11.2026, and 3D the same day).
+ *
+ * The window (this file): the line that says what to do, the legend, the chips of what was picked, the button that
+ * confirms. Inside it, one of two stages:
+ *  - the 3D map (HoodMap3D.tsx, MapLibre on OpenFreeMap tiles): tilted, the neighbourhoods are raised plates, the one
+ *    picked rises higher, buildings in 3D when close. Its code (MapLibre) is fetched only when a map is opened.
+ *  - the flat map (FlatStage below, an SVG the page draws itself): for a device without WebGL, for a 3D map that
+ *    could not load, and for a city with no 3D shapes. Someone who asked for less motion gets the 3D stage laid flat
+ *    (no tilt, no flight, no rising), see HoodMap3D.
+ * Both: a tap picks a neighbourhood, a second tap lets it go; where several are allowed each tap adds one; the parts
+ * of the city with no boundary in the open data are a quiet hatch, with a line in the legend that says so.
  */
-type View = { s: number; x: number; y: number }
-const MIN = 1
-const MAX = 10
-const TAP = 8
+const HoodMap3D = lazy(() => import('./HoodMap3D'))
+
+/** can this device draw the 3D map? (WebGL, and not turned off by hand with ?map=flat or localStorage) */
+function can3d(map: CityMap): boolean {
+  if (!map.geo) return false
+  try {
+    if (new URLSearchParams(location.search).get('map') === 'flat') return false
+    if (localStorage.getItem('nadlanup-map-flat') === '1') return false
+  } catch {
+    /* a private window: no switch, so 3D as usual */
+  }
+  try {
+    const c = document.createElement('canvas')
+    return !!(c.getContext('webgl2') || c.getContext('webgl'))
+  } catch {
+    return false
+  }
+}
 
 export function HoodMap({
   open,
@@ -43,28 +57,130 @@ export function HoodMap({
 }) {
   const map = places.map!
   const [chosen, setChosen] = useState<string[]>(picked)
-  const [view, setView] = useState<View>({ s: 1, x: 0, y: 0 })
   const [near, setNear] = useState<string | null>(null)
-  const stage = useRef<HTMLDivElement>(null)
-  const pts = useRef(new Map<number, { x: number; y: number }>())
-  const gesture = useRef<{ start: View; a: { x: number; y: number }; d: number; mid: { x: number; y: number }; moved: number; target: string | null } | null>(null)
+  const [stage, setStage] = useState<'3d' | 'flat'>(() => (can3d(map) ? '3d' : 'flat'))
 
   useEffect(() => {
     if (!open) return
     setChosen(picked)
-    setView({ s: 1, x: 0, y: 0 })
     setNear(null)
     const overflow = document.body.style.overflow
+    const overscroll = document.documentElement.style.overscrollBehavior
     document.body.style.overflow = 'hidden'
+    // the page under the map never moves, not even the "rubber band" of a phone
+    document.documentElement.style.overscrollBehavior = 'none'
     const key = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
     document.addEventListener('keydown', key)
     return () => {
       document.body.style.overflow = overflow
+      document.documentElement.style.overscrollBehavior = overscroll
       document.removeEventListener('keydown', key)
     }
   }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const flip = (n: string) => setChosen((c) => (c.includes(n) ? c.filter((x) => x !== n) : many ? [...c, n] : [n]))
+  const n = chosen.length
+  const none = map.hoods.length === 0
+  // few boundaries in the open data (ראשון לציון, בת ים, חולון): most of the city is picked from the list
+  const sparse = !none && map.source !== 'official' && map.hoods.length < 10
+  const line = none
+    ? `במפה הפתוחה (OpenStreetMap) עוד אין גבולות שכונה ב${places.city}, ולכן כל העיר מוצללת. את השכונה בוחרים מרשימת החיפוש.`
+    : what === 'client'
+      ? many
+        ? 'לוחצים על כל שכונה שמעניינת את הלקוח. לחיצה נוספת מבטלת.'
+        : 'לוחצים על השכונה שהלקוח מחפש בה.'
+      : many
+        ? 'לוחצים על כל שכונה שרוצים. לחיצה נוספת מבטלת.'
+        : 'לוחצים על השכונה שבה נמצא הנכס.'
+  if (!open) return null
+  return createPortal(
+    <div className="hm" role="dialog" aria-modal="true" aria-label={`מפת השכונות של ${places.city}`} data-hood-map={places.city} data-map-mode={stage}>
+      <header className="hm-top">
+        <button type="button" className="hm-x" onClick={onClose} aria-label="סגירה" data-act="close-map">
+          <X aria-hidden />
+        </button>
+        <div>
+          <strong>בחירת שכונה מהמפה</strong>
+          <span className="pl-city">{places.city}</span>
+        </div>
+      </header>
+      <div className="hm-head">
+        <p className="hm-tip" data-map-tip>
+          {line}
+          {!none && <span> מזיזים את המפה בגרירה, ומגדילים בצביטה או בכפתורי הזום.</span>}
+          {sparse && <span className="hm-sparse" data-map-sparse> ברוב העיר עוד אין גבולות במפה הפתוחה: שכונה שלא מופיעה בוחרים מרשימת החיפוש.</span>}
+        </p>
+        <div className="hm-legend" data-map-legend>
+          {!none && (
+            <>
+              <span>
+                <i className="hm-key is-hood" /> שכונה
+              </span>
+              <span>
+                <i className="hm-key is-on" /> נבחרה
+              </span>
+            </>
+          )}
+          <span>
+            <i className="hm-key is-gap" /> אין גבול שכונה במפה הפתוחה
+          </span>
+        </div>
+      </div>
+      {stage === '3d' ? (
+        <Suspense fallback={<div className="hm-stage hm-wait" data-map-stage data-map-loading />}>
+          <HoodMap3D places={places} chosen={chosen} flip={flip} near={near} setNear={setNear} onFail={() => setStage('flat')} />
+        </Suspense>
+      ) : (
+        <FlatStage map={map} chosen={chosen} flip={flip} near={near} setNear={setNear} />
+      )}
+      {/* always there, so the map does not move under the finger when the first one is picked */}
+      <div className="hm-chips" aria-live="polite">
+        {n === 0 && <span className="hm-none">{none ? 'בעיר הזאת בוחרים שכונה מהרשימה' : 'עוד לא נבחרה שכונה'}</span>}
+        {chosen.map((c) => (
+          <span key={c} className="pl-chip is-on" data-map-chip={c}>
+            {c}
+            <button type="button" onClick={() => flip(c)} aria-label={`הסרת ${c}`} data-act="map-chip-off">
+              <X aria-hidden />
+            </button>
+          </span>
+        ))}
+      </div>
+      <footer className="hm-foot">
+        {none ? (
+          <button type="button" className="btn btn-gold btn-lg hm-ok" onClick={onClose} data-act="map-to-list">
+            חזרה לרשימת החיפוש
+          </button>
+        ) : (
+          <button type="button" className="btn btn-gold btn-lg hm-ok" onClick={() => onDone(chosen)} disabled={n === 0} data-act="map-done">
+            <Check aria-hidden />
+            {n === 0 ? 'בוחרים שכונה' : n === 1 ? 'אישור שכונה אחת' : `אישור ${n} שכונות`}
+          </button>
+        )}
+      </footer>
+    </div>,
+    document.body,
+  )
+}
+
+/* ================================================================ the flat map (an SVG the page draws itself) */
+type View = { s: number; x: number; y: number }
+const MIN = 1
+const MAX = 10
+const TAP = 8
+
+export type StageProps = {
+  chosen: string[]
+  flip: (n: string) => void
+  near: string | null
+  setNear: (n: string | null) => void
+}
+
+function FlatStage({ map, chosen, flip, near, setNear }: StageProps & { map: CityMap }) {
+  const [view, setView] = useState<View>({ s: 1, x: 0, y: 0 })
+  const stage = useRef<HTMLDivElement>(null)
+  const pts = useRef(new Map<number, { x: number; y: number }>())
+  const gesture = useRef<{ start: View; a: { x: number; y: number }; d: number; mid: { x: number; y: number }; moved: number; target: string | null } | null>(null)
+
   const clampView = (v: View): View => {
     const s = Math.max(MIN, Math.min(MAX, v.s))
     const r = stage.current?.getBoundingClientRect()
@@ -162,121 +278,65 @@ export function HoodMap({
     // a Hebrew letter at this size is about 0.52 of it wide; the name needs its own height too
     return !!b && b.w >= n.length * size * 0.52 && b.h >= size * 1.6
   }
-  const n = chosen.length
-  const line =
-    what === 'client'
-      ? many
-        ? 'לוחצים על כל שכונה שמעניינת את הלקוח. לחיצה נוספת מבטלת.'
-        : 'לוחצים על השכונה שהלקוח מחפש בה.'
-      : many
-        ? 'לוחצים על כל שכונה שרוצים. לחיצה נוספת מבטלת.'
-        : 'לוחצים על השכונה שבה נמצא הנכס.'
-  if (!open) return null
-  return createPortal(
-    <div className="hm" role="dialog" aria-modal="true" aria-label={`מפת השכונות של ${places.city}`} data-hood-map={places.city}>
-      <header className="hm-top">
-        <button type="button" className="hm-x" onClick={onClose} aria-label="סגירה" data-act="close-map">
-          <X aria-hidden />
-        </button>
-        <div>
-          <strong>בחירת שכונה מהמפה</strong>
-          <span className="pl-city">{places.city}</span>
-        </div>
-      </header>
-      <div className="hm-head">
-        <p className="hm-tip" data-map-tip>
-          {line} <span>מזיזים את המפה בגרירה, ומגדילים בצביטה או בכפתורי הזום.</span>
-        </p>
-        <div className="hm-legend" data-map-legend>
-          <span>
-            <i className="hm-key is-hood" /> שכונה
-          </span>
-          <span>
-            <i className="hm-key is-on" /> נבחרה
-          </span>
-          <span>
-            <i className="hm-key is-gap" /> אין גבול שכונה במפה הפתוחה
-          </span>
-        </div>
-      </div>
-      <div
-        ref={stage}
-        className="hm-stage"
-        onPointerDown={down}
-        onPointerMove={move}
-        onPointerUp={up}
-        onPointerCancel={up}
-        onPointerLeave={() => setNear(null)}
-        onWheel={wheel}
-        data-map-stage
-      >
-        <svg viewBox={`0 0 ${map.w} ${map.h}`} preserveAspectRatio="xMidYMid meet" style={{ transform: `translate(${view.x}px, ${view.y}px) scale(${view.s})` }} data-scale={view.s}>
-          <defs>
-            {/* the parts of the city with no neighbourhood boundary in the open data: a quiet hatch, not a hole */}
-            <pattern id="hm-gap" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-              <rect width="9" height="9" className="hm-gap-bg" />
-              <line x1="0" y1="0" x2="0" y2="9" className="hm-gap-line" />
-            </pattern>
-          </defs>
-          <path className="hm-city" d={map.outline} />
-          {map.hoods.map((h) => (
-            <path
-              key={h.n}
-              className={`hm-hood${chosen.includes(h.n) ? ' is-on' : ''}${near === h.n ? ' is-near' : ''}`}
-              d={h.d}
-              data-hood={h.n}
-              role="checkbox"
-              aria-checked={chosen.includes(h.n)}
-              aria-label={h.n}
-              vectorEffect="non-scaling-stroke"
-            />
-          ))}
-          {map.hoods
-            .filter((h) => chosen.includes(h.n) || near === h.n || fits(h.n))
-            .map((h) => (
-              <text
-                key={`t:${h.n}`}
-                className={`hm-label${chosen.includes(h.n) ? ' is-on' : ''}${near === h.n ? ' is-near' : ''}`}
-                x={h.c[0]}
-                y={h.c[1]}
-                style={{ fontSize: font / view.s }}
-                textAnchor="middle"
-                dominantBaseline="middle"
-                data-label={h.n}
-              >
-                {h.n}
-              </text>
-            ))}
-        </svg>
-        <div className="hm-zoom">
-          <button type="button" onClick={() => step(1.5)} aria-label="הגדלה" disabled={view.s >= MAX} data-act="zoom-in">
-            <Plus aria-hidden />
-          </button>
-          <button type="button" onClick={() => step(1 / 1.5)} aria-label="הקטנה" disabled={view.s <= MIN} data-act="zoom-out">
-            <Minus aria-hidden />
-          </button>
-        </div>
-        <small className="hm-credit">{map.credit}</small>
-      </div>
-      {/* always there, so the map does not move under the finger when the first one is picked */}
-      <div className="hm-chips" aria-live="polite">
-        {n === 0 && <span className="hm-none">עוד לא נבחרה שכונה</span>}
-        {chosen.map((c) => (
-          <span key={c} className="pl-chip is-on" data-map-chip={c}>
-            {c}
-            <button type="button" onClick={() => flip(c)} aria-label={`הסרת ${c}`} data-act="map-chip-off">
-              <X aria-hidden />
-            </button>
-          </span>
+  return (
+    <div
+      ref={stage}
+      className="hm-stage"
+      onPointerDown={down}
+      onPointerMove={move}
+      onPointerUp={up}
+      onPointerCancel={up}
+      onPointerLeave={() => setNear(null)}
+      onWheel={wheel}
+      data-map-stage
+    >
+      <svg viewBox={`0 0 ${map.w} ${map.h}`} preserveAspectRatio="xMidYMid meet" style={{ transform: `translate(${view.x}px, ${view.y}px) scale(${view.s})` }} data-scale={view.s}>
+        <defs>
+          {/* the parts of the city with no neighbourhood boundary in the open data: a quiet hatch, not a hole */}
+          <pattern id="hm-gap" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+            <rect width="9" height="9" className="hm-gap-bg" />
+            <line x1="0" y1="0" x2="0" y2="9" className="hm-gap-line" />
+          </pattern>
+        </defs>
+        <path className="hm-city" d={map.outline} />
+        {map.hoods.map((h) => (
+          <path
+            key={h.n}
+            className={`hm-hood${chosen.includes(h.n) ? ' is-on' : ''}${near === h.n ? ' is-near' : ''}`}
+            d={h.d}
+            data-hood={h.n}
+            role="checkbox"
+            aria-checked={chosen.includes(h.n)}
+            aria-label={h.n}
+            vectorEffect="non-scaling-stroke"
+          />
         ))}
-      </div>
-      <footer className="hm-foot">
-        <button type="button" className="btn btn-gold btn-lg hm-ok" onClick={() => onDone(chosen)} disabled={n === 0} data-act="map-done">
-          <Check aria-hidden />
-          {n === 0 ? 'בוחרים שכונה' : n === 1 ? 'אישור שכונה אחת' : `אישור ${n} שכונות`}
+        {map.hoods
+          .filter((h) => chosen.includes(h.n) || near === h.n || fits(h.n))
+          .map((h) => (
+            <text
+              key={`t:${h.n}`}
+              className={`hm-label${chosen.includes(h.n) ? ' is-on' : ''}${near === h.n ? ' is-near' : ''}`}
+              x={h.c[0]}
+              y={h.c[1]}
+              style={{ fontSize: font / view.s }}
+              textAnchor="middle"
+              dominantBaseline="middle"
+              data-label={h.n}
+            >
+              {h.n}
+            </text>
+          ))}
+      </svg>
+      <div className="hm-zoom">
+        <button type="button" onClick={() => step(1.5)} aria-label="הגדלה" disabled={view.s >= MAX} data-act="zoom-in">
+          <Plus aria-hidden />
         </button>
-      </footer>
-    </div>,
-    document.body,
+        <button type="button" onClick={() => step(1 / 1.5)} aria-label="הקטנה" disabled={view.s <= MIN} data-act="zoom-out">
+          <Minus aria-hidden />
+        </button>
+      </div>
+      <small className="hm-credit">{map.credit}</small>
+    </div>
   )
 }

@@ -582,3 +582,102 @@ html[data-mode='night'] .hm-hood:not(.is-on):not(.is-near) {
     transition: none;
   }
 }
+
+/* ---------------------------------------------------------------- the 3D map (HoodMap3D.tsx, 23.11.2026)
+   MapLibre draws into .hm3-map; the names are our own words laid over it (the site's font, right to left), and the
+   zoom buttons and the credit are the same as on the flat map. */
+.hm3 {
+  cursor: default;
+  overscroll-behavior: contain;
+}
+/* MapLibre gives its container position: relative; the map still fills the whole stage */
+.hm3 .hm3-map {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.hm3-map .maplibregl-canvas {
+  outline: none;
+}
+.hm3-map .maplibregl-canvas:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: -2px;
+}
+.hm3-labels {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.hm3-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--text);
+  background: color-mix(in srgb, var(--card) 84%, transparent);
+  box-shadow: 0 2px 8px -3px rgb(0 0 0 / 0.35);
+  will-change: transform;
+}
+.hm3-label.is-near {
+  background: var(--card);
+  box-shadow: 0 0 0 1.5px var(--gold), 0 4px 12px -4px rgb(0 0 0 / 0.4);
+}
+.hm3-label.is-on {
+  color: #fff;
+  background: #0a5e3e;
+  box-shadow: 0 6px 16px -6px rgb(0 0 0 / 0.55);
+}
+.hm-stage .hm-credit a {
+  color: inherit;
+  text-decoration: none;
+}
+.hm-stage .hm-credit a:hover {
+  text-decoration: underline;
+}
+.hm-zoom button svg[style] {
+  transition: transform 0.15s ease;
+}
+/* while MapLibre and the tiles come in: a quiet shimmer in the map's own place, no jump */
+.hm-wait {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 30%, rgb(var(--w) / 0.06) 50%, transparent 70%) 0 0 / 220% 100%,
+    color-mix(in srgb, var(--card) 70%, var(--bg));
+  animation: hm-shimmer 1.3s linear infinite;
+}
+div.hm-stage.hm-wait {
+  position: relative;
+  inset: auto;
+}
+@keyframes hm-shimmer {
+  to {
+    background-position: -220% 0, 0 0;
+  }
+}
+.hm-tip .hm-sparse {
+  display: block;
+  margin-top: 4px;
+  color: var(--text-dim);
+}
+@media (prefers-reduced-motion: reduce) {
+  .hm-wait {
+    animation: none;
+  }
+  .hm3-label,
+  .hm-zoom button svg[style] {
+    transition: none;
+  }
+}
+.hm3-label.is-tap {
+  pointer-events: auto;
+  cursor: pointer;
+  padding: 6px 12px;
+}

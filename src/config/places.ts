@@ -12,9 +12,25 @@ export type CityPlaces = {
   code: number
   streets: string[]
   hoods: string[]
-  map?: { w: number; h: number; outline: string; hoods: { n: string; d: string; c: [number, number] }[]; credit: string }
+  map?: CityMap
 }
-type IndexRow = { code: number; streets: number; hoods: number; map: boolean; mapped: number }
+/** a city's map: an SVG drawing for the flat map, and the same shapes in longitude and latitude for the 3D map */
+export type CityMap = {
+  w: number
+  h: number
+  outline: string
+  hoods: { n: string; d: string; c: [number, number] }[]
+  credit: string
+  /** where the shapes come from: OpenStreetMap (the default), or a city's own official layer */
+  source?: 'osm' | 'official'
+  geo?: {
+    bounds: [number, number, number, number]
+    outline: [number, number][]
+    /** r: the ring, l: where its name sits best */
+    hoods: { n: string; r: [number, number][]; l: [number, number] }[]
+  }
+}
+type IndexRow = { code: number; streets: number; hoods: number; map: boolean; mapped: number; official?: boolean }
 const index = INDEX as unknown as Record<string, IndexRow>
 
 export const hasPlaces = (city: string) => !!index[city]
@@ -32,12 +48,29 @@ export function loadPlaces(city: string): Promise<CityPlaces | null> {
       city,
       fetch(asset(`geo/${row.code}.json`))
         .then((r) => (r.ok ? (r.json() as Promise<CityPlaces>) : null))
+        .then((p) => (p && row.official ? withOfficial(p, row.code) : p))
         .catch(() => {
           cache.delete(city)
           return null
         }),
     )
   return cache.get(city)!
+}
+
+/**
+ * A city's own official neighbourhood layer, when one was added (see scripts/build-geo.mjs): a file of its own,
+ * public/geo/official/<code>.json, never mixed into the OpenStreetMap file. Its map is shown instead of the
+ * OpenStreetMap one, and its names join the list. If the file cannot be read, the OpenStreetMap map stays.
+ */
+function withOfficial(p: CityPlaces, code: number): Promise<CityPlaces> {
+  return fetch(asset(`geo/official/${code}.json`))
+    .then((r) => (r.ok ? (r.json() as Promise<{ map: CityMap }>) : null))
+    .then((o) => {
+      if (!o?.map) return p
+      const names = o.map.hoods.map((h) => h.n).filter((n) => !p.hoods.some((x) => nameKey(x) === nameKey(n)))
+      return { ...p, hoods: [...p.hoods, ...names].sort((a, b) => a.localeCompare(b, 'he')), map: { ...o.map, source: 'official' as const } }
+    })
+    .catch(() => p)
 }
 
 /* ---------------------------------------------------------------- one way of writing a name */

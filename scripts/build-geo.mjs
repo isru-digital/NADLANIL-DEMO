@@ -11,7 +11,22 @@
 //  - neighbourhood boundaries and names: OpenStreetMap, through the Overpass API. © OpenStreetMap contributors, under
 //    the Open Database License (ODbL): the map in the app says so wherever it is shown.
 // A city gets a map only when OpenStreetMap has real boundaries for enough of it; otherwise its neighbourhoods are
-// picked from the list alone.
+// picked from the list alone. A city marked { map: 'always' } (ראשון לציון, בת ים, חולון, Itzik 23.11.2026) gets its
+// map even when OpenStreetMap has only a few boundaries there: the rest of the city is the hatch of the map, and those
+// neighbourhoods are picked from the list.
+//
+// Each map is written twice in the same file: `map.hoods[].d` (an SVG path in the city's own 1000-wide frame, for the
+// flat map) and `map.geo` (the same shapes in longitude and latitude, for the 3D map on MapLibre).
+//
+// AN OFFICIAL LAYER, later: a city's own neighbourhood layer (from the city, under its own licence) goes into
+// geo-official/<city code>.geojson, a FeatureCollection of Polygons or MultiPolygons with `properties.name` (and,
+// once, `credit` at the top of the collection). This script turns it into public/geo/official/<code>.json, a file of
+// its own, never mixed into the OpenStreetMap file, and marks the city `official: true` in the index. The app then
+// shows that layer instead of the OpenStreetMap one, with its credit. Nothing like that exists yet.
+//
+//   node scripts/build-geo.mjs                     builds the cities not built yet, then tidies all of them
+//   node scripts/build-geo.mjs --city=חולון        builds that city again (the flag may be given more than once)
+//   node scripts/build-geo.mjs --fresh             builds every city again
 import fs from 'node:fs'
 import path from 'node:path'
 
@@ -27,16 +42,16 @@ const CITIES = [
   ['ירושלים', 'ירושלים', 1381350],
   ['מודיעין', 'מודיעין-מכבים-רעות', 1381425],
   ['חיפה', 'חיפה', 1387888],
-  ['ראשון לציון', 'ראשון לציון', 1382177],
+  ['ראשון לציון', 'ראשון לציון', 1382177, { map: 'always' }],
   ['באר שבע', 'באר שבע', 1377264],
   ['פתח תקווה', 'פתח תקווה', 1382816],
   ['אשדוד', 'אשדוד', 1380013],
   ['חדרה', 'חדרה', 1392860],
   ['עפולה', 'עפולה', 1380226],
-  ['חולון', 'חולון', 1382460],
+  ['חולון', 'חולון', 1382460, { map: 'always' }],
   ['כפר סבא', 'כפר סבא', 1383631],
   ['נהריה', 'נהריה', 1932164],
-  ['בת ים', 'בת ים', 1382458],
+  ['בת ים', 'בת ים', 1382458, { map: 'always' }],
   ['אשקלון', 'אשקלון', 1376782],
   ['הוד השרון', 'הוד השרון', 1383629],
   ['רחובות', 'רחובות', 1246791],
@@ -50,7 +65,12 @@ const CITIES = [
   ['אילת', 'אילת', 1377284],
 ]
 const OUT = path.resolve('public/geo')
+const OFFICIAL_IN = path.resolve('geo-official')
+const OFFICIAL_OUT = path.join(OUT, 'official')
 const INDEX = path.resolve('src/config/geo-index.json')
+const always = (app) => CITIES.find((c) => c[0] === app)?.[3]?.map === 'always'
+/** the city files of public/geo (not the folder of official layers) */
+const cityFiles = () => fs.readdirSync(OUT).filter((n) => n.endsWith('.json')).map((n) => path.join(OUT, n))
 const UA = 'nadlanup-geo-build/1.0'
 const wait = (ms) => new Promise((r) => setTimeout(r, ms))
 fs.mkdirSync(OUT, { recursive: true })
@@ -172,6 +192,91 @@ function simplify(pts, eps) {
   return [...simplify(pts.slice(0, at + 1), eps).slice(0, -1), ...simplify(pts.slice(at), eps)]
 }
 
+/* ---------------------------------------------------------------- longitude and latitude, for the 3D map */
+const r5 = (v) => Math.round(v * 1e5) / 1e5
+/** a ring in [lon, lat], a few metres of detail (5 decimals is about a metre) */
+function geoRing(r) {
+  const k = Math.cos((r[0][1] * Math.PI) / 180)
+  const pts = simplify(r.map((p) => [p[0] * k, p[1]]), 0.00002).map(([x, y]) => [r5(x / k), r5(y)])
+  if (pts.length && (pts[0][0] !== pts[pts.length - 1][0] || pts[0][1] !== pts[pts.length - 1][1])) pts.push(pts[0])
+  return pts
+}
+/** the point where a name sits best: inside the shape and as far from its edges as can be (a coarse search, then a fine one) */
+function labelPoint(r) {
+  const xs = r.map((p) => p[0])
+  const ys = r.map((p) => p[1])
+  const k = Math.cos((ys[0] * Math.PI) / 180)
+  const edge = (pt) => {
+    let m = Infinity
+    for (let i = 0; i < r.length - 1; i++) {
+      const [x1, y1] = [r[i][0] * k, r[i][1]]
+      const [x2, y2] = [r[i + 1][0] * k, r[i + 1][1]]
+      const [x, y] = [pt[0] * k, pt[1]]
+      const dx = x2 - x1
+      const dy = y2 - y1
+      const t = Math.max(0, Math.min(1, ((x - x1) * dx + (y - y1) * dy) / (dx * dx + dy * dy || 1e-12)))
+      m = Math.min(m, Math.hypot(x - (x1 + t * dx), y - (y1 + t * dy)))
+    }
+    return m
+  }
+  let best = centroid(r)
+  let bestD = inside(best, r) ? edge(best) : -1
+  let [x0, x1, y0, y1] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)]
+  for (let round = 0; round < 3; round++) {
+    const n = 14
+    for (let i = 0; i <= n; i++)
+      for (let j = 0; j <= n; j++) {
+        const pt = [x0 + ((x1 - x0) * i) / n, y0 + ((y1 - y0) * j) / n]
+        if (!inside(pt, r)) continue
+        const d = edge(pt)
+        if (d > bestD) {
+          bestD = d
+          best = pt
+        }
+      }
+    const wx = (x1 - x0) / 6
+    const wy = (y1 - y0) / 6
+    ;[x0, x1, y0, y1] = [best[0] - wx, best[0] + wx, best[1] - wy, best[1] + wy]
+  }
+  return [r5(best[0]), r5(best[1])]
+}
+const boundsOf = (r) => {
+  const xs = r.map((p) => p[0])
+  const ys = r.map((p) => p[1])
+  return [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)].map(r5)
+}
+
+/** both drawings of a city: the SVG one for the flat map, and the longitude-latitude one for the 3D map */
+function drawings(outline, polys, credit) {
+  const lat0 = (outline.reduce((s, p) => s + p[1], 0) / outline.length) * (Math.PI / 180)
+  const k = Math.cos(lat0)
+  const xs = outline.map((p) => p[0] * k)
+  const ys = outline.map((p) => p[1])
+  const minX = Math.min(...xs)
+  const maxX = Math.max(...xs)
+  const minY = Math.min(...ys)
+  const maxY = Math.max(...ys)
+  const s = 1000 / Math.max(maxX - minX, maxY - minY)
+  const to = (p) => [Math.round((p[0] * k - minX) * s * 10) / 10, Math.round((maxY - p[1]) * s * 10) / 10]
+  const eps = 1.2 / s
+  const pathOf = (r) => {
+    const pts = simplify(r.map((p) => [p[0] * k, p[1]]), eps).map(([x, y]) => [Math.round((x - minX) * s * 10) / 10, Math.round((maxY - y) * s * 10) / 10])
+    return 'M' + pts.map((p) => p.join(' ')).join('L') + 'Z'
+  }
+  return {
+    w: Math.round((maxX - minX) * s),
+    h: Math.round((maxY - minY) * s),
+    outline: pathOf(outline),
+    hoods: polys.map((p) => ({ n: p.n, d: pathOf(p.r), c: to(centroid(p.r)) })),
+    credit,
+    geo: {
+      bounds: boundsOf(outline),
+      outline: geoRing(outline),
+      hoods: polys.map((p) => ({ n: p.n, r: geoRing(p.r), l: labelPoint(p.r) })),
+    },
+  }
+}
+
 async function cityMap(rel) {
   const area = 3600000000 + rel
   const q = `[out:json][timeout:120];
@@ -212,6 +317,7 @@ out tags geom;`
 const all = await streets()
 console.log('streets from data.gov.il:', all.length)
 const FRESH = process.argv.includes('--fresh')
+const AGAIN = process.argv.filter((a) => a.startsWith('--city=')).map((a) => a.slice(7).trim())
 async function buildCity([app, gov, rel]) {
   const rows = all.filter((r) => clean(r['שם_ישוב']) === gov)
   const code = rows[0]?.['סמל_ישוב'] ?? rel
@@ -236,7 +342,10 @@ async function buildCity([app, gov, rel]) {
   const seen = new Set()
   polys = polys.filter((p) => !seen.has(nameKey(p.n)) && seen.add(nameKey(p.n)))
   const covered = cityArea ? polys.reduce((s, p) => s + p.a, 0) / cityArea : 0
-  const hasMap = !!map.outline && polys.length >= 4 && covered >= 0.3
+  // inside the city: a boundary whose middle lies outside it belongs to a neighbour (the tidy step below drops those
+  // from the drawing; a city drawn with only a few boundaries needs at least one of its own)
+  const own = map.outline ? polys.filter((p) => inside(centroid(p.r), map.outline)).length : 0
+  const hasMap = !!map.outline && (always(app) ? own >= 0 : polys.length >= 4 && covered >= 0.3)
 
   // the list: the map's names first, then OpenStreetMap's points, then the state's list; one entry per name
   const hoods = []
@@ -253,44 +362,17 @@ async function buildCity([app, gov, rel]) {
   govHoods.forEach((n) => add(n, 'gov'))
   hoods.sort((a, b) => a.n.localeCompare(b.n, 'he'))
 
-  // the drawing: the city's own frame, 1000 wide, north up, the right proportions for its latitude
+  // the drawing: the city's own frame, 1000 wide, north up, the right proportions for its latitude; and the same in
+  // longitude and latitude for the 3D map
   const file = { city: app, code, streets: streetNames, hoods: hoods.map((h) => h.n) }
-  if (hasMap) {
-    const lat0 = (map.outline.reduce((s, p) => s + p[1], 0) / map.outline.length) * (Math.PI / 180)
-    const k = Math.cos(lat0)
-    const xs = map.outline.map((p) => p[0] * k)
-    const ys = map.outline.map((p) => p[1])
-    const minX = Math.min(...xs)
-    const maxX = Math.max(...xs)
-    const minY = Math.min(...ys)
-    const maxY = Math.max(...ys)
-    const s = 1000 / Math.max(maxX - minX, maxY - minY)
-    const W = Math.round((maxX - minX) * s)
-    const H = Math.round((maxY - minY) * s)
-    const to = (p) => [Math.round((p[0] * k - minX) * s * 10) / 10, Math.round((maxY - p[1]) * s * 10) / 10]
-    const eps = 1.2 / s
-    const pathOf = (r) => {
-      const pts = simplify(r.map((p) => [p[0] * k, p[1]]), eps).map(([x, y]) => [Math.round((x - minX) * s * 10) / 10, Math.round((maxY - y) * s * 10) / 10])
-      return 'M' + pts.map((p) => p.join(' ')).join('L') + 'Z'
-    }
-    file.map = {
-      w: W,
-      h: H,
-      outline: pathOf(map.outline),
-      hoods: polys.map((p) => {
-        const c = to(centroid(p.r))
-        return { n: p.n, d: pathOf(p.r), c }
-      }),
-      credit: '© OpenStreetMap contributors (ODbL)',
-    }
-  }
+  if (hasMap) file.map = drawings(map.outline, polys, '© OpenStreetMap contributors (ODbL)')
   fs.writeFileSync(path.join(OUT, `${code}.json`), JSON.stringify(file))
   console.log(app, 'streets', streetNames.length, 'hoods', hoods.length, hasMap ? `map of ${polys.length} (${Math.round(covered * 100)}% of the city)` : 'list only')
 }
 
 // two cities at a time (Overpass serves two requests from one address at once); a city built before is kept
-const done = new Set(fs.readdirSync(OUT).map((f) => JSON.parse(fs.readFileSync(path.join(OUT, f), 'utf8')).city))
-const todo = CITIES.filter(([app]) => FRESH || !done.has(app))
+const done = new Set(cityFiles().map((f) => JSON.parse(fs.readFileSync(f, 'utf8')).city))
+const todo = CITIES.filter(([app]) => FRESH || AGAIN.includes(app) || !done.has(app))
 console.log('to build:', todo.map((c) => c[0]).join(', ') || 'nothing')
 await Promise.all(
   [0, 1].map(async (lane) => {
@@ -311,20 +393,55 @@ const insideXY = (pt, poly) => {
 const pointsOf = (d) => d.replace(/[MZ]/g, '').split('L').map((p) => p.trim().split(' ').map(Number))
 /** the state writes "שד", "סמ", "ככר" and "רח" short: on the screen they are said in full */
 const longStreet = (n) => n.replace(/^שד\s+/, 'שדרות ').replace(/^שד'\s*/, 'שדרות ').replace(/^סמ\s+/, 'סמטת ').replace(/^סמ'\s*/, 'סמטת ').replace(/^ככר\s+/, 'כיכר ').replace(/^רח\s+/, 'רחוב ')
+/**
+ * A city's own official layer (see the top of this file): geo-official/<code>.geojson becomes
+ * public/geo/official/<code>.json, in the same shape as the OpenStreetMap map, and gives back how many
+ * neighbourhoods it holds. Without such a file, null, and any old official file of that city is left alone.
+ */
+function officialLayer(file) {
+  const src = path.join(OFFICIAL_IN, `${file.code}.geojson`)
+  if (!fs.existsSync(src)) return null
+  const fc = JSON.parse(fs.readFileSync(src, 'utf8'))
+  const polys = []
+  for (const f of fc.features ?? []) {
+    const n = hoodName(String(f.properties?.name ?? f.properties?.name_he ?? ''))
+    const g = f.geometry
+    if (!n || !g) continue
+    const outer = g.type === 'Polygon' ? [g.coordinates[0]] : g.type === 'MultiPolygon' ? g.coordinates.map((p) => p[0]) : []
+    const r = outer.sort((a, b) => ringArea(b) - ringArea(a))[0]
+    if (r?.length > 3) polys.push({ n, r, a: ringArea(r) })
+  }
+  if (!polys.length) return null
+  // the city's outline from the OpenStreetMap file when there is one, or the frame of the official shapes
+  const outline = file.map?.geo?.outline ?? (() => {
+    const b = boundsOf(polys.flatMap((p) => p.r))
+    return [[b[0], b[1]], [b[2], b[1]], [b[2], b[3]], [b[0], b[3]], [b[0], b[1]]]
+  })()
+  fs.mkdirSync(OFFICIAL_OUT, { recursive: true })
+  const layer = { city: file.city, code: file.code, source: 'official', map: drawings(outline, polys, String(fc.credit ?? 'שכבת השכונות של העירייה')) }
+  fs.writeFileSync(path.join(OFFICIAL_OUT, `${file.code}.json`), JSON.stringify(layer))
+  console.log(file.city, 'official layer of', polys.length)
+  return polys.length
+}
+
 const index = {}
 for (const [app] of CITIES) {
-  const f = fs.readdirSync(OUT).map((n) => path.join(OUT, n)).find((n) => JSON.parse(fs.readFileSync(n, 'utf8')).city === app)
+  const f = cityFiles().find((n) => JSON.parse(fs.readFileSync(n, 'utf8')).city === app)
   if (!f) continue
   const file = JSON.parse(fs.readFileSync(f, 'utf8'))
   file.streets = [...new Set(file.streets.map(longStreet))].sort((a, b) => a.localeCompare(b, 'he'))
   fs.writeFileSync(f, JSON.stringify(file))
   if (file.map) {
     const outline = pointsOf(file.map.outline)
-    file.map.hoods = file.map.hoods.filter((h) => insideXY(h.c, outline))
-    if (file.map.hoods.length < 4) delete file.map
+    const keep = new Set(file.map.hoods.filter((h) => insideXY(h.c, outline)).map((h) => h.n))
+    file.map.hoods = file.map.hoods.filter((h) => keep.has(h.n))
+    if (file.map.geo) file.map.geo.hoods = file.map.geo.hoods.filter((h) => keep.has(h.n))
+    if (!always(app) && file.map.hoods.length < 4) delete file.map
     fs.writeFileSync(f, JSON.stringify(file))
   }
-  index[app] = { code: file.code, streets: file.streets.length, hoods: file.hoods.length, map: !!file.map, mapped: file.map?.hoods.length ?? 0 }
+  const official = officialLayer(file)
+  index[app] = { code: file.code, streets: file.streets.length, hoods: file.hoods.length, map: !!file.map || !!official, mapped: official ?? file.map?.hoods.length ?? 0 }
+  if (official) index[app].official = true
 }
 fs.writeFileSync(INDEX, JSON.stringify(index, null, 2) + '\n')
 console.log('done')
