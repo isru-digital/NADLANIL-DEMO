@@ -84,6 +84,9 @@ export default function MatchMoment({ sim = false }: { sim?: boolean }) {
   const [chat, setChat] = useState<{ item: CommunityItem; opener: string } | null>(null)
   const [pop, setPop] = useState<Pop | null>(null)
   const [offer, setOffer] = useState<Offer | null>(null)
+  // a window never lands on a broker in the middle of a form of their own (a composer, a picker, any modal):
+  // it waits, quietly, until that screen is closed, and only then opens (23.11.2026)
+  const [roomFor, setRoomFor] = useState(true)
   const seen = useRef<Set<string> | null>(null)
   const timers = useRef<number[]>([])
   const itemsRef = useRef(items)
@@ -134,6 +137,20 @@ export default function MatchMoment({ sim = false }: { sim?: boolean }) {
     },
     [addItem, addNotice, toast],
   )
+
+  useEffect(() => {
+    if (!offer) return setRoomFor(true)
+    const busy = () => !!document.querySelector('.modal, [data-composer], [data-picker], [data-chat]')
+    if (!busy()) return setRoomFor(true)
+    setRoomFor(false)
+    const t = window.setInterval(() => {
+      if (!busy()) {
+        setRoomFor(true)
+        window.clearInterval(t)
+      }
+    }, 400)
+    return () => window.clearInterval(t)
+  }, [offer])
 
   /* --------------------------------------------- a new post of mine: check it at once */
   useEffect(() => {
@@ -229,7 +246,7 @@ export default function MatchMoment({ sim = false }: { sim?: boolean }) {
           }}
         />
       )}
-      {offer && !session && (
+      {offer && roomFor && !session && (
         <BuyerForYou
           key={`offer-${offer.theirs.id}`}
           offer={offer}

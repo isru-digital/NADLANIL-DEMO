@@ -632,7 +632,9 @@ for (const [dev, vp] of DEVICES) {
     const { kindOf, kindTitle } = await import(`${root}/src/config/propertyTypes.ts`)
     const { publicPlace, lockScreenPlace } = await import(`${root}/src/community/place.ts`)
     const P = (o) => ({ area: 'חיפה - נווה שאנן', rooms: '5', price: 4000000, split: '', ...o })
-    const S = (o) => ({ cities: ['חיפה'], roomsMin: 4, roomsMax: 5, budget: 4500000, wants: [], ...o })
+    // the budget is 200,000 ₪ above the price, inside the window of config/matchPrice.ts (23.11.2026), so these
+    // fixtures go on measuring what they are about: the kind of property, not the money
+    const S = (o) => ({ cities: ['חיפה'], roomsMin: 4, roomsMax: 5, budget: 4200000, wants: [], ...o })
     const kindOk = (r) => r && r.reasons.find((x) => /פנטהאוז|דירת גן|משרד|חנות|דירה|מגרש/.test(x.label))?.ok
     const pent = P({ kind: 'פנטהאוז', group: 'home' })
     const officeP = P({ kind: 'משרד', group: 'business', rooms: '', sqm: 120 })
