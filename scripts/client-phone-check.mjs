@@ -88,8 +88,12 @@ for (const [dev, vp] of [
       label: [...document.querySelectorAll('.nc .ct-label')].map((l) => l.textContent.trim()).find((t) => t.startsWith('טלפון')) ?? null,
       note: document.querySelector('[data-f="phone-note"]')?.textContent.replace(/\s+/g, ' ').trim() ?? null,
       lock: !!document.querySelector('[data-f="phone-note"] svg'),
+      // the line belongs to the phone's field alone, not to the whole form (23.11.2026)
+      under: document.querySelector('[data-f="phone-note"]')?.closest('label')?.contains(document.querySelector('[data-f="phone"]')) ?? false,
+      plain: getComputedStyle(document.querySelector('[data-f="phone-note"]')).backgroundColor,
+      narrow: Math.round((document.querySelector('[data-f="phone-note"]')?.getBoundingClientRect().width ?? 0) / (document.querySelector('.nc-row')?.getBoundingClientRect().width ?? 1) * 100),
     }))
-    check(`${dev}, ${mode}: the form says only the name is a must, the field says "טלפון (לא חובה)", and a lock line says where the number stays`, words.sub === 'מה הוא מחפש, בכמה לחיצות. רק שם חובה.' && words.label === 'טלפון (לא חובה)' && words.note === 'נשמר רק אצלך ב-CRM. אף מתווך בקהילה לא רואה אותו.' && words.lock, words)
+    check(`${dev}, ${mode}: the form says only the name is a must, the field says "טלפון (לא חובה)", and a plain lock line under that field alone says where the number stays`, words.sub === 'מה הוא מחפש, בכמה לחיצות. רק שם חובה.' && words.label === 'טלפון (לא חובה)' && words.note === 'המספר נשמר רק אצלך. מתווכים אחרים לא רואים אותו.' && words.lock && words.under && /rgba\(0, 0, 0, 0\)|transparent/.test(words.plain) && (dev === 'phone' || words.narrow <= 60), words)
     await shot('1-new-client')
     // half a number is still said, so it is not kept by mistake
     await type('.nc [data-f="name"]', NAME)
@@ -118,10 +122,11 @@ for (const [dev, vp] of [
     const ask = await page.evaluate(() => ({
       title: [...document.querySelectorAll('.modal h2, .modal h3, .modal strong')].map((h) => h.textContent.trim()).find((t) => t.includes('להוסיף טלפון')) ?? null,
       note: [...document.querySelectorAll('[data-ask-phone] .nc-safe')].map((e) => e.textContent.replace(/\s+/g, ' ').trim())[0] ?? null,
+      under: document.querySelector('[data-ask-phone] .nc-safe')?.closest('label')?.contains(document.querySelector('[data-f="ask-phone"]')) ?? false,
       field: !!document.querySelector('[data-f="ask-phone"]'),
       opened: window.__opened.length,
     }))
-    check(`${dev}, ${mode}: "שליחה ללקוח" with no number opens the small window with a field, and nothing was sent yet`, ask.title === 'להוסיף טלפון כדי לשלוח ללקוח?' && ask.field && ask.note === 'נשמר רק אצלך ב-CRM. אף מתווך בקהילה לא רואה אותו.' && ask.opened === 0, ask)
+    check(`${dev}, ${mode}: "שליחה ללקוח" with no number opens the small window with a field, and nothing was sent yet`, ask.title === 'להוסיף טלפון כדי לשלוח ללקוח?' && ask.field && ask.note === 'המספר נשמר רק אצלך. מתווכים אחרים לא רואים אותו.' && ask.under && ask.opened === 0, ask)
     await shot('2-ask-phone')
     const ratio = await page.evaluate(`(${CONTRAST})('[data-ask-phone] .nc-safe')`)
     check(`${dev}, ${mode}: the line about where the number stays can be read (4.5 to 1 at least)`, ratio !== null && ratio >= 4.5, ratio)

@@ -35,11 +35,11 @@ export function AskPhone({ open, client, what = 'לשלוח ללקוח', onClose
           <label className="ct-field">
             <span className="ct-label">טלפון</span>
             <input className="input ltr num" type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="off" enterKeyHint="done" autoFocus data-f="ask-phone" />
+            <small className="nc-safe" data-f="phone-note">
+              <Lock aria-hidden />
+              המספר נשמר רק אצלך. מתווכים אחרים לא רואים אותו.
+            </small>
           </label>
-          <p className="nc-safe">
-            <Lock aria-hidden />
-            נשמר רק אצלך ב-CRM. אף מתווך בקהילה לא רואה אותו.
-          </p>
           {err && (
             <em className="pf-err" role="alert" data-err="ask-phone">
               {err}

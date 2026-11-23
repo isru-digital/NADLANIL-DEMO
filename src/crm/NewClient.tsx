@@ -151,12 +151,13 @@ export default function NewClient({ open, onClose, isOffice, onAdd, searchOnly =
             <label className="ct-field">
               <span className="ct-label">טלפון (לא חובה)</span>
               <input className="input ltr num" type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="off" enterKeyHint="next" data-f="phone" />
+              {/* right under the field it belongs to, and only under it: it is about the number, not about the form */}
+              <small className="nc-safe" data-f="phone-note">
+                <Lock aria-hidden />
+                המספר נשמר רק אצלך. מתווכים אחרים לא רואים אותו.
+              </small>
             </label>
           </div>
-          <p className="nc-safe" data-f="phone-note">
-            <Lock aria-hidden />
-            נשמר רק אצלך ב-CRM. אף מתווך בקהילה לא רואה אותו.
-          </p>
           <div className="ct-field">
             <span className="ct-label">סוג</span>
             <div className="ct-stage" role="radiogroup" aria-label="סוג">
