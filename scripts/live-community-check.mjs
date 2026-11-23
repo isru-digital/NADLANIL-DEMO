@@ -69,7 +69,7 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
   await wait(900)
   const counts2 = await page.evaluate(() => { const it = JSON.parse(localStorage.getItem('brokers-demo-state-v5') ?? '{}').items ?? []; return Object.fromEntries(['coop', 'seeking', 'referrals'].map((t) => [t, it.filter((x) => x.topicId === t).length])) })
   // 16 properties since 22.11.2026: a property of the broker himself was seeded, so "הקפצה למעלה" has one to sit on
-  check(`${d} 16 properties, 15 buyers, 5 referrals in the feed`, counts2.coop === 16 && counts2.seeking === 15 && counts2.referrals === 5, JSON.stringify([counts, counts2]))
+  check(`${d} 16 properties, 17 buyers (two of them the demo's own examples), 5 referrals in the feed`, counts2.coop === 16 && counts2.seeking === 17 && counts2.referrals === 5, JSON.stringify([counts, counts2]))
   const feed = await page.evaluate(() => ({ cities: [...new Set([...document.querySelectorAll('.ci .fb-city')].map((x) => x.textContent.trim()))], cards: document.querySelectorAll('.ci').length, times: [...document.querySelectorAll('.ci .fb-meta > span:first-child')].map((x) => x.textContent) }))
   check(`${d} posts from all over: Haifa, Beer Sheva, Ashdod, Petah Tikva, Netanya, Hadera, Afula`, ['חיפה', 'באר שבע', 'אשדוד', 'פתח תקווה', 'נתניה', 'חדרה', 'עפולה'].every((c) => feed.cities.includes(c)) && feed.cards >= 40, JSON.stringify(feed.cities))
   check(`${d} times from today, yesterday and this week, newest first`, feed.times[0].includes('דקות') && feed.times.includes('אתמול') && feed.times.some((x) => x.includes('ימים')), feed.times.slice(0, 6).join(','))
@@ -178,7 +178,7 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
   await page.goto(green + '/app/community?topic=seeking', { waitUntil: 'load' })
   await wait(1200)
   c = await count()
-  check(`${d} buyers: the filter shows 15`, c.n === 15, JSON.stringify(c))
+  check(`${d} buyers: the filter shows 17`, c.n === 17, JSON.stringify(c))
   await page.evaluate(() => document.querySelector('[data-deal="rent"]').click())
   await wait(1200)
   c = await count()

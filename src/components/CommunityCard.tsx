@@ -378,6 +378,11 @@ export default function CommunityCard({
                 <Radar />
               </i>
               בקשת חיפוש שמורה
+              {item.search.sample && (
+                <em className="sample-tag" data-sample>
+                  דוגמה
+                </em>
+              )}
             </span>
             <h3>{item.title}</h3>
             <ul className="ci-params">

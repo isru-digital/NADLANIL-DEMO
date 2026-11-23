@@ -4,7 +4,8 @@
 // ---------------------------------------------------------------------------
 
 import type { TopicId } from '../config/topics'
-import { isKind, searchGroup } from '../config/propertyTypes'
+import { isKind, searchGroup } from '../config/propertyTypes'
+import { priceFits } from '../config/matchPrice'
 import { REFERRAL_TERMS } from '../config/topics'
 
 export type Broker = {
@@ -73,6 +74,8 @@ export type CrmItem = {
 
 export type SearchSpec = {
   cities: string[]
+  /** a buyer's request of the demo, put there so a match can be seen at all (23.11.2026): it carries a "דוגמה" tag */
+  sample?: boolean
   roomsMin: number
   roomsMax: number
   /** the most the buyer pays, or the most rent a month when `deal` is 'rent' */
@@ -861,6 +864,13 @@ function moreItems(): CommunityItem[] {
       [{ authorId: 'b11', time: 'אתמול', body: 'יש לי משהו ברובע י"א שיכול להתאים. שולח לך בפרטי.' }]),
     buyer('s5', 'b14', 'עפולה', 'לפני יומיים', 'קונים ראשונים מחפשים בית בעמק', 'זוג עם תינוק, רוצים חצר ושקט. מוכנים לשפץ.', 4,
       { cities: ['עפולה'], roomsMin: 4, roomsMax: 5, budget: 2300000, wants: ['חצר', 'צמוד קרקע'] }),
+    // Two requests of the demo (Itzik 23.11.2026), so there is a match to see: both fit "דירת 4 חדרים משופצת
+    // ליד הבורסה", the property of the broker the demo is played as. They are marked `sample`, so a "דוגמה" tag
+    // is on them wherever they show. No client is behind them: a request holds no name and no phone, as always.
+    buyer('s8', 'b8', 'רמת גן', 'לפני שעה', 'משפחה מחפשת 4 חדרים ליד הבורסה', 'מוכרים בגבעתיים ועוברים לרמת גן. חשוב להם מעלית, חניה וממ"ד.', 4,
+      { cities: ['רמת גן'], roomsMin: 4, roomsMax: 4, budget: 2650000, wants: ['מעלית', 'חניה', 'ממ"ד'], neighborhoods: ['ליד הבורסה'], sample: true }),
+    buyer('s9', 'b2', 'רמת גן', 'הבוקר', 'זוג מחפש 4 עד 4.5 חדרים ברמת גן', 'מחפשים משופצת עם מעלית. גמישים על השכונה ועל הקומה.', 2,
+      { cities: ['רמת גן'], roomsMin: 4, roomsMax: 4.5, budget: 3000000, wants: ['מעלית'], neighborhoods: ['נחלת יצחק'], sample: true }),
     buyer('s7', 'b13', 'חדרה', 'לפני 3 ימים', 'משפחה מחפשת 4 חדרים בחדרה או בנתניה', 'עוברים מהמרכז בגלל העבודה. מחליטים מהר כשמשהו מתאים.', 2,
       { cities: ['חדרה', 'נתניה'], roomsMin: 4, roomsMax: 4, budget: 2200000, wants: ['ממ"ד', 'חניה'] }),
 
@@ -1191,7 +1201,8 @@ export const simulatedListings: Record<string, CommunityItem> = {
 /** Does a property fit a saved search? Used for the "נמצאה התאמה" alerts. */
 export const fitsSearch = (s: SearchSpec, p: { city: string; rooms: string; price: number }) => {
   const rooms = parseFloat(p.rooms)
-  return s.cities.includes(p.city) && rooms >= s.roomsMin && rooms <= s.roomsMax && p.price <= s.budget
+  // the same window around the budget as the match screen uses (config/matchPrice.ts, 23.11.2026)
+  return s.cities.includes(p.city) && rooms >= s.roomsMin && rooms <= s.roomsMax && priceFits(p.price, s.budget, s.deal ?? 'sale')
 }
 
 /** what a search is for, in a few words: the rooms of a home, or the kinds of a commercial property (it has no rooms) */

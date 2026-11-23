@@ -2,9 +2,9 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { createPortal } from 'react-dom'
 import { animate, motion, useMotionValue, useReducedMotion, useTransform } from 'framer-motion'
 import type { MotionValue, PanInfo } from 'framer-motion'
-import { Bell, Check, Heart, Home, MapPin, MessageCircle, Search, Sparkles, X } from 'lucide-react'
+import { Bell, Check, Heart, Home, MapPin, MessageCircle, Phone, Search, Sparkles, X } from 'lucide-react'
 import { CURRENT_BROKER_ID, asset } from '../config'
-import { brokerById, brokers, communityItems, formatPriceShort, roomsLabel } from '../data/demo'
+import { brokerById, brokerPhone, brokers, communityItems, formatPriceShort, roomsLabel } from '../data/demo'
 import type { CommunityItem, Notice, SearchSpec } from '../data/demo'
 import { useStore } from '../store'
 import { Avatar } from '../components/ui'
@@ -62,6 +62,20 @@ function openerFor(mine: CommunityItem, theirs: CommunityItem, score: number) {
 type Session = { mine: CommunityItem; matches: Match[]; stage: 'meet' | 'deck' | 'done'; index: number; yes: number }
 type Mutual = { mine: CommunityItem; match: Match; fromDeck: boolean }
 type Pop = { notice: Notice; mine: CommunityItem; theirs: CommunityItem; score: number }
+/**
+ * A buyer of another broker that fits a property of mine (Itzik 23.11.2026): the broker who put the property up
+ * gets a window of its own. `asked` is true once they have said "כן", and only then are the other broker's details
+ * in it. Nothing of the client is ever here: no name, no phone, only what they are looking for.
+ */
+type Offer = { mine: CommunityItem; theirs: CommunityItem; score: number; asked: boolean }
+
+/** what a buyer is looking for, in a few words: city, neighbourhood, rooms, budget. Never who they are. */
+export function demandWords(it: CommunityItem): string {
+  const s = it.search
+  if (!s) return ''
+  const rent = s.deal === 'rent'
+  return [s.cities.join(', ') || it.city, s.neighborhoods?.[0] ?? '', roomsLabel(s), `${rent ? 'שכירות' : 'תקציב'} עד ${formatPriceShort(s.budget)}${rent ? ' לחודש' : ''}`].filter(Boolean).join(' · ')
+}
 
 export default function MatchMoment({ sim = false }: { sim?: boolean }) {
   const { items, addItem, addNotice, toast, matchAlert, showMatch } = useStore()
@@ -69,6 +83,7 @@ export default function MatchMoment({ sim = false }: { sim?: boolean }) {
   const [mutual, setMutual] = useState<Mutual | null>(null)
   const [chat, setChat] = useState<{ item: CommunityItem; opener: string } | null>(null)
   const [pop, setPop] = useState<Pop | null>(null)
+  const [offer, setOffer] = useState<Offer | null>(null)
   const seen = useRef<Set<string> | null>(null)
   const timers = useRef<number[]>([])
   const itemsRef = useRef(items)
@@ -110,7 +125,10 @@ export default function MatchMoment({ sim = false }: { sim?: boolean }) {
           }
           addNotice(notice)
           toast(`התראה חדשה: ${notice.title}`)
-          setPop({ notice, mine, theirs, score: r.score })
+          // a buyer who fits MY property is a window of its own (23.11.2026); the other way round keeps the small
+          // notice at the foot of the screen, as it was
+          if (forProperty) setOffer({ mine, theirs, score: r.score, asked: false })
+          else setPop({ notice, mine, theirs, score: r.score })
         }, SIM_DELAY),
       )
     },
@@ -141,9 +159,20 @@ export default function MatchMoment({ sim = false }: { sim?: boolean }) {
       const mine = all.find((i) => i.id === p.mine)
       const theirs = all.find((i) => i.id === p.theirs)
       if (!mine || !theirs) return toast('הפוסט כבר לא בקהילה')
+      // a match that was answered "לא מעניין אותי" does not come back, from a notice either (23.11.2026)
+      if (matchStore.said(p.mine, p.theirs) === 'no') {
+        setPop(null)
+        return toast('הסרת את ההתאמה הזאת')
+      }
       const r = mine.property && theirs.search ? scoreOf(mine.city, mine.property, theirs.search) : mine.search && theirs.property ? scoreOf(theirs.city, theirs.property, mine.search) : null
       const match: Match = { item: theirs, score: r?.score ?? 0, reasons: r?.reasons ?? [] }
       setPop(null)
+      // a buyer of another broker for a property of mine: the window of "יש לי קונה מתאים", with the details open
+      if (mine.property && theirs.search) {
+        matchStore.say(p.mine, p.theirs, 'yes')
+        matchStore.mutual(p.mine, p.theirs)
+        return setOffer({ mine, theirs, score: match.score, asked: true })
+      }
       if (isMutual(p.mine, p.theirs)) return setChat({ item: theirs, opener: openerFor(mine, theirs, match.score) })
       matchStore.say(p.mine, p.theirs, 'yes')
       matchStore.mutual(p.mine, p.theirs)
@@ -189,7 +218,38 @@ export default function MatchMoment({ sim = false }: { sim?: boolean }) {
     <>
       {session && <MatchScreen key={session.mine.id} session={session} leaving={leaving} onStart={() => setSession({ ...session, stage: session.matches.length ? 'deck' : 'done' })} onDecide={decide} onClose={closeAll} paused={!!mutual || !!chat} />}
       {mutual && <ItsAMatch key="mutual" mu={mutual} onChat={() => openChat(mutual)} onLater={() => setMutual(null)} />}
-      {pop && !session && !mutual && <MatchNotice key={pop.notice.id} pop={pop} onYes={() => answerPair(pop.notice.pair!)} onLater={() => setPop(null)} />}
+      {pop && !session && !mutual && !offer && (
+        <MatchNotice
+          key={pop.notice.id}
+          pop={pop}
+          onYes={() => answerPair(pop.notice.pair!)}
+          onNo={() => {
+            matchStore.say(pop.mine.id, pop.theirs.id, 'no')
+            setPop(null)
+          }}
+        />
+      )}
+      {offer && !session && (
+        <BuyerForYou
+          key={`offer-${offer.theirs.id}`}
+          offer={offer}
+          onYes={() => {
+            matchStore.say(offer.mine.id, offer.theirs.id, 'yes')
+            matchStore.mutual(offer.mine.id, offer.theirs.id)
+            setOffer({ ...offer, asked: true })
+          }}
+          onNo={() => {
+            matchStore.say(offer.mine.id, offer.theirs.id, 'no')
+            setOffer(null)
+          }}
+          onChat={() => {
+            const o = offer
+            setOffer(null)
+            setChat({ item: o.theirs, opener: openerFor(o.mine, o.theirs, o.score) })
+          }}
+          onClose={() => setOffer(null)}
+        />
+      )}
       {chat && <ChatWindow key={chat.item.id} item={chat.item} open opener={chat.opener} onClose={() => setChat(null)} />}
     </>
   )
@@ -327,7 +387,14 @@ function MiniCard({ it, tag }: { it: CommunityItem; tag: string }) {
   return (
     <div className="mm-mini">
       <Thumb it={it} />
-      <span className="mm-mini-tag">{tag}</span>
+      <span className="mm-mini-tag">
+        {tag}
+        {it.search?.sample && (
+          <em className="sample-tag" data-sample>
+            דוגמה
+          </em>
+        )}
+      </span>
       <b>{it.title}</b>
       <small>
         <MapPin aria-hidden /> {placeOf(it)}
@@ -502,15 +569,15 @@ function MatchScreen({
           </div>
           <div className="mm-buttons">
             <button type="button" className="mm-btn is-yes" onClick={() => fly(true)} data-act="match-yes">
-              <Heart aria-hidden />
-              מעניין אותי
+              <Check aria-hidden />
+              כן
             </button>
             <button type="button" className="mm-btn is-no" onClick={() => fly(false)} data-act="match-no">
               <X aria-hidden />
-              לא עכשיו
+              לא מעניין אותי
             </button>
           </div>
-          <p className="mm-hint">מחליקים ימינה או שמאלה, או בוחרים בכפתור</p>
+          <p className="mm-hint">מחליקים ימינה או שמאלה, או בוחרים בכפתור. "לא מעניין אותי" מוריד את ההתאמה, והיא לא חוזרת.</p>
           <p className="mm-demo">
             <em className="notice-demo">דוגמה</em> בדמו, מתווך שהפוסט שלו מתאים ב-70% ומעלה נחשב כמי שסימן מעניין
           </p>
@@ -570,10 +637,10 @@ function SwipeCard({ m, x, onFly }: { m: Match; x: MotionValue<number>; onFly: (
       data-score={m.score}
     >
       <motion.span className="mm-stamp is-yes" style={{ opacity: yes }} aria-hidden>
-        מעניין אותי
+        כן
       </motion.span>
       <motion.span className="mm-stamp is-no" style={{ opacity: no }} aria-hidden>
-        לא עכשיו
+        לא מעניין
       </motion.span>
       <CardBody m={m} />
     </motion.article>
@@ -602,7 +669,14 @@ function CardBody({ m }: { m: Match }) {
             {buyer ? <Search /> : <Home />}
           </span>
         )}
-        <span className="mm-card-kind">{buyer ? (it.search?.deal === 'rent' ? 'מחפש לשוכר' : 'מחפש לקונה') : it.property?.deal === 'rent' ? 'להשכרה' : 'למכירה'}</span>
+        <span className="mm-card-kind">
+          {buyer ? (it.search?.deal === 'rent' ? 'מחפש לשוכר' : 'מחפש לקונה') : it.property?.deal === 'rent' ? 'להשכרה' : 'למכירה'}
+          {it.search?.sample && (
+            <em className="sample-tag" data-sample>
+              דוגמה
+            </em>
+          )}
+        </span>
         <span className="mm-card-ring">
           <Ring value={m.score} size={70} delay={0.15} />
           <small>התאמה</small>
@@ -701,7 +775,7 @@ function ItsAMatch({ mu, onChat, onLater }: { mu: Mutual; onChat: () => void; on
 
 /* ================================================================ the notice in the site */
 
-function MatchNotice({ pop, onYes, onLater }: { pop: Pop; onYes: () => void; onLater: () => void }) {
+function MatchNotice({ pop, onYes, onNo }: { pop: Pop; onYes: () => void; onNo: () => void }) {
   const b = brokerById(pop.theirs.authorId)
   return createPortal(
     <motion.aside
@@ -727,14 +801,126 @@ function MatchNotice({ pop, onYes, onLater }: { pop: Pop; onYes: () => void; onL
       </div>
       <Ring value={pop.score} size={52} />
       <div className="mm-notice-acts">
-        <button type="button" className="btn btn-gold" onClick={onYes} data-act="match-have">
-          יש לי
+        <button type="button" className="mm-ans is-yes" onClick={onYes} data-act="match-have">
+          <Check aria-hidden /> כן
         </button>
-        <button type="button" className="btn btn-ghost" onClick={onLater} data-act="match-later">
-          אחר כך
+        <button type="button" className="mm-ans is-no" onClick={onNo} data-act="match-later">
+          <X aria-hidden /> לא מעניין אותי
         </button>
       </div>
     </motion.aside>,
+    document.body,
+  )
+}
+
+/* ================================================================ a buyer of another broker, for my property */
+
+/**
+ * "שים לב יש התאמה עבורך בדרישת קונה" (Itzik 23.11.2026): the broker who put the property up is told that a buyer
+ * of another broker fits it. What is said about the buyer is what they are looking for, and only that: the city,
+ * the neighbourhood, the rooms and the budget. The client's name and phone are not here, are not fetched here, and
+ * are not in the post this is read from either.
+ * Two answers: "כן", which opens the other BROKER's details, and "לא מעניין אותי", which takes the match away for
+ * good. The details are two ways of reaching them, both of which the broker does themself: a message in the
+ * community's own chat, or a call. Nothing is sent anywhere by itself, and no WhatsApp message is sent from here.
+ */
+function BuyerForYou({ offer, onYes, onNo, onChat, onClose }: { offer: Offer; onYes: () => void; onNo: () => void; onChat: () => void; onClose: () => void }) {
+  const still = useReducedMotion()
+  const b = brokerById(offer.theirs.authorId)
+  const phone = brokerPhone(b)
+  const first = useRef<HTMLButtonElement>(null)
+  useEffect(() => {
+    const t = window.setTimeout(() => first.current?.focus(), 80)
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
+    document.addEventListener('keydown', onKey)
+    return () => {
+      clearTimeout(t)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [onClose])
+  const rent = offer.theirs.search?.deal === 'rent'
+  return createPortal(
+    <motion.div className="mm-offer-wrap" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }}>
+      <motion.section
+        className="mm-offer"
+        role="alertdialog"
+        aria-modal="true"
+        aria-label="יש התאמה עבורך"
+        data-offer={offer.asked ? 'open' : 'ask'}
+        initial={still ? false : { scale: 0.9, y: 18 }}
+        animate={{ scale: 1, y: 0 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 24 }}
+      >
+        <button type="button" className="mm-offer-x" onClick={onClose} aria-label="סגירה" data-act="offer-close">
+          <X aria-hidden />
+        </button>
+        <span className="mm-offer-ico" aria-hidden>
+          <Sparkles />
+        </span>
+        <h2 className="mm-offer-title" data-offer-title>
+          שים לב, יש התאמה עבורך בדרישת {rent ? 'שוכר' : 'קונה'}
+        </h2>
+        <div className="mm-offer-card">
+          <span className="mm-offer-kind">
+            <Search aria-hidden /> {rent ? 'דרישת שוכר' : 'דרישת קונה'}
+            {offer.theirs.search?.sample && (
+              <em className="sample-tag" data-sample>
+                דוגמה
+              </em>
+            )}
+          </span>
+          <p className="mm-offer-need num" data-offer-need>
+            {demandWords(offer.theirs)}
+          </p>
+          <span className="mm-offer-mine">לנכס שלך: {offer.mine.title}</span>
+          <Ring value={offer.score} size={64} />
+        </div>
+        {!offer.asked ? (
+          <>
+            <p className="mm-offer-safe" data-offer-safe>
+              פרטי הלקוח של המתווך השני לא מוצגים כאן, ולא ייחשפו. אם תענה "כן", ייפתחו פרטי הקשר של המתווך עצמו.
+            </p>
+            <div className="mm-offer-acts">
+              <button ref={first} type="button" className="mm-ans is-yes" onClick={onYes} data-act="offer-yes">
+                <Check aria-hidden /> כן
+              </button>
+              <button type="button" className="mm-ans is-no" onClick={onNo} data-act="offer-no">
+                <X aria-hidden /> לא מעניין אותי
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="mm-offer-who" data-offer-broker>
+              <Avatar src={b.avatar} name={b.name} size={46} />
+              <span>
+                <b>{b.name}</b>
+                <small>
+                  {b.title} · {b.area}
+                </small>
+              </span>
+            </div>
+            <div className="mm-offer-acts">
+              <button ref={first} type="button" className="mm-ans is-yes" onClick={onChat} data-act="offer-message">
+                <MessageCircle aria-hidden /> שליחת הודעה
+              </button>
+              {phone ? (
+                <a className="mm-ans is-call" href={`tel:${phone.replace(/-/g, '')}`} data-act="offer-call">
+                  <Phone aria-hidden /> התקשרות
+                </a>
+              ) : (
+                <span className="mm-ans is-call is-off" data-act="offer-call-none">
+                  <Phone aria-hidden /> אין טלפון בפרופיל
+                </span>
+              )}
+            </div>
+            <p className="mm-offer-safe" data-offer-safe>
+              אלה פרטי המתווך בלבד. שם הלקוח והטלפון שלו נשארים אצלו, ואף פעם לא עוברים לכאן.
+            </p>
+          </>
+        )}
+      </motion.section>
+    </motion.div>,
     document.body,
   )
 }

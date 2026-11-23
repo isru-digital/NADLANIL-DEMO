@@ -2,6 +2,7 @@ import { CURRENT_BROKER_ID } from '../config'
 import type { CommunityItem, PropertyInfo, SearchSpec } from '../data/demo'
 import { isBusinessWord, isKind, kindFits, kindOf, searchGroup } from '../config/propertyTypes'
 import { nameKey, samePlace } from '../config/places'
+import { priceTolerance } from '../config/matchPrice'
 
 /**
  * The match between a property and a buyer's search (Itzik 17.11.2026): city, neighbourhood, kind of home, rooms,
@@ -75,12 +76,13 @@ export function scoreOf(city: string, p: PropertyInfo, s: SearchSpec): { score: 
     reasons.push({ label: `${rooms} חדרים`, ok: off === 0 })
   } else pts += 10
 
-  // budget: up to 10% over it can still talk
-  const ratio = p.price / Math.max(1, s.budget)
-  if (ratio > 1.1) return null
-  pts += ratio <= 1 ? 20 : ratio <= 1.05 ? 14 : 8
+  // the budget, with the window of config/matchPrice.ts (23.11.2026): so much above it, and so much below it
+  const off = p.price - s.budget
+  const tol = priceTolerance(s.budget, s.deal ?? 'sale')
+  if (Math.abs(off) > tol) return null
+  pts += off <= 0 ? 20 : off <= tol / 2 ? 14 : 8
   if (s.budgetMin && p.price < s.budgetMin * 0.8) pts -= 5
-  reasons.push({ label: ratio <= 1 ? 'בתקציב' : 'מעט מעל התקציב', ok: ratio <= 1 })
+  reasons.push({ label: off <= 0 ? 'בתקציב' : off <= tol / 2 ? 'מעט מעל התקציב' : 'מעל התקציב, בטווח', ok: off <= 0 })
 
   // the must-haves the buyer asked for
   const wants = AMENITIES.filter((a) => s.wants.includes(a))
@@ -93,11 +95,16 @@ export function scoreOf(city: string, p: PropertyInfo, s: SearchSpec): { score: 
   return { score: Math.max(0, Math.min(100, Math.round(pts))), reasons }
 }
 
-/** the posts of other brokers that match one of mine: buyers for my property, properties for my buyer */
+/**
+ * The posts of other brokers that match one of mine: buyers for my property, properties for my buyer.
+ * A match the broker said "לא מעניין אותי" to is gone for good (Itzik 23.11.2026): it is not offered again, here
+ * or anywhere else that asks for matches.
+ */
 export function matchesFor(mine: CommunityItem, items: CommunityItem[]): Match[] {
   const out: Match[] = []
   for (const it of items) {
     if (it.authorId === CURRENT_BROKER_ID || it.id === mine.id) continue
+    if (matchStore.said(mine.id, it.id) === 'no') continue
     const r = mine.property && it.search ? scoreOf(mine.city, mine.property, it.search) : mine.search && it.property ? scoreOf(it.city, it.property, mine.search) : null
     if (r && r.score >= MATCH_MIN) out.push({ item: it, ...r })
   }

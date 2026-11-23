@@ -1,7 +1,8 @@
 // The match moment (17.11.2026): sharing a property checks the community at once and shows "נמצאו X התאמות!" with
-// two cards that meet and a score each; the matches as cards to swipe (right "מעניין אותי", left "לא עכשיו",
-// buttons and arrow keys too); both sides yes = "יש התאמה!" and the chat opens with a ready first line; the other
-// broker's notice "יש קונה לנכס שלך ב..." with "יש לי"; no match = "נודיע לך ברגע שתהיה התאמה". No street or house
+// two cards that meet and a score each; the matches as cards to swipe (right "כן", left "לא מעניין אותי", buttons
+// and arrow keys too); both sides yes = "יש התאמה!" and the chat opens with a ready first line; a buyer of another
+// broker for a property of mine opens the window of "שים לב, יש התאמה עבורך בדרישת קונה" (23.11.2026, in place of
+// the small notice for this one case); no match = "נודיע לך ברגע שתהיה התאמה". No street or house
 // number anywhere in it. Saves screenshots, and with RECORD=1 recordings.
 // Usage: node scripts/match-check.mjs [outDir]     (BASE_GREEN overrides the address)
 import puppeteer from 'puppeteer-core'
@@ -125,7 +126,7 @@ for (const [tag, vp, phone] of process.env.RECORD === 'only' ? [] : [
     }
   })
   check(`${tag}: each match is a card with its score ring, why it fits, the place and the broker`, card.score >= 55 && card.ring === `${card.score}%` && card.reasons >= 3 && !!card.place && !!card.who && card.count === `1 מתוך ${n}`, { ...card, text: undefined })
-  check(`${tag}: "מעניין אותי" on the right and "לא עכשיו" on the left, big, inside the screen`, card.yes === 'מעניין אותי' && card.no === 'לא עכשיו' && card.yesRight && card.h >= 52 && card.fits, card)
+  check(`${tag}: "כן" on the right and "לא מעניין אותי" on the left, big, inside the screen`, card.yes === 'כן' && card.no === 'לא מעניין אותי' && card.yesRight && card.h >= 52 && card.fits, card)
   check(`${tag}: the played side is said on the screen ("דוגמה")`, /^דוגמה/.test(card.demo ?? ''), card.demo)
   check(`${tag}: the cards show the city and the neighbourhood only (no street of mine, no "רחוב")`, !/רחוב/.test(card.text) && (!rec.address || !card.text.includes(rec.address)), card.place)
   await page.screenshot({ path: `${out}/${tag}-2-deck.png` })
@@ -136,14 +137,14 @@ for (const [tag, vp, phone] of process.env.RECORD === 'only' ? [] : [
   const back = await page.evaluate(() => ({ id: document.querySelector('.mm-card.is-top')?.dataset.matchCard, count: document.querySelector('.mm-count')?.textContent.replace(/\s+/g, ' ').trim() }))
   check(`${tag}: a short drag springs back`, back.count === `1 מתוך ${n}`, back)
 
-  // left = "לא עכשיו" (if there is more than one), then right = "מעניין אותי" on a card that fits at 70 and up
+  // left = "לא מעניין אותי" (if there is more than one), then right = "כן" on a card that fits at 70 and up
   let cur = card.score
   if (n > 1) {
     await drag(page, -260, phone)
     await wait(800)
     cur = await page.evaluate(() => Number(document.querySelector('.mm-card.is-top')?.dataset.score ?? 0))
     const said = await page.evaluate(() => Object.values(JSON.parse(localStorage.getItem('nadlanup-match-v1') ?? '{}').said ?? {}))
-    check(`${tag}: a swipe to the left is "לא עכשיו" and the next card comes up`, said.includes('no'), said)
+    check(`${tag}: a swipe to the left is "לא מעניין אותי" and the next card comes up`, said.includes('no'), said)
   }
   await drag(page, 260, phone)
   await wait(900)
@@ -182,29 +183,36 @@ for (const [tag, vp, phone] of process.env.RECORD === 'only' ? [] : [
   const left = { el: !!(await page.$('[data-match-screen]')), ms: Date.now() - t0 }
   check(`${tag}: the screen closes`, !left.el && left.ms < 600, left)
 
-  // ---- 3. the other broker's notice: "יש קונה לנכס שלך ב..." with "יש לי"
-  await page.waitForSelector('[data-match-notice]', { visible: true, timeout: 9000 })
+  // ---- 3. a buyer of another broker for my property: the window of "שים לב, יש התאמה עבורך בדרישת קונה"
+  await page.waitForSelector('[data-offer]', { visible: true, timeout: 12000 })
   await wait(700)
   const note = await page.evaluate(() => {
-    const el = document.querySelector('[data-match-notice]')
+    const el = document.querySelector('[data-offer]')
     const r = el.getBoundingClientRect()
-    return { title: el.querySelector('.mm-notice-main b')?.textContent, yes: el.querySelector('[data-act="match-have"]')?.textContent, inside: r.left >= 0 && r.right <= innerWidth && r.bottom <= innerHeight, text: el.innerText, bell: Number(document.querySelector('.bell-count')?.textContent ?? 0) }
+    return {
+      title: document.querySelector('[data-offer-title]')?.textContent.replace(/\s+/g, ' ').trim(),
+      need: document.querySelector('[data-offer-need]')?.textContent.replace(/\s+/g, ' ').trim(),
+      yes: document.querySelector('[data-act="offer-yes"]')?.textContent.trim(),
+      inside: r.left >= 0 && r.right <= innerWidth && r.bottom <= innerHeight + 1,
+      text: el.innerText,
+      bell: Number(document.querySelector('.bell-count')?.textContent ?? 0),
+    }
   })
-  check(`${tag}: a notice "יש קונה לנכס שלך ב${rec.city}" (marked "דוגמה") with "יש לי", inside the screen`, note.title === `יש קונה לנכס שלך ב${rec.city}דוגמה` && note.yes === 'יש לי' && note.inside && note.bell >= 1, note)
-  check(`${tag}: the notice has no street either`, !rec.address || !note.text.includes(rec.address))
+  check(`${tag}: the window "שים לב, יש התאמה עבורך בדרישת קונה" comes up, with the bell counting it too`, /^שים לב, יש התאמה עבורך בדרישת (קונה|שוכר)$/.test(note.title ?? '') && !!note.need && note.yes === 'כן' && note.inside && note.bell >= 1, note)
+  check(`${tag}: the window has no street either`, !rec.address || !note.text.includes(rec.address))
   await page.screenshot({ path: `${out}/${tag}-6-notice.png` })
-  await tap(page, '[data-act="match-have"]')
-  await page.waitForSelector('[data-mutual]', { visible: true, timeout: 3000 })
+  await tap(page, '[data-act="offer-yes"]')
+  await page.waitForSelector('[data-offer="open"]', { visible: true, timeout: 3000 })
   await wait(400)
   await page.screenshot({ path: `${out}/${tag}-7-have.png` })
-  await tap(page, '[data-act="open-match-chat"]')
+  await tap(page, '[data-act="offer-message"]')
   await page.waitForSelector('[data-chat]', { visible: true })
   await wait(500)
   const c2 = await page.evaluate(() => document.querySelector('[data-f="chat-input"]')?.value)
-  check(`${tag}: "יש לי" makes the match and opens the chat with a first line`, /^היי .+ שמתאים לו ב-\d+%/.test(c2 ?? ''), c2)
+  check(`${tag}: "כן" opens the broker's details, and "שליחת הודעה" opens the chat with a first line`, /^היי .+ שמתאים לו ב-\d+%/.test(c2 ?? ''), c2)
   await tap(page, '[data-act="close-chat"]')
   await wait(300)
-  const free = await page.evaluate(() => [[0.5, 0.5], [0.2, 0.8], [0.8, 0.3]].every(([x, y]) => !document.elementFromPoint(innerWidth * x, innerHeight * y)?.closest('.mm, .mm-mutual-wrap, .mm-notice, .cw')))
+  const free = await page.evaluate(() => [[0.5, 0.5], [0.2, 0.8], [0.8, 0.3]].every(([x, y]) => !document.elementFromPoint(innerWidth * x, innerHeight * y)?.closest('.mm, .mm-mutual-wrap, .mm-notice, .mm-offer-wrap, .cw')))
   check(`${tag}: once everything is closed, nothing is left over the page`, free)
 
   // the notice in the list answers too, and opens the chat the second time
@@ -234,8 +242,8 @@ for (const [tag, vp, phone] of process.env.RECORD === 'only' ? [] : [
   check(`${tag}: nothing fits: "אין עדיין התאמה" and "נודיע לך ברגע שתהיה התאמה"`, none.title === 'אין עדיין התאמה' && none.sub === 'נודיע לך ברגע שתהיה התאמה' && none.cards === 1, none)
   await p2.screenshot({ path: `${out}/${tag}-9-none.png` })
   await tap(p2, '[data-act="ok-none"]')
-  await p2.waitForSelector('[data-match-notice]', { visible: true, timeout: 9000 })
-  check(`${tag}: and when a fitting buyer comes in, the notice says so`, true)
+  await p2.waitForSelector('[data-offer]', { visible: true, timeout: 12000 })
+  check(`${tag}: and when a fitting buyer comes in, the window says so`, true)
   await p2.close()
 }
 
