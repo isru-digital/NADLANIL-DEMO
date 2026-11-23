@@ -57,8 +57,23 @@ export function PlacePicker({
   }, [data, kind])
   const shown = useMemo(() => {
     if (!typed.trim()) return []
-    const hits = new Set(findNames(names.map((x) => x.name), typed, 80))
-    return names.filter((x) => hits.has(x.name)).slice(0, 80)
+    // in the order findNames gives them (23.11.2026): the names that start with what was typed come first, then
+    // those whose second or third word does, and only then those that have it somewhere inside. One name that two
+    // cities both have stays two rows, each with its own city.
+    const rows = new Map<string, { name: string; city: string }[]>()
+    for (const x of names) rows.set(x.name, [...(rows.get(x.name) ?? []), x])
+    const out: { name: string; city: string }[] = []
+    const seen = new Set<string>()
+    for (const n of findNames(
+      names.map((x) => x.name),
+      typed,
+      80,
+    )) {
+      if (seen.has(n)) continue
+      seen.add(n)
+      out.push(...(rows.get(n) ?? []))
+    }
+    return out.slice(0, 80)
   }, [names, typed])
 
   const list = kind === 'street' ? value.streets : value.hoods
@@ -132,16 +147,17 @@ export function PlacePicker({
       )}
       {cities.length > 0 && (
         <>
-          <div className="pl-kinds" role="radiogroup" aria-label="מה בוחרים">
-            {streets && (
+          {/* with nothing to choose between (a field of neighbourhoods alone) one tab on its own says nothing */}
+          {streets && (
+            <div className="pl-kinds" role="radiogroup" aria-label="מה בוחרים">
               <button type="button" role="radio" aria-checked={kind === 'street'} onClick={() => setKind('street')} data-kind="street">
                 רחוב{value.streets.length > 0 && <b className="num">{value.streets.length}</b>}
               </button>
-            )}
-            <button type="button" role="radio" aria-checked={kind === 'hood'} onClick={() => setKind('hood')} data-kind="hood">
-              שכונה{value.hoods.length > 0 && <b className="num">{value.hoods.length}</b>}
-            </button>
-          </div>
+              <button type="button" role="radio" aria-checked={kind === 'hood'} onClick={() => setKind('hood')} data-kind="hood">
+                שכונה{value.hoods.length > 0 && <b className="num">{value.hoods.length}</b>}
+              </button>
+            </div>
+          )}
           <label className="pl-search">
             <Search aria-hidden />
             <input

@@ -6,6 +6,7 @@ import { useStore } from '../store'
 import { saveOwnProfile, signedIn } from '../auth/session'
 import { initials } from '../config/initials'
 import { Modal } from '../components/ui'
+import { PlacePicker } from '../components/PlacePicker'
 import '../styles/profile-edit.css'
 
 /**
@@ -25,6 +26,12 @@ export default function ProfileEdit({ open, onClose }: { open: boolean; onClose:
 }
 
 type Errors = Partial<Record<'name' | 'phone' | 'cities' | 'photo' | 'save', string>>
+/** the line of neighbourhoods as it is kept, back into names: "כפר גנים, אם המושבות" */
+const splitHoods = (s: string) =>
+  (s ?? '')
+    .split(',')
+    .map((x) => x.trim())
+    .filter(Boolean)
 /** The side of the saved picture, in pixels: sharp on a phone at three times the largest size it is shown at. */
 const OUT = 320
 
@@ -35,7 +42,9 @@ function Form({ onClose }: { onClose: () => void }) {
   const [phone, setPhone] = useState(me.phone)
   const [cities, setCities] = useState<string[]>(me.cities)
   const [other, setOther] = useState('')
-  const [areas, setAreas] = useState(me.areas)
+  // the neighbourhoods of work: kept as one line ("כפר גנים, אם המושבות"), picked from the cities' lists
+  const [{ hoods, manual }, setPlaces] = useState<{ hoods: string[]; manual: string[] }>(() => ({ hoods: splitHoods(me.areas), manual: [] }))
+  const areas = hoods.join(', ')
   const [photo, setPhoto] = useState(me.photo)
   const [raw, setRaw] = useState<string | null>(null)
   const [errors, setErrors] = useState<Errors>({})
@@ -196,12 +205,13 @@ function Form({ onClose }: { onClose: () => void }) {
         {err('cities')}
       </fieldset>
 
-      <label className="pfe-field">
-        <span>
+      {/* the neighbourhoods come from the cities' own lists (23.11.2026): a letter opens every name that has it */}
+      <fieldset className="pfe-field pfe-hoods">
+        <legend>
           שכונות עבודה <i>לא חובה</i>
-        </span>
-        <input className="input" data-f="areas" value={areas} onChange={(e) => setAreas(e.target.value)} maxLength={120} placeholder="למשל: כפר גנים, אם המושבות" />
-      </label>
+        </legend>
+        <PlacePicker id="profile" cities={cities} value={{ streets: [], hoods, manual }} onChange={(next) => setPlaces({ hoods: next.hoods, manual: next.manual })} many streets={false} />
+      </fieldset>
 
       {/* ------------------------------------------------------------ one button */}
       <div className="pfe-foot">

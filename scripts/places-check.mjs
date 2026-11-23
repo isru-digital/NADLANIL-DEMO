@@ -490,8 +490,9 @@ for (const [dev, vp] of DEVICES) {
     const n = await fresh(vp, mode)
     await openCard(n, 'תל אביב')
     await n.click('[data-places="property"] [data-kind="hood"]')
-    await typeIn(n, '[data-places="property"] [data-f="hood-search"]', 'נווה')
-    await pickRow(n.page, 'property', (await picker(n.page, 'property')).rows[0].n)
+    // a neighbourhood the map itself knows, so the chip on the map below can be read too
+    await typeIn(n, '[data-places="property"] [data-f="hood-search"]', 'נווה אביבים')
+    await pickRow(n.page, 'property', 'נווה אביבים')
     await typeIn(n, '[data-places="property"] [data-f="hood-search"]', 'רמת')
     const r = {}
     for (const [name, sel] of [

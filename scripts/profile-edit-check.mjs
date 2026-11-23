@@ -163,6 +163,24 @@ const setField = async (page, name, text) => {
   if (text) await page.keyboard.type(text)
 }
 const same = (a, b) => [...a].sort().join() === [...b].sort().join()
+/** Picks a neighbourhood of work the way a person would: a few letters, then the name from the list (23.11.2026) */
+const pickHood = async (page, name) => {
+  await page.evaluate(() => {
+    const el = document.querySelector('[data-places="profile"] [data-f="hood-search"]')
+    el.scrollIntoView({ block: 'center' })
+    el.focus()
+    el.select()
+  })
+  await page.keyboard.press('Backspace')
+  await page.keyboard.type(name)
+  await new Promise((r) => setTimeout(r, 700))
+  return page.evaluate((n) => {
+    const hit = [...document.querySelectorAll('[data-places="profile"] [data-pick]')].find((b) => b.dataset.pick === n)
+    if (hit) hit.click()
+    else document.querySelector('[data-places="profile"] [data-act="manual"]')?.click()
+    return !!hit
+  }, name)
+}
 const formNow = (page) =>
   page.evaluate(() => {
     const f = document.querySelector('[data-profile-edit]')
@@ -172,7 +190,8 @@ const formNow = (page) =>
     return {
       name: f.querySelector('[data-f="name"]').value,
       phone: f.querySelector('[data-f="phone"]').value,
-      areas: f.querySelector('[data-f="areas"]').value,
+      // since 23.11.2026 the neighbourhoods are picked from the cities' lists, not typed freely
+      areas: (f.querySelector('[data-places="profile"]')?.dataset.hoodValue ?? '').split('|').filter(Boolean).join(', '),
       cities: [...f.querySelectorAll('[data-city][aria-checked="true"]')].map((b) => b.dataset.city),
       photo: f.querySelector('.pfe-face img').dataset.photo,
       src: f.querySelector('.pfe-face img').getAttribute('src'),
@@ -219,8 +238,8 @@ const publish = async (page, body) => {
 }
 
 const people = [
-  { tag: 'staff', session: staff, was: STAFF, role: 'צוות הקהילה', key: 's:itzik@test.local', phone: '', cities: [], areas: '', now: 'איציק מהצוות', newPhone: '054-555-0123' },
-  { tag: 'broker', session: broker, was: BROKER.name, role: `מתווך, ${BROKER.office_name}`, key: `m:${broker.member?.id}`, phone: BROKER.phone, cities: BROKER.cities, areas: BROKER.areas, now: 'נועם א.', newPhone: '054-555-0188' },
+  { tag: 'staff', session: staff, was: STAFF, role: 'צוות הקהילה', key: 's:itzik@test.local', phone: '', cities: [], areas: '', areasAfter: 'נווה שאנן, אחוזה', now: 'איציק מהצוות', newPhone: '054-555-0123' },
+  { tag: 'broker', session: broker, was: BROKER.name, role: `מתווך, ${BROKER.office_name}`, key: `m:${broker.member?.id}`, phone: BROKER.phone, cities: BROKER.cities, areas: BROKER.areas, areasAfter: 'כרמל, נווה שאנן, אחוזה', now: 'נועם א.', newPhone: '054-555-0188' },
 ]
 for (const [dev, vp] of [
   ['phone', PHONE],
@@ -366,18 +385,20 @@ for (const [dev, vp] of [
     if (p.tag === 'broker') await tap(page, '[data-city="נתניה"]') // one city off
     await setField(page, 'other-city', 'קריית אתא')
     await page.keyboard.press('Enter')
-    await setField(page, 'areas', 'נווה שאנן, אחוזה')
-    await wait(200)
+    const fromList = [await pickHood(page, 'נווה שאנן'), await pickHood(page, 'אחוזה')]
+    await wait(300)
     f = await formNow(page)
     check(`${t}: the lines of "what is wrong" leave once the fields are put right`, Object.keys(f.errors).length === 0, f.errors)
     const CITIES = p.tag === 'broker' ? ['חיפה', 'קריית אתא'] : ['קריית אתא']
     check(`${t}: a city that is not in the list is added from the field`, same(f.cities, CITIES), f.cities)
     const clear = await page.evaluate(() => {
-      const el = document.querySelector('[data-f="areas"]').getBoundingClientRect()
+      const el = document.querySelector('[data-places="profile"] [data-f="hood-search"]').getBoundingClientRect()
       const bar = document.querySelector('.pfe-foot').getBoundingClientRect()
-      return { field: Math.round(el.bottom), bar: Math.round(bar.top), ok: document.activeElement?.dataset.f === 'areas' && el.bottom <= bar.top + 14 }
+      return { field: Math.round(el.bottom), bar: Math.round(bar.top), ok: el.bottom <= bar.top + 14 }
     })
-    check(`${t}: the field being typed in is not under the save bar`, clear.ok, clear)
+    check(`${t}: the box being typed in is not under the save bar`, clear.ok, clear)
+    // a city whose list the site has (חיפה) gives the names from the list; one with no list (קריית אתא) keeps what was typed
+    check(`${t}: the neighbourhoods are picked, each one a chip, and what was there before stays`, f.areas === p.areasAfter && (p.tag !== 'broker' || fromList.every(Boolean)), { fromList, areas: f.areas, want: p.areasAfter })
     await shot('5-filled')
     await page.evaluate(() => (window.__sameDocument = true))
     const sessionBefore = await page.evaluate(() => localStorage.getItem('nadlanup-session-v1'))
@@ -416,7 +437,7 @@ for (const [dev, vp] of [
       writes.length === 0 && JSON.parse(sessionAfter).token === JSON.parse(sessionBefore).token && (p.tag === 'staff' ? onServer.staff?.name === p.was : onServer.member?.name === p.was && onServer.member?.phone === p.phone),
       { writes, onServer },
     )
-    check(`${t}: it is kept in this browser under the person's own key`, after.kept?.name === p.now && after.kept?.phone === p.newPhone && after.kept?.cities.join() === CITIES.join() && after.kept?.areas === 'נווה שאנן, אחוזה' && after.kept?.photo.startsWith('data:image/jpeg'), { ...after.kept, photo: after.kept?.photo?.slice(0, 20) })
+    check(`${t}: it is kept in this browser under the person's own key`, after.kept?.name === p.now && after.kept?.phone === p.newPhone && after.kept?.cities.join() === CITIES.join() && after.kept?.areas === p.areasAfter && after.kept?.photo.startsWith('data:image/jpeg'), { ...after.kept, photo: after.kept?.photo?.slice(0, 20) })
 
     // ---------------------------------------------------------------- 6. the phone stays out of the feed
     const digits = p.newPhone.replace(/\D/g, '')
@@ -458,7 +479,7 @@ for (const [dev, vp] of [
     // ---------------------------------------------------------------- 4. the picture taken off: the initials are back
     await openEdit(page, '[data-act="edit-profile-who"]')
     f = await formNow(page)
-    check(`${t}: the screen opens again with what was saved`, f.name === p.now && f.phone === p.newPhone && same(f.cities, CITIES) && f.areas === 'נווה שאנן, אחוזה' && f.photo === 'own', { ...f, src: f.src.slice(0, 20) })
+    check(`${t}: the screen opens again with what was saved`, f.name === p.now && f.phone === p.newPhone && same(f.cities, CITIES) && f.areas === p.areasAfter && f.photo === 'own', { ...f, src: f.src.slice(0, 20) })
     await tap(page, '[data-act="remove-photo"]')
     await wait(200)
     await tap(page, '[data-act="save-profile"]')
