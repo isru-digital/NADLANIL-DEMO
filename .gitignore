@@ -11,3 +11,8 @@ _shots_*
 server/.dev.vars
 server/.wrangler
 .wrangler
+
+# skills of the agent, installed on this machine (npx skills add): not part of the site.
+# Only the skills: a .claude/launch.json of the project itself is still kept in git.
+.claude/skills/
+skills-lock.json
