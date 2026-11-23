@@ -430,6 +430,79 @@ html[data-mode='night'] .ct-type.is-pro {
   font-size: 13.5px;
   color: var(--text-faint);
 }
+/* a client kept without a phone: the number is asked for when something needs it (23.11.2026) */
+.ct-det-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 40px;
+  padding: 0 12px;
+  border-radius: 99px;
+  border: 1.5px dashed var(--line-gold);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background-color var(--t) var(--ease);
+}
+.ct-det-add:hover {
+  background: rgb(var(--g) / 0.12);
+}
+.ct-det-add svg {
+  width: 16px;
+  height: 16px;
+  color: var(--gold-soft);
+}
+.ct-det-add:focus-visible,
+.ct-send:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+/* "שליחה ללקוח": one quiet line, the way a message is sent from a phone */
+.ct-send {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 56px;
+  margin-block-start: 12px;
+  padding: 10px 14px;
+  border-radius: 16px;
+  border: 1.5px solid var(--line);
+  background: var(--surface);
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  text-align: start;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition:
+    border-color var(--t) var(--ease),
+    background-color var(--t) var(--ease);
+}
+.ct-send:hover {
+  border-color: var(--line-gold);
+  background: rgb(var(--g) / 0.08);
+}
+.ct-send svg {
+  width: 19px;
+  height: 19px;
+  color: var(--gold-soft);
+}
+.ct-send small {
+  margin-inline-start: auto;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-dim);
+}
+@media (max-width: 520px) {
+  .ct-send small {
+    display: none;
+  }
+}
 .ct-field {
   display: grid;
   gap: 7px;

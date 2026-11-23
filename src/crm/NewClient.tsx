@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { CSSProperties, FormEvent, KeyboardEvent } from 'react'
-import { ArrowUpDown, Car, Home, KeyRound, Minus, Plus, Shield, ShieldCheck, Sun, X } from 'lucide-react'
+import { ArrowUpDown, Car, Home, KeyRound, Lock, Minus, Plus, Shield, ShieldCheck, Sun, X } from 'lucide-react'
 import { Modal } from '../components/ui'
 import { formatPriceShort } from '../data/demo'
 import { knownCities } from '../green/whatsapp'
@@ -105,7 +105,9 @@ export default function NewClient({ open, onClose, isOffice, onAdd, searchOnly =
   const submit = (e: FormEvent) => {
     e.preventDefault()
     if (name.trim().length < 2) return setErr('צריך שם, לפחות שתי אותיות.')
-    if (phone.replace(/\D/g, '').length < 9) return setErr('מספר הטלפון קצר מדי. למשל: 050-555-0199')
+    // the phone is not a must since 23.11.2026 (Itzik). Written but too short, it is still said, so a half number
+    // is not kept by mistake; left empty it is asked for later, when something really needs it.
+    if (phone.trim() && phone.replace(/\D/g, '').length < 9) return setErr('מספר הטלפון קצר מדי. למשל: 050-555-0199')
     if (!searching) {
       onAdd({ name: name.trim(), phone: phone.trim(), type })
       return
@@ -138,7 +140,7 @@ export default function NewClient({ open, onClose, isOffice, onAdd, searchOnly =
   const fill = { '--lo': `${pct(lo)}%`, '--hi': `${100 - pct(hi)}%` } as CSSProperties
 
   return (
-    <Modal open={open} onClose={onClose} title="לקוח חדש" subtitle={searching ? 'מה הוא מחפש, בכמה לחיצות. רק שם וטלפון חובה.' : 'שם, טלפון וסוג. את השאר מסמנים אחר כך בחלון הפרטים.'}>
+    <Modal open={open} onClose={onClose} title="לקוח חדש" subtitle={searching ? 'מה הוא מחפש, בכמה לחיצות. רק שם חובה.' : 'שם וסוג, והשאר מסמנים אחר כך בחלון הפרטים. רק שם חובה.'}>
       <form onSubmit={submit} noValidate>
         <div className="modal-body ct-new nc">
           <div className="nc-row">
@@ -147,10 +149,14 @@ export default function NewClient({ open, onClose, isOffice, onAdd, searchOnly =
               <input className="input" value={name} onChange={(e) => setName(e.target.value)} autoComplete="off" enterKeyHint="next" data-f="name" />
             </label>
             <label className="ct-field">
-              <span className="ct-label">טלפון</span>
+              <span className="ct-label">טלפון (לא חובה)</span>
               <input className="input ltr num" type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="off" enterKeyHint="next" data-f="phone" />
             </label>
           </div>
+          <p className="nc-safe" data-f="phone-note">
+            <Lock aria-hidden />
+            נשמר רק אצלך ב-CRM. אף מתווך בקהילה לא רואה אותו.
+          </p>
           <div className="ct-field">
             <span className="ct-label">סוג</span>
             <div className="ct-stage" role="radiogroup" aria-label="סוג">

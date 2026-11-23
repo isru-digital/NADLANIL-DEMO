@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, CalendarClock, Check, Download, Lock, Phone, Plus, Search, Share2, Sparkles, Star, UserRound } from 'lucide-react'
+import { ArrowLeft, CalendarClock, Check, Download, Lock, Phone, Plus, Search, Send, Share2, Sparkles, Star, UserRound } from 'lucide-react'
 import { brokerById, crmStages, formatPriceShort } from '../data/demo'
 import type { CrmItem } from '../data/demo'
 import { asset } from '../config'
@@ -13,6 +13,7 @@ import { Avatar, Modal } from '../components/ui'
 import { TYPES, clientActions, dateText, dateValue, daysFrom, lastText, matchLabel, matchesFor, sideOf, typeOf, useClients, yad2Demo } from './clients'
 import type { Client, ClientType } from './clients'
 import NewClient from './NewClient'
+import { AskPhone } from './AskPhone'
 import { groupLabel } from '../config/propertyTypes'
 import '../styles/clients.css'
 
@@ -330,10 +331,19 @@ function Details({
 }) {
   // keep the last client mounted while the window animates out
   const [last, setLast] = useState<Client | null>(client)
+  // an action that needs a phone, waiting for one to be written (23.11.2026: the phone is not a must any more)
+  const [ask, setAsk] = useState<null | 'send' | 'call'>(null)
   if (client && client !== last) setLast(client)
   const cl = client ?? last
   if (!cl) return null
   const set = (p: Partial<Client>) => clientActions.patch(cl.id, p)
+  const digits = (p: string) => p.replace(/\D/g, '').replace(/^0/, '972')
+  const run = (which: 'send' | 'call', phone: string) => {
+    if (which === 'send') window.open(`https://wa.me/${digits(phone)}`, '_blank', 'noopener')
+    else window.location.href = `tel:${phone.replace(/-/g, '')}`
+  }
+  /** with a phone it happens at once; without one, the window asks for it and then it happens */
+  const need = (which: 'send' | 'call') => (cl.phone ? run(which, cl.phone) : setAsk(which))
   const label = matchLabel(cl.type)
   const marks: { key: 'backToOwner' | 'tourSet' | 'exclusive'; text: string }[] = [
     { key: 'backToOwner', text: 'חזרתי לבעלים' },
@@ -353,10 +363,18 @@ function Details({
               </bdi>
             </a>
           ) : (
-            <span className="ct-none">לא הוזן טלפון</span>
+            <button type="button" className="ct-det-add" onClick={() => need('call')} data-act="add-phone">
+              <Phone aria-hidden />
+              הוספת טלפון
+            </button>
           )}
           <span className="ct-det-last">עדכון אחרון: {lastText(cl.lastDays)}</span>
         </div>
+        <button type="button" className="ct-send" onClick={() => need('send')} data-act="send-client">
+          <Send aria-hidden />
+          שליחה ללקוח
+          <small>נכס, סיור או הודעה קצרה בוואטסאפ</small>
+        </button>
 
         {cl.roomsMin != null && <SearchSummary cl={cl} />}
 
@@ -444,6 +462,7 @@ function Details({
           סגירה
         </button>
       </div>
+      <AskPhone open={!!ask} client={cl} what={ask === 'call' ? 'להתקשר ללקוח' : 'לשלוח ללקוח'} onClose={() => setAsk(null)} onReady={(p) => run(ask ?? 'send', p)} />
     </Modal>
   )
 }

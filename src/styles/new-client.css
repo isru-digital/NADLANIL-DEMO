@@ -17,6 +17,33 @@
   grid-template-columns: 1fr 1fr;
   gap: 12px;
 }
+/* the phone is not a must (23.11.2026): one quiet line says where it stays, so no one is afraid to write it */
+.nc-safe {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-block-start: 8px;
+  padding: 9px 12px;
+  border-radius: 12px;
+  background: var(--nc-soft);
+  font-size: 13.5px;
+  line-height: 1.5;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+.nc-safe svg {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  color: var(--nc-on-line);
+}
+html[data-mode='night'] .nc-safe {
+  background: rgb(var(--g) / 0.1);
+  color: var(--text);
+}
+html[data-mode='night'] .nc-safe svg {
+  color: var(--gold);
+}
 .nc-search {
   display: grid;
   gap: 18px;
