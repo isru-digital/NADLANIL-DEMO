@@ -1,5 +1,5 @@
 // Checks the green version: the home page hero (map, nodes, moving packets), no sideways overflow,
-// the green logo, the switch between the two looks, and that no console errors appear.
+// the green logo, the day / night switch, and that no console errors appear.
 // Usage: node scripts/green-check.mjs   (BASE_GREEN / BASE_NAVY override the two addresses)
 import puppeteer from 'puppeteer-core'
 
@@ -16,6 +16,8 @@ for (const [label, vp, phone] of [
 ]) {
   const page = await browser.newPage()
   await page.evaluateOnNewDocument(() => { try { localStorage.setItem('nadlanup-demo-v1', '1') } catch {} }) // the community is closed to visitors: these checks walk the open demo
+  // the site follows the clock in Israel (dark after 18:00): this part checks the day look, at any hour
+  await page.evaluateOnNewDocument(() => { try { localStorage.setItem('nadlanup-mode-v1', JSON.stringify({ mode: 'day', until: Date.now() + 9e9 })) } catch {} })
   const errors = []
   page.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
   page.on('pageerror', (e) => errors.push(String(e)))
@@ -40,7 +42,7 @@ for (const [label, vp, phone] of [
       logo: document.querySelector('.hg-nav .logo img')?.getAttribute('src') ?? '',
       overflowX: document.documentElement.scrollWidth - document.documentElement.clientWidth,
       title: document.querySelector('h1')?.textContent ?? '',
-      switchLinks: [...q('.vswitch a')].map((a) => a.getAttribute('href')),
+      dayNight: [...q('nav.dn button[data-mode]')].map((b) => b.dataset.mode),
     }
   })
   check(`${label}: green theme attribute set`, info.theme === 'green')
@@ -58,8 +60,15 @@ for (const [label, vp, phone] of [
   const moved = t1.filter((v, i) => v !== t2[i]).length
   check(`${label}: packets move`, moved >= 2, `${moved} of ${t1.length} changed`)
 
-  // the switch points to the navy version of the same screen
-  check(`${label}: switch links to both looks`, info.switchLinks.length === 2 && info.switchLinks.some((h) => h.includes('5230')) && info.switchLinks.some((h) => h.includes('5240')), info.switchLinks.join(' , '))
+  // since 12.11.2026 the corner switch is day / night (בהיר / כהה); the old navy / green switch is retired
+  check(`${label}: the corner switch offers day and night`, info.dayNight.join() === 'day,night', info.dayNight.join(' , '))
+  // by night the nav carries the wordmark made for dark pages
+  await page.evaluate(() => [...document.querySelectorAll('nav.dn button[data-mode="night"]')].find((b) => b.getBoundingClientRect().width > 0)?.click())
+  await wait(500)
+  const night = await page.evaluate(() => ({ mode: document.documentElement.dataset.mode, logo: document.querySelector('.hg-nav .logo img')?.getAttribute('src') ?? '' }))
+  check(`${label}: by night the wordmark for dark pages`, night.mode === 'night' && night.logo.includes('nadlanup-dark.png'), JSON.stringify(night))
+  await page.evaluate(() => [...document.querySelectorAll('nav.dn button[data-mode="day"]')].find((b) => b.getBoundingClientRect().width > 0)?.click())
+  await wait(400)
 
   // contrast of the primary button text on the emerald (white on the deep end of the gradient)
   const btn = await page.evaluate(() => {

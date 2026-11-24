@@ -70,7 +70,7 @@ export async function part4({ browser, check, wait, out, CONTRAST, DEVICES, gree
   const openMap = async (t, sel) => {
     const t0 = Date.now()
     await t.click(`${sel} [data-act="open-map"]`)
-    await t.page.waitForSelector('[data-hood-map]', { visible: true, timeout: 8000 })
+    await t.page.waitForSelector('[data-hood-map]', { visible: true, timeout: 15000 }) // 15 s: under a long suite run the window can take longer than 8
     const ok = await t.page.waitForSelector('[data-map-stage][data-intro="done"], [data-hood-map][data-map-mode="flat"] svg', { timeout: 25000 }).then(() => true, () => false)
     const ms = Date.now() - t0
     await wait(900)

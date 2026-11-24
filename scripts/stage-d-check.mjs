@@ -23,7 +23,9 @@ const fields = (page) =>
     // the form is big buttons now: the city and the rooms are the pressed buttons, the price is the one box
     const pressed = (sel) => m.querySelector(`${sel}[aria-pressed="true"]`)
     return {
-      kind: m.querySelector('.ga-fields .ga-pick.is-big[aria-pressed="true"]')?.textContent.trim(),
+      // the WhatsApp tool's form picks between big buttons; the CRM property form picks the kind of property
+      // (since 22.11.2026: a group such as מגורים, then a kind such as דירה)
+      kind: m.querySelector('.ga-fields .ga-pick.is-big[aria-pressed="true"]')?.textContent.trim() ?? m.querySelector('.pf-kind[aria-pressed="true"]')?.dataset.kind,
       city: pressed('[data-city]')?.dataset.city,
       rooms: pressed('[data-rooms]')?.dataset.rooms,
       price: (m.querySelector('[data-price-value]')?.dataset.priceValue ?? m.querySelector('[data-f="price"]')?.value),
@@ -73,7 +75,7 @@ for (const [label, vp, phone] of [
   await clickText(page, '.ga-paste .btn', 'למלא מההודעה')
   await wait(500)
   let f = await fields(page)
-  check(`${tag}: the card can be filled from a WhatsApp message (city, rooms, price, extras)`, f?.kind === 'נכס' && f.city === 'פתח תקווה' && f.rooms === '4' && f.price === '2650000' && ['מרפסת שמש', 'מעלית', 'משופצת'].every((x) => f.extras.includes(x)) && f.parking === '1', JSON.stringify(f))
+  check(`${tag}: the card can be filled from a WhatsApp message (kind, city, rooms, price, extras)`, f?.kind === 'דירה' && f.city === 'פתח תקווה' && f.rooms === '4' && f.price === '2650000' && ['מרפסת שמש', 'מעלית', 'משופצת'].every((x) => f.extras.includes(x)) && f.parking === '1', JSON.stringify(f))
   await shot('1-new-card')
   // "עמלת שת"פ" is a must since 22.11.2026: its "+" picks 0.5% (post-form-check walks the slider itself)
   await page.evaluate(() => document.querySelector('[data-slider="coop"] [data-step="more"]')?.click())

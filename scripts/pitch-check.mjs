@@ -63,8 +63,13 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
   check(`${d} before it comes into view the commission stands at half and half`, s.share === 50 && s.office === '50%' && s.broker === '50%' && !s.done, JSON.stringify({ s: s.share, o: s.office, b: s.broker }))
 
   await page.evaluate(() => document.querySelector('.kp').scrollIntoView({ block: 'center' }))
-  await wait(1100)
-  const mid = await state(page)
+  // the page scrolls smoothly (about 0.8 s down this long page), then a short beat, then 1.7 s of motion: watch it
+  // for up to 3.5 s and catch it on the way, instead of looking once at a fixed moment
+  let mid = await state(page)
+  for (let i = 0; i < 35 && !(mid.share > 50 && mid.share < 100); i++) {
+    await wait(100)
+    mid = await state(page)
+  }
   await page.screenshot({ path: `${out}/${d}-1-moving.png` })
   await wait(2300)
   s = await state(page)

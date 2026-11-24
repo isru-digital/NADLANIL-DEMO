@@ -1,5 +1,5 @@
-// Stage B of the three-layer upgrade (green version): the credits wallet of a community member, the monthly quota of
-// an office member, the marks on the lab's tools, the simulated charge, the "no credits" and "quota used" screens,
+// Stage B of the three-layer upgrade (green version): what a community member sees (no wallet since 16.11.2026), the
+// monthly quota of an office member, the marks on the lab's tools, the simulated charge, the "no credits" and "quota used" screens,
 // and the three-column comparison page.
 // Usage: node scripts/stage-b-check.mjs [outDir]     (BASE_GREEN overrides the address)
 import puppeteer from 'puppeteer-core'
@@ -16,7 +16,8 @@ const check = (name, ok, detail = '') => results.push(`${ok ? 'PASS' : 'FAIL'}  
 const seen = (sel) => `[...document.querySelectorAll('${sel}')].find((n) => n.getBoundingClientRect().width > 0)`
 const chipText = (page) => page.evaluate(`(${seen('.mb-chip')})?.textContent.replace(/\\s+/g, ' ').trim()`)
 const wallet = (page) => page.evaluate(() => JSON.parse(localStorage.getItem('nadlanup-wallet-v1') ?? 'null'))
-const flip = (page, v) => page.evaluate(`(${seen('.ms')}).querySelector('button[data-v="${v}"]').click()`)
+// the view switch: in the top bar for an office member, in the line at the foot of the page for a community member
+const flip = (page, v) => page.evaluate(`((${seen('.ms')})?.querySelector('button[data-v="${v}"]') ?? document.querySelector('[data-foot] button[data-v="${v}"]')).click()`)
 const tile = (page, id) => page.evaluate((i) => document.querySelector(`.bl-tile[data-id="${i}"]`)?.click(), id)
 const chips = (page) => page.evaluate(() => Object.fromEntries([...document.querySelectorAll('.bl-tile')].map((t) => [t.dataset.id, t.querySelector('.bl-chip')?.textContent.replace(/\s+/g, ' ').trim()])))
 const ask = (page) =>
@@ -62,6 +63,7 @@ for (const [label, vp, phone] of [
   ['phone', { width: 390, height: 844, isMobile: true, hasTouch: true }, true],
 ]) {
   const tag = `green ${label}`
+  try {
   const page = await browser.newPage()
   await page.evaluateOnNewDocument(() => { try { localStorage.setItem('nadlanup-demo-v1', '1') } catch {} }) // the community is closed to visitors: these checks walk the open demo
   const errors = []
@@ -73,82 +75,18 @@ for (const [label, vp, phone] of [
   await page.goto(green + '/app', { waitUntil: 'load' })
   await wait(1600)
 
-  // ---- a community member: the wallet
-  check(`${tag}: community member: a wallet of 12 credits in the top bar`, /^12 ?קרדיטים$/.test((await chipText(page)) ?? '') || (await chipText(page)) === '12', await chipText(page))
+  // ---- a community member: since 16.11.2026 they see the community, not the demo's controls (MemberBar.tsx): no
+  // wallet of credits and no view switch in the top bar, and no lab. The credits screens below the lab can't be
+  // reached by a community member any more, so they are not walked here; the office part further down still is.
+  const cm = await page.evaluate(() => {
+    const seen = (sel) => [...document.querySelectorAll(sel)].some((n) => n.getBoundingClientRect().width > 0)
+    return { path: location.pathname, wallet: seen('.mb-chip'), switch: seen('.ms'), lab: seen('.side-lab'), foot: document.querySelector('[data-foot] button[data-v]')?.dataset.v ?? null }
+  })
+  check(`${tag}: community member: the community, with no credits wallet, no view switch and no lab`, cm.path.endsWith('/app/community') && !cm.wallet && !cm.switch && !cm.lab, JSON.stringify(cm))
+  check(`${tag}: community member: the way to the office view is in the line at the foot of the page`, cm.foot === 'office', JSON.stringify(cm))
   check(`${tag}: no sideways overflow in the app`, (await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)) <= 1)
   await page.screenshot({ path: `${out}/b-${label}-1-app-community.png` })
-  await page.evaluate(`(${seen('.mb-chip')}).click()`)
-  await wait(800)
-  let t = await page.evaluate(() => document.querySelector('.mb-sheet')?.textContent.replace(/\s+/g, ' ') ?? '')
-  check(`${tag}: the wallet sheet: balance, what each tool costs, no price for a credit, a way to the comparison`, t.includes('מחיר קרדיט: מחיר יקבע') && t.includes('טינדר של הדירות') && t.includes('3 קרדיטים') && t.includes('1 חינם בחודש') && !t.includes('₪') && (await page.evaluate(() => document.querySelector('.mb-cta')?.getAttribute('href')?.endsWith('/upgrade'))), t.slice(0, 120))
-  await page.screenshot({ path: `${out}/b-${label}-2-wallet.png` })
-  await page.evaluate(() => document.querySelector('.modal .icon-btn')?.click())
-  await wait(600)
-
-  // ---- the lab in layers
-  await openHub(page, phone)
-  let c = await chips(page)
-  const groupsNow = await page.evaluate(() => [...document.querySelectorAll('.bl-group b')].map((b) => b.textContent))
-  check(`${tag}: the lab is in two groups: free in the community, and advanced tools`, groupsNow.join('|') === 'חינם בקהילה|כלים מתקדמים', groupsNow.join('|'))
-  check(`${tag}: free tools are marked free, paid ones "פתח בקרדיטים" with their cost, the urgent request "1 חינם בחודש"`, c.whatsapp === 'חינם בקהילה' && c.trust === 'חינם בקהילה' && c.voice === 'פתח בקרדיטים · 1' && c.room === 'פתח בקרדיטים · 3' && c.urgent === '1 חינם בחודש' && Object.keys(c).length === 10, JSON.stringify(c))
-  await page.screenshot({ path: `${out}/b-${label}-3-lab-community.png` })
-
-  await tile(page, 'whatsapp')
-  await wait(1000)
-  check(`${tag}: a free tool opens at once, with no charge`, (await peekTitle(page)) === 'מוואטסאפ למערכת' && !(await ask(page)) && (await page.evaluate(() => document.querySelector('.bl-badges')?.textContent.includes('חינם בקהילה'))) && (await wallet(page))?.credits !== 11)
-  await toHub(page)
-  await wait(900)
-
-  await tile(page, 'voice')
-  await wait(900)
-  let a = await ask(page)
-  check(`${tag}: a paid tool asks to confirm a demo charge: cost, balance before and after, no price`, a?.kind === 'pay' && a.title.includes('פתיחה בקרדיטים') && a.title.includes('חיוב דמו בלבד') && a.text.includes('קרדיט אחד') && /12\s*11/.test(a.text) && a.text.includes('מחיר יקבע') && !a.text.includes('₪'), JSON.stringify(a))
-  check(`${tag}: the tool is not open yet (the list is still behind the question)`, (await peekTitle(page)) === 'מעבדת בטא')
-  await page.screenshot({ path: `${out}/b-${label}-4-ask.png` })
-  await page.evaluate(() => document.querySelector('.modal .icon-btn')?.click())
-  await wait(800)
-  check(`${tag}: cancelling charges nothing and stays in the list`, (await wallet(page)) === null || (await wallet(page)).credits === 12)
-  check(`${tag}: ... and the list is still there`, (await peekTitle(page)) === 'מעבדת בטא' && !(await ask(page)))
-
-  await tile(page, 'voice')
-  await wait(900)
-  await page.evaluate(() => document.querySelector('.tl-go')?.click())
-  await wait(1300)
-  check(`${tag}: confirming takes the credit and opens the tool`, (await wallet(page)).credits === 11 && (await peekTitle(page)) === 'הקלטה אחת, מודעה שלמה' && (await chipText(page)).startsWith('11'), JSON.stringify(await wallet(page)))
-  check(`${tag}: the open tool says it was opened with credits`, await page.evaluate(() => document.querySelector('.bl-badges')?.textContent.includes('נפתח בקרדיטים')))
-  await page.screenshot({ path: `${out}/b-${label}-5-opened.png` })
-  await toHub(page)
-  await wait(900)
-  check(`${tag}: back in the list the tool is marked open, and opening it again is not charged twice`, (await chips(page)).voice === 'פתוח')
-  await tile(page, 'voice')
-  await wait(900)
-  check(`${tag}: ... (no second charge)`, !(await ask(page)) && (await wallet(page)).credits === 11)
-  await toHub(page)
-  await wait(900)
-
-  // the urgent request: one free a month, then credits
-  await tile(page, 'urgent')
-  await wait(1000)
-  check(`${tag}: the first urgent request of the month is free`, (await peekTitle(page)) === 'בקשה בוערת' && !(await ask(page)) && (await wallet(page)).credits === 11 && (await wallet(page)).urgentFreeUsed === true)
-  await toHub(page)
-  await wait(900)
-  check(`${tag}: after it the tool asks for credits`, (await chips(page)).urgent === 'פתח בקרדיטים · 1')
-  await tile(page, 'urgent')
-  await wait(900)
-  a = await ask(page)
-  check(`${tag}: ... and says the free one was used`, a?.kind === 'pay' && a.text.includes('הבקשה הבוערת החינמית של החודש כבר נוצלה'))
-  await page.evaluate(() => document.querySelector('.modal .icon-btn')?.click())
-  await wait(800)
-
-  // spend down to nothing: room 3, pros 2, folder 2, radar 2, matchmaker 2 = 11
-  for (const id of ['room', 'pros', 'folder', 'radar', 'matchmaker']) await payFor(page, id, phone)
-  check(`${tag}: the balance goes down with every tool (11 credits spent)`, (await wallet(page)).credits === 0 && (await chipText(page)).startsWith('0'), JSON.stringify(await wallet(page)))
-  await tile(page, 'wallet')
-  await wait(900)
-  a = await ask(page)
-  check(`${tag}: with no credits left: a "לא נשארו קרדיטים" screen that leads to the comparison, with no price`, a?.kind === 'empty' && a.title.includes('לא נשארו קרדיטים') && a.text.includes('להשוואת המסלולים ולשדרוג למשרד') && !a.text.includes('₪'), JSON.stringify(a))
-  await page.screenshot({ path: `${out}/b-${label}-6-empty.png` })
-  await page.evaluate(() => document.querySelector('.tl-go')?.click())
+  await page.goto(green + '/upgrade', { waitUntil: 'load' })
   await wait(1600)
 
   // ---- the comparison page
@@ -163,7 +101,7 @@ for (const [label, vp, phone] of [
     overflowX: document.documentElement.scrollWidth - document.documentElement.clientWidth,
     text: document.querySelector('.up')?.textContent ?? '',
   }))
-  check(`${tag}: the "no credits" screen leads to the comparison page`, st.path.endsWith('/upgrade'))
+  check(`${tag}: the comparison page opens`, st.path.endsWith('/upgrade'))
   check(`${tag}: three columns: the community free, credits by use with no price, the office at 689 a month and 0%`, JSON.stringify(st.cols) === JSON.stringify([['מתווכים לעסקאות', 'חינם', 'הקהילה, תמיד'], ['קרדיטים', 'לפי שימוש', 'מחיר קרדיט: מחיר יקבע'], ['המשרד', 'החל מ-549 ₪ + מע"מ לחודש', '0% עמלה למשרד']]), JSON.stringify(st.cols))
   check(`${tag}: three groups of rows: the base, advanced tools, office only`, st.groups.join('|') === 'הבסיס|כלים מתקדמים|בלעדי למשרד' && st.rows === 24 && st.exclusive === 12, `${st.groups.join('|')} / ${st.rows} rows`)
   check(`${tag}: it marks the layer being viewed (the community), benefits are "בהקמה", and no invented price`, st.you.join() === 'מתווכים לעסקאות' && st.text.includes('בהקמה') && (st.text.match(/₪/g) ?? []).length === 2 && !/[\u2013\u2014]/.test(st.text), `${st.you.join()} / ${(st.text.match(/₪/g) ?? []).length} shekel signs`)
@@ -185,18 +123,17 @@ for (const [label, vp, phone] of [
   // ---- an office member: the quota
   await page.goto(green + '/app', { waitUntil: 'load' })
   await wait(1500)
-  check(`${tag}: the wallet is kept after a reload`, (await chipText(page)).startsWith('0'))
   await flip(page, 'office')
   await wait(900)
   check(`${tag}: office member: the top bar shows the monthly quota instead of the wallet (3/10)`, (await chipText(page)).replace(/\s/g, '').startsWith('3/10'), await chipText(page))
   await page.screenshot({ path: `${out}/b-${label}-10-app-office.png` })
   await openHub(page, phone)
-  c = await chips(page)
+  const c = await chips(page)
   check(`${tag}: office member: every advanced tool is "כלול במשרד", free ones stay free`, ['voice', 'room', 'urgent', 'radar', 'matchmaker', 'folder', 'wallet', 'pros'].every((id) => c[id] === 'כלול במשרד') && c.whatsapp === 'חינם בקהילה', JSON.stringify(c))
   await page.screenshot({ path: `${out}/b-${label}-11-lab-office.png` })
   await tile(page, 'wallet')
   await wait(1100)
-  check(`${tag}: office member: a tool opens with no charge and counts in the quota (4/10)`, (await peekTitle(page)) === 'ארנק עמלות' && !(await ask(page)) && (await wallet(page)).quotaUsed === 4 && (await wallet(page)).credits === 0 && (await page.evaluate(() => document.querySelector('.bl-badges')?.textContent.includes('כלול במשרד'))))
+  check(`${tag}: office member: a tool opens with no charge and counts in the quota (4/10)`, (await peekTitle(page)) === 'ארנק עמלות' && !(await ask(page)) && (await wallet(page)).quotaUsed === 4 && (await wallet(page)).credits === 12 && (await page.evaluate(() => document.querySelector('.bl-badges')?.textContent.includes('כלול במשרד'))))
   await toHub(page)
   await wait(800)
   for (const id of ['voice', 'urgent', 'radar', 'matchmaker', 'folder', 'pros']) {
@@ -208,7 +145,7 @@ for (const [label, vp, phone] of [
   check(`${tag}: the quota fills up (10/10)`, (await wallet(page)).quotaUsed === 10 && (await chipText(page)).replace(/\s/g, '').startsWith('10/10'), JSON.stringify(await wallet(page)))
   await tile(page, 'room')
   await wait(900)
-  a = await ask(page)
+  const a = await ask(page)
   check(`${tag}: over the quota: a gentle note that it renews next month, with no price`, a?.kind === 'quota' && a.title.includes('המכסה החודשית נוצלה') && a.text.includes('מתחדשת בתחילת החודש הבא') && !a.text.includes('₪') && !a.text.includes('קרדיט'), JSON.stringify(a))
   await page.screenshot({ path: `${out}/b-${label}-12-quota.png` })
   await page.evaluate(() => document.querySelector('.tl-go')?.click())
@@ -221,7 +158,7 @@ for (const [label, vp, phone] of [
   await wait(800)
   await page.evaluate(`(${seen('.mb-chip')}).click()`)
   await wait(800)
-  t = await page.evaluate(() => document.querySelector('.mb-sheet')?.textContent.replace(/\s+/g, ' ') ?? '')
+  const t = await page.evaluate(() => document.querySelector('.mb-sheet')?.textContent.replace(/\s+/g, ' ') ?? '')
   check(`${tag}: the quota sheet: 10/10, what is included, renews every month, no price`, t.includes('10/10') && t.includes('נפתח החודש') && t.includes('המכסה מתחדשת בתחילת כל חודש') && !t.includes('₪'), t.slice(0, 100))
   await page.screenshot({ path: `${out}/b-${label}-13-quota-sheet.png` })
   await page.evaluate(() => document.querySelector('.modal .icon-btn')?.click())
@@ -243,6 +180,9 @@ for (const [label, vp, phone] of [
 
   check(`${tag}: no console errors`, errors.length === 0, errors.slice(0, 2).join(' | '))
   await page.close()
+  } catch (e) {
+    check(`${tag}: ran to the end`, false, String(e).slice(0, 300))
+  }
 }
 
 await browser.close().catch(() => {})

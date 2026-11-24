@@ -1,4 +1,4 @@
-// Checks the "חדר עסקה משותף" demo pop-up in both looks, on desktop and phone: it opens from the sidebar (desktop),
+// Checks the "חדר עסקה משותף" demo pop-up (in the green version named "טינדר של הדירות" since 12.11.2026) in both looks, on desktop and phone: it opens from the sidebar (desktop),
 // from the "עוד" sheet (phone) and from the home panel; the match plays and wakes the button; the button moves
 // to the deal room; it fits the screen; Escape closes it; no console errors. Saves screenshots of the key moments.
 // Usage: node scripts/deal-demo-check.mjs [outDir] [look]   (look: navy | green | both)
@@ -50,8 +50,10 @@ for (const [look, base] of looks) {
     await page.goto(base + '/app', { waitUntil: 'load' })
     // the green version puts the tools in layers: these checks are about the cards themselves, so every paid tool
     // is already opened here (the layers have their own check, stage-b-check.mjs)
-    await page.evaluate(() => localStorage.setItem('nadlanup-wallet-v1', JSON.stringify({ credits: 12, opened: ['urgent', 'voice', 'pros', 'folder', 'radar', 'matchmaker', 'wallet', 'room'], urgentFreeUsed: true, quotaUsed: 3, openedOffice: [] })))
-    await page.evaluate(() => localStorage.removeItem('nadlanup-member-v1'))
+    await page.evaluate(() => localStorage.setItem('nadlanup-wallet-v1', JSON.stringify({ credits: 12, opened: ['urgent', 'voice', 'pros', 'folder', 'radar', 'matchmaker', 'wallet', 'room'], urgentFreeUsed: true, quotaUsed: 3, openedOffice: ['urgent', 'voice', 'pros', 'folder', 'radar', 'matchmaker', 'wallet', 'room'] })))
+    // since 16.11.2026 a community member sees the community and not the demo's lab: the lab lives in the office view
+    // (every paid tool is already opened for the office too, so the monthly quota never stops a card here)
+    await page.evaluate(() => localStorage.setItem('nadlanup-member-v1', 'office'))
     await page.reload({ waitUntil: 'load' })
     await wait(1500)
 
@@ -61,11 +63,11 @@ for (const [look, base] of looks) {
       await wait(700)
       await page.evaluate(() => [...document.querySelectorAll('.more-link')].find((b) => b.textContent.includes('מעבדת בטא'))?.click())
       await wait(900)
-      await page.evaluate(() => [...document.querySelectorAll('.bl-tile')].find((t) => t.textContent.includes('חדר עסקה'))?.click())
+      await page.evaluate(() => [...document.querySelectorAll('.bl-tile')].find((t) => /חדר עסקה|טינדר של הדירות/.test(t.textContent))?.click())
     } else {
       const chip = await page.evaluate(() => !!document.querySelector('.side-lab .beta-chip'))
       check(`${tag}: beta lab entry with a beta chip in the sidebar`, chip)
-      await page.evaluate(() => [...document.querySelectorAll('.side-lab-link')].find((b) => b.textContent.includes('חדר עסקה'))?.click())
+      await page.evaluate(() => [...document.querySelectorAll('.side-lab-link')].find((b) => /חדר עסקה|טינדר של הדירות/.test(b.textContent))?.click())
     }
     await wait(1200)
     let s = await dialog(page)

@@ -110,7 +110,16 @@ for (const [dev, vp] of [
   if (phone) {
     check('phone: the top bar is one thin row (60px at most)', top.barShown && top.barH <= 60 && top.rowIs === 'topbar' && top.oneRow, top)
     check('phone: the name "מתווכים לעסקאות" is on the right, with no back arrow before it on the feed', /מתווכים לעסקאות/.test(top.brand ?? '') && top.brandRight && !top.back, top)
-    check('phone: the first post starts in the upper half of the screen (it was at 580px)', top.postTop !== null && top.postTop <= 440, top.postTop)
+    // 23.11.2026 (5bb0152) a banner that invites to put up properties sits above the feed until it is closed for the
+    // day: with it the first post is still on the first screen, and once it is closed the post is in the upper half
+    check('phone: with the invitation banner, the first post still starts on the first screen', top.postTop !== null && top.postTop <= 640, top.postTop)
+    await tap(page, '[data-act="banner-close"]')
+    await wait(500)
+    const closedTop = await page.evaluate(() => {
+      const post = document.querySelector('.ci-wrap')
+      return { banner: !!document.querySelector('[data-banner="share"]'), postTop: post ? Math.round(post.getBoundingClientRect().top) : null }
+    })
+    check('phone: with the banner closed, the first post starts in the upper half of the screen (it was at 580px)', !closedTop.banner && closedTop.postTop !== null && closedTop.postTop <= 440, closedTop)
   } else {
     check('desktop: the icons are in the top row of the page, on its left', top.rowIs === 'main-back' && top.oneRow, top)
   }

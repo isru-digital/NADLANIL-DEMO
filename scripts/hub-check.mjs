@@ -17,6 +17,9 @@ const check = (name, ok, info) => {
 }
 
 const LABELS = ['נכסים', 'קונים', 'שיתופי פעולה', 'מתווך בעיר אחרת', 'מתווכים', 'ידע ושאלות']
+// the site follows the clock in Israel (light 08:00-18:00, dark after): the day parts pin the day look, so the check
+// gives the same answer at any hour (the night part below sets night itself)
+const dayLook = (page) => page.evaluateOnNewDocument(() => { try { localStorage.setItem('nadlanup-mode-v1', JSON.stringify({ mode: 'day', until: Date.now() + 9e9 })) } catch {} })
 
 for (const [tag, vp] of [
   ['desktop', { width: 1440, height: 900 }],
@@ -25,6 +28,7 @@ for (const [tag, vp] of [
   ['small phone', { width: 360, height: 740, isMobile: true, hasTouch: true }],
 ]) {
   const page = await browser.newPage()
+  await dayLook(page)
   await page.setViewport(vp)
   await page.goto(green + '/kehila', { waitUntil: 'networkidle0' })
   await wait(600)
@@ -159,6 +163,7 @@ for (const [tag, vp] of [
   ['phone', { width: 390, height: 844, isMobile: true, hasTouch: true, deviceScaleFactor: 2 }],
 ]) {
   const page = await browser.newPage()
+  await dayLook(page)
   await page.setViewport(vp)
   await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }])
   await page.goto(green + '/kehila', { waitUntil: 'networkidle0' })

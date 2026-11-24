@@ -23,6 +23,8 @@ type Extra = {
 }
 
 export function start(home?: ReactElement, extra?: Extra) {
+  // set before the wait, as before 17.11, so a look's entry file can still put its own title over it
+  document.title = `${PLATFORM_NAME} - הדבר הבא בעולם המתווכים`
   // while the site is being upgraded, a visitor sees one page; Itzik's own browser sees the real site
   siteOpen().then((open) => (open ? mount(home, extra) : curtain()))
 }
@@ -33,7 +35,6 @@ function curtain() {
 }
 
 function mount(home?: ReactElement, extra?: Extra) {
-  document.title = `${PLATFORM_NAME} - הדבר הבא בעולם המתווכים`
   ReactDOM.createRoot(document.getElementById('root')!).render(<Root home={home} extra={extra} />)
 }
 

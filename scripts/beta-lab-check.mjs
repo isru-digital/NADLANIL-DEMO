@@ -12,6 +12,8 @@ const looks = [
   ['navy', process.env.BASE_NAVY ?? 'http://localhost:5230/NADLANIL-DEMO'],
   ['green', process.env.BASE_GREEN ?? 'http://localhost:5240/NADLANIL-DEMO/green'],
 ].filter(([l]) => only === 'both' || only === l)
+// the shared deal room tool: in the green version it is "טינדר של הדירות" (Itzik, 12.11.2026, src/config/labNames.ts)
+const roomName = (look) => (look === 'green' ? 'טינדר של הדירות' : 'חדר עסקה משותף')
 const titles = [
   'הקלטה אחת, מודעה שלמה',
   'חדר עסקה משותף',
@@ -65,8 +67,10 @@ for (const [look, base] of looks) {
     await page.goto(base + '/app', { waitUntil: 'load' })
     // the green version puts the tools in layers: these checks are about the cards themselves, so every paid tool
     // is already opened here (the layers have their own check, stage-b-check.mjs)
-    await page.evaluate(() => localStorage.setItem('nadlanup-wallet-v1', JSON.stringify({ credits: 12, opened: ['urgent', 'voice', 'pros', 'folder', 'radar', 'matchmaker', 'wallet', 'room'], urgentFreeUsed: true, quotaUsed: 3, openedOffice: [] })))
-    await page.evaluate(() => localStorage.removeItem('nadlanup-member-v1'))
+    await page.evaluate(() => localStorage.setItem('nadlanup-wallet-v1', JSON.stringify({ credits: 12, opened: ['urgent', 'voice', 'pros', 'folder', 'radar', 'matchmaker', 'wallet', 'room'], urgentFreeUsed: true, quotaUsed: 3, openedOffice: ['urgent', 'voice', 'pros', 'folder', 'radar', 'matchmaker', 'wallet', 'room'] })))
+    // since 16.11.2026 a community member sees the community and not the demo's lab: the lab lives in the office view
+    // (every paid tool is already opened for the office too, so the monthly quota never stops a card here)
+    await page.evaluate(() => localStorage.setItem('nadlanup-member-v1', 'office'))
     await page.reload({ waitUntil: 'load' })
     await wait(1400)
 
@@ -99,14 +103,14 @@ for (const [look, base] of looks) {
     // each tile opens its own card
     for (let i = 0; i < titles.length; i++) {
       if (i > 0) await openHub()
-      await page.evaluate((title) => [...document.querySelectorAll('.bl-tile')].find((t) => t.querySelector('strong')?.textContent === title)?.click(), titles[i])
+      await page.evaluate((title) => [...document.querySelectorAll('.bl-tile')].find((t) => t.querySelector('strong')?.textContent === title)?.click(), i === 1 ? roomName(look) : titles[i])
       await wait(i === 0 ? 1600 : 1400)
       s = await info(page)
-      const shown = i === 1 ? s?.kind === 'dr' && s.title.includes('חדר עסקה') : s?.kind === 'bl' && s.title === titles[i]
+      const shown = i === 1 ? s?.kind === 'dr' && s.title === roomName(look) : s?.kind === 'bl' && s.title === titles[i]
       check(`${tag}: tile ${i + 1} opens "${titles[i]}"`, !!shown, `${s?.kind}:${s?.title}`)
       if (i !== 1) {
-        check(`${tag}: card ${i + 1} has its picture, fits, no overflow`, s.vis > 0 && s.visH > 120 && s.fits && s.overflowX <= 1 && s.imgsBroken === 0, `vis ${s.vis}, h ${s.visH}, overflow ${s.overflowX}, broken ${s.imgsBroken}`)
-        check(`${tag}: card ${i + 1} is marked beta`, s.badge.includes('בטא'))
+        check(`${tag}: card ${i + 1} has its picture, fits, no overflow`, !!s && s.vis > 0 && s.visH > 120 && s.fits && s.overflowX <= 1 && s.imgsBroken === 0, `vis ${s?.vis}, h ${s?.visH}, overflow ${s?.overflowX}, broken ${s?.imgsBroken}`)
+        check(`${tag}: card ${i + 1} is marked beta`, !!s?.badge?.includes('בטא'))
       }
       if (i === 0) {
         await wait(4200)

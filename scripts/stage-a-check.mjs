@@ -23,15 +23,23 @@ const pageText = (page, dropCalc = false) =>
     if (drop) b.querySelector('#calc')?.remove()
     return b.textContent
   }, dropCalc)
+// The view switch of the demo: an office member has it in the top bar (.ms); a community member sees the community
+// and not the demo's controls, so for them it is the button in the small line at the foot of the page
+// ([data-foot] button[data-v], since 19.11.2026). `where` says which of the two is showing.
 const visibleSwitch = (page) =>
   page.evaluate(() => {
-    const el = [...document.querySelectorAll('.ms')].find((n) => n.getBoundingClientRect().width > 0)
-    return el ? { m: el.dataset.m, pressed: el.querySelector('button[aria-pressed="true"]')?.textContent.trim(), count: [...document.querySelectorAll('.ms')].filter((n) => n.getBoundingClientRect().width > 0).length } : null
+    const seen = (n) => n.getBoundingClientRect().width > 0
+    const el = [...document.querySelectorAll('.ms')].find(seen)
+    if (el) return { where: 'bar', m: el.dataset.m, pressed: el.querySelector('button[aria-pressed="true"]')?.textContent.trim(), count: [...document.querySelectorAll('.ms')].filter(seen).length }
+    const foot = document.querySelector('[data-foot] button[data-v]')
+    return foot ? { where: 'foot', m: localStorage.getItem('nadlanup-member-v1') === 'office' ? 'office' : 'community', next: foot.dataset.v, count: 0 } : null
   })
 const flip = (page, v) =>
   page.evaluate((val) => {
     const el = [...document.querySelectorAll('.ms')].find((n) => n.getBoundingClientRect().width > 0)
-    el.querySelector(`button[data-v="${val}"]`).click()
+    const b = el?.querySelector(`button[data-v="${val}"]`) ?? document.querySelector(`[data-foot] button[data-v="${val}"]`)
+    if (!b) throw new Error(`no view switch to "${val}" on ${location.pathname}`)
+    b.click()
   }, v)
 
 for (const [label, vp, phone] of [
@@ -39,6 +47,7 @@ for (const [label, vp, phone] of [
   ['phone', { width: 390, height: 844, isMobile: true, hasTouch: true }, true],
 ]) {
   const tag = `green ${label}`
+  try {
   const page = await browser.newPage()
   await page.evaluateOnNewDocument(() => { try { localStorage.setItem('nadlanup-demo-v1', '1') } catch {} }) // the community is closed to visitors: these checks walk the open demo
   const errors = []
@@ -81,7 +90,9 @@ for (const [label, vp, phone] of [
   t = await pageText(page, true)
   check(`${tag}: office page: the fee is 689 a month, 0% to the office, and no commitment sum outside the calculator`, t.includes('דמי חבר: החל מ-549 ₪ + מע"מ לחודש') && !t.includes('מחיר יקבע') && t.includes('0% עמלה למשרד'), '')
   const whole = await pageText(page)
-  check(`${tag}: office page: the calculator has no "example" line under it`, !whole.includes('חישוב לדוגמה') && !whole.includes('המחיר הסופי יקבע'))
+  // 14.11.2026 (the fair calculator, 8383937): the calculator is marked "חישוב לדוגמה בלבד" on purpose; the old "the
+  // final price will be set" line stays gone
+  check(`${tag}: office page: the calculator is marked an example only, with no "final price" line`, whole.includes('חישוב לדוגמה בלבד') && !whole.includes('המחיר הסופי יקבע'))
   check(`${tag}: office page: typos fixed ("מכם", "ב-NadlanUP")`, !whole.includes('ממכם') && whole.includes('לוקחים מכם') && whole.includes('ב-NadlanUP') && !/[א-ת]NadlanUP/.test(whole))
   check(`${tag}: office page: no long dashes`, !/[\u2013\u2014]/.test(whole))
   await page.screenshot({ path: `${out}/a-${label}-3-office.png` })
@@ -108,7 +119,8 @@ for (const [label, vp, phone] of [
   await flip(page, 'community')
   await wait(900)
   sw = await visibleSwitch(page)
-  check(`${tag}: switching to "חבר קהילה" closes the agent area (the gate)`, sw.m === 'community' && (await page.evaluate(() => !!document.querySelector('.ag-gate') && !document.querySelector('.ag-wiz'))), JSON.stringify(sw))
+  check(`${tag}: switching to "חבר קהילה" closes the agent area (the gate)`, sw?.m === 'community' && (await page.evaluate(() => !!document.querySelector('.ag-gate') && !document.querySelector('.ag-wiz'))), JSON.stringify(sw))
+  check(`${tag}: a community member gets back through the line at the foot of the page, not the top bar`, sw?.where === 'foot' && sw.next === 'office', JSON.stringify(sw))
   await page.screenshot({ path: `${out}/a-${label}-5-app-community.png` })
   await page.reload({ waitUntil: 'load' })
   await wait(1400)
@@ -169,6 +181,9 @@ for (const [label, vp, phone] of [
 
   check(`${tag}: no console errors`, errors.length === 0, errors.slice(0, 2).join(' | '))
   await page.close()
+  } catch (e) {
+    check(`${tag}: ran to the end`, false, String(e).slice(0, 300))
+  }
 }
 
 await browser.close().catch(() => {})
