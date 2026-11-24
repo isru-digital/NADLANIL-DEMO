@@ -10,8 +10,15 @@ import { useMember } from '../config/member'
 import { OFFICE_FEE, OFFICE_NAME, shekel } from '../config/office'
 import { AD_PRICE_EXAMPLE, ADS_WHY, EXAMPLE_ONLY, MADLAN_EXTRA, PLANS, TERMS, costOf, pickActions, priceText, usePick } from '../config/pricing'
 import { useStore } from '../store'
-import PriceList, { PlanChooser } from './PriceList'
+// the price list is no longer shown on this page (24.11.2026); PlanChooser stays for the hidden calculator
+import { PlanChooser } from './PriceList'
+import LeadSheet from './LeadSheet'
 import '../styles/join-green.css'
+import '../styles/leads.css'
+
+const FEE = '0% עמלה למשרד, 100% עמלה למתווך'
+// the calculator compares the plans' monthly prices, so it left the page with them (24.11.2026)
+const SHOW_CALC = false
 
 /** A number that glides to its new value, so the calculator feels alive. */
 function useGlide(value: number) {
@@ -33,7 +40,7 @@ const gains: { icon: LucideIcon; title: string; text: string }[] = [
   { icon: BadgeCheck, title: 'דף אישי שמופיע בגוגל', text: 'הסוכן שלנו: דף מרשים בשם שלך, שנבנה כדי שיחפשו אותך ויגיעו אליך.' },
   { icon: Building2, title: 'שם ומותג של משרד ארצי', text: 'מציגים את עצמכם כחלק ממשרד תיווך בפריסה ארצית.' },
   { icon: ShieldCheck, title: 'צוות מאחורי הקלעים', text: 'אנשי מקצוע מהתחום שמלווים, מנהלים ומפקחים.' },
-  { icon: Wallet, title: '0% עמלה למשרד', text: 'המשרד לא לוקח אחוז מהעסקה. 100% מהעמלה נשארת אצלכם.' },
+  { icon: Wallet, title: '0% עמלה למשרד, 100% עמלה למתווך', text: 'המשרד לא לוקח אחוז מהעסקה.' },
   { icon: Gem, title: 'כל הכלים המתקדמים כלולים', text: 'טינדר של הדירות, רדאר ביקוש, ארנק עמלות ועוד, בלי קרדיטים, בתוך מכסה חודשית.' },
   { icon: Users, title: 'קהילה ארצית ושת"פים', text: 'מתווכים מכל הארץ, במקום אחד, וכל העבודה ביחד.' },
 ]
@@ -51,15 +58,16 @@ const rows: { what: string; community: boolean; office: boolean }[] = [
 ]
 
 const faq = [
-  { q: 'כמה זה עולה?', a: `שלושה מסלולים: ${PLANS.map((p) => `${p.name} ב-${p.price.toLocaleString('he-IL')} ₪`).join(', ')}. כל המחירים חודשיים ולפני מע"מ. המשרד לא לוקח אחוז מהעמלה, ו-100% נשארים אצלכם.` },
-  { q: 'האם לוקחים אחוז מהעמלה?', a: 'לא. 0% עמלה למשרד, והעמלה כולה נשארת אצלכם.' },
+  // the prices left this page (24.11.2026): who wants to know more leaves details
+  { q: 'איך מקבלים פרטים על ההצטרפות?', a: 'לוחצים על "מעוניינים לקבל מידע? לחצו כאן", משאירים שם, טלפון ועיר, וצוות המשרד חוזר אליכם.' },
+  { q: 'האם לוקחים אחוז מהעמלה?', a: 'לא. 0% עמלה למשרד, 100% עמלה למתווך.' },
   { q: 'מתי אפשר להתחיל?', a: 'מיד אחרי ההצטרפות נפתח האזור "הסוכן שלנו", שהוא חלק מהמשרד. עונים על 15 שאלות קלילות, ואנחנו בונים את הדף.' },
   { q: 'אפשר להתחיל בקהילה ולעבור למשרד אחר כך?', a: 'כן. מצטרפים לקהילה בחינם, ועוברים למשרד בכל שלב.' },
   { q: 'צריך רישיון מתווך?', a: 'כן. מעלים אותו בשאלון, והצוות בודק אותו.' },
 ]
 
 const same = ['שם ומותג של משרד תיווך ארצי', 'צוות מקצועי מאחורי הקלעים', 'קהילת מתווכים ושת"פים בכל הארץ', 'CRM ופולדר דיגיטלי']
-const more = ['הסוכן שלנו: דף אישי שמופיע בגוגל', 'כל הכלים המתקדמים כלולים', '0% עמלה למשרד, 100% למתווך', 'צוות שמלווה עסקה עד החתימה']
+const more = ['הסוכן שלנו: דף אישי שמופיע בגוגל', 'כל הכלים המתקדמים כלולים', '0% עמלה למשרד, 100% עמלה למתווך', 'צוות שמלווה עסקה עד החתימה']
 
 /** Money paid over the years: the office that takes a share climbs steeply, the fixed fee climbs slowly; the space between is what stays. */
 function MarathonChart({ perYearToday, perYearOurs, years }: { perYearToday: number; perYearOurs: number; years: number }) {
@@ -155,6 +163,9 @@ export default function JoinOffice() {
   const [pay, setPay] = useState<'closed' | 'open' | 'busy' | 'done'>('closed')
   const [agree, setAgree] = useState(false)
   const [open, setOpen] = useState(0)
+  // "מעוניינים לקבל מידע? לחצו כאן" (24.11.2026): the short form that took the place of the prices
+  const [lead, setLead] = useState(false)
+  const ask = () => setLead(true)
   useEffect(() => {
     if (pay !== 'busy') return
     const t = window.setTimeout(() => setPay('done'), 1600)
@@ -205,30 +216,37 @@ export default function JoinOffice() {
           <motion.h1 initial={{ opacity: 0, y: 22 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.1, ease: EASE }}>
             משרד תיווך ארצי
             <br />
-            <span>עם 0% עמלה למשרד</span>
+            <span>0% עמלה למשרד, 100% עמלה למתווך</span>
           </motion.h1>
           <motion.p className="jo-sub" initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.2, ease: EASE }}>
-            100% מהעמלה נשארת אצלכם. המשרד נותן את השם, את הכלים ואת הצוות.
+            המשרד נותן את השם, את הכלים ואת הצוות.
           </motion.p>
           <motion.div className="jo-price" initial={{ opacity: 0, scale: 0.94 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.8, delay: 0.3, ease: EASE }}>
             <b className="num">0%</b>
             <span>
               <strong>עמלה למשרד</strong>
-              <small>דמי חבר: {OFFICE_FEE}</small>
+              <small>100% עמלה למתווך</small>
             </span>
           </motion.div>
           <motion.div className="jo-actions" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.4, ease: EASE }}>
-            <button className="btn btn-white btn-lg" onClick={cta}>
-              {joined ? 'לאזור הסוכן שלנו' : 'להצטרפות למשרד'}
-              <ArrowLeft />
-            </button>
-            <a href="#calc" className="btn btn-outline-white btn-lg">
-              <Calculator /> לחשב כמה זה משתלם
+            {joined ? (
+              <button className="btn btn-white btn-lg" onClick={cta}>
+                לאזור הסוכן שלנו
+                <ArrowLeft />
+              </button>
+            ) : (
+              <button className="btn btn-white btn-lg" onClick={ask} data-act="ask-info">
+                מעוניינים לקבל מידע? לחצו כאן
+                <ArrowLeft />
+              </button>
+            )}
+            <a href="#about" className="btn btn-outline-white btn-lg">
+              מה זה {OFFICE_NAME}
             </a>
           </motion.div>
           <ul className="jo-chips">
             <li>
-              <Check /> 100% מהעמלה למתווך
+              <Check /> 100% עמלה למתווך
             </li>
             <li>
               <Check /> דף אישי בגוגל
@@ -240,17 +258,46 @@ export default function JoinOffice() {
         </div>
       </section>
 
-      {/* ------------------------------------------------------------ the price list: three plans, Madlan, terms */}
-      <PriceList
-        joined={joined}
-        onJoin={(plan) => {
-          if (joined) return toast(`המסלול עודכן בדמו: ${PLANS.find((p) => p.id === plan)?.name}`)
-          setAgree(false)
-          setPay('open')
-        }}
-      />
+      {/* ------------------------------------------------------------ the ask for details (24.11.2026): the prices were here */}
+      <section className="jo-ask" data-section="ask">
+        <div className="jo-in">
+          <Reveal className="jo-ask-card">
+            <span className="jo-ask-fee">
+              <Wallet aria-hidden /> {FEE}
+            </span>
+            <h2>רוצים לשמוע איך זה עובד אצלנו?</h2>
+            <p>משאירים שם, טלפון ועיר, וצוות המשרד חוזר אליכם עם כל הפרטים.</p>
+            <button className="btn btn-gold btn-lg" onClick={ask} data-act="ask-info">
+              מעוניינים לקבל מידע? לחצו כאן
+              <ArrowLeft />
+            </button>
+          </Reveal>
+        </div>
+      </section>
 
-      {/* ------------------------------------------------------------ the calculator */}
+      {/* ------------------------------------------------------------ the network, in Itzik's words (24.11.2026, word for word) */}
+      <section className="jo-section is-tint" id="about" data-section="about">
+        <div className="jo-in">
+          <Reveal className="jo-about">
+            <h2>
+              <bdi dir="ltr">NADLANUP</bdi> | רשת תיווך נדל"ן ארצית
+            </h2>
+            <p>NADLANUP היא רשת תיווך נדל"ן ארצית הפועלת באמצעות סוכני נדל"ן בעלי רישיון תיווך בתוקף, המצטרפים למשרד במסגרת הסכם התקשרות והשתייכות מקצועית.</p>
+            <p>הרשת מעניקה לסוכניה מעטפת מקצועית ועסקית הכוללת מערכות טכנולוגיות, הכשרות, קהילה מקצועית, תמיכה שוטפת, שירותי שיווק ופרסום משרדיים וכלים לפיתוח פעילות התיווך.</p>
+            <p>סוכני הרשת פועלים במסגרת נהלי המשרד, תוך שמירה על עצמאותם העסקית בהתאם להסכם ההתקשרות, להוראות הדין ולהסדרי המשרד עם ספקיו.</p>
+            <p>שירותי הפרסום הניתנים לסוכני המשרד מופעלים במסגרת פעילות המשרד, בכפוף לתנאי ההתקשרות עם ספקי הפרסום ולאישורים הנדרשים מהם.</p>
+          </Reveal>
+          {/* the table "מילון מונחים" comes from Itzik later: its place is kept, and nothing is made up for it */}
+          <div className="jo-glossary" data-glossary="placeholder">
+            <h3>מילון מונחים</h3>
+            <p>יתווסף בהמשך.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* ------------------------------------------------------------ the calculator: hidden on 24.11.2026 with the prices,
+          since all of it compares the plans' monthly prices. It stays in the code, and can come back without prices */}
+      {SHOW_CALC && (
       <section className="jo-section is-tint" id="calc">
         <div className="jo-in">
           <Reveal className="jo-head">
@@ -523,6 +570,7 @@ export default function JoinOffice() {
           </Reveal>
         </div>
       </section>
+      )}
 
       {/* ------------------------------------------------------------ what you get */}
       <section className="jo-section is-tint">
@@ -559,9 +607,9 @@ export default function JoinOffice() {
               <b className="is-office">{OFFICE_NAME}</b>
             </div>
             <div className="jo-row is-price">
-              <span>מחיר</span>
-              <b>חינם</b>
-              <b className="is-office num">{OFFICE_FEE}</b>
+              <span>עמלה</span>
+              <b>אין</b>
+              <b className="is-office">{FEE}</b>
             </div>
             {rows.map((r) => (
               <div key={r.what} className="jo-row">
@@ -586,7 +634,7 @@ export default function JoinOffice() {
           </Reveal>
           <ol className="jo-steps">
             {[
-              ['בוחרים מסלול ומצטרפים', 'BASIC, PLUS או PRO, ו-0% עמלה למשרד. בדמו אין חיוב אמיתי.'],
+              ['משאירים פרטים', `לוחצים על "מעוניינים לקבל מידע", וצוות המשרד חוזר אליכם. ${FEE}.`],
               ['עונים על 15 שאלות', 'קלילות, בכיף: תמונה, רישיון, אזורים והסיפור שלכם.'],
               ['הדף והמשרד שלכם מוכנים', 'דף אישי מרשים בשמכם, ומקום במשרד תיווך ארצי.'],
             ].map(([t, d], i) => (
@@ -628,13 +676,13 @@ export default function JoinOffice() {
         <i className="jo-grid" aria-hidden />
         <div className="jo-in jo-final-in">
           <h2>שווה לכם להצטרף</h2>
-          <p>{OFFICE_FEE}, 0% עמלה למשרד, ו-100% מהעמלה נשארת אצלכם.</p>
-          <button className="btn btn-white btn-lg" onClick={cta}>
-            {joined ? 'לאזור הסוכן שלנו' : 'להצטרפות למשרד'}
+          <p>{FEE}.</p>
+          <button className="btn btn-white btn-lg" onClick={joined ? cta : ask} data-act={joined ? undefined : 'ask-info'}>
+            {joined ? 'לאזור הסוכן שלנו' : 'מעוניינים לקבל מידע? לחצו כאן'}
             <ArrowLeft />
           </button>
           <small>
-            <Lock /> בדמו אין חיוב אמיתי.
+            <Lock /> הפרטים מגיעים לצוות המשרד בלבד.
           </small>
         </div>
       </section>
@@ -642,10 +690,10 @@ export default function JoinOffice() {
       <div className="jo-sticky">
         <div>
           <b className="num">0%</b>
-          <small>עמלה למשרד. {OFFICE_FEE}</small>
+          <small>עמלה למשרד, 100% עמלה למתווך</small>
         </div>
-        <button className="btn btn-gold btn-lg" onClick={cta}>
-          {joined ? 'לאזור הסוכן' : 'להצטרפות'}
+        <button className="btn btn-gold btn-lg" onClick={joined ? cta : ask} data-act={joined ? undefined : 'ask-info'}>
+          {joined ? 'לאזור הסוכן' : 'לקבלת מידע'}
           <ArrowLeft />
         </button>
       </div>
@@ -666,59 +714,21 @@ export default function JoinOffice() {
             </div>
           ) : (
             <>
-              <PlanChooser />
+              {/* the plans and their prices left this window with the price list (24.11.2026) */}
               <dl className="prc-sum" data-sum>
-                <div>
-                  <dt>מסלול {cost.plan.name}</dt>
-                  <dd className="num">{priceText(cost.plan.price)}</dd>
-                </div>
-                {cost.pack && (
-                  <div>
-                    <dt>{cost.pack.label}</dt>
-                    <dd className="num">{priceText(cost.pack.price)}</dd>
-                  </div>
-                )}
-                {cost.pack && pick.extra > 0 && (
-                  <div>
-                    <dt>
-                      {MADLAN_EXTRA.label} × <span className="num">{pick.extra}</span>
-                    </dt>
-                    <dd className="num">{priceText(pick.extra * MADLAN_EXTRA.price)}</dd>
-                  </div>
-                )}
                 <div>
                   <dt>עמלה למשרד</dt>
                   <dd className="num">0%</dd>
                 </div>
                 <div>
-                  <dt>{TERMS[4][0]}</dt>
-                  <dd>{TERMS[4][1]}</dd>
-                </div>
-                <div className="is-total">
-                  <dt>סך הכול לחודש</dt>
-                  <dd className="num">{priceText(cost.month)}</dd>
+                  <dt>עמלה למתווך</dt>
+                  <dd className="num">100%</dd>
                 </div>
                 <div>
                   <dt>חיוב היום</dt>
                   <dd>אין, זה דמו</dd>
                 </div>
               </dl>
-              {/* the terms that apply to what was picked, in the price list's own words */}
-              <ul className="prc-terms" data-terms>
-                <li>
-                  {TERMS[0][0]}: {TERMS[0][1]}
-                </li>
-                {cost.plan.yad2 > 0 && (
-                  <li>
-                    {TERMS[1][0]}: {TERMS[1][1]}
-                  </li>
-                )}
-                {cost.pack && (
-                  <li>
-                    {TERMS[2][0]}: {TERMS[2][1]}
-                  </li>
-                )}
-              </ul>
               <label className="jo-agree">
                 <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} />
                 <span>אני מאשר/ת את תנאי ההצטרפות. בדמו זה ממשק בלבד: התנאים דורשים אישור עורך דין לפני גרסה אמיתית.</span>
@@ -736,6 +746,8 @@ export default function JoinOffice() {
           )}
         </div>
       </Modal>
+
+      <LeadSheet open={lead} onClose={() => setLead(false)} />
     </div>
   )
 }

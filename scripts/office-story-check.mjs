@@ -54,7 +54,8 @@ const shotAt = async (page, sel, path, offset = 20) => {
   await wait(900)
   await page.screenshot({ path })
 }
-const PRICES = ['549', '887', '1,219', '265', '390']
+// 24.11.2026: no prices on this page any more (Itzik); none of these may show
+const PRICES = ['549', '887', '1,219', 'מע"מ לחודש', 'דמי חבר', 'מחירון', 'חבילות מדלן']
 
 for (const [tag, vp, phone] of [
   ['desktop', { width: 1440, height: 900 }, false],
@@ -79,7 +80,7 @@ for (const [tag, vp, phone] of [
   const hero = await page.evaluate(() => {
     const s = document.querySelector('.os-split')
     const join = document.querySelector('[data-act="join-hero"]')
-    const call = document.querySelector('[data-act="call-hero"]')
+    const call = document.querySelector('[data-act="ask-info"][data-where="hero"]')
     const r = join.getBoundingClientRect()
     return {
       share: Number(s.dataset.share),
@@ -93,7 +94,7 @@ for (const [tag, vp, phone] of [
     }
   })
   check(`${tag}: "0% עמלה למשרד, 100% עמלה למתווך" in big numbers (it slides there from half-and-half)`, hero.share === 100 && hero.broker === '100% עמלה למתווך' && hero.office === '0% עמלה למשרד' && hero.label === 'מכל עסקה: 0% עמלה למשרד, 100% עמלה למתווך', hero)
-  check(`${tag}: a clear button to join and one to be called back, big`, hero.join === 'אני רוצה להצטרף' && hero.call === 'שיחזרו אליי קודם' && hero.joinH >= 52, hero)
+  check(`${tag}: a clear button to join and one to ask for details ("מעוניינים לקבל מידע? לחצו כאן"), big`, hero.join === 'אני רוצה להצטרף' && hero.call === 'מעוניינים לקבל מידע? לחצו כאן' && hero.joinH >= 52, hero)
   await page.evaluate(() => scrollTo(0, 0))
   await wait(300)
   await page.screenshot({ path: `${out}/${tag}-1-hero.png` })
@@ -109,11 +110,14 @@ for (const [tag, vp, phone] of [
       env: [...root.querySelectorAll('.os-env-card h3')].map((e) => e.textContent),
       plans: [...root.querySelectorAll('.os-plan')].map((e) => e.querySelector('.os-plan-name').textContent + ' ' + e.querySelector('b').textContent.replace(/\s+/g, ' ').trim()),
       wide: document.documentElement.scrollWidth > innerWidth + 1,
+      ask: !!root.querySelector('[data-section="ask"] [data-act="ask-info"]'),
     }
   })
   check(`${tag}: it speaks to the feeling: עצמאות, ביטחון, לא לבד, עסק משלכם`, all.feel.join('|') === 'עצמאות|ביטחון|לא לבד|עסק משלכם', all.feel)
-  check(`${tag}: the envelope: פרסום (יד2, מדלן), ליווי, מיתוג, כלים`, all.env.join('|') === 'פרסום|ליווי|מיתוג|כלים וידע' && /יד2/.test(all.text) && /מדלן/.test(all.text) && /אריאל/.test(all.text), all.env)
-  check(`${tag}: the prices are the price list's (549, 887, 1,219, Madlan 265 / 390)`, PRICES.every((p) => all.text.includes(p)) && all.plans.join('|') === 'BASIC 549 ₪|PLUS 887 ₪|PRO 1,219 ₪', all.plans)
+  // the Madlan packs carried prices, and left with them (24.11.2026)
+  check(`${tag}: the envelope: פרסום (יד2), ליווי, מיתוג, כלים`, all.env.join('|') === 'פרסום|ליווי|מיתוג|כלים וידע' && /יד2/.test(all.text) && /אריאל/.test(all.text), all.env)
+  check(`${tag}: no price on the page: no plan prices, no Madlan packs, no "דמי חבר", no ₪`, PRICES.every((p) => !all.text.includes(p)) && !all.text.includes('₪') && all.plans.length === 0, PRICES.filter((p) => all.text.includes(p)))
+  check(`${tag}: the fee reads "0% עמלה למשרד, 100% עמלה למתווך", and the ask for details stands where the prices were`, (all.text.match(/0% עמלה למשרד, 100% עמלה למתווך/g) ?? []).length >= 3 && all.ask, all.ask)
   check(`${tag}: no dashes in the copy`, !/[\u2013\u2014]/.test(all.text), all.text.match(/.{0,20}[\u2013\u2014].{0,20}/)?.[0])
   check(`${tag}: no headline ends with a full stop`, all.heads.every((h) => !/\.$/.test(h)), all.heads)
   check(`${tag}: no reviews, no counts of members or deals`, !/ממליצ|ביקורת|★|לקוחות מרוצים|מתווכים כבר|\d+\+? מתווכים/.test(all.text), all.text.match(/.{0,20}(ממליצ|ביקורת|מתווכים כבר).{0,20}/)?.[0])
@@ -123,54 +127,30 @@ for (const [tag, vp, phone] of [
   await shotAt(page, '.os-feel', `${out}/${tag}-3-feel.png`)
   await shotAt(page, '.os-env', `${out}/${tag}-4-envelope.png`)
   if (phone) await shotAt(page, '.os-env-card.is-guide', `${out}/${tag}-4b-envelope.png`, 80)
-  await shotAt(page, '.os-plans', `${out}/${tag}-5-plans.png`)
+  await shotAt(page, '.os-ask', `${out}/${tag}-5-ask.png`)
   await shotAt(page, '.os-final', `${out}/${tag}-6-final.png`, phone ? 120 : 160)
 
-  // ---- 3. "שיחזרו אליי קודם"
-  await tap(page, '[data-act="call-hero"]')
-  await page.waitForSelector('[data-callback]', { visible: true })
+  // ---- 3. "מעוניינים לקבל מידע? לחצו כאן" opens the leads form of the office page (24.11.2026; it took the place of
+  // the demo's "שיחזרו אליי"; scripts/leads-check.mjs sends one to the server)
+  await tap(page, '[data-act="ask-info"][data-where="hero"]')
+  await page.waitForSelector('[data-sheet="lead"]', { visible: true })
   await wait(500)
   const form = await page.evaluate(() => ({
-    name: document.querySelector('[data-f="cb-name"]').value,
-    phone: document.querySelector('[data-f="cb-phone"]').value,
-    times: [...document.querySelectorAll('[data-time]')].map((b) => b.textContent),
-    demo: document.querySelector('.os-sheet .os-demo')?.textContent.trim(),
+    fields: [...document.querySelectorAll('[data-sheet="lead"] [data-lead]')].map((e) => e.dataset.lead),
     inView: (() => {
-      const r = document.querySelector('[data-act="send-callback"]').getBoundingClientRect()
-      return r.bottom <= innerHeight && r.top >= 0
+      const r = document.querySelector('[data-act="send-lead"]').getBoundingClientRect()
+      return r.bottom <= innerHeight + 2 && r.top >= 0
     })(),
   }))
-  check(`${tag}: "שיחזרו אליי": name and phone already filled, a time to pick, marked "דוגמה"`, form.name === 'מאיה לנדאו' && /555/.test(form.phone) && form.times.join('|') === 'בבוקר|בצהריים|בערב' && /^דוגמה/.test(form.demo ?? '') && form.inView, form)
-  await page.screenshot({ path: `${out}/${tag}-7-callback.png` })
-  // a broken phone says what to fix, next to the field
-  await page.$eval('[data-f="cb-phone"]', (el) => {
-    const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set
-    set.call(el, '050')
-    el.dispatchEvent(new Event('input', { bubbles: true }))
-  })
-  await tap(page, '[data-act="send-callback"]')
+  check(`${tag}: the leads form: name, phone, city and a note, its button in view`, form.fields.join() === 'name,phone,city,note' && form.inView, form)
+  await page.screenshot({ path: `${out}/${tag}-7-lead-form.png` })
+  await tap(page, '[data-act="send-lead"]')
   await wait(300)
-  const err = await page.evaluate(() => ({ msg: document.querySelector('[data-f="cb-phone"]').parentElement.querySelector('[role="alert"]')?.textContent, sent: !!document.querySelector('[data-callback-sent]') }))
-  check(`${tag}: a short phone number gets a message next to the field`, !!err.msg && !err.sent, err)
-  await page.$eval('[data-f="cb-phone"]', (el) => {
-    const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set
-    set.call(el, '050-555-0201')
-    el.dispatchEvent(new Event('input', { bubbles: true }))
-  })
-  await tap(page, '[data-time="בערב"]')
-  await tap(page, '[data-act="send-callback"]')
-  await page.waitForSelector('[data-callback-sent]', { visible: true })
-  await wait(500)
-  const sent = await page.evaluate(() => ({ text: document.querySelector('[data-callback-sent]').innerText.replace(/\s+/g, ' '), saved: JSON.parse(localStorage.getItem('nadlanup-callback-v1') ?? 'null') }))
-  check(`${tag}: sending says "קיבלנו" and when they will call, and that nothing was sent in the demo`, /קיבלנו, מאיה/.test(sent.text) && /בערב/.test(sent.text) && /לא נשלחת/.test(sent.text) && sent.saved?.time === 'בערב', sent)
-  await page.screenshot({ path: `${out}/${tag}-8-sent.png` })
+  const err = await page.evaluate(() => ({ n: document.querySelectorAll('[data-sheet="lead"] .ld-err').length, done: document.querySelector('[data-sheet="lead"]')?.dataset.state === 'done' }))
+  check(`${tag}: sending it empty: a word under each required field, nothing sent`, err.n === 3 && !err.done, err)
   await page.keyboard.press('Escape')
-  await wait(500)
-  const left = await page.evaluate(() => {
-    const el = document.elementFromPoint(innerWidth / 2, innerHeight / 2)
-    return { scrim: !!document.querySelector('.os-sheet-scrim'), over: el?.closest('.os-sheet-scrim') ? 'scrim' : 'page', scroll: document.body.style.overflow }
-  })
-  check(`${tag}: Escape closes it and nothing is left over the page`, !left.scrim && left.over === 'page' && left.scroll !== 'hidden', left)
+  await wait(600)
+  check(`${tag}: Escape closes it`, !(await page.$('[data-sheet="lead"]')))
 
   // ---- 4. "אני רוצה להצטרף" opens the joining at once
   await tap(page, '[data-act="join-final"]')

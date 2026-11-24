@@ -92,7 +92,8 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
   await page.evaluate(() => document.querySelector('[data-upgrade="post"]')?.click())
   await wait(1700)
   check(`${d} the post leads to the office's page`, (await path(page)) === '/app/office', await path(page))
-  check(`${d} the office's page shows the fee from 549`, (await text(page)).includes('החל מ-549 ₪ + מע"מ לחודש'))
+  // 24.11.2026: no price on the office's page any more (Itzik)
+  check(`${d} the office's page shows "0% עמלה למשרד, 100% עמלה למתווך" and no price at all`, (await text(page)).includes('0% עמלה למשרד, 100% עמלה למתווך') && !/549|887|1,219|דמי חבר|מחירון|חבילות מדלן|₪/.test(await text(page)), (await text(page)).match(/.{0,40}(549|887|1,219|דמי חבר|מחירון|חבילות מדלן|₪).{0,40}/)?.[0] ?? '')
 
   // ---- 4. the two tools that belong to the office
   for (const [id, title] of [['builder', 'בונה דף נחיתה'], ['folder', 'פולדר דיגיטלי']]) {

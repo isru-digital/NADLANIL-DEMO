@@ -61,13 +61,15 @@ for (const [label, vp, phone] of [
   // the area is closed: its button leads to the office page, where the (simulated) joining is
   await click(page, '.ag-gate-cta .btn', 'להצטרפות')
   await wait(1600)
-  check(`${tag}: the gate leads to the office pricing page`, await page.evaluate(() => location.pathname.endsWith('/join/office') && !!document.querySelector('.jo-hero')))
+  check(`${tag}: the gate leads to the office page`, await page.evaluate(() => location.pathname.endsWith('/join/office') && !!document.querySelector('.jo-hero')))
   await page.screenshot({ path: `${out}/agent-${label}-2-office.png` })
-  await click(page, '.jo-hero .btn-white', 'להצטרפות')
-  await wait(900)
+  // 24.11.2026: the office page's buttons ask for details now (no prices); the demo's joining opens from
+  // "אני רוצה להצטרף" (?join=1), as it does on the office's own page
+  await page.goto(page.url().split('?')[0].split('#')[0] + '?join=1', { waitUntil: 'load' })
+  await wait(1200)
   await page.screenshot({ path: `${out}/agent-${label}-2b-pay.png` })
   check(`${tag}: joining is a simulation with no card fields`, await page.evaluate(() => !!document.querySelector('.jo-pay') && document.querySelectorAll('.jo-pay input[type=text], .jo-pay input[type=tel], .jo-pay input[type=number]').length === 0 && document.body.textContent.includes('בדמו אין חיוב אמיתי')))
-  check(`${tag}: the joining shows 0% to the office and the plan's price`, await page.evaluate(() => { const t = document.querySelector('[data-sum]')?.textContent ?? ''; return t.includes('0%') && t.includes('549 ₪ + מע"מ לחודש') }))
+  check(`${tag}: the joining shows 0% to the office and 100% to the broker, and no price`, await page.evaluate(() => { const t = document.querySelector('[data-sum]')?.textContent ?? ''; return t.includes('0%') && t.includes('100%') && !t.includes('₪') }))
   check(`${tag}: joining needs the terms to be approved`, await page.evaluate(() => document.querySelector('.jo-go')?.disabled === true))
   await page.evaluate(() => document.querySelector('.jo-agree input')?.click())
   await wait(300)

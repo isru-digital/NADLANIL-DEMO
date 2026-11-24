@@ -86,7 +86,8 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
   await tap(page, '[data-act="register"]')
   await wait(500)
   let errs = await page.evaluate(() => ({ n: document.querySelectorAll('.au-err').length, focus: document.activeElement?.dataset.f, sent: !!document.querySelector('[data-state="waiting"]'), city: !!document.querySelector('#err-cities'), areas: !!document.querySelector('#err-areas'), areasRequired: document.querySelector('[data-f="areas"]').required }))
-  check(`${d} an empty form is not sent: an error under each required field, and the first one gets the cursor`, errs.n === 6 && errs.focus === 'name' && !errs.sent, JSON.stringify(errs))
+  // 24.11.2026: the licence number comes first now (it fills in the name from the registry), so it gets the cursor
+  check(`${d} an empty form is not sent: an error under each required field, and the first one (the licence number) gets the cursor`, errs.n === 6 && errs.focus === 'license' && !errs.sent, JSON.stringify(errs))
   check(`${d} the city is required, the neighbourhoods are not (Itzik 18.11.2026)`, errs.city && !errs.areas && !errs.areasRequired, JSON.stringify(errs))
   await shot('2-form-errors')
   await fill(page, '[data-f="name"]', who.name)

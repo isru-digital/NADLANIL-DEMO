@@ -155,8 +155,8 @@ function Form({ onClose }: { onClose: () => void }) {
       {/* ------------------------------------------------------------ the details */}
       <label className="pfe-field">
         <span>שם תצוגה או כינוי</span>
-        <input className="input" data-f="name" value={name} onChange={(e) => (mended('name'), setName(e.target.value))} maxLength={40} autoComplete="name" aria-invalid={!!errors.name} />
-        {err('name') ?? <small>כך השם שלך יופיע בפיד, בפוסטים ובתגובות.</small>}
+        <input className="input" data-f="name" value={name} onChange={(e) => (mended('name'), setName(e.target.value))} readOnly={me.nameLocked} aria-readonly={me.nameLocked} maxLength={40} autoComplete="name" aria-invalid={!!errors.name} />
+        {err('name') ?? (me.nameLocked ? <small data-name-locked>השם המלא מגיע מרשם המתווכים, ואי אפשר לשנות אותו כאן.</small> : <small>כך השם שלך יופיע בפיד, בפוסטים ובתגובות.</small>)}
       </label>
 
       <label className="pfe-field">

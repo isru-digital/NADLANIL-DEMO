@@ -1,6 +1,5 @@
 import { BadgeCheck, Check, Sparkles } from 'lucide-react'
 import { formatPriceShort } from '../data/demo'
-import { OFFICE_FEE } from '../config/office'
 import type { Panel } from './OpenPanels'
 
 /**
@@ -41,7 +40,7 @@ export const panelOffice: Panel = {
   id: 'office',
   label: 'המשרד',
   title: 'משרד ארצי מאחוריך',
-  text: `שם ומותג של משרד תיווך ארצי, לידים מהקמפיינים וצוות שמלווה עד החתימה. ${OFFICE_FEE.replace(/ /g, ' ')}, ו-0% עמלה למשרד.`,
+  text: `שם ומותג של משרד תיווך ארצי, לידים מהקמפיינים וצוות שמלווה עד החתימה. 0% עמלה למשרד, 100% עמלה למתווך.`,
   image: 'img/panel-office.webp',
   position: '50% 50%',
   link: { to: '/join/office', label: 'להכיר את המשרד' },

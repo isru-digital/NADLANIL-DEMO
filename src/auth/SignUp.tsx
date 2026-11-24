@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, Building2, Check, LoaderCircle, Lock, MailCheck, Plus, User, X } from 'lucide-react'
+import { ArrowLeft, BadgeCheck, Building2, Check, Info, LoaderCircle, Lock, MailCheck, Plus, User, X } from 'lucide-react'
 import { COMMUNITY_HOME, COMMUNITY_NAME } from '../config/community'
 import { cities as knownCities } from '../data/demo'
 import CommunityBrand from '../community/CommunityBrand'
@@ -14,7 +14,7 @@ import '../styles/auth.css'
  * says yes the broker cannot enter. Every field is required.
  */
 type Fields = 'name' | 'phone' | 'email' | 'license' | 'work' | 'office_name' | 'cities' | 'areas'
-const ORDER: Fields[] = ['name', 'phone', 'email', 'license', 'work', 'office_name', 'cities', 'areas']
+const ORDER: Fields[] = ['license', 'name', 'phone', 'email', 'work', 'office_name', 'cities', 'areas']
 
 export default function SignUp() {
   // "להרשמה מחדש" in the rejection e-mail opens the form even on the device that still shows the waiting screen,
@@ -35,6 +35,42 @@ export default function SignUp() {
   const [busy, setBusy] = useState(false)
   const [failure, setFailure] = useState('')
   const form = useRef<HTMLFormElement>(null)
+  // the licence number, looked up by the server in the Registrar of Real Estate Brokers (24.11.2026): once found, the
+  // full name is the registry's and cannot be typed over. Not found: a soft word, and the request goes to a check by hand
+  const [lic, setLic] = useState<{ state: 'idle' | 'checking' | 'verified' | 'not_found' | 'unavailable'; of: string; name?: string }>({ state: 'idle', of: '' })
+  const digits = license.replace(/[\s-]/g, '')
+  useEffect(() => {
+    if (!/^\d{4,10}$/.test(digits)) {
+      setLic((old) => {
+        // the number changed after a name came from the registry: the name goes with it
+        if (old.state === 'verified') setName('')
+        return { state: 'idle', of: '' }
+      })
+      return
+    }
+    if (lic.of === digits && lic.state !== 'idle') return
+    let gone = false
+    const t = window.setTimeout(async () => {
+      setLic({ state: 'checking', of: digits })
+      const r = await call<{ status: 'verified' | 'not_found' | 'unavailable'; name?: string }>('/api/license', { method: 'POST', body: { license: digits } })
+      if (gone) return
+      if (r.ok && r.data.status === 'verified' && r.data.name) {
+        setLic({ state: 'verified', of: digits, name: r.data.name })
+        setName(r.data.name)
+      } else {
+        setLic((old) => {
+          if (old.state === 'verified') setName('')
+          return { state: r.ok && r.data.status === 'not_found' ? 'not_found' : 'unavailable', of: digits }
+        })
+      }
+    }, 550)
+    return () => {
+      gone = true
+      window.clearTimeout(t)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [digits])
+  const locked = lic.state === 'verified' && lic.of === digits
 
   useEffect(() => {
     if (again) pending.set(null)
@@ -165,10 +201,40 @@ export default function SignUp() {
             <div className="au-grid">
               <label className="au-field">
                 <span>
+                  מספר רישיון תיווך <b aria-hidden>*</b>
+                </span>
+                <span className="au-lic">
+                  <input className="input ltr" data-f="license" inputMode="numeric" value={license} onChange={(e) => setLicense(e.target.value.replace(/[^\d\s-]/g, ''))} autoComplete="off" required {...bad('license')} />
+                  {lic.state === 'checking' && <LoaderCircle className="au-lic-spin" aria-hidden />}
+                  {locked && <BadgeCheck className="au-lic-ok" aria-hidden />}
+                </span>
+                {err('license') ??
+                  (lic.state === 'not_found' || lic.state === 'unavailable' ? (
+                    <small className="au-lic-note" data-license="manual" role="status">
+                      <Info aria-hidden />
+                      {lic.state === 'not_found'
+                        ? 'לא מצאנו את המספר במאגר רשם המתווכים. אפשר להמשיך, והצוות יבדוק את הבקשה ידנית.'
+                        : 'המאגר של רשם המתווכים לא זמין כרגע. אפשר להמשיך, והצוות יבדוק את הבקשה ידנית.'}
+                    </small>
+                  ) : (
+                    <small>השם המלא יתמלא לבד מתוך רשם המתווכים.</small>
+                  ))}
+              </label>
+              <label className="au-field">
+                <span>
                   שם מלא <b aria-hidden>*</b>
                 </span>
-                <input className="input" data-f="name" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" required {...bad('name')} />
-                {err('name')}
+                <span className={`au-lic${locked ? ' is-locked' : ''}`}>
+                  <input className="input" data-f="name" value={name} onChange={(e) => setName(e.target.value)} readOnly={locked} aria-readonly={locked} autoComplete="name" required {...bad('name')} />
+                  {locked && <Lock className="au-lic-ok" aria-hidden />}
+                </span>
+                {err('name') ??
+                  (locked ? (
+                    <small className="au-lic-src" data-license="verified" role="status">
+                      <BadgeCheck aria-hidden />
+                      אומת מול רשם המתווכים. מקור: משרד המשפטים, data.gov.il
+                    </small>
+                  ) : null)}
               </label>
               <label className="au-field">
                 <span>
@@ -184,13 +250,6 @@ export default function SignUp() {
                 <input className="input ltr" data-f="email" type="email" inputMode="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required {...bad('email')} />
                 {err('email')}
                 <small>לכתובת הזו יישלח אישור הכניסה.</small>
-              </label>
-              <label className="au-field">
-                <span>
-                  מספר רישיון תיווך <b aria-hidden>*</b>
-                </span>
-                <input className="input ltr" data-f="license" inputMode="numeric" value={license} onChange={(e) => setLicense(e.target.value.replace(/[^\d\s-]/g, ''))} autoComplete="off" required {...bad('license')} />
-                {err('license')}
               </label>
             </div>
 

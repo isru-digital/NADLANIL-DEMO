@@ -16,7 +16,9 @@ CREATE TABLE IF NOT EXISTS members (
   is_test     INTEGER NOT NULL DEFAULT 0,
   created_at  INTEGER NOT NULL,
   decided_at  INTEGER,
-  decided_by  TEXT                       -- the approver's name
+  decided_by  TEXT,                      -- the approver's name
+  license_status TEXT NOT NULL DEFAULT '', -- 'verified' | 'not_found' | 'unavailable' (migrations/0002)
+  registry_name  TEXT NOT NULL DEFAULT ''  -- the name in the Registrar of Real Estate Brokers
 );
 CREATE INDEX IF NOT EXISTS members_status ON members (status, created_at);
 
@@ -26,7 +28,9 @@ CREATE TABLE IF NOT EXISTS staff (
   email      TEXT PRIMARY KEY,           -- lower case
   name       TEXT NOT NULL,
   approver   INTEGER NOT NULL DEFAULT 1,
-  created_at INTEGER NOT NULL
+  created_at INTEGER NOT NULL,
+  gets_leads INTEGER NOT NULL DEFAULT 0,  -- gets an e-mail on a new lead (migrations/0002)
+  test_inbox INTEGER NOT NULL DEFAULT 0   -- while LEADS_MAIL is not 'live', lead e-mails go only here
 );
 
 -- one-time links. Only the SHA-256 of the token is kept, never the token.
@@ -92,3 +96,17 @@ CREATE TABLE IF NOT EXISTS outbox (
   html       TEXT NOT NULL,
   created_at INTEGER NOT NULL
 );
+
+-- the leads form of the office page (migrations/0002). Staff only: never shown anywhere public
+CREATE TABLE IF NOT EXISTS leads (
+  id         TEXT PRIMARY KEY,
+  name       TEXT NOT NULL,
+  phone      TEXT NOT NULL,
+  city       TEXT NOT NULL,
+  note       TEXT NOT NULL DEFAULT '',
+  status     TEXT NOT NULL DEFAULT 'new', -- 'new' | 'working' | 'closed'
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER,
+  updated_by TEXT
+);
+CREATE INDEX IF NOT EXISTS leads_created ON leads (created_at);

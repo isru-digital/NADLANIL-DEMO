@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom'
 import { ArrowLeft, Building2, UserRound } from 'lucide-react'
 import { PLATFORM_NAME } from '../config'
 import { OFFICE_STORY, UPGRADE_LABEL } from '../config/community'
-import { OFFICE_FEE } from '../config/office'
 import '../styles/office-pitch.css'
 
 /**
@@ -71,7 +70,8 @@ export default function OfficePitch() {
             <span>{UPGRADE_LABEL}</span>
             <ArrowLeft />
           </Link>
-          <em>דמי חבר: {OFFICE_FEE}</em>
+          {/* no price (Itzik, 24.11.2026) */}
+          <em>0% עמלה למשרד, 100% עמלה למתווך</em>
         </div>
       </div>
 
@@ -97,7 +97,7 @@ export default function OfficePitch() {
           <i style={{ width: `${share}%` }} />
           <u style={{ insetInlineEnd: `${share}%` }} />
         </div>
-        <p className="kp-note">במשרדים רבים חלק מהעמלה, לרוב 50%, נשאר במשרד. כאן המשרד מקבל 0%.</p>
+        <p className="kp-note">במשרדים רבים חלק מהעמלה, לרוב 50%, נשאר במשרד. כאן: 0% עמלה למשרד, 100% עמלה למתווך.</p>
       </div>
     </section>
   )

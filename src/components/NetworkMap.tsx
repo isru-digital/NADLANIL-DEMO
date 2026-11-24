@@ -20,12 +20,12 @@ type City = { id: string; name: string; lon: number; lat: number; label?: boolea
 
 const cities: City[] = [
   { id: 'ks', name: 'קריית שמונה', lon: 35.57, lat: 33.21, label: true, side: 'l' },
-  { id: 'tib', name: 'טבריה', lon: 35.53, lat: 32.79 },
-  { id: 'haifa', name: 'חיפה', lon: 34.99, lat: 32.79, label: true, side: 'r' },
-  { id: 'nat', name: 'נתניה', lon: 34.85, lat: 32.33 },
+  { id: 'tib', name: 'טבריה', lon: 35.53, lat: 32.79, label: true, side: 'r' },
+  { id: 'haifa', name: 'חיפה', lon: 34.99, lat: 32.79, label: true, side: 'l' },
+  { id: 'nat', name: 'נתניה', lon: 34.85, lat: 32.33, label: true, side: 'l' },
   { id: 'tlv', name: 'תל אביב', lon: 34.78, lat: 32.08, label: true, side: 'r' },
   { id: 'jer', name: 'ירושלים', lon: 35.21, lat: 31.77, label: true, side: 'r' },
-  { id: 'ash', name: 'אשדוד', lon: 34.65, lat: 31.8 },
+  { id: 'ash', name: 'אשדוד', lon: 34.65, lat: 31.8, label: true, side: 'l' },
   { id: 'bs', name: 'באר שבע', lon: 34.79, lat: 31.25, label: true, side: 'r' },
   { id: 'mr', name: 'מצפה רמון', lon: 34.8, lat: 30.61 },
   { id: 'eilat', name: 'אילת', lon: 34.95, lat: 29.56, label: true, side: 'r' },

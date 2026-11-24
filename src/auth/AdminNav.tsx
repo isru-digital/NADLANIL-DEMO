@@ -1,4 +1,4 @@
-import { Inbox, LayoutDashboard, PieChart, Settings2, Users } from 'lucide-react'
+import { Inbox, LayoutDashboard, PhoneIncoming, PieChart, Settings2, Users } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import '../styles/admin-nav.css'
 
@@ -12,12 +12,13 @@ type Part<V extends string> = { id: V; label: string }
 const ICONS: Record<string, { icon: LucideIcon; short?: string }> = {
   overview: { icon: LayoutDashboard },
   requests: { icon: Inbox },
+  leads: { icon: PhoneIncoming, short: 'לידים' },
   people: { icon: Users },
   breakdown: { icon: PieChart },
   tools: { icon: Settings2, short: 'צוות' },
 }
 
-export default function AdminNav<V extends string>({ parts, view, go, pending }: { parts: Part<V>[]; view: V; go: (v: V) => void; pending: number }) {
+export default function AdminNav<V extends string>({ parts, view, go, pending, leads = 0 }: { parts: Part<V>[]; view: V; go: (v: V) => void; pending: number; leads?: number }) {
   return (
     <div className="an-tabs" role="tablist" aria-label="חלקי המסך" data-nav="tabs">
       {parts.map((p) => {
@@ -41,6 +42,11 @@ export default function AdminNav<V extends string>({ parts, view, go, pending }:
               {p.id === 'requests' && pending > 0 && (
                 <b className="num an-badge" aria-label={`${pending} ממתינות`}>
                   {pending}
+                </b>
+              )}
+              {p.id === 'leads' && leads > 0 && (
+                <b className="num an-badge" aria-label={`${leads} לידים חדשים`} data-leads-new={leads}>
+                  {leads}
                 </b>
               )}
             </span>

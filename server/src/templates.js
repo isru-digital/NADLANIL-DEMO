@@ -23,12 +23,23 @@ const citiesOf = (m) => {
   }
 }
 
+/** What the check of the licence number found (24.11.2026). */
+export const licenseWord = (m) =>
+  m.license_status === 'verified'
+    ? 'אומת. השם מתוך רשם המתווכים'
+    : m.license_status === 'not_found'
+      ? 'לא נמצא במאגר. לבדוק ידנית'
+      : m.license_status === 'unavailable'
+        ? 'המאגר לא ענה. לבדוק ידנית'
+        : 'לא נבדק'
+
 /** The details a broker filled in, as rows (label, value). */
 export const detailRows = (m) => [
   ['שם מלא', m.name],
   ['טלפון', m.phone],
   ['מייל', m.email],
   ['מספר רישיון תיווך', m.license],
+  ['בדיקה מול רשם המתווכים', licenseWord(m)],
   ['עובד במשרד או עצמאי', work(m)],
   ['ערים', citiesOf(m)],
   ['שכונות ואזורים', m.areas || 'לא צוין'],
@@ -186,6 +197,30 @@ export function loginMail({ site, name, enter, minutes, code, codeMinutes }) {
     '',
     `הקישור בתוקף ל-${minutes} דקות ופועל פעם אחת.`,
   ].join('\n')
+  return { subject, html, text }
+}
+
+/** To staff: someone asked for details on the office page (24.11.2026). Staff only: it carries a name and a phone. */
+export function leadMail({ site, person, lead, test }) {
+  const when = new Date(lead.created_at).toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem', dateStyle: 'short', timeStyle: 'short' })
+  const rows = [
+    ['שם', lead.name],
+    ['טלפון', lead.phone],
+    ['עיר', lead.city],
+    ['הערה', lead.note || 'לא נכתבה הערה'],
+    ['מתי', when],
+  ]
+  const subject = `${test ? '(בדיקה) ' : ''}ליד חדש מהאתר: ${lead.name}, ${lead.city}`
+  const html = frame(
+    site,
+    `${h1(`היי ${esc(person.name)},`)}
+     ${p('מישהו השאיר פרטים בדף ההצטרפות למשרד, וביקש לקבל מידע.')}
+     ${test ? p('זה ליד של בדיקה. המייל נשלח רק לתיבת הבדיקות.', 'font-size:14px;color:#8a5a00;') : ''}
+     ${table(rows)}
+     <div style="padding:4px 0 4px;">${button(`${site}/kehila/admin#leads`, 'לכל הלידים')}</div>`,
+    { preheader: `${lead.name} מ${lead.city} ביקש לקבל מידע`, foot: 'הפרטים של הליד מיועדים לצוות בלבד.' },
+  )
+  const text = [`היי ${person.name},`, 'מישהו השאיר פרטים בדף ההצטרפות למשרד, וביקש לקבל מידע.', '', ...rows.map(([k, v]) => `${k}: ${v}`), '', `לכל הלידים: ${site}/kehila/admin#leads`].join('\n')
   return { subject, html, text }
 }
 

@@ -1,5 +1,5 @@
 import { sendMail } from './mail.js'
-import { approvalMail, approveConfirmPage, donePage, loginMail, rejectFormPage, rejectMail, welcomeMail } from './templates.js'
+import { approvalMail, approveConfirmPage, donePage, leadMail, loginMail, rejectFormPage, rejectMail, welcomeMail } from './templates.js'
 import { activityOf, dayKey, maskPhone, seen, stats } from './stats.js'
 
 /**
@@ -70,6 +70,8 @@ const memberView = (m) => ({
   created_at: m.created_at,
   decided_at: m.decided_at,
   decided_by: m.decided_by,
+  license_status: m.license_status ?? '',
+  registry_name: m.registry_name ?? '',
 })
 function safeList(text) {
   try {
@@ -91,6 +93,85 @@ async function allowed(env, key, max, windowMs) {
   if (row.n >= max) return false
   await env.DB.prepare('UPDATE rate SET n = n + 1 WHERE key = ?').bind(key).run()
   return true
+}
+
+// ---------------------------------------------------------------- the licence number (24.11.2026)
+/**
+ * A broker's licence number is looked up in the Registrar of Real Estate Brokers of the Ministry of Justice, the
+ * open dataset "מאגר מתווכים פעילים" on data.gov.il (resource "רשימת מתווכים מורשים"). The terms of data.gov.il allow
+ * this use with the source named. The lookup is made here, on the server, never in the browser.
+ *  - found: the name is the registry's, and it is kept as the broker's name
+ *  - not found, or a number that is plainly made up (000000): the request still goes on, to a check by hand
+ *  - the registry does not answer: the same, a check by hand
+ * REGISTRY_API may point elsewhere for local tests (a fake registry); it defaults to data.gov.il.
+ */
+const REGISTRY_API = 'https://data.gov.il/api/3/action/datastore_search'
+const LICENSE_RESOURCE = 'a0f56034-88db-4132-8803-854bcdb01ca1'
+const licenseDigits = (v) => String(v ?? '').replace(/[\s-]/g, '')
+// all one digit (000000, 1111111), a plain run (1234567) or zero: no registry has these
+const madeUp = (d) => /^(\d)\1+$/.test(d) || '0123456789'.includes(d) || '9876543210'.includes(d) || Number(d) === 0
+
+/** @returns {Promise<{status: 'verified' | 'not_found' | 'unavailable', name?: string}>} */
+async function lookupLicense(env, digits) {
+  if (!/^\d{4,10}$/.test(digits) || madeUp(digits)) return { status: 'not_found' }
+  // local tests never ask the real registry: without a fake one to ask, the answer is "unavailable"
+  if (env.TEST_MODE === '1' && !env.REGISTRY_API) return { status: 'unavailable' }
+  const base = env.REGISTRY_API || REGISTRY_API
+  const url = `${base}?resource_id=${LICENSE_RESOURCE}&limit=2&filters=${encodeURIComponent(JSON.stringify({ 'מס רשיון': Number(digits) }))}`
+  try {
+    const r = await fetch(url, { headers: { accept: 'application/json', 'user-agent': 'NadlanUP licence check' }, signal: AbortSignal.timeout(8000) })
+    if (!r.ok) return { status: 'unavailable' }
+    const j = await r.json().catch(() => null)
+    if (!j?.success || !Array.isArray(j.result?.records)) return { status: 'unavailable' }
+    const rec = j.result.records.find((x) => String(x['מס רשיון']) === String(Number(digits)))
+    const name = str(rec?.['שם המתווך'], 80)
+    return name.length >= 2 ? { status: 'verified', name } : { status: 'not_found' }
+  } catch {
+    return { status: 'unavailable' }
+  }
+}
+
+/** The sign-up form asks while the broker types: the name of a licence number, or "not found". */
+async function licenseCheck(env, request) {
+  const ip = request.headers.get('cf-connecting-ip') ?? 'local'
+  if (!(await allowed(env, `lic:${ip}`, 30, HOUR))) return json({ error: 'יותר מדי בדיקות מהמקום הזה. נסו שוב בעוד שעה.' }, 429)
+  const b = await request.json().catch(() => null)
+  const digits = licenseDigits(b?.license)
+  if (!/^\d{4,10}$/.test(digits)) return json({ error: 'מספר רישיון תיווך הוא ספרות בלבד.' }, 400)
+  const found = await lookupLicense(env, digits)
+  return json({ ok: true, ...found })
+}
+
+// ---------------------------------------------------------------- leads (24.11.2026)
+/**
+ * "מעוניינים לקבל מידע?" on the office page: a name, a phone, a city and a note. It is kept here and an e-mail goes to
+ * the staff marked gets_leads. Until LEADS_MAIL is 'live', the e-mail goes only to the staff marked test_inbox, so a
+ * test never reaches anyone else. No address is written in this code: all of them are in the staff table.
+ * A lead's name and phone are for staff only, and are never shown anywhere public.
+ */
+const LEAD_STATUS = ['new', 'working', 'closed']
+async function newLead(env, request) {
+  const ip = request.headers.get('cf-connecting-ip') ?? 'local'
+  if (!(await allowed(env, `lead:${ip}`, 5, HOUR))) return json({ error: 'יותר מדי פניות מהמקום הזה. נסו שוב בעוד שעה.' }, 429)
+  const b = await request.json().catch(() => null)
+  if (!b || typeof b !== 'object') return json({ error: 'הבקשה לא תקינה.' }, 400)
+  // a field people never see: a robot that fills it in gets a quiet yes, and nothing is kept
+  if (str(b.website, 100)) return json({ ok: true })
+  const lead = { name: str(b.name, 80), phone: str(b.phone, 20), city: str(b.city, 40), note: str(b.note, 500) }
+  const errors = {}
+  if (lead.name.length < 2) errors.name = 'צריך שם.'
+  if (lead.phone.replace(/\D/g, '').length < 9) errors.phone = 'מספר הטלפון קצר מדי.'
+  if (lead.city.length < 2) errors.city = 'באיזו עיר?'
+  if (Object.keys(errors).length) return json({ error: 'חסרים פרטים.', fields: errors }, 400)
+  const id = newId()
+  const now = Date.now()
+  await env.DB.prepare('INSERT INTO leads (id, name, phone, city, note, created_at) VALUES (?, ?, ?, ?, ?, ?)').bind(id, lead.name, lead.phone, lead.city, lead.note, now).run()
+  const live = env.LEADS_MAIL === 'live'
+  const to = (await env.DB.prepare(`SELECT email, name FROM staff WHERE ${live ? 'gets_leads' : 'test_inbox'} = 1`).all()).results
+  for (const person of to) {
+    await sendMail(env, { to: person.email, kind: 'lead', ...leadMail({ site: site(env), person, lead: { ...lead, created_at: now }, test: !live }) })
+  }
+  return json({ ok: true })
 }
 
 // ---------------------------------------------------------------- tokens and sessions
@@ -180,6 +261,12 @@ async function register(env, request, origin) {
   // the neighbourhoods are optional (Itzik 18.11.2026); at least one city stays required, above
   if (Object.keys(errors).length) return json({ error: 'חסרים פרטים.', fields: errors }, 400)
   if (m.work === 'solo') m.office_name = ''
+  m.license = licenseDigits(m.license)
+  const found = await lookupLicense(env, m.license)
+  m.license_status = found.status
+  m.registry_name = found.name ?? ''
+  // found in the registry: the name is the registry's, whatever was typed
+  if (found.name) m.name = found.name
 
   const old = await env.DB.prepare('SELECT * FROM members WHERE email = ?').bind(m.email).first()
   // the answer is the same waiting screen whether or not the address was seen before: nothing about a broker leaks
@@ -193,17 +280,17 @@ async function register(env, request, origin) {
   const id = old?.id ?? newId()
   if (old) {
     // asked again after a rejection: the request starts over
-    await env.DB.prepare("UPDATE members SET name=?, phone=?, license=?, work=?, office_name=?, cities=?, areas=?, status='pending', reason='', created_at=?, decided_at=NULL, decided_by=NULL WHERE id=?")
-      .bind(m.name, m.phone, m.license, m.work, m.office_name, JSON.stringify(m.cities), m.areas, now, id)
+    await env.DB.prepare("UPDATE members SET name=?, phone=?, license=?, work=?, office_name=?, cities=?, areas=?, license_status=?, registry_name=?, status='pending', reason='', created_at=?, decided_at=NULL, decided_by=NULL WHERE id=?")
+      .bind(m.name, m.phone, m.license, m.work, m.office_name, JSON.stringify(m.cities), m.areas, m.license_status, m.registry_name, now, id)
       .run()
   } else {
-    await env.DB.prepare('INSERT INTO members (id, name, phone, email, license, work, office_name, cities, areas, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
-      .bind(id, m.name, m.phone, m.email, m.license, m.work, m.office_name, JSON.stringify(m.cities), m.areas, now)
+    await env.DB.prepare('INSERT INTO members (id, name, phone, email, license, work, office_name, cities, areas, license_status, registry_name, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+      .bind(id, m.name, m.phone, m.email, m.license, m.work, m.office_name, JSON.stringify(m.cities), m.areas, m.license_status, m.registry_name, now)
       .run()
   }
   const member = await env.DB.prepare('SELECT * FROM members WHERE id = ?').bind(id).first()
   await askApprovers(env, origin, member)
-  return json({ ok: true, name: member.name })
+  return json({ ok: true, name: member.name, license: member.license_status })
 }
 
 /** A sign-in link to an approved broker and/or to staff. Says nothing to anyone else. */
@@ -431,16 +518,31 @@ async function admin(env, request, origin, path, s) {
     return json({ ok: true, member: memberView(member), sent })
   }
 
+  // incoming leads (24.11.2026): staff only, with the full phone, to call back
+  if (path === '/api/admin/leads' && method === 'GET') {
+    const rows = (await env.DB.prepare('SELECT * FROM leads ORDER BY created_at DESC LIMIT 500').all()).results
+    return json({ leads: rows, live: env.LEADS_MAIL === 'live' })
+  }
+  const lead = path.match(/^\/api\/admin\/leads\/([a-f0-9]{16})\/status$/)
+  if (lead && method === 'POST') {
+    const status = String(body?.status ?? '')
+    if (!LEAD_STATUS.includes(status)) return json({ error: 'סטטוס לא מוכר.' }, 400)
+    const done = await env.DB.prepare('UPDATE leads SET status = ?, updated_at = ?, updated_by = ? WHERE id = ?').bind(status, Date.now(), s.staff.name, lead[1]).run()
+    return done.meta.changes === 1 ? json({ ok: true }) : json({ error: 'הליד לא נמצא.' }, 404)
+  }
+
   // the list of approvers: one place to add Ariel
   if (path === '/api/admin/staff' && method === 'GET') {
-    return json({ staff: (await env.DB.prepare('SELECT email, name, approver FROM staff ORDER BY created_at').all()).results.map((x) => ({ ...x, approver: !!x.approver })) })
+    return json({ staff: (await env.DB.prepare('SELECT email, name, approver, gets_leads, test_inbox FROM staff ORDER BY created_at').all()).results.map((x) => ({ ...x, approver: !!x.approver, gets_leads: !!x.gets_leads, test_inbox: !!x.test_inbox })) })
   }
   if (path === '/api/admin/staff' && method === 'POST') {
     const name = str(body?.name, 60)
     const email = emailOf(body?.email)
     if (name.length < 2 || !isEmail(email)) return json({ error: 'צריך שם וכתובת מייל תקינה.' }, 400)
-    await env.DB.prepare('INSERT INTO staff (email, name, approver, created_at) VALUES (?, ?, ?, ?) ON CONFLICT(email) DO UPDATE SET name = excluded.name, approver = excluded.approver')
-      .bind(email, name, body?.approver === false ? 0 : 1, Date.now())
+    // who gets the lead e-mails, and the one inbox of a test: kept as they were unless this asks to change them
+    const flag = (v) => (v === true ? 1 : v === false ? 0 : null)
+    await env.DB.prepare('INSERT INTO staff (email, name, approver, created_at, gets_leads, test_inbox) VALUES (?, ?, ?, ?, COALESCE(?, 0), COALESCE(?, 0)) ON CONFLICT(email) DO UPDATE SET name = excluded.name, approver = excluded.approver, gets_leads = COALESCE(?, gets_leads), test_inbox = COALESCE(?, test_inbox)')
+      .bind(email, name, body?.approver === false ? 0 : 1, Date.now(), flag(body?.gets_leads), flag(body?.test_inbox), flag(body?.gets_leads), flag(body?.test_inbox))
       .run()
     return json({ ok: true })
   }
@@ -480,6 +582,8 @@ export default {
       if (path.startsWith('/api/') && request.method !== 'GET' && !okOrigin) return json({ error: 'מקור הבקשה לא מורשה.' }, 403)
 
       if (path === '/api/register' && request.method === 'POST') return withCors(await register(env, request, origin))
+      if (path === '/api/license' && request.method === 'POST') return withCors(await licenseCheck(env, request))
+      if (path === '/api/leads' && request.method === 'POST') return withCors(await newLead(env, request))
       if (path === '/api/login' && request.method === 'POST') return withCors(await login(env, request))
       if (path === '/api/staff-login' && request.method === 'POST') return withCors(await staffLogin(env, request))
       if (path === '/api/session' && request.method === 'POST') return withCors(await openSession(env, request))

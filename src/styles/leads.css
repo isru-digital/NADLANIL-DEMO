@@ -1,0 +1,395 @@
+/* "מעוניינים לקבל מידע?" on the office page, its text about the network, and "לידים נכנסים" in the admin (24.11.2026) */
+
+/* ---------------------------------------------------------------- the sheet */
+.ld-form {
+  display: grid;
+  gap: 14px;
+}
+.ld-field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+.ld-field > span {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+}
+.ld-field > span small {
+  font-weight: 500;
+  color: var(--text-faint);
+}
+.ld-field .input {
+  min-height: 52px;
+  font-size: 17px;
+}
+.ld-field .textarea {
+  font-size: 16px;
+  resize: vertical;
+}
+.ld-err {
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 600;
+  color: #c0392b;
+}
+html[data-mode='night'] .ld-err {
+  color: #ffa39b;
+}
+.ld-field .input[aria-invalid='true'] {
+  border-color: #c0392b;
+}
+.ld-trap {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+  inset-inline-start: -9999px;
+}
+.ld-go {
+  width: 100%;
+  justify-content: center;
+  min-height: 54px;
+}
+.ld-go svg {
+  width: 19px;
+  height: 19px;
+}
+.ld-spin {
+  animation: ld-spin 0.9s linear infinite;
+}
+.ld-fail {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(192, 57, 43, 0.1);
+  color: #a5281b;
+  font-size: 14.5px;
+  font-weight: 600;
+}
+.ld-private {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--text-faint);
+  text-align: center;
+}
+.ld-private svg {
+  flex: none;
+  width: 14px;
+  height: 14px;
+}
+.ld-done {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 10px 0 4px;
+  text-align: center;
+}
+.ld-done h3 {
+  margin: 4px 0 0;
+  font-size: 22px;
+}
+.ld-done p {
+  margin: 0 0 8px;
+  color: var(--text-dim);
+}
+.ld-mark {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #0c7f52;
+  color: #fff;
+  animation: ld-pop 0.42s cubic-bezier(0.2, 0.9, 0.3, 1.25);
+}
+.ld-mark svg {
+  width: 32px;
+  height: 32px;
+  stroke-width: 3;
+}
+@keyframes ld-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes ld-pop {
+  from {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+}
+
+/* ---------------------------------------------------------------- the office page: the ask for details, the text */
+.jo-ask {
+  padding: 34px 0;
+}
+.jo-ask-card {
+  display: grid;
+  gap: 14px;
+  justify-items: center;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 28px 22px;
+  border-radius: 26px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  box-shadow: 0 24px 60px -40px rgba(4, 59, 43, 0.55);
+  text-align: center;
+}
+.jo-ask-card h2 {
+  margin: 0;
+  font-size: clamp(22px, 5vw, 30px);
+  line-height: 1.25;
+}
+.jo-ask-card p {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 16.5px;
+}
+.jo-ask-card .btn {
+  min-height: 54px;
+}
+.jo-ask-fee {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: rgba(12, 127, 82, 0.1);
+  color: #0a6b45;
+  font-size: 14.5px;
+  font-weight: 700;
+}
+html[data-mode='night'] .jo-ask-fee {
+  background: rgba(111, 224, 173, 0.12);
+  color: #8ce9bf;
+}
+.jo-ask-fee svg {
+  width: 16px;
+  height: 16px;
+}
+
+.jo-about {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 26px 22px;
+  border-radius: 24px;
+  background: var(--card);
+  border: 1px solid var(--line);
+}
+.jo-about h2 {
+  margin: 0 0 14px;
+  font-size: clamp(21px, 4.6vw, 28px);
+  line-height: 1.3;
+}
+.jo-about h2 bdi {
+  letter-spacing: 0.02em;
+}
+.jo-about p {
+  margin: 0 0 12px;
+  font-size: 16.5px;
+  line-height: 1.75;
+  color: var(--text-dim);
+}
+.jo-about p:last-child {
+  margin-bottom: 0;
+}
+.jo-glossary {
+  max-width: 760px;
+  margin: 18px auto 0;
+  padding: 22px;
+  border-radius: 20px;
+  border: 1.5px dashed var(--line-gold, var(--line));
+  text-align: center;
+}
+.jo-glossary h3 {
+  margin: 0 0 6px;
+  font-size: 19px;
+}
+.jo-glossary p {
+  margin: 0;
+  color: var(--text-faint);
+  font-size: 15px;
+}
+
+/* ---------------------------------------------------------------- the admin: incoming leads */
+.lds-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 14px;
+}
+.lds-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--text);
+  font: inherit;
+  font-size: 14.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.lds-chip[aria-pressed='true'] {
+  background: #0c7f52;
+  border-color: #0c7f52;
+  color: #fff;
+}
+.lds-chip b {
+  font-variant-numeric: tabular-nums;
+}
+.lds-list {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.lds-card {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border-radius: 18px;
+  background: var(--card);
+  border: 1px solid var(--line);
+}
+.lds-card[data-status='new'] {
+  border-inline-start: 4px solid #0c7f52;
+}
+.lds-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.lds-face {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(12, 127, 82, 0.12);
+  color: #0a6b45;
+  font-weight: 800;
+}
+html[data-mode='night'] .lds-face {
+  background: rgba(111, 224, 173, 0.14);
+  color: #8ce9bf;
+}
+.lds-who {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+}
+.lds-who b {
+  font-size: 16.5px;
+  overflow-wrap: anywhere;
+}
+.lds-who small {
+  color: var(--text-faint);
+  font-size: 13.5px;
+}
+.lds-call {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: #0c7d43;
+  color: #fff;
+  font-size: 14.5px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.lds-call svg {
+  width: 16px;
+  height: 16px;
+}
+.lds-note {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(127, 127, 127, 0.08);
+  color: var(--text-dim);
+  font-size: 15px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.lds-status {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  padding: 4px;
+  border-radius: 14px;
+  background: rgba(127, 127, 127, 0.08);
+}
+.lds-status button {
+  min-height: 40px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.lds-status button[aria-pressed='true'] {
+  background: var(--card);
+  color: var(--text);
+  box-shadow: 0 2px 8px -3px rgba(0, 0, 0, 0.25);
+}
+.lds-status button[aria-pressed='true'][data-v='new'] {
+  color: #0a6b45;
+}
+.lds-status button[aria-pressed='true'][data-v='working'] {
+  color: #9a6400;
+}
+.lds-empty {
+  padding: 28px 16px;
+  border-radius: 18px;
+  border: 1.5px dashed var(--line);
+  color: var(--text-faint);
+  text-align: center;
+}
+.lds-mode {
+  margin: 0 0 12px;
+  font-size: 13.5px;
+  color: var(--text-faint);
+}
+@media (prefers-reduced-motion: reduce) {
+  .ld-spin,
+  .ld-mark {
+    animation: none;
+  }
+}
+
+/* the hero's "מעוניינים לקבל מידע? לחצו כאן" is longer than the button it replaced: on a narrow phone it wraps
+   instead of running out of the screen */
+.jo-actions .btn {
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+  text-align: center;
+}
+/* the hero is a one-column grid sized by its widest child: the longer button must not widen it past the screen */
+.jo-hero-in > * {
+  min-width: 0;
+  max-width: 100%;
+}
+.jo-actions {
+  width: 100%;
+}

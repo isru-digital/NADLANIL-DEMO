@@ -16,6 +16,8 @@ const check = (name, ok, detail = '') => {
   results.push(line)
   console.error(line)
 }
+// the office page's prices (until 24.11.2026)
+const OFFICE_PRICES = false
 const clean = (s) => (s ?? '').replace(/\s+/g, ' ').trim()
 
 // the price list, word for word
@@ -92,104 +94,117 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
   await page.goto(green + '/join/office', { waitUntil: 'load' })
   await wait(1800)
 
-  // ---- 1. the price list, word for word
-  const l = await list(page)
-  check(`${d} the title and the line under it`, l.title === 'מחירון NadlanUP - מסלולי חברות' && l.sub === 'כל המחירים חודשיים ולפני מע"מ.', `${l.title} / ${l.sub}`)
-  check(`${d} three plans with their prices: BASIC 549, PLUS 887, PRO 1,219`, l.plans.map((p) => `${p.name} ${p.price}`).join(' | ') === `BASIC 549 ${VAT} | PLUS 887 ${VAT} | PRO 1,219 ${VAT}`, l.plans.map((p) => `${p.name} ${p.price}`).join(' | '))
-  check(`${d} BASIC: the eight lines, word for word, with the values next to them`, JSON.stringify(l.plans[0].lines) === JSON.stringify(BASIC), JSON.stringify(l.plans[0].lines.filter((x, i) => x !== BASIC[i])))
-  check(`${d} PLUS and PRO: all of BASIC, and 5 or 10 Yad2 ads`, l.plans[1].lines.join(';') === 'כל שירותי BASIC|;5 מודעות יד2|' && l.plans[2].lines.join(';') === 'כל שירותי BASIC|;10 מודעות יד2|', `${l.plans[1].lines.join(';')} / ${l.plans[2].lines.join(';')}`)
-  const side = l.plans[0].y === l.plans[1].y && l.plans[1].y === l.plans[2].y
-  check(d === 'desktop' ? 'desktop the three cards stand side by side' : 'phone the three cards stand one under the other', d === 'desktop' ? side : l.plans[0].y < l.plans[1].y && l.plans[1].y < l.plans[2].y && l.plans[0].x === l.plans[1].x)
-  check(`${d} the Madlan table, word for word`, l.madlanTitle === 'חבילות מדלן - בתשלום נוסף' && l.madlan.join(' ; ') === `5 מודעות מדלן - 265 ${VAT} ; 10 מודעות מדלן - 390 ${VAT} ; תוספת של 5 מודעות - 125 ${VAT}`, l.madlan.join(' ; '))
-  check(`${d} the terms, word for word`, l.termsTitle === 'תנאי ההתקשרות' && l.terms.join(' ; ') === 'חברות במשרד: התחייבות מינימלית ל-3 חודשים ; פרסום ביד2: התחייבות ל-3 חודשים ; פרסום במדלן: התחייבות ל-6 חודשים ; עמלות תיווך: 100% נשארות אצל הסוכן ; דמי הצטרפות: ללא עלות', l.terms.join(' ; '))
-  check(`${d} every plan includes "הסוכן שלנו" and what the office included`, l.all.includes('בכל המסלולים') && l.all.includes('הסוכן שלנו'), l.all)
-  check(`${d} nothing scrolls sideways`, l.ov <= 1, `${l.ov}px`)
-  await page.evaluate(() => document.querySelector('#pricing').scrollIntoView({ block: 'start' }))
-  await wait(500)
-  await page.screenshot({ path: `${out}/${d}-1-plans.png` })
-  await page.evaluate(() => document.querySelector('.prc-below').scrollIntoView({ block: 'center' }))
-  await wait(400)
-  await page.screenshot({ path: `${out}/${d}-2-madlan-terms.png` })
+  // ---- 24.11.2026: Itzik took the prices off the office page (a leads form took their place). The price list, the
+  // calculator and the plans of the joining are no longer there, so their checks below are kept but not run, and
+  // this checks instead that no price is left on the page (scripts/leads-check.mjs checks the form)
+  const office = await page.evaluate(() => ({ list: !!document.querySelector('#pricing, .prc-below'), calc: !!document.querySelector('#calc'), shekel: (document.body.innerText.match(/₪/g) ?? []).length, ask: !!document.querySelector('[data-act="ask-info"]') }))
+  check(`${d} the office page: no price list, no calculator, no ₪, and the ask for details in their place`, !office.list && !office.calc && office.shekel === 0 && office.ask, JSON.stringify(office))
+  if (OFFICE_PRICES) {
+    // ---- 1. the price list, word for word
+    const l = await list(page)
+    check(`${d} the title and the line under it`, l.title === 'מחירון NadlanUP - מסלולי חברות' && l.sub === 'כל המחירים חודשיים ולפני מע"מ.', `${l.title} / ${l.sub}`)
+    check(`${d} three plans with their prices: BASIC 549, PLUS 887, PRO 1,219`, l.plans.map((p) => `${p.name} ${p.price}`).join(' | ') === `BASIC 549 ${VAT} | PLUS 887 ${VAT} | PRO 1,219 ${VAT}`, l.plans.map((p) => `${p.name} ${p.price}`).join(' | '))
+    check(`${d} BASIC: the eight lines, word for word, with the values next to them`, JSON.stringify(l.plans[0].lines) === JSON.stringify(BASIC), JSON.stringify(l.plans[0].lines.filter((x, i) => x !== BASIC[i])))
+    check(`${d} PLUS and PRO: all of BASIC, and 5 or 10 Yad2 ads`, l.plans[1].lines.join(';') === 'כל שירותי BASIC|;5 מודעות יד2|' && l.plans[2].lines.join(';') === 'כל שירותי BASIC|;10 מודעות יד2|', `${l.plans[1].lines.join(';')} / ${l.plans[2].lines.join(';')}`)
+    const side = l.plans[0].y === l.plans[1].y && l.plans[1].y === l.plans[2].y
+    check(d === 'desktop' ? 'desktop the three cards stand side by side' : 'phone the three cards stand one under the other', d === 'desktop' ? side : l.plans[0].y < l.plans[1].y && l.plans[1].y < l.plans[2].y && l.plans[0].x === l.plans[1].x)
+    check(`${d} the Madlan table, word for word`, l.madlanTitle === 'חבילות מדלן - בתשלום נוסף' && l.madlan.join(' ; ') === `5 מודעות מדלן - 265 ${VAT} ; 10 מודעות מדלן - 390 ${VAT} ; תוספת של 5 מודעות - 125 ${VAT}`, l.madlan.join(' ; '))
+    check(`${d} the terms, word for word`, l.termsTitle === 'תנאי ההתקשרות' && l.terms.join(' ; ') === 'חברות במשרד: התחייבות מינימלית ל-3 חודשים ; פרסום ביד2: התחייבות ל-3 חודשים ; פרסום במדלן: התחייבות ל-6 חודשים ; עמלות תיווך: 100% נשארות אצל הסוכן ; דמי הצטרפות: ללא עלות', l.terms.join(' ; '))
+    check(`${d} every plan includes "הסוכן שלנו" and what the office included`, l.all.includes('בכל המסלולים') && l.all.includes('הסוכן שלנו'), l.all)
+    check(`${d} nothing scrolls sideways`, l.ov <= 1, `${l.ov}px`)
+    await page.evaluate(() => document.querySelector('#pricing').scrollIntoView({ block: 'start' }))
+    await wait(500)
+    await page.screenshot({ path: `${out}/${d}-1-plans.png` })
+    await page.evaluate(() => document.querySelector('.prc-below').scrollIntoView({ block: 'center' }))
+    await wait(400)
+    await page.screenshot({ path: `${out}/${d}-2-madlan-terms.png` })
 
-  // ---- 2. the old fee is gone, on this page and on the others
-  const whole = clean(await page.evaluate(() => document.body.innerText))
-  check(`${d} the office page: no 689, no "יקבע", and the short line says "החל מ-549 ₪ + מע"מ לחודש"`, !whole.includes('689') && !whole.includes('יקבע') && whole.includes('החל מ-549 ₪ + מע"מ לחודש'))
+    // ---- 2. the old fee is gone, on this page and on the others
+    const whole = clean(await page.evaluate(() => document.body.innerText))
+    check(`${d} the office page: no 689, no "יקבע", and the short line says "החל מ-549 ₪ + מע"מ לחודש"`, !whole.includes('689') && !whole.includes('יקבע') && whole.includes('החל מ-549 ₪ + מע"מ לחודש'))
 
-  // ---- 3. the calculator goes by the plan, with Madlan on top
-  await page.evaluate(() => document.querySelector('#calc').scrollIntoView({ block: 'start' }))
-  await wait(500)
-  let c = await calc(page)
-  check(`${d} the calculator starts on BASIC, 12 months: 549 × 12`, c.plan === `מסלול BASIC: 549 ${VAT}` && c.sum === '549 × 12, לפני מע"מ' && c.total === '₪6,588' && c.min === 3 && !c.madlan, JSON.stringify(c))
-  await pickIn(page, '.jo-ours', 'plan', 'pro')
-  await wait(900)
-  c = await calc(page)
-  check(`${d} choosing PRO: 1,219 × 12`, c.plan === `מסלול PRO: 1,219 ${VAT}` && c.sum === '1,219 × 12, לפני מע"מ' && c.total === '₪14,628', JSON.stringify(c))
-  await pickIn(page, '.jo-ours', 'plan', 'plus')
-  await pickIn(page, '.jo-ours', 'madlan', 'm10')
-  await wait(400)
-  await page.evaluate(() => { const b = document.querySelector('.jo-ours [data-act="extra-more"]'); b.click(); b.click() })
-  await wait(900)
-  c = await calc(page)
-  // PLUS 887 + Madlan 10 ads 390 + two extras of 125 = 1,527 a month
-  check(`${d} PLUS with 10 Madlan ads and two extras: 887 + 390 + 2 × 125 = 1,527 a month, 20 ads`, c.plan === `מסלול PLUS: 887 ${VAT}` && c.madlan === `מדלן, 20 מודעות: 640 ${VAT}` && c.sum === '1,527 × 12, לפני מע"מ' && c.total === '₪18,324' && c.extra === '2' && c.ads.includes('20'), JSON.stringify(c))
-  check(`${d} with Madlan the calculator does not go under 6 months`, c.min === 6)
-  await page.evaluate(() => document.querySelector('.jo-ours').scrollIntoView({ block: 'center' }))
-  await wait(400)
-  await page.screenshot({ path: `${out}/${d}-3-calculator.png` })
-  await page.evaluate(() => { const b = document.querySelector('.jo-ours [data-act="extra-less"]'); b.click() })
-  await pickIn(page, '.jo-ours', 'madlan', 'none')
-  await wait(600)
-  c = await calc(page)
-  check(`${d} taking Madlan off removes its extras too`, !c.madlan && c.sum === '887 × 12, לפני מע"מ' && c.min === 3 && c.extra === null, JSON.stringify(c))
+    // ---- 3. the calculator goes by the plan, with Madlan on top
+    await page.evaluate(() => document.querySelector('#calc').scrollIntoView({ block: 'start' }))
+    await wait(500)
+    let c = await calc(page)
+    check(`${d} the calculator starts on BASIC, 12 months: 549 × 12`, c.plan === `מסלול BASIC: 549 ${VAT}` && c.sum === '549 × 12, לפני מע"מ' && c.total === '₪6,588' && c.min === 3 && !c.madlan, JSON.stringify(c))
+    await pickIn(page, '.jo-ours', 'plan', 'pro')
+    await wait(900)
+    c = await calc(page)
+    check(`${d} choosing PRO: 1,219 × 12`, c.plan === `מסלול PRO: 1,219 ${VAT}` && c.sum === '1,219 × 12, לפני מע"מ' && c.total === '₪14,628', JSON.stringify(c))
+    await pickIn(page, '.jo-ours', 'plan', 'plus')
+    await pickIn(page, '.jo-ours', 'madlan', 'm10')
+    await wait(400)
+    await page.evaluate(() => { const b = document.querySelector('.jo-ours [data-act="extra-more"]'); b.click(); b.click() })
+    await wait(900)
+    c = await calc(page)
+    // PLUS 887 + Madlan 10 ads 390 + two extras of 125 = 1,527 a month
+    check(`${d} PLUS with 10 Madlan ads and two extras: 887 + 390 + 2 × 125 = 1,527 a month, 20 ads`, c.plan === `מסלול PLUS: 887 ${VAT}` && c.madlan === `מדלן, 20 מודעות: 640 ${VAT}` && c.sum === '1,527 × 12, לפני מע"מ' && c.total === '₪18,324' && c.extra === '2' && c.ads.includes('20'), JSON.stringify(c))
+    check(`${d} with Madlan the calculator does not go under 6 months`, c.min === 6)
+    await page.evaluate(() => document.querySelector('.jo-ours').scrollIntoView({ block: 'center' }))
+    await wait(400)
+    await page.screenshot({ path: `${out}/${d}-3-calculator.png` })
+    await page.evaluate(() => { const b = document.querySelector('.jo-ours [data-act="extra-less"]'); b.click() })
+    await pickIn(page, '.jo-ours', 'madlan', 'none')
+    await wait(600)
+    c = await calc(page)
+    check(`${d} taking Madlan off removes its extras too`, !c.madlan && c.sum === '887 × 12, לפני מע"מ' && c.min === 3 && c.extra === null, JSON.stringify(c))
 
-  // ---- 4. joining: pick a plan, add Madlan, no charge
-  await page.evaluate(() => document.querySelector('.prc-plan article[data-plan="pro"] [data-act="pick-plan"]').click())
-  await wait(900)
-  await pickIn(page, '.jo-pay', 'madlan', 'm5')
-  await wait(300)
-  await page.evaluate(() => document.querySelector('.jo-pay [data-act="extra-more"]').click())
-  await wait(500)
-  const j = await page.evaluate(() => {
-    const clean = (s) => (s ?? '').replace(/\s+/g, ' ').trim()
-    return {
-      on: clean(document.querySelector('.jo-pay .prc-opts.is-plans button.is-on b')?.textContent),
-      sum: [...document.querySelectorAll('.jo-pay [data-sum] > div')].map((r) => `${clean(r.querySelector('dt').textContent)}=${clean(r.querySelector('dd').textContent)}`),
-      terms: [...document.querySelectorAll('.jo-pay [data-terms] li')].map((x) => clean(x.textContent)),
-      disabled: document.querySelector('.jo-go')?.disabled,
-      note: clean(document.querySelector('.modal')?.textContent).includes('בדמו אין חיוב אמיתי'),
-      fits: (() => { const m = document.querySelector('.jo-pay').getBoundingClientRect(); return m.left >= 0 && m.right <= innerWidth })(),
-    }
-  })
-  // PRO 1,219 + Madlan 5 ads 265 + one extra 125 = 1,609
-  check(`${d} joining opens on the plan that was clicked (PRO), and adds Madlan with an extra`, j.on === 'PRO' && j.sum.join(' ; ') === `מסלול PRO=1,219 ${VAT} ; 5 מודעות מדלן=265 ${VAT} ; תוספת של 5 מודעות × 1=125 ${VAT} ; עמלה למשרד=0% ; דמי הצטרפות=ללא עלות ; סך הכול לחודש=1,609 ${VAT} ; חיוב היום=אין, זה דמו`, j.sum.join(' ; '))
-  check(`${d} joining shows the terms that apply: membership, Yad2 and Madlan`, j.terms.join(' ; ') === 'חברות במשרד: התחייבות מינימלית ל-3 חודשים ; פרסום ביד2: התחייבות ל-3 חודשים ; פרסום במדלן: התחייבות ל-6 חודשים', j.terms.join(' ; '))
-  check(`${d} joining: no real charge, the terms must be approved, and the window fits`, j.note && j.disabled === true && j.fits)
-  await page.screenshot({ path: `${out}/${d}-4-joining.png` })
-  await page.evaluate(() => document.querySelector('.jo-agree input').click())
-  await wait(200)
-  await page.evaluate(() => document.querySelector('.jo-go').click())
-  await wait(2400)
-  await page.evaluate(() => document.querySelector('.jo-done .btn')?.click())
-  await wait(1800)
-  const after = await page.evaluate(() => ({ path: location.pathname, member: localStorage.getItem('nadlanup-member-v1'), plan: JSON.parse(localStorage.getItem('nadlanup-plan-v1') ?? '{}') }))
-  check(`${d} after joining: an office member on PRO with Madlan, in the questionnaire`, after.path.endsWith('/app/agent') && after.member === 'office' && after.plan.plan === 'pro' && after.plan.madlan === 'm5' && after.plan.extra === 1, JSON.stringify(after))
-  await page.goto(green + '/app/office', { waitUntil: 'load' })
-  await wait(1500)
-  check(`${d} the office area names the member's plan`, clean(await page.evaluate(() => document.querySelector('.of-banner.is-in')?.textContent)).includes('מסלול PRO'))
+    // ---- 4. joining: pick a plan, add Madlan, no charge
+    await page.evaluate(() => document.querySelector('.prc-plan article[data-plan="pro"] [data-act="pick-plan"]').click())
+    await wait(900)
+    await pickIn(page, '.jo-pay', 'madlan', 'm5')
+    await wait(300)
+    await page.evaluate(() => document.querySelector('.jo-pay [data-act="extra-more"]').click())
+    await wait(500)
+    const j = await page.evaluate(() => {
+      const clean = (s) => (s ?? '').replace(/\s+/g, ' ').trim()
+      return {
+        on: clean(document.querySelector('.jo-pay .prc-opts.is-plans button.is-on b')?.textContent),
+        sum: [...document.querySelectorAll('.jo-pay [data-sum] > div')].map((r) => `${clean(r.querySelector('dt').textContent)}=${clean(r.querySelector('dd').textContent)}`),
+        terms: [...document.querySelectorAll('.jo-pay [data-terms] li')].map((x) => clean(x.textContent)),
+        disabled: document.querySelector('.jo-go')?.disabled,
+        note: clean(document.querySelector('.modal')?.textContent).includes('בדמו אין חיוב אמיתי'),
+        fits: (() => { const m = document.querySelector('.jo-pay').getBoundingClientRect(); return m.left >= 0 && m.right <= innerWidth })(),
+      }
+    })
+    // PRO 1,219 + Madlan 5 ads 265 + one extra 125 = 1,609
+    check(`${d} joining opens on the plan that was clicked (PRO), and adds Madlan with an extra`, j.on === 'PRO' && j.sum.join(' ; ') === `מסלול PRO=1,219 ${VAT} ; 5 מודעות מדלן=265 ${VAT} ; תוספת של 5 מודעות × 1=125 ${VAT} ; עמלה למשרד=0% ; דמי הצטרפות=ללא עלות ; סך הכול לחודש=1,609 ${VAT} ; חיוב היום=אין, זה דמו`, j.sum.join(' ; '))
+    check(`${d} joining shows the terms that apply: membership, Yad2 and Madlan`, j.terms.join(' ; ') === 'חברות במשרד: התחייבות מינימלית ל-3 חודשים ; פרסום ביד2: התחייבות ל-3 חודשים ; פרסום במדלן: התחייבות ל-6 חודשים', j.terms.join(' ; '))
+    check(`${d} joining: no real charge, the terms must be approved, and the window fits`, j.note && j.disabled === true && j.fits)
+    await page.screenshot({ path: `${out}/${d}-4-joining.png` })
+    await page.evaluate(() => document.querySelector('.jo-agree input').click())
+    await wait(200)
+    await page.evaluate(() => document.querySelector('.jo-go').click())
+    await wait(2400)
+    await page.evaluate(() => document.querySelector('.jo-done .btn')?.click())
+    await wait(1800)
+    const after = await page.evaluate(() => ({ path: location.pathname, member: localStorage.getItem('nadlanup-member-v1'), plan: JSON.parse(localStorage.getItem('nadlanup-plan-v1') ?? '{}') }))
+    check(`${d} after joining: an office member on PRO with Madlan, in the questionnaire`, after.path.endsWith('/app/agent') && after.member === 'office' && after.plan.plan === 'pro' && after.plan.madlan === 'm5' && after.plan.extra === 1, JSON.stringify(after))
+    await page.goto(green + '/app/office', { waitUntil: 'load' })
+    await wait(1500)
+    check(`${d} the office area names the member's plan`, clean(await page.evaluate(() => document.querySelector('.of-banner.is-in')?.textContent)).includes('מסלול PRO'))
+  }
 
-  // ---- 5. the old fee is gone everywhere; credits still have no price
-  await page.evaluate(() => localStorage.setItem('nadlanup-member-v1', 'community'))
-  for (const r of ['/', '/join', '/join/office', '/upgrade', '/kehila', '/about', '/app/office', '/app/agent', '/app/community']) {
+  // ---- 5. the old fee is gone everywhere; credits still have no price. Since 24.11.2026 (Itzik) no page shows any
+  // price of the office at all: no plan price, no Madlan pack, no "דמי חבר", for a community member and for a member
+  // of the office alike. (Property prices in the feed are not the office's, and are left alone.)
+  const PRICE = /(^|[^\d,])(549|887|1,219|689)(?![\d,])|דמי חבר|מחירון|חבילות מדלן|מע"מ לחודש/
+  for (const member of ['office', 'community']) {
+  await page.evaluate((m) => localStorage.setItem('nadlanup-member-v1', m), member)
+  for (const r of ['/', '/join', '/join/office', '/office', '/upgrade', '/kehila', '/about', '/app/office', '/app/agent', '/app/community']) {
     await page.goto(green + r, { waitUntil: 'load' })
     await wait(1300)
     const t = clean(await page.evaluate(() => document.body.innerText))
-    check(`${d} ${r}: no 689 anywhere`, !t.includes('689'), t.match(/.{0,30}689.{0,30}/)?.[0] ?? '')
-    if (r === '/join') check(`${d} the choice of a way to join says "החל מ-549 ₪ + מע"מ לחודש"`, t.includes('החל מ-549 ₪ + מע"מ לחודש'))
+    check(`${d} ${member} member, ${r}: no price of the office anywhere`, !PRICE.test(t), t.match(new RegExp(`.{0,30}(${PRICE.source}).{0,30}`))?.[0] ?? '')
+    if (member === 'office') continue
+    if (r === '/join') check(`${d} the choice of a way to join shows no price for the office any more (24.11.2026)`, !t.includes('549') && !t.includes('₪') && t.includes('100% עמלה למתווך'))
     if (r === '/upgrade') {
-      check(`${d} the comparison: the office from 549, and a credit still has no price ("מחיר יקבע")`, t.includes('החל מ-549 ₪ + מע"מ לחודש') && t.includes('מחיר קרדיט: מחיר יקבע'))
+      check(`${d} the comparison: no price for the office (24.11.2026), and a credit still has no price ("מחיר יקבע")`, !t.includes('549') && t.includes('0% עמלה למשרד, 100% עמלה למתווך') && t.includes('מחיר קרדיט: מחיר יקבע'))
       check(`${d} the comparison: nothing scrolls sideways`, (await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)) <= 1)
       await page.screenshot({ path: `${out}/${d}-5-upgrade.png` })
     }
+  }
   }
 
   check(`${d} no page errors`, errors.length === 0, errors.slice(0, 2).join(' | '))

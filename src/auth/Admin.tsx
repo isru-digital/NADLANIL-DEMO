@@ -14,6 +14,7 @@ import '../styles/admin-dash.css'
 import { Breakdown, Decisions, Directory, Engagement, Kpis, MemberDetails, Signups, Timing, Visits } from './AdminDash'
 import type { Stats } from './AdminDash'
 import AdminNav from './AdminNav'
+import LeadsPanel from './LeadsPanel'
 
 /**
  * The approvers' screen: what is happening in the community (real numbers from the server), the requests with a yes
@@ -31,10 +32,12 @@ const TABS: { id: Tab; label: string }[] = [
 ]
 // the screen's tabs: each shows only its own part. The tab is kept in the address (#requests), so a reload or a
 // link opens the same tab.
-type View = 'overview' | 'requests' | 'people' | 'breakdown' | 'tools'
+type View = 'overview' | 'requests' | 'leads' | 'people' | 'breakdown' | 'tools'
 const VIEWS: { id: View; label: string }[] = [
   { id: 'overview', label: 'סקירה' },
   { id: 'requests', label: 'בקשות' },
+  // 24.11.2026: who asked for details on the office page
+  { id: 'leads', label: 'לידים נכנסים' },
   { id: 'people', label: 'מתווכים' },
   { id: 'breakdown', label: 'פילוח' },
   { id: 'tools', label: 'צוות וכלים' },
@@ -43,7 +46,7 @@ const viewOf = (hash: string): View => (VIEWS.find((v) => `#${v.id}` === hash)?.
 const PENDING_SHOWN = 5
 const when = (ms: number | null) => (ms ? new Date(ms).toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '')
 const mailWords: Record<string, string> = { sent: 'נשלח', no_password: 'לא נשלח: חסרה סיסמת האפליקציה', failed: 'השליחה נכשלה', test: 'מצב בדיקה' }
-const kindWords: Record<string, string> = { approval: 'בקשת אישור', welcome: 'ברוכים הבאים', reject: 'דחייה', login: 'קישור כניסה' }
+const kindWords: Record<string, string> = { approval: 'בקשת אישור', welcome: 'ברוכים הבאים', reject: 'דחייה', login: 'קישור כניסה', lead: 'ליד חדש' }
 
 export default function Admin() {
   const staff = session?.staff ?? null
@@ -66,6 +69,8 @@ export default function Admin() {
   const [statsError, setStatsError] = useState('')
   const [openId, setOpenId] = useState<string | null>(null)
   const [view, setView] = useState<View>(() => viewOf(window.location.hash))
+  // the new leads, counted on the tab
+  const [freshLeads, setFreshLeads] = useState(0)
   const go = useCallback((v: View) => {
     setView(v)
     window.history.replaceState(window.history.state, '', `${window.location.pathname}${window.location.search}#${v}`)
@@ -86,6 +91,8 @@ export default function Admin() {
     setMailReady(r.data.mailReady)
     const t = await call<{ staff: Staff[] }>('/api/admin/staff')
     if (t.ok) setTeam(t.data.staff)
+    const l = await call<{ leads: { status: string }[] }>('/api/admin/leads')
+    if (l.ok) setFreshLeads(l.data.leads.filter((x) => x.status === 'new').length)
   }, [])
 
   useEffect(() => {
@@ -196,7 +203,7 @@ export default function Admin() {
           </button>
         </div>
 
-        <AdminNav parts={VIEWS} view={view} go={go} pending={count('pending')} />
+        <AdminNav parts={VIEWS} view={view} go={go} pending={count('pending')} leads={freshLeads} />
 
         {!mailReady && (
           <p className="ad-warn" data-warn="mail">
@@ -335,6 +342,11 @@ export default function Admin() {
                     <dt>רישיון</dt>
                     <dd className="num">{m.license}</dd>
                   </div>
+                  {/* 24.11.2026: the number against the Registrar of Real Estate Brokers */}
+                  <div data-license-status={m.license_status ?? ''}>
+                    <dt>רשם המתווכים</dt>
+                    <dd>{m.license_status === 'verified' ? 'אומת' : m.license_status === 'not_found' ? 'לא נמצא, לבדוק ידנית' : m.license_status === 'unavailable' ? 'המאגר לא ענה, לבדוק ידנית' : 'לא נבדק'}</dd>
+                  </div>
                   <div>
                     <dt>עובד</dt>
                     <dd>{m.work === 'office' ? `במשרד: ${m.office_name}` : 'עצמאי'}</dd>
@@ -409,6 +421,7 @@ export default function Admin() {
         </>
         )}
 
+        {view === 'leads' && <LeadsPanel onCount={setFreshLeads} />}
         {view === 'people' && (
           <div id="dk-people" className="dk-section">
             {stats ? (

@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowLeft, BadgeCheck, Check, Lock, Users } from 'lucide-react'
 import { BackButton, DemoTag, EASE, Logo } from '../components/ui'
-import { OFFICE_FEE, OFFICE_NAME } from '../config/office'
+import { OFFICE_NAME } from '../config/office'
 import { useMember } from '../config/member'
 import { COMMUNITY_HOME, COMMUNITY_NAME } from '../config/community'
 import '../styles/join-green.css'
@@ -41,7 +41,8 @@ export default function JoinChoice() {
             <h2>{OFFICE_NAME}</h2>
             <div className="jc-price">
               <b className="num">0%</b>
-              <small>עמלה למשרד. דמי חבר: {OFFICE_FEE}</small>
+              {/* 24.11.2026: no price here either (Itzik): the fee as the office page says it */}
+              <small>עמלה למשרד, 100% עמלה למתווך</small>
             </div>
             <p className="jc-sub">כל מה שבקהילה, ועוד: משרד תיווך ארצי בשמך, דף אישי שמביא לקוחות מגוגל, ו-100% מהעמלה אצלך.</p>
             <ul>

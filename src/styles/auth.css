@@ -591,3 +591,81 @@ html[data-mode='night'] .au-code-msg.is-err {
   font-style: normal;
   font-weight: 700;
 }
+
+/* the licence number, looked up in the Registrar of Real Estate Brokers (24.11.2026) */
+.au-field > .au-lic {
+  position: relative;
+  display: block;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 400;
+}
+.au-lic .input {
+  width: 100%;
+  /* the mark sits on the left, where neither the digits (aligned right) nor a Hebrew name start */
+  padding-left: 44px;
+}
+.au-lic > svg {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  width: 20px;
+  height: 20px;
+  margin-top: -10px;
+  pointer-events: none;
+}
+.au-lic-spin {
+  color: var(--text-faint);
+  animation: au-lic-spin 0.9s linear infinite;
+}
+.au-lic-ok {
+  color: #0c7f52;
+}
+.au-lic.is-locked .input {
+  background: rgba(12, 127, 82, 0.07);
+  border-color: rgba(12, 127, 82, 0.45);
+  color: var(--text);
+  font-weight: 700;
+  cursor: default;
+}
+.au-field small.au-lic-src,
+.au-field small.au-lic-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  line-height: 1.5;
+}
+.au-field small.au-lic-src {
+  color: #0a6b45;
+  font-weight: 600;
+}
+.au-field small.au-lic-note {
+  padding: 9px 11px;
+  border-radius: 12px;
+  background: rgba(184, 134, 11, 0.1);
+  color: var(--text-dim);
+}
+.au-lic-src svg,
+.au-lic-note svg {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+}
+html[data-mode='night'] .au-field small.au-lic-src {
+  color: #6fe0ad;
+}
+html[data-mode='night'] .au-lic.is-locked .input {
+  background: rgba(111, 224, 173, 0.08);
+  border-color: rgba(111, 224, 173, 0.4);
+}
+@keyframes au-lic-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .au-lic-spin {
+    animation: none;
+  }
+}

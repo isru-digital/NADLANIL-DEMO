@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import { ArrowLeft, ArrowRight, BadgeCheck, Check, Lock } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useMember } from '../config/member'
-import { OFFICE_FEE, OFFICE_NAME } from '../config/office'
+import { OFFICE_NAME } from '../config/office'
 import { planById, usePick } from '../config/pricing'
 import { EASE } from '../components/ui'
 import { extraById, extras } from './officeData'
@@ -39,7 +39,7 @@ export function OfficeHub() {
           <div>
             <b>אתם חברי משרד. הכול פתוח.</b>
             <small>
-              מסלול {plan.name}. 0% עמלה למשרד, 100% נשאר אצלכם.
+              מסלול {plan.name}. 0% עמלה למשרד, 100% עמלה למתווך.
             </small>
           </div>
         </div>
@@ -50,7 +50,7 @@ export function OfficeHub() {
           </span>
           <div>
             <b>אתם רואים את זה כחבר קהילה</b>
-            <small>האקסטרות נפתחות לחברי המשרד: {OFFICE_FEE}, ו-0% עמלה למשרד.</small>
+            <small>האקסטרות נפתחות לחברי המשרד. 0% עמלה למשרד, 100% עמלה למתווך.</small>
           </div>
           <div className="of-banner-cta">
             <Link to="/upgrade" className="btn btn-gold">

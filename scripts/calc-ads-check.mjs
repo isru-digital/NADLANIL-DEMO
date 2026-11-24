@@ -10,6 +10,8 @@ const green = process.env.BASE_GREEN ?? 'http://localhost:5240/NADLANIL-DEMO/gre
 const out = process.argv[2] ?? '_shots/calc-ads'
 mkdirSync(out, { recursive: true })
 const browser = await puppeteer.launch({ executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: 'new', args: ['--hide-scrollbars'] })
+// the calculator of the office page (until 24.11.2026)
+const CALCULATOR = false
 const wait = (ms) => new Promise((r) => setTimeout(r, ms))
 const results = []
 const check = (name, ok, detail = '') => {
@@ -62,56 +64,61 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
   await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }])
   await page.goto(green + '/join/office', { waitUntil: 'load' })
   await wait(1700)
-  await page.evaluate(() => document.querySelector('#calc').scrollIntoView({ block: 'start' }))
-  await wait(700)
+  // 24.11.2026: the calculator compares the plans' monthly prices, and Itzik took the prices off the office page, so
+  // it is hidden with them (kept in the code). Its checks are kept below but not run; this checks it is not shown.
+  check(`${d} the calculator is not on the office page any more (prices removed, 24.11.2026)`, await page.evaluate(() => !document.querySelector('#calc') && !document.body.innerText.includes('₪')))
+  if (CALCULATOR) {
+    await page.evaluate(() => document.querySelector('#calc').scrollIntoView({ block: 'start' }))
+    await wait(700)
 
-  // ---- the example label, the side's name, the field
-  let s = await state(page)
-  check(`${d} next to the calculator: "חישוב לדוגמה בלבד"`, s.example === 'חישוב לדוגמה בלבד' && s.note.startsWith('חישוב לדוגמה בלבד'), `${s.example} / ${s.note.slice(0, 40)}`)
-  check(`${d} the other side is "a regular office or alone"`, s.side === 'במשרד רגיל או כעצמאים', s.side)
-  check(`${d} a field "מחיר למודעה בחודש", filled with an example that says it is an example`, s.fieldLabel === 'מחיר למודעה בחודש' && s.field === '100' && s.fieldNote.startsWith('100 ₪ הוא ערך לדוגמה בלבד'), `${s.fieldLabel} / ${s.field} / ${s.fieldNote}`)
+    // ---- the example label, the side's name, the field
+    let s = await state(page)
+    check(`${d} next to the calculator: "חישוב לדוגמה בלבד"`, s.example === 'חישוב לדוגמה בלבד' && s.note.startsWith('חישוב לדוגמה בלבד'), `${s.example} / ${s.note.slice(0, 40)}`)
+    check(`${d} the other side is "a regular office or alone"`, s.side === 'במשרד רגיל או כעצמאים', s.side)
+    check(`${d} a field "מחיר למודעה בחודש", filled with an example that says it is an example`, s.fieldLabel === 'מחיר למודעה בחודש' && s.field === '100' && s.fieldNote.startsWith('100 ₪ הוא ערך לדוגמה בלבד'), `${s.fieldLabel} / ${s.field} / ${s.fieldNote}`)
 
-  // ---- BASIC has no ads: nothing added
-  check(`${d} on BASIC (no ads) no ads cost is added, and it says why`, s.adsToday === 'במסלול BASIC אין מודעות כלולות, ולכן לא נוספה כאן עלות מודעות.' && s.today === '₪36,000', `${s.adsToday} / ${s.today}`)
+    // ---- BASIC has no ads: nothing added
+    check(`${d} on BASIC (no ads) no ads cost is added, and it says why`, s.adsToday === 'במסלול BASIC אין מודעות כלולות, ולכן לא נוספה כאן עלות מודעות.' && s.today === '₪36,000', `${s.adsToday} / ${s.today}`)
 
-  // ---- each plan: its ads, and their cost bought alone
-  check(`${d} each plan shows its ads and what they cost bought alone (at 100 ₪)`, s.rows.join(' ; ') === 'BASIC | ללא מודעות יד2 | אין מודעות לקנות * ; PLUS | 5 מודעות יד2 | לקנות לבד: ₪500 בחודש ; PRO | 10 מודעות יד2 | לקנות לבד: ₪1,000 בחודש', s.rows.join(' ; '))
-  check(`${d} the explanation, word for word`, s.why === WHY, s.why)
-  check(`${d} no promise of how many deals`, !/תסגור|תסגרו|עוד \d+ עסקאות|מבטיח|מובטח/.test(s.calcText))
-  await page.screenshot({ path: `${out}/${d}-1-calculator.png` })
+    // ---- each plan: its ads, and their cost bought alone
+    check(`${d} each plan shows its ads and what they cost bought alone (at 100 ₪)`, s.rows.join(' ; ') === 'BASIC | ללא מודעות יד2 | אין מודעות לקנות * ; PLUS | 5 מודעות יד2 | לקנות לבד: ₪500 בחודש ; PRO | 10 מודעות יד2 | לקנות לבד: ₪1,000 בחודש', s.rows.join(' ; '))
+    check(`${d} the explanation, word for word`, s.why === WHY, s.why)
+    check(`${d} no promise of how many deals`, !/תסגור|תסגרו|עוד \d+ עסקאות|מבטיח|מובטח/.test(s.calcText))
+    await page.screenshot({ path: `${out}/${d}-1-calculator.png` })
 
-  // ---- PRO: the other side pays for 10 ads itself
-  await page.evaluate(() => document.querySelector('.jo-ads-row[data-plan="pro"]').click())
-  await wait(1000)
-  s = await state(page)
-  // 6 x 30,000 x 20% = 36,000 a year, plus 10 ads x 100 x 12 = 12,000
-  check(`${d} on PRO the other side buys the same 10 ads: 10 × 100 = 1,000 a month, 48,000 a year in all`, s.adsToday.includes('10 × ₪100 = ₪1,000 בחודש') && s.today === '₪48,000' && s.todayWhat === 'עמלות, מודעות' && s.rows[2].endsWith('*'), `${s.adsToday} / ${s.today} / ${s.todayWhat}`)
-  check(`${d} ... and ours is PRO: 1,219 × 12`, s.ours === '₪14,628', s.ours)
+    // ---- PRO: the other side pays for 10 ads itself
+    await page.evaluate(() => document.querySelector('.jo-ads-row[data-plan="pro"]').click())
+    await wait(1000)
+    s = await state(page)
+    // 6 x 30,000 x 20% = 36,000 a year, plus 10 ads x 100 x 12 = 12,000
+    check(`${d} on PRO the other side buys the same 10 ads: 10 × 100 = 1,000 a month, 48,000 a year in all`, s.adsToday.includes('10 × ₪100 = ₪1,000 בחודש') && s.today === '₪48,000' && s.todayWhat === 'עמלות, מודעות' && s.rows[2].endsWith('*'), `${s.adsToday} / ${s.today} / ${s.todayWhat}`)
+    check(`${d} ... and ours is PRO: 1,219 × 12`, s.ours === '₪14,628', s.ours)
 
-  // ---- the visitor's own price
-  await setAdPrice(page, '150')
-  s = await state(page)
-  check(`${d} the visitor writes his own price (150): 10 × 150, and the plans' rows follow`, s.adsToday.includes('10 × ₪150 = ₪1,500 בחודש') && s.today === '₪54,000' && s.rows[1].includes('₪750') && s.rows[2].includes('₪1,500'), `${s.adsToday} / ${s.today}`)
-  await setAdPrice(page, '')
-  s = await state(page)
-  check(`${d} an empty price counts as 0`, s.today === '₪36,000' && s.todayWhat === 'עמלות', `${s.today} / ${s.todayWhat}`)
-  await setAdPrice(page, 'abc90')
-  s = await state(page)
-  check(`${d} only digits are taken`, s.field === '90', s.field)
-  await setAdPrice(page, '100')
+    // ---- the visitor's own price
+    await setAdPrice(page, '150')
+    s = await state(page)
+    check(`${d} the visitor writes his own price (150): 10 × 150, and the plans' rows follow`, s.adsToday.includes('10 × ₪150 = ₪1,500 בחודש') && s.today === '₪54,000' && s.rows[1].includes('₪750') && s.rows[2].includes('₪1,500'), `${s.adsToday} / ${s.today}`)
+    await setAdPrice(page, '')
+    s = await state(page)
+    check(`${d} an empty price counts as 0`, s.today === '₪36,000' && s.todayWhat === 'עמלות', `${s.today} / ${s.todayWhat}`)
+    await setAdPrice(page, 'abc90')
+    s = await state(page)
+    check(`${d} only digits are taken`, s.field === '90', s.field)
+    await setAdPrice(page, '100')
 
-  // ---- Madlan on top: the other side buys those ads too
-  await page.evaluate(() => document.querySelector('.jo-ours .prc-choose [data-madlan="m5"]').click())
-  await wait(1000)
-  s = await state(page)
-  check(`${d} with 5 Madlan ads on PRO the other side buys 15 ads`, s.adsToday.includes('ובחבילת המדלן') && s.adsToday.includes('15 × ₪100 = ₪1,500 בחודש'), s.adsToday)
-  check(`${d} nothing scrolls sideways`, s.ov <= 1, `${s.ov}px`)
-  await page.evaluate(() => document.querySelector('.jo-ads').scrollIntoView({ block: 'center' }))
-  await wait(400)
-  await page.screenshot({ path: `${out}/${d}-2-plans-ads.png` })
-  await page.evaluate(() => document.querySelector('.jo-today').scrollIntoView({ block: 'center' }))
-  await wait(400)
-  await page.screenshot({ path: `${out}/${d}-3-other-side.png` })
+    // ---- Madlan on top: the other side buys those ads too
+    await page.evaluate(() => document.querySelector('.jo-ours .prc-choose [data-madlan="m5"]').click())
+    await wait(1000)
+    s = await state(page)
+    check(`${d} with 5 Madlan ads on PRO the other side buys 15 ads`, s.adsToday.includes('ובחבילת המדלן') && s.adsToday.includes('15 × ₪100 = ₪1,500 בחודש'), s.adsToday)
+    check(`${d} nothing scrolls sideways`, s.ov <= 1, `${s.ov}px`)
+    await page.evaluate(() => document.querySelector('.jo-ads').scrollIntoView({ block: 'center' }))
+    await wait(400)
+    await page.screenshot({ path: `${out}/${d}-2-plans-ads.png` })
+    await page.evaluate(() => document.querySelector('.jo-today').scrollIntoView({ block: 'center' }))
+    await wait(400)
+    await page.screenshot({ path: `${out}/${d}-3-other-side.png` })
+  }
 
   check(`${d} no page errors`, errors.length === 0, errors.slice(0, 2).join(' | '))
   await page.close()

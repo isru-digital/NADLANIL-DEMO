@@ -82,26 +82,29 @@ for (const [label, vp, phone] of [
   await page.goto(green + '/join', { waitUntil: 'load' })
   await wait(1300)
   let t = await pageText(page)
-  check(`${tag}: join: the logo stands alone, the office shows 0% and the fee of 689 a month`, (await noSub(page)) && t.includes('דמי חבר: החל מ-549 ₪ + מע"מ לחודש') && !t.includes('מחיר יקבע') && !t.includes('אחרי תשלום') && (await page.evaluate(() => document.querySelector('.jc-card.is-office .jc-price b')?.textContent)) === '0%')
+  check(`${tag}: join: the logo stands alone, the office shows 0% and 100% to the broker, no price (24.11.2026)`, (await noSub(page)) && t.includes('עמלה למשרד, 100% עמלה למתווך') && !t.includes('₪') && !t.includes('מחיר יקבע') && !t.includes('אחרי תשלום') && (await page.evaluate(() => document.querySelector('.jc-card.is-office .jc-price b')?.textContent)) === '0%')
   await page.screenshot({ path: `${out}/a-${label}-2-join.png` })
 
   await page.goto(green + '/join/office', { waitUntil: 'load' })
   await wait(1500)
   t = await pageText(page, true)
-  check(`${tag}: office page: the fee is 689 a month, 0% to the office, and no commitment sum outside the calculator`, t.includes('דמי חבר: החל מ-549 ₪ + מע"מ לחודש') && !t.includes('מחיר יקבע') && t.includes('0% עמלה למשרד'), '')
+  // 24.11.2026: no prices on the office page any more; the fee is "0% עמלה למשרד, 100% עמלה למתווך"
+  check(`${tag}: office page: no price at all, and "0% עמלה למשרד, 100% עמלה למתווך"`, !t.includes('₪') && !t.includes('מחיר יקבע') && t.includes('0% עמלה למשרד, 100% עמלה למתווך'), '')
   const whole = await pageText(page)
   // 14.11.2026 (the fair calculator, 8383937): the calculator is marked "חישוב לדוגמה בלבד" on purpose; the old "the
   // final price will be set" line stays gone
-  check(`${tag}: office page: the calculator is marked an example only, with no "final price" line`, whole.includes('חישוב לדוגמה בלבד') && !whole.includes('המחיר הסופי יקבע'))
-  check(`${tag}: office page: typos fixed ("מכם", "ב-NadlanUP")`, !whole.includes('ממכם') && whole.includes('לוקחים מכם') && whole.includes('ב-NadlanUP') && !/[א-ת]NadlanUP/.test(whole))
+  // the calculator compared the plans' prices and is hidden with them (24.11.2026), and its lines with it
+  check(`${tag}: office page: no calculator and no "final price" line`, !(await page.$('#calc')) && !whole.includes('המחיר הסופי יקבע'))
+  check(`${tag}: office page: typos stay fixed ("ממכם", a name glued to NadlanUP)`, !whole.includes('ממכם') && !/[א-ת]NadlanUP/.test(whole))
   check(`${tag}: office page: no long dashes`, !/[\u2013\u2014]/.test(whole))
   await page.screenshot({ path: `${out}/a-${label}-3-office.png` })
 
   // ---- the simulated joining has no amount, and makes the visitor an office member
-  await page.evaluate(() => [...document.querySelectorAll('.jo-hero .btn')].find((b) => b.textContent.includes('להצטרפות למשרד'))?.click())
-  await wait(900)
-  st = await page.evaluate(() => ({ sum: document.querySelector('[data-sum]')?.textContent ?? '', commit: document.querySelector('[data-terms]')?.textContent ?? '', disabled: document.querySelector('.jo-go')?.disabled }))
-  check(`${tag}: joining: 689 a month, 0% to the office, nothing charged today, commitment "יקבע", and the terms must be approved`, st.sum.includes('549 ₪ + מע"מ לחודש') && st.sum.includes('0%') && st.sum.includes('אין, זה דמו') && !st.sum.includes('2,067') && st.commit.includes('התחייבות מינימלית ל-3 חודשים') && st.disabled === true, JSON.stringify(st))
+  // 24.11.2026: the hero's button asks for details now; the demo's joining opens from "אני רוצה להצטרף" (?join=1)
+  await page.goto(green + '/join/office?join=1', { waitUntil: 'load' })
+  await wait(1500)
+  st = await page.evaluate(() => ({ sum: document.querySelector('[data-sum]')?.textContent ?? '', disabled: document.querySelector('.jo-go')?.disabled }))
+  check(`${tag}: joining: 0% to the office, 100% to the broker, no price, nothing charged today, and the terms must be approved`, !st.sum.includes('₪') && st.sum.includes('0%') && st.sum.includes('100%') && st.sum.includes('אין, זה דמו') && st.disabled === true, JSON.stringify(st))
   await page.screenshot({ path: `${out}/a-${label}-4-join-modal.png` })
   await page.evaluate(() => document.querySelector('.jo-agree input')?.click())
   await wait(200)

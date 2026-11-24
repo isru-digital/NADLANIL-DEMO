@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import { ArrowLeft, BadgeCheck, Check, Coins, Minus, Users } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { PLATFORM_NAME } from '../config'
-import { OFFICE_FEE, OFFICE_NAME, PRICE_TBD } from '../config/office'
+import { OFFICE_NAME, PRICE_TBD } from '../config/office'
 import { useMember } from '../config/member'
 import { PAID_IDS } from '../config/tiers'
 import { COMMUNITY_JOIN, COMMUNITY_NAME } from '../config/community'
@@ -61,7 +61,8 @@ const groups: { title: string; sub: string; rows: Row[] }[] = [
 const tiers: { key: 'community' | 'credits' | 'office'; icon: LucideIcon; name: string; price: string; unit: string }[] = [
   { key: 'community', icon: Users, name: COMMUNITY_NAME, price: 'חינם', unit: 'הקהילה, תמיד' },
   { key: 'credits', icon: Coins, name: 'קרדיטים', price: 'לפי שימוש', unit: `מחיר קרדיט: ${PRICE_TBD}` },
-  { key: 'office', icon: BadgeCheck, name: 'המשרד', price: OFFICE_FEE, unit: '0% עמלה למשרד' },
+  // no price for the office (Itzik, 24.11.2026)
+  { key: 'office', icon: BadgeCheck, name: 'המשרד', price: '0%', unit: 'עמלה למשרד, 100% עמלה למתווך' },
 ]
 
 function CellView({ value, office }: { value: Cell; office?: boolean }) {
@@ -177,7 +178,7 @@ export default function Upgrade() {
             <b>קרדיטים:</b> ארנק לחברי קהילה שלא במשרד. כל שימוש בכלי מתקדם מוריד קרדיטים מהיתרה. מחיר קרדיט: {PRICE_TBD}.
           </p>
           <p>
-            <b>{OFFICE_NAME}:</b> {OFFICE_FEE}, ו-0% עמלה למשרד. כל הכלים המתקדמים כלולים בתוך מכסה חודשית שמתחדשת בכל חודש.
+            <b>{OFFICE_NAME}:</b> 0% עמלה למשרד, 100% עמלה למתווך. כל הכלים המתקדמים כלולים בתוך מכסה חודשית שמתחדשת בכל חודש.
           </p>
           <p className="up-demo">דמו של {PLATFORM_NAME}: אין חיוב אמיתי, והיתרות והמכסות הן נתוני דמו.</p>
         </Reveal>

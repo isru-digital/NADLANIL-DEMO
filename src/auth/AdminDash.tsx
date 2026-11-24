@@ -570,6 +570,19 @@ export function MemberDetails({ id, onClose }: { id: string | null; onClose: () 
                 <dt>מספר רישיון</dt>
                 <dd className="num">{m.license}</dd>
               </div>
+              {/* 24.11.2026: what the Registrar of Real Estate Brokers said about the number */}
+              <div data-license-status={m.license_status ?? ''}>
+                <dt>רשם המתווכים</dt>
+                <dd>
+                  {m.license_status === 'verified'
+                    ? 'אומת, השם מתוך המאגר'
+                    : m.license_status === 'not_found'
+                      ? 'לא נמצא במאגר, לבדוק ידנית'
+                      : m.license_status === 'unavailable'
+                        ? 'המאגר לא ענה, לבדוק ידנית'
+                        : 'לא נבדק'}
+                </dd>
+              </div>
               <div>
                 <dt>עובד</dt>
                 <dd>{m.work === 'office' ? `במשרד: ${m.office_name}` : 'עצמאי'}</dd>

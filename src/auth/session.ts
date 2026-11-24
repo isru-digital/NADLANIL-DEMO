@@ -27,6 +27,9 @@ export type MemberInfo = {
   created_at: number
   decided_at: number | null
   decided_by: string | null
+  /** 24.11.2026: 'verified' when the licence number was found in the Registrar of Real Estate Brokers */
+  license_status?: '' | 'verified' | 'not_found' | 'unavailable'
+  registry_name?: string
 }
 export type StaffInfo = { name: string; email: string; approver: boolean }
 export type Session = { token: string; member: MemberInfo | null; staff: StaffInfo | null }
@@ -109,7 +112,7 @@ export const asMember: MemberInfo | null = !demo && session?.member ? session.me
  * who has no broker's card. Null for a visitor and inside a presentation of the demo. auth/profile.ts turns the
  * app's "current broker" into this person, so a screen never has to pick a name by itself.
  */
-export type SignedIn = { key: string; name: string; title: string; phone: string; email: string; cities: string[]; areas: string; photo: string; isStaff: boolean; isBroker: boolean }
+export type SignedIn = { key: string; name: string; title: string; phone: string; email: string; cities: string[]; areas: string; photo: string; isStaff: boolean; isBroker: boolean; nameLocked?: boolean }
 export const signedIn: SignedIn | null = demo || !session
   ? null
   : asMember
@@ -124,6 +127,8 @@ export const signedIn: SignedIn | null = demo || !session
         photo: '',
         isStaff: !!session.staff,
         isBroker: true,
+        // the full name came from the registry: the broker cannot change it himself (24.11.2026)
+        nameLocked: asMember.license_status === 'verified',
       }
     : session.staff
       ? { key: `s:${session.staff.email.toLowerCase()}`, name: session.staff.name, title: 'צוות הקהילה', phone: '', email: session.staff.email, cities: [], areas: '', photo: '', isStaff: true, isBroker: false }
@@ -149,7 +154,7 @@ function readOwn(who: string): Partial<OwnProfile> | null {
   }
 }
 function takeOwn(to: SignedIn, own: Partial<OwnProfile>) {
-  if (typeof own.name === 'string' && own.name.trim().length >= 2) to.name = own.name.trim()
+  if (!to.nameLocked && typeof own.name === 'string' && own.name.trim().length >= 2) to.name = own.name.trim()
   if (typeof own.phone === 'string') to.phone = own.phone.trim()
   if (Array.isArray(own.cities)) to.cities = own.cities.filter((c) => typeof c === 'string' && c.trim()).map((c) => c.trim())
   if (typeof own.areas === 'string') to.areas = own.areas.trim()

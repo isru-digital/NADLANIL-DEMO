@@ -135,7 +135,7 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
   const { ctx, page, errors } = await signIn(dev.vp)
   // the tabs: the overview first, each tab shows only its own part
   const tabs = await page.evaluate(() => ({ list: [...document.querySelectorAll('[role="tablist"].an-tabs [data-view]')].map((b) => (b.querySelector('.an-long') ?? b).textContent.replace(/\d+/g, '').trim()), on: document.querySelector('.an-tabs [aria-selected="true"]')?.dataset.view, badge: document.querySelector('[data-view="requests"] b')?.textContent }))
-  check(`${d} five tabs, the overview open, the waiting count on "בקשות"`, tabs.list.join('|') === 'סקירה|בקשות|מתווכים|פילוח|צוות וכלים' && tabs.on === 'overview' && tabs.badge === '3', JSON.stringify(tabs))
+  check(`${d} six tabs (with "לידים נכנסים", 24.11.2026), the overview open, the waiting count on "בקשות"`, tabs.list.join('|') === 'סקירה|בקשות|לידים נכנסים|מתווכים|פילוח|צוות וכלים' && tabs.on === 'overview' && tabs.badge === '3', JSON.stringify(tabs))
   let sh = await shown(page)
   check(`${d} the overview: the cards, the waiting requests and the chart, and none of the other parts`, sh.kpis && sh.pending && sh.chart && !sh.requests && !sh.directory && !sh.breakdown && !sh.engagement && !sh.test && !sh.staff && !sh.mail, JSON.stringify(sh))
   const pend = await page.evaluate(() => ({

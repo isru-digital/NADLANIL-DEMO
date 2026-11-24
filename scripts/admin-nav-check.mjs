@@ -87,7 +87,7 @@ for (const [dev, vp] of Object.entries(SIZES)) {
       }
     })
     check(`${tag}: with nothing in the address the menu is the tabs, and only the tabs`, menu.lists === 1 && menu.tabs && !menu.old, menu)
-    check(`${tag}: five tabs in order, all seen, none slides sideways`, menu.labels.join('|') === 'סקירה|בקשות|מתווכים|פילוח|צוות וכלים' && menu.inside && !menu.slides, menu)
+    check(`${tag}: six tabs in order (with "לידים נכנסים", 24.11.2026), all seen, none slides sideways`, menu.labels.join('|') === 'סקירה|בקשות|לידים נכנסים|מתווכים|פילוח|צוות וכלים' && menu.inside && !menu.slides, menu)
     check(`${tag}: the waiting count is on "בקשות", and a screen reader reads it`, !!menu.badge && Number(menu.badge.n) >= 1 && menu.badge.label === `${menu.badge.n} ממתינות` && !menu.badge.hidden, menu.badge)
     check(`${tag}: the count does not touch the name "בקשות" and stays inside its tab`, !!menu.badge && menu.badge.apart >= 4 && menu.badge.inTab, menu.badge)
 

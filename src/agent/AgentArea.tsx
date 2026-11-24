@@ -216,9 +216,10 @@ function Dashboard() {
                 <dt>עמלה למשרד</dt>
                 <dd className="num">0%</dd>
               </div>
+              {/* no price (Itzik, 24.11.2026): the fee as everywhere else */}
               <div>
-                <dt>דמי חבר</dt>
-                <dd className="num">{priceText(cost.month)}</dd>
+                <dt>עמלה למתווך</dt>
+                <dd className="num">100%</dd>
               </div>
               <div>
                 <dt>הצטרפות</dt>

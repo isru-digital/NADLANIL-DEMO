@@ -9,7 +9,14 @@ import { useMember } from '../config/member'
 import { MADLAN_PACKS, PLANS, TERMS } from '../config/pricing'
 import { brokerPhone, brokers } from '../data/demo'
 import { BackButton, Logo, Reveal } from '../components/ui'
+import LeadSheet from '../join/LeadSheet'
 import '../styles/office-story.css'
+import '../styles/leads.css'
+
+// 24.11.2026 (Itzik): no prices on this page. The price list, the Madlan packs and the fee line are not shown; the
+// leads form of the office page takes their place, and the fee reads "0% עמלה למשרד, 100% עמלה למתווך"
+const SHOW_PRICES = false
+const FEE = '0% עמלה למשרד, 100% עמלה למתווך'
 
 /**
  * The office's page for a member of the community (Itzik, 17.11.2026): what opens from "המשרד" and from
@@ -61,7 +68,7 @@ const envelope: { id: string; icon: LucideIcon; name: string; lines: ReactNode[]
       <>
         מודעות יד2 כלולות: {ADS_PLUS} במסלול <bdi dir="ltr">PLUS</bdi>, ו-{ADS_PRO} במסלול <bdi dir="ltr">PRO</bdi>
       </>,
-      `חבילות מדלן בתוספת: ${MADLAN_PACKS.map((m) => `${m.ads} מודעות ב-${num(m.price)} ₪`).join(', ')} לחודש, לפני מע"מ`,
+      ...(SHOW_PRICES ? [`חבילות מדלן בתוספת: ${MADLAN_PACKS.map((m) => `${m.ads} מודעות ב-${num(m.price)} ₪`).join(', ')} לחודש, לפני מע"מ`] : []),
     ],
   },
   {
@@ -144,7 +151,7 @@ function Split() {
         <i style={{ width: `${share}%` }} />
       </div>
       <p className="os-split-note" aria-hidden>
-        במשרדים רבים חלק מהעמלה, לרוב 50%, נשאר במשרד. כאן המשרד מקבל 0%.
+        במשרדים רבים חלק מהעמלה, לרוב 50%, נשאר במשרד. כאן: {FEE}.
       </p>
     </div>
   )
@@ -280,6 +287,8 @@ export default function OfficeStory({ standalone = false }: { standalone?: boole
   const navigate = useNavigate()
   const { isOffice } = useMember()
   const [call, setCall] = useState(false)
+  // "מעוניינים לקבל מידע? לחצו כאן": the same form as on the office page, sent to the office's staff (24.11.2026)
+  const [lead, setLead] = useState(false)
   const me = brokers.find((b) => b.id === CURRENT_BROKER_ID) ?? brokers[0]
   const join = () => navigate(isOffice ? '/app/office' : '/join/office?join=1')
   const joinLabel = isOffice ? 'למשרד שלי' : 'אני רוצה להצטרף'
@@ -290,8 +299,8 @@ export default function OfficeStory({ standalone = false }: { standalone?: boole
         {joinLabel} <ArrowLeft />
       </button>
       {!isOffice && (
-        <button type="button" className="os-btn is-ghost" onClick={() => setCall(true)} data-act={`call-${where}`}>
-          <PhoneCall /> שיחזרו אליי קודם
+        <button type="button" className="os-btn is-ghost" onClick={() => setLead(true)} data-act="ask-info" data-where={where}>
+          מעוניינים לקבל מידע? לחצו כאן
         </button>
       )}
     </div>
@@ -324,8 +333,14 @@ export default function OfficeStory({ standalone = false }: { standalone?: boole
             </h1>
             <p className="os-lead">משרד תיווך ארצי שעומד מאחוריכם בכל עסקה, ולא לוקח ממנה אף אחוז. אתם בונים עסק משלכם, ואנחנו דואגים שלא תעשו את זה לבד.</p>
             {ctas('hero')}
-            <small className="os-fine">
-              דמי חבר החל מ-<span className="num">{num(PLANS[0].price)}</span> ₪ + מע"מ לחודש. {termOf('דמי הצטרפות') === 'ללא עלות' ? 'בלי דמי הצטרפות.' : ''}
+            <small className="os-fine" data-fee>
+              {SHOW_PRICES ? (
+                <>
+                  דמי חבר החל מ-<span className="num">{num(PLANS[0].price)}</span> ₪ + מע"מ לחודש. {termOf('דמי הצטרפות') === 'ללא עלות' ? 'בלי דמי הצטרפות.' : ''}
+                </>
+              ) : (
+                `${FEE}.`
+              )}
             </small>
           </div>
           <Split />
@@ -416,7 +431,25 @@ export default function OfficeStory({ standalone = false }: { standalone?: boole
         </div>
       </section>
 
-      {/* ------------------------------------------------------------ the price list, short */}
+      {/* ------------------------------------------------------------ the ask for details: the price list was here */}
+      {!SHOW_PRICES && (
+        <section className="jo-ask os-ask" data-section="ask">
+          <Reveal className="jo-ask-card">
+            <span className="jo-ask-fee">
+              <BadgeCheck aria-hidden /> {FEE}
+            </span>
+            <h2>רוצים לשמוע איך זה עובד אצלנו?</h2>
+            <p>משאירים שם, טלפון ועיר, וצוות המשרד חוזר אליכם עם כל הפרטים.</p>
+            <button type="button" className="btn btn-gold btn-lg" onClick={() => setLead(true)} data-act="ask-info" data-where="ask">
+              מעוניינים לקבל מידע? לחצו כאן
+              <ArrowLeft />
+            </button>
+          </Reveal>
+        </section>
+      )}
+
+      {/* ------------------------------------------------------------ the price list, short (not shown since 24.11.2026) */}
+      {SHOW_PRICES && (
       <section className="os-plans">
         <Reveal className="os-head">
           <span className="os-tag">המחירון</span>
@@ -448,6 +481,7 @@ export default function OfficeStory({ standalone = false }: { standalone?: boole
           למחירון המלא ולמחשבון <ArrowLeft />
         </Link>
       </section>
+      )}
 
       {/* ------------------------------------------------------------ the close */}
       <section className="os-final">
@@ -457,13 +491,15 @@ export default function OfficeStory({ standalone = false }: { standalone?: boole
           <h2>
             הגיע הזמן לעבוד <span className="is-mint">בשביל עצמכם</span>
           </h2>
-          <p>עם השם, הליווי והכלים של משרד ארצי. ועם 100% מהעמלה.</p>
+          <p>עם השם, הליווי והכלים של משרד ארצי. {FEE}.</p>
           {ctas('final')}
           {!isOffice && <small className="os-fine">לא בטוחים עדיין? הקהילה נשארת שלכם, בחינם, כמה שתרצו.</small>}
         </div>
       </section>
 
+      {/* the demo's "שיחזרו אליי" sheet is kept, not shown: the leads form took its place (24.11.2026) */}
       <CallBack open={call} onClose={() => setCall(false)} />
+      <LeadSheet open={lead} onClose={() => setLead(false)} />
     </div>
   )
 }
