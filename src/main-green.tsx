@@ -54,6 +54,10 @@ import { AutoPublish, AutoPublishNote, OwnerLinkButton } from './owner/OwnerPubl
 import MatchMoment from './community/MatchMoment'
 import { OWNER_PATH, ownerActions } from './owner/ownerLink'
 import { clientActions } from './crm/clients'
+import { referralActions } from './crm/referral'
+import { SendCardButton } from './crm/SendToBuyer'
+import BuyerPage from './crm/BuyerPage'
+import { BUYER_PATH } from './crm/sendProperty'
 import './styles/lite.css'
 import './styles/theme-green.css'
 
@@ -74,6 +78,7 @@ registerReset(() => memberActions.reset())
 registerReset(() => walletActions.reset())
 registerReset(() => clientActions.reset())
 registerReset(() => ownerActions.reset())
+registerReset(() => referralActions.reset())
 registerReset(() => pickActions.reset())
 // the CRM's clients are one simple table (search, types, matches, quick marks); the board keeps the properties
 registerCrm({
@@ -88,7 +93,16 @@ registerCrm({
 // the feed opens with a personal hello, four cards for what a broker came to do, and the four rooms (17.11.2026)
 registerCommunity({ Top: FeedWelcome as never })
 // every property put in the CRM goes up to the community by itself; a published card carries the link for its owner
-registerCrm({ AutoBar: AutoPublishNote, CardExtra: OwnerLinkButton })
+// and "שלח ללקוח בוואטסאפ" on every property card (24.11.2026)
+registerCrm({
+  AutoBar: AutoPublishNote,
+  CardExtra: (p) => (
+    <>
+      <OwnerLinkButton {...p} />
+      <SendCardButton item={p.item} />
+    </>
+  ),
+})
 // a property is a private home, an office or a business property: picked when it is opened, shown and filtered on the board
 registerCrm({ categories: CATEGORIES.map(({ id, label }) => ({ id, label })), categoryOf, kindOf: cardKind, noRooms: (item) => !hasRooms(categoryOf(item), cardKind(item)) })
 // the community's properties have no stages: one list of cards (Itzik 17.11.2026)
@@ -166,6 +180,8 @@ start(<HomeGreen />, {
       <Route path="/install" element={<InstallGuide />} />
       <Route path="/upgrade" element={<Upgrade />} />
       <Route path={OWNER_PATH} element={<OwnerPage />} />
+      {/* the property as the buyer sees it, from the broker's WhatsApp message */}
+      <Route path={BUYER_PATH} element={<BuyerPage />} />
     </>
   ),
   // the "start again" tab is for the demo only: a real launch builds with VITE_DEMO_RESET=false

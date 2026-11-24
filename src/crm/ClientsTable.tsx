@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, CalendarClock, Check, Download, Lock, Phone, Plus, Search, Send, Share2, Sparkles, Star, UserRound } from 'lucide-react'
+import { ArrowLeft, CalendarClock, Check, Download, Forward, Lock, Phone, Plus, Search, Send, Share2, Sparkles, Star, UserRound } from 'lucide-react'
 import { brokerById, crmStages, formatPriceShort } from '../data/demo'
 import type { CrmItem } from '../data/demo'
 import { asset } from '../config'
@@ -11,7 +11,13 @@ import { nameSlots } from '../config/navExtras'
 import { useStore } from '../store'
 import { Avatar, Modal } from '../components/ui'
 import { TYPES, clientActions, dateText, dateValue, daysFrom, lastText, matchLabel, matchesFor, sideOf, typeOf, useClients, yad2Demo } from './clients'
-import type { Client, ClientType } from './clients'
+import type { Client, ClientType, Match } from './clients'
+import ReferralInbox from './ReferralInbox'
+import ReferClient from './ReferClient'
+import SendToBuyer from './SendToBuyer'
+import { fromMatch } from './sendProperty'
+import type { SendProp } from './sendProperty'
+import { WhatsAppIcon } from '../templates/LandingTemplate'
 import NewClient from './NewClient'
 import { AskPhone } from './AskPhone'
 import { groupLabel } from '../config/propertyTypes'
@@ -36,6 +42,9 @@ export default function ClientsTable({ onPublish }: { onPublish: (item: CrmItem)
   const [matchId, setMatchId] = useState<string | null>(null)
   const [adding, setAdding] = useState(false)
   const [pulling, setPulling] = useState(false)
+  // "העבר למתווך בקהילה" and "שלח ללקוח בוואטסאפ" (24.11.2026)
+  const [referId, setReferId] = useState<string | null>(null)
+  const [sending, setSending] = useState<{ prop: SendProp; clientId: string } | null>(null)
 
   // a community member has only the four basic types; the office's types are shown locked
   const mine = useMemo(() => all.filter((x) => isOffice || !typeOf(x.type).office), [all, isOffice])
@@ -63,6 +72,9 @@ export default function ClientsTable({ onPublish }: { onPublish: (item: CrmItem)
   const closeMatch = useCallback(() => setMatchId(null), [])
   const closeAdd = useCallback(() => setAdding(false), [])
   const closePull = useCallback(() => setPulling(false), [])
+  const closeRefer = useCallback(() => setReferId(null), [])
+  const closeSend = useCallback(() => setSending(null), [])
+  const referring = all.find((x) => x.id === referId) ?? null
 
   const basic = TYPES.filter((t) => !t.office)
   const office = TYPES.filter((t) => t.office)
@@ -138,6 +150,8 @@ export default function ClientsTable({ onPublish }: { onPublish: (item: CrmItem)
           </em>
         </Link>
       )}
+
+      <ReferralInbox />
 
       <div className="ct-wrap">
         <table className={`ct-table${isOffice ? ' is-office' : ''}`}>
@@ -244,6 +258,10 @@ export default function ClientsTable({ onPublish }: { onPublish: (item: CrmItem)
           setOpenId(null)
           setMatchId(id)
         }}
+        onRefer={(id) => {
+          setOpenId(null)
+          setReferId(id)
+        }}
         published={open?.crmId ? publishedIds[open.crmId] : undefined}
         onPublish={
           open?.crmId && crm.some((x) => x.id === open.crmId)
@@ -255,7 +273,17 @@ export default function ClientsTable({ onPublish }: { onPublish: (item: CrmItem)
             : undefined
         }
       />
-      <Matches client={matching} onClose={closeMatch} onAsk={() => toast('הפנייה נשלחה למתווך')} />
+      <Matches
+        client={matching}
+        onClose={closeMatch}
+        onAsk={() => toast('הפנייה נשלחה למתווך')}
+        onSend={(m, clientId) => {
+          setMatchId(null)
+          setSending({ prop: fromMatch(m), clientId })
+        }}
+      />
+      <ReferClient client={referring} onClose={closeRefer} />
+      <SendToBuyer prop={sending?.prop ?? null} preset={sending?.clientId} onClose={closeSend} />
       <NewClient
         open={adding}
         onClose={closeAdd}
@@ -319,6 +347,7 @@ function Details({
   onClose,
   isOffice,
   onMatch,
+  onRefer,
   onPublish,
   published,
 }: {
@@ -326,6 +355,7 @@ function Details({
   onClose: () => void
   isOffice: boolean
   onMatch: (id: string) => void
+  onRefer: (id: string) => void
   onPublish?: () => void
   published?: string
 }) {
@@ -375,6 +405,13 @@ function Details({
           שליחה ללקוח
           <small>נכס, סיור או הודעה קצרה בוואטסאפ</small>
         </button>
+        {sideOf(cl.type) === 'wants' && (
+          <button type="button" className="ct-send ct-refer" onClick={() => onRefer(cl.id)} data-act="refer-client">
+            <Forward aria-hidden />
+            העבר למתווך בקהילה
+            <small>יש לך לקוח בעיר שאתם לא עובדים בה? על עמלת הפניה של 25% או 50%</small>
+          </button>
+        )}
 
         {cl.roomsMin != null && <SearchSummary cl={cl} />}
 
@@ -468,7 +505,7 @@ function Details({
 }
 
 /** Matches from the community for one client. Demo data. */
-function Matches({ client, onClose, onAsk }: { client: Client | null; onClose: () => void; onAsk: () => void }) {
+function Matches({ client, onClose, onAsk, onSend }: { client: Client | null; onClose: () => void; onAsk: () => void; onSend: (m: Match, clientId: string) => void }) {
   const [last, setLast] = useState<Client | null>(client)
   if (client && client !== last) setLast(client)
   const cl = client ?? last
@@ -504,6 +541,12 @@ function Matches({ client, onClose, onAsk }: { client: Client | null; onClose: (
                   פנייה למתווך
                 </button>
               </div>
+              {wants && (
+                <button type="button" className="sh-card-btn ct-m-send" onClick={() => onSend(m, cl.id)} data-act="send-to-buyer">
+                  <WhatsAppIcon />
+                  שלח ללקוח בוואטסאפ
+                </button>
+              )}
             </article>
           )
         })}
