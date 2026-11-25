@@ -145,11 +145,17 @@ async function licenseCheck(env, request) {
 // ---------------------------------------------------------------- leads (24.11.2026)
 /**
  * "מעוניינים לקבל מידע?" on the office page: a name, a phone, a city and a note. It is kept here and an e-mail goes to
- * the staff marked gets_leads. Until LEADS_MAIL is 'live', the e-mail goes only to the staff marked test_inbox, so a
- * test never reaches anyone else. No address is written in this code: all of them are in the staff table.
+ * ONE address only (25.11.2026, Itzik): the server setting LEADS_TO (a Cloudflare secret on the live Worker, a line in
+ * server/.dev.vars locally). No address is written in this code, and the staff table plays no part: nobody in it is
+ * marked or mailed for a lead. Without LEADS_TO the lead is still kept, and no e-mail goes out.
  * A lead's name and phone are for staff only, and are never shown anywhere public.
  */
 const LEAD_STATUS = ['new', 'working', 'closed']
+// the one address every lead's e-mail goes to, from the server's settings; '' when it is not set or not an address
+const leadsTo = (env) => {
+  const a = String(env.LEADS_TO ?? '').trim().toLowerCase()
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(a) ? a : ''
+}
 async function newLead(env, request) {
   const ip = request.headers.get('cf-connecting-ip') ?? 'local'
   if (!(await allowed(env, `lead:${ip}`, 5, HOUR))) return json({ error: 'יותר מדי פניות מהמקום הזה. נסו שוב בעוד שעה.' }, 429)
@@ -166,11 +172,8 @@ async function newLead(env, request) {
   const id = newId()
   const now = Date.now()
   await env.DB.prepare('INSERT INTO leads (id, name, phone, city, note, created_at) VALUES (?, ?, ?, ?, ?, ?)').bind(id, lead.name, lead.phone, lead.city, lead.note, now).run()
-  const live = env.LEADS_MAIL === 'live'
-  const to = (await env.DB.prepare(`SELECT email, name FROM staff WHERE ${live ? 'gets_leads' : 'test_inbox'} = 1`).all()).results
-  for (const person of to) {
-    await sendMail(env, { to: person.email, kind: 'lead', ...leadMail({ site: site(env), person, lead: { ...lead, created_at: now }, test: !live }) })
-  }
+  const to = leadsTo(env)
+  if (to) await sendMail(env, { to, kind: 'lead', ...leadMail({ site: site(env), person: { name: 'צוות המשרד' }, lead: { ...lead, created_at: now }, test: env.TEST_MODE === '1' }) })
   return json({ ok: true })
 }
 
@@ -521,7 +524,7 @@ async function admin(env, request, origin, path, s) {
   // incoming leads (24.11.2026): staff only, with the full phone, to call back
   if (path === '/api/admin/leads' && method === 'GET') {
     const rows = (await env.DB.prepare('SELECT * FROM leads ORDER BY created_at DESC LIMIT 500').all()).results
-    return json({ leads: rows, live: env.LEADS_MAIL === 'live' })
+    return json({ leads: rows, mail_to: leadsTo(env) })
   }
   const lead = path.match(/^\/api\/admin\/leads\/([a-f0-9]{16})\/status$/)
   if (lead && method === 'POST') {

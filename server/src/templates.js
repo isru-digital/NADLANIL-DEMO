@@ -215,7 +215,7 @@ export function leadMail({ site, person, lead, test }) {
     site,
     `${h1(`היי ${esc(person.name)},`)}
      ${p('מישהו השאיר פרטים בדף ההצטרפות למשרד, וביקש לקבל מידע.')}
-     ${test ? p('זה ליד של בדיקה. המייל נשלח רק לתיבת הבדיקות.', 'font-size:14px;color:#8a5a00;') : ''}
+     ${test ? p('זה ליד של בדיקה מהשרת המקומי.', 'font-size:14px;color:#8a5a00;') : ''}
      ${table(rows)}
      <div style="padding:4px 0 4px;">${button(`${site}/kehila/admin#leads`, 'לכל הלידים')}</div>`,
     { preheader: `${lead.name} מ${lead.city} ביקש לקבל מידע`, foot: 'הפרטים של הליד מיועדים לצוות בלבד.' },

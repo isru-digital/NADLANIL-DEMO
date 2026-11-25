@@ -1,8 +1,9 @@
 // The leads form of the office page and "לידים נכנסים" in the admin (24.11.2026), on the LOCAL test server only.
 //  1. the server keeps a lead, refuses a short one with clear words, quietly drops a robot, brakes after 5 an hour,
 //     and refuses a foreign site
-//  2. the e-mail of a lead: in test mode only to the staff marked test_inbox (itzik), never to אריאל or אופק, even
-//     though they are marked gets_leads; no e-mail address is written in the server's code
+//  2. the e-mail of a lead (25.11.2026): to ONE address only, the server setting LEADS_TO (read here from
+//     server/.dev.vars, so it is written in no code), and to nobody in the staff table, even one marked gets_leads or
+//     test_inbox; nothing in the staff table is marked by this check
 //  3. the list is for staff only: nobody signed in gets 401, a broker gets 403; the statuses move
 //  4. the office page: no price left, the button, the sheet, the network's text word for word, a kept place for
 //     "מילון מונחים", and the fee always as "0% עמלה למשרד, 100% עמלה למתווך"
@@ -56,17 +57,15 @@ await api('/api/login', { method: 'POST', body: { email: 'itzik@test.local' } })
 const staffToken = (await api('/api/session', { method: 'POST', body: { token: tokenOf((await lastTo('itzik@test.local')).html) } })).data.token
 const team = (await api('/api/admin/staff', { token: staffToken })).data.staff
 const byMail = (m) => team.find((s) => s.email === m)
-// אריאל and אופק get the leads for real; only itzik is the inbox of a test
-for (const [email, flags] of [
-  ['itzik@test.local', { test_inbox: true, gets_leads: false }],
-  ['ariel@test.local', { gets_leads: true, test_inbox: false }],
-  ['ofek@test.local', { gets_leads: true, test_inbox: false }],
-]) {
-  const s = byMail(email)
-  if (s) await api('/api/admin/staff', { method: 'POST', token: staffToken, body: { name: s.name, email, approver: s.approver, ...flags } })
+// nobody in the staff table is marked for leads (25.11.2026): the local copy is set back to all 0, like the live one
+for (const x of team) {
+  if (x.gets_leads || x.test_inbox) await api('/api/admin/staff', { method: 'POST', token: staffToken, body: { name: x.name, email: x.email, approver: x.approver, gets_leads: false, test_inbox: false } })
 }
 const team2 = (await api('/api/admin/staff', { token: staffToken })).data.staff
-check('the staff table: itzik is the test inbox; אריאל and אופק get leads; the flags kept on the approver row', team2.find((s) => s.email === 'itzik@test.local')?.test_inbox && team2.filter((s) => s.gets_leads).length >= 2 && team2.every((s) => s.email === 'itzik@test.local' || !s.test_inbox), team2)
+check('the staff table: nobody is marked for leads (gets_leads and test_inbox all 0)', team2.length > 0 && team2.every((x) => !x.gets_leads && !x.test_inbox), team2.map((x) => [x.email, x.gets_leads, x.test_inbox]))
+// the one address of the leads, from the local server's settings (server/.dev.vars, not in git)
+const LEADS_TO = (readFileSync('server/.dev.vars', 'utf8').match(/^LEADS_TO=(.+)$/m)?.[1] ?? '').trim().toLowerCase()
+check('the local server has the setting LEADS_TO (one address)', /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(LEADS_TO), LEADS_TO ? 'set' : 'missing')
 
 // ---------------------------------------------------------------- 1-2: the server
 const stamp = Date.now().toString(36).slice(-5)
@@ -75,8 +74,8 @@ let r = await api('/api/leads', { method: 'POST', body: LEAD })
 check('a lead with name, phone, city and note is kept', r.status === 200 && r.data.ok, r)
 const box = (await outbox()).filter((m) => !m.subject.includes('קוד הכניסה') && !m.subject.includes('קישור הכניסה'))
 const leadMails = box.filter((m) => m.subject.includes(LEAD.name))
-check('the e-mail of the lead went to itzik (the test inbox) only', leadMails.length === 1 && leadMails[0].to_email === 'itzik@test.local', leadMails.map((m) => m.to_email))
-check('no e-mail of the lead to אריאל or to אופק while testing', !box.some((m) => /ariel|ofek/.test(m.to_email)), box.map((m) => m.to_email))
+check('the e-mail of the lead went once, to the LEADS_TO address only', leadMails.length === 1 && leadMails[0].to_email === LEADS_TO, leadMails.length)
+check('no e-mail of the lead to anyone in the staff table (itzik, אריאל, אופק)', !box.some((m) => m.subject.includes(LEAD.name) && team2.some((x) => x.email === m.to_email)), box.length)
 check('the e-mail says it is a test, and carries the name, phone, city, note and a link to the leads tab', leadMails[0]?.subject.startsWith('(בדיקה)') && ['054-555-0123', 'טבריה', 'אפשר להתקשר אחרי חמש', '/kehila/admin#leads'].every((x) => leadMails[0].html.includes(x)), leadMails[0]?.subject)
 const code = readdirSync('server/src').map((f) => readFileSync(`server/src/${f}`, 'utf8')).join('\n')
 const addrs = [...code.matchAll(/[\w.+-]+@[\w-]+\.[\w.]+/g)].map((m) => m[0]).filter((a) => !/^(noreply|example)@/.test(a))
@@ -113,7 +112,7 @@ if (brokerToken) {
 const list = (await api('/api/admin/leads', { token: staffToken })).data
 const mine = list.leads.find((l) => l.name === LEAD.name)
 check('staff see the lead: name, full phone, city, note, status new, newest first', mine && mine.phone === LEAD.phone && mine.city === 'טבריה' && mine.note === LEAD.note && mine.status === 'new' && list.leads[0].created_at >= list.leads.at(-1).created_at, mine)
-check('the list says the e-mails are in test mode', list.live === false)
+check('the list names the one address the e-mails go to', list.mail_to === LEADS_TO)
 r = await api(`/api/admin/leads/${mine.id}/status`, { method: 'POST', token: staffToken, body: { status: 'working' } })
 let now = (await api('/api/admin/leads', { token: staffToken })).data.leads.find((l) => l.id === mine.id)
 check('status to בטיפול: kept, with who and when', r.status === 200 && now.status === 'working' && now.updated_by && now.updated_at, now)

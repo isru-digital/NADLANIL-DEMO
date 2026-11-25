@@ -20,17 +20,18 @@ const telOf = (phone: string) => phone.replace(/[^\d+]/g, '')
 
 export default function LeadsPanel({ onCount }: { onCount?: (fresh: number) => void }) {
   const [leads, setLeads] = useState<Lead[] | null>(null)
-  const [live, setLive] = useState(false)
+  // the one address the server sends every lead's e-mail to (its setting LEADS_TO), '' when none is set
+  const [mailTo, setMailTo] = useState('')
   const [error, setError] = useState('')
   const [filter, setFilter] = useState<'all' | LeadStatus>('all')
   const [busy, setBusy] = useState('')
 
   const load = useCallback(async () => {
-    const r = await call<{ leads: Lead[]; live: boolean }>('/api/admin/leads')
+    const r = await call<{ leads: Lead[]; mail_to: string }>('/api/admin/leads')
     if (!r.ok) return setError(r.data.error ?? 'לא הצלחנו לטעון את הלידים.')
     setError('')
     setLeads(r.data.leads)
-    setLive(r.data.live)
+    setMailTo(r.data.mail_to ?? '')
   }, [])
   useEffect(() => {
     load()
@@ -61,8 +62,14 @@ export default function LeadsPanel({ onCount }: { onCount?: (fresh: number) => v
 
   return (
     <section id="dk-leads" className="dk-section" aria-label="לידים נכנסים" data-panel="leads">
-      <p className="lds-mode" data-mail-mode={live ? 'live' : 'test'}>
-        {live ? 'על כל ליד חדש נשלח מייל לצוות שמקבל לידים.' : 'מצב בדיקה: מייל על ליד חדש נשלח רק לתיבת הבדיקות.'}
+      <p className="lds-mode" data-mail-mode={mailTo ? 'set' : 'none'}>
+        {mailTo ? (
+          <>
+            על כל ליד חדש נשלח מייל אל <bdi dir="ltr">{mailTo}</bdi>.
+          </>
+        ) : (
+          'לא הוגדרה כתובת למיילים של הלידים. הלידים נשמרים כאן, ומייל לא נשלח.'
+        )}
       </p>
       <div className="lds-filter" role="group" aria-label="סינון לפי סטטוס">
         {([{ id: 'all', label: 'הכול' }, ...STATUS] as { id: 'all' | LeadStatus; label: string }[]).map((f) => (
