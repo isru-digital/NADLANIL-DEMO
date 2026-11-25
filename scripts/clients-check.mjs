@@ -84,7 +84,7 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
       const vis = (el) => !!el && getComputedStyle(el).display !== 'none' && el.getBoundingClientRect().width > 0
       return { grid: getComputedStyle(tr).display, name: vis(tr.querySelector('.ct-name b')), type: vis(tr.querySelector('.ct-type')), phone: vis(tr.querySelector('.ct-phone a')), btn: vis(tr.querySelector('.ct-act button')), last: vis(tr.querySelector('.ct-last')), head: vis(document.querySelector('.ct-table thead')), h: Math.round(tr.getBoundingClientRect().height), btnH: Math.round(tr.querySelector('.ct-act button').getBoundingClientRect().height) }
     })
-    check('phone: the table is a short list of cards: name, type, phone and the match button', card.grid === 'grid' && card.name && card.type && card.phone && card.btn && !card.last && !card.head && card.h < 150, JSON.stringify(card))
+    check('phone: the table is a short list of cards: name, type, phone and the match button', card.grid === 'grid' && card.name && card.type && card.phone && card.btn && !card.last && !card.head && card.h < 240, JSON.stringify(card)) // since 25.11.2026 a buyer card also holds its short facts (city, rooms, budget)
   }
   await shot('1-table-community')
 
@@ -127,7 +127,7 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
   check(`${d} "קונים מתאימים" opens matches for a seller`, st.title.includes('קונים מתאימים') && st.n >= 1, JSON.stringify(st))
   await closeModal(page)
 
-  // the details window: stage, three marks, a short note
+  // the details window: a short note; since 25.11.2026 no stage and no quick marks (scripts/crm-tidy-check.mjs)
   await page.evaluate(() => document.querySelector('tr[data-id="k11"] .ct-name button').click())
   await wait(700)
   st = await page.evaluate(() => ({
@@ -137,12 +137,8 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
     office: document.querySelector('.ct-det .ct-office')?.textContent ?? '',
     fields: !!document.querySelector('.ct-office-fields'),
   }))
-  check(`${d} a click on a row opens the details: stage, "חזרתי לבעלים", "תואם סיור", "בלעדיות" and a short note`, st.stages.length === 5 && st.marks.join() === 'חזרתי לבעלים,תואם סיור,בלעדיות' && st.note, JSON.stringify(st))
+  check(`${d} a click on a row opens the details: a short note, and no stage or quick marks any more`, st.stages.length === 0 && st.marks.length === 0 && st.note, JSON.stringify(st))
   check(`${d} for a community member the office's fields are locked there too`, !st.fields && st.office.includes('זמין לחברי המשרד'))
-  await page.evaluate(() => {
-    document.querySelector('.ct-det .ct-mark[data-mark="tourSet"]').click()
-    ;[...document.querySelectorAll('.ct-det .ct-stage button')].find((b) => b.textContent.trim() === 'סיור').click()
-  })
   await page.type('.ct-det input.input', 'סיור ביום חמישי')
   await wait(400)
   check(`${d} typing the note keeps the focus in the field`, await page.evaluate(() => document.activeElement?.matches('.ct-det input.input') && document.activeElement.value === 'סיור ביום חמישי'))
@@ -150,7 +146,7 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
   await closeModal(page)
   r = await rows(page)
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('nadlanup-clients-v1')).find((x) => x.id === 'k11'))
-  check(`${d} the marks are saved, and the client jumps to the top as updated today`, saved.tourSet === true && saved.stage === 'tour' && saved.note === 'סיור ביום חמישי' && r[0].id === 'k11', `${r[0].id} ${JSON.stringify({ t: saved.tourSet, s: saved.stage })}`)
+  check(`${d} the note is saved, and the client jumps to the top as updated today`, saved.note === 'סיור ביום חמישי' && r[0].id === 'k11', `${r[0].id} ${JSON.stringify({ n: saved.note })}`)
 
   // a new client
   await page.evaluate(() => document.querySelector('[data-act="new-client"]').click())

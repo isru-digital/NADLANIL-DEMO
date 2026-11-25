@@ -806,6 +806,28 @@ html[data-mode='night'] .kan-renew {
   width: max-content;
   margin-top: -2px;
 }
+/* the card's tags: "מצב הנכס" (25.11.2026) and urban renewal, on one line that wraps */
+.kan-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: -2px;
+}
+.kan-tags .kan-renew {
+  margin-top: 0;
+}
+.kan-cond {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 9px;
+  border-radius: 99px;
+  border: 1px solid var(--line-strong);
+  background: var(--surface-2, var(--surface));
+  color: var(--text);
+  font-size: 12.5px;
+  font-weight: 800;
+  white-space: nowrap;
+}
 /* the exact address on the page of one's own property: only its broker sees it */
 .pp-exact {
   display: grid;

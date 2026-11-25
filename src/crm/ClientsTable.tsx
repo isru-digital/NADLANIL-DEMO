@@ -1,8 +1,8 @@
 import { useCallback, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, CalendarClock, Check, Download, Forward, Lock, Phone, Plus, Search, Send, Share2, Sparkles, Star, UserRound } from 'lucide-react'
-import { brokerById, crmStages, formatPriceShort } from '../data/demo'
+import { ArrowLeft, BedDouble, Building2, CalendarClock, Check, Download, Forward, Lock, MapPin, Phone, Plus, Search, Send, Share2, Sparkles, Star, UserRound, Wallet } from 'lucide-react'
+import { brokerById, formatPriceShort } from '../data/demo'
 import type { CrmItem } from '../data/demo'
 import { asset } from '../config'
 import { OFFICE_ONLY, OFFICE_PAGE, UPGRADE_LABEL } from '../config/community'
@@ -21,6 +21,7 @@ import { WhatsAppIcon } from '../templates/LandingTemplate'
 import NewClient from './NewClient'
 import { AskPhone } from './AskPhone'
 import { groupLabel } from '../config/propertyTypes'
+import '../styles/green-actions.css'
 import '../styles/clients.css'
 
 /**
@@ -191,7 +192,13 @@ export default function ClientsTable({ onPublish }: { onPublish: (item: CrmItem)
                       </span>
                     </button>
                   </td>
-                  <td>
+                  {/* on a phone only: what a buyer or a renter looks for, in short lines (25.11.2026) */}
+                  {sideOf(cl.type) === 'wants' && (
+                    <td className="ct-facts-cell">
+                      <Facts cl={cl} />
+                    </td>
+                  )}
+                  <td className="ct-type-cell">
                     <span className={`ct-type is-${cl.type}`}>{typeOf(cl.type).one}</span>
                   </td>
                   <td className="ct-phone">
@@ -341,7 +348,7 @@ function Stars({ value, onPick }: { value: number; onPick?: (n: number) => void 
   )
 }
 
-/** The details window: the stage and the quick marks. Every change is saved at once. */
+/** The details window: what the client looks for, the note and, for a buyer or a renter, urban renewal. Every change is saved at once. */
 function Details({
   client,
   onClose,
@@ -375,11 +382,6 @@ function Details({
   /** with a phone it happens at once; without one, the window asks for it and then it happens */
   const need = (which: 'send' | 'call') => (cl.phone ? run(which, cl.phone) : setAsk(which))
   const label = matchLabel(cl.type)
-  const marks: { key: 'backToOwner' | 'tourSet' | 'exclusive'; text: string }[] = [
-    { key: 'backToOwner', text: 'חזרתי לבעלים' },
-    { key: 'tourSet', text: 'תואם סיור' },
-    { key: 'exclusive', text: 'בלעדיות' },
-  ]
   return (
     <Modal open={!!client} onClose={onClose} title={cl.name} subtitle={cl.about || typeOf(cl.type).one}>
       <div className="modal-body ct-det" data-id={cl.id}>
@@ -415,28 +417,19 @@ function Details({
 
         {cl.roomsMin != null && <SearchSummary cl={cl} />}
 
-        <div className="ct-field">
-          <span className="ct-label">שלב</span>
-          <div className="ct-stage" role="radiogroup" aria-label="שלב">
-            {crmStages.map((s) => (
-              <button key={s.id} type="button" role="radio" aria-checked={cl.stage === s.id} className={cl.stage === s.id ? 'is-on' : ''} onClick={() => set({ stage: s.id })}>
-                {s.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="ct-field">
-          <span className="ct-label">סימון מהיר</span>
-          <div className="ct-marks">
-            {marks.map((m) => (
-              <button key={m.key} type="button" role="switch" aria-checked={cl[m.key]} className={`ct-mark${cl[m.key] ? ' is-on' : ''}`} data-mark={m.key} onClick={() => set({ [m.key]: !cl[m.key] })}>
-                <i aria-hidden>{cl[m.key] && <Check />}</i>
-                {m.text}
-              </button>
-            ))}
-          </div>
-        </div>
+        {/* "התחדשות עירונית" for a buyer or a renter (25.11.2026): the same mark as on the property form. The stage and
+            the quick marks left this window the same day; what was saved in them stays in the client's data. */}
+        {sideOf(cl.type) === 'wants' && (
+          <button type="button" role="switch" aria-checked={!!cl.renewal} className="ga-renew" onClick={() => set({ renewal: !cl.renewal })} data-f="client-renewal">
+            <span className="ga-renew-box" aria-hidden>
+              {cl.renewal && <Check />}
+            </span>
+            <span className="ga-renew-text">
+              <b>מחפש נכס בהתחדשות עירונית</b>
+              <small>תמ"א 38 או פינוי בינוי. יופיע כתגית בכרטיס הלקוח.</small>
+            </span>
+          </button>
+        )}
 
         <label className="ct-field">
           <span className="ct-label">הערה קצרה</span>
@@ -501,6 +494,58 @@ function Details({
       </div>
       <AskPhone open={!!ask} client={cl} what={ask === 'call' ? 'להתקשר ללקוח' : 'לשלוח ללקוח'} onClose={() => setAsk(null)} onReady={(p) => run(ask ?? 'send', p)} />
     </Modal>
+  )
+}
+
+/** A buyer's or a renter's search in short lines with small icons, for the card on a phone. Two neighbourhoods at most,
+ * then "+N עוד": the whole list is in the details window. Nothing here is cut: every line wraps. */
+function Facts({ cl }: { cl: Client }) {
+  const rent = cl.type === 'renter'
+  const sum = (n: number) => (rent ? `${n.toLocaleString('he-IL')} ₪` : formatPriceShort(n))
+  const hoods = cl.neighborhoods ?? []
+  const lo = cl.roomsMin ?? null
+  const hi = cl.roomsMax ?? null
+  const rooms = lo != null && hi != null ? (lo === hi ? `${lo} חדרים` : `${lo} עד ${hi} חדרים`) : cl.rooms > 0 ? `${cl.rooms} חדרים` : ''
+  const kind = cl.kinds?.length ? cl.kinds.join(', ') : cl.group ? `כל סוגי ה${groupLabel(cl.group)}` : ''
+  const budget = cl.sum > 0 ? `${cl.budgetMin ? `${sum(cl.budgetMin)} עד ` : 'עד '}${sum(cl.sum)}${rent ? ' לחודש' : ''}` : ''
+  return (
+    <ul className="ct-facts" data-facts>
+      {cl.cities.length > 0 && (
+        <li data-fact="where">
+          <MapPin aria-hidden />
+          <span>
+            <b>{cl.cities.join(', ')}</b>
+            {hoods.length > 0 && <> · {hoods.slice(0, 2).join(', ')}</>}
+            {hoods.length > 2 && (
+              <em className="ct-facts-more" data-more={hoods.length - 2}>
+                +<span className="num">{hoods.length - 2}</span> עוד
+              </em>
+            )}
+          </span>
+        </li>
+      )}
+      {(rooms || kind) && (
+        <li data-fact="what">
+          {rooms ? <BedDouble aria-hidden /> : <Building2 aria-hidden />}
+          <span>
+            {rooms && <span className="num">{rooms}</span>}
+            {rooms && kind && ' · '}
+            {kind}
+          </span>
+        </li>
+      )}
+      {budget && (
+        <li data-fact="budget">
+          <Wallet aria-hidden />
+          <span className="num">{budget}</span>
+        </li>
+      )}
+      {cl.renewal && (
+        <li data-fact="renewal">
+          <span className="kan-renew">התחדשות עירונית</span>
+        </li>
+      )}
+    </ul>
   )
 }
 

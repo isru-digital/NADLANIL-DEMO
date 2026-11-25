@@ -68,6 +68,8 @@ export type CrmItem = {
   parking?: number
   /** marked for urban renewal (תמ"א 38 or פינוי בינוי) */
   renewal?: boolean
+  /** "מצב הנכס" (25.11.2026): one of PROPERTY_CONDITIONS, picked on the new property form */
+  condition?: string
   /** clients only: what the buyer is looking for (never includes name or phone) */
   search?: SearchSpec
 }

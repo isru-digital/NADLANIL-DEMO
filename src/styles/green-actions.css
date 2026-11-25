@@ -377,10 +377,11 @@ html[data-mode='night'] .ga-photo-err {
   outline: 2px solid var(--gold);
   outline-offset: 2px;
 }
+/* a picked tag: a deeper green than the brand's, so the white words read clearly in day and night (5:1, 25.11.2026) */
 .ga-pick[aria-pressed='true'] {
-  background: var(--gold);
-  border-color: var(--gold);
-  color: var(--on-accent);
+  background: #0b7d50;
+  border-color: #0b7d50;
+  color: #ffffff;
 }
 .ga-pick svg {
   width: 18px;

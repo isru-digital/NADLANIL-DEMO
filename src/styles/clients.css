@@ -745,6 +745,58 @@ html[data-mode='night'] .ct-err {
   color: var(--gold-soft);
 }
 
+/* a buyer's search in short lines: shown on a phone only (25.11.2026); the computer has it in the row's small line */
+.ct-facts-cell {
+  display: none;
+}
+.ct-facts {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ct-facts li {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  align-items: start;
+  gap: 8px;
+  font-size: 14.5px;
+  line-height: 1.45;
+  color: var(--text-dim);
+  overflow-wrap: anywhere;
+}
+.ct-facts li > svg {
+  width: 17px;
+  height: 17px;
+  margin-top: 2px;
+  color: var(--gold);
+  stroke-width: 2;
+}
+.ct-facts b {
+  font-weight: 700;
+  color: var(--text);
+}
+.ct-facts-more {
+  display: inline-flex;
+  align-items: center;
+  margin-inline-start: 6px;
+  padding: 0 7px;
+  border-radius: 99px;
+  background: rgb(var(--g) / 0.12);
+  color: var(--gold-soft);
+  font-size: 12.5px;
+  font-style: normal;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.ct-facts li[data-fact='renewal'] {
+  grid-template-columns: minmax(0, 1fr);
+}
+.ct-facts .kan-renew {
+  justify-self: start;
+}
+
 /* ------------------------------------------------------------------ on a phone: a short list of cards */
 @media (max-width: 760px) {
   .ct-bar .btn {
@@ -807,16 +859,42 @@ html[data-mode='night'] .ct-err {
   .ct-name small {
     display: none;
   }
-  .ct-table td:nth-child(2) {
+  .ct-table td.ct-type-cell {
     grid-column: 2;
     justify-self: end;
+  }
+  .ct-table td.ct-name {
+    grid-row: 1;
+  }
+  .ct-table td.ct-type-cell {
+    grid-row: 1;
+  }
+  .ct-name b {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .ct-table td.ct-facts-cell {
+    display: block;
+    grid-column: 1 / -1;
+    grid-row: 2;
+    padding: 8px 0 4px;
+    border-top: 1px solid var(--line);
+    margin-top: 4px;
   }
   .ct-table td.ct-phone {
     grid-column: 1;
+    grid-row: 3;
   }
   .ct-table td.ct-act {
     grid-column: 2;
+    grid-row: 3;
     justify-self: end;
+  }
+  /* "נכסים מתאימים" stays the clear thing to tap: a full thumb's height */
+  .ct-table td.ct-act .ct-match {
+    min-height: 44px;
+    padding-inline: 16px;
+    font-size: 14.5px;
   }
   .ct-marks {
     grid-template-columns: 1fr;

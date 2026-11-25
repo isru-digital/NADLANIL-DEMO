@@ -51,6 +51,8 @@ export type Client = {
   must?: string[]
   /** what they look for, in their own words */
   wants?: string
+  /** a buyer or a renter who looks for a property in urban renewal (25.11.2026), the same mark as a property's */
+  renewal?: boolean
   stage: CrmStatus
   /** days since the last update: 0 is today */
   lastDays: number
@@ -82,7 +84,7 @@ const c = (x: Partial<Client> & Pick<Client, 'id' | 'name' | 'type' | 'phone' | 
 })
 
 const seed: Client[] = [
-  c({ id: 'k1', crmId: 'c7', name: 'רון ומיכל ק.', type: 'buyer', phone: '050-555-0101', about: 'מחפשים 3 חדרים בתל אביב - יפו, עד 3.2 מיליון', cities: ['תל אביב'], rooms: 3, sum: 3200000, stage: 'new', lastDays: 0, note: 'אישור עקרוני למשכנתה ביד.', rating: 5, followUpDays: 1, createdDays: 2 }),
+  c({ id: 'k1', crmId: 'c7', name: 'רון ומיכל ק.', type: 'buyer', phone: '050-555-0101', about: 'מחפשים 3 חדרים בתל אביב - יפו, עד 3.2 מיליון', cities: ['תל אביב'], neighborhoods: ['לב העיר', 'הצפון הישן', 'נווה צדק', 'פלורנטין'], kinds: ['דירה'], rooms: 3, sum: 3200000, stage: 'new', lastDays: 0, note: 'אישור עקרוני למשכנתה ביד.', rating: 5, followUpDays: 1, createdDays: 2 }),
   c({ id: 'k2', name: 'אורי ב.', type: 'seller', phone: '052-555-0102', about: 'מוכר 4 חדרים בגבעתיים', cities: ['גבעתיים'], rooms: 4, sum: 3650000, stage: 'active', lastDays: 0, backToOwner: true, note: 'מחכה להערכת שווי.', rating: 4, followUpDays: 2, createdDays: 9 }),
   c({ id: 'k3', name: 'נועה כ.', type: 'renter', phone: '054-555-0103', about: 'מחפשת 2 חדרים ברמת גן, עד 5,500 ₪ לחודש', cities: ['רמת גן'], rooms: 2, sum: 5500, stage: 'tour', lastDays: 1, tourSet: true, note: 'כניסה בתחילת החודש הבא.', rating: 3, followUpDays: 3, createdDays: 6 }),
   c({ id: 'k4', crmId: 'c8', name: 'משפחת אבירם', type: 'buyer', phone: '050-555-0104', about: 'מחפשים בית פרטי ברמת השרון או בהרצליה', cities: ['רמת השרון', 'הרצליה'], rooms: 5, sum: 8500000, stage: 'tour', lastDays: 1, tourSet: true, note: 'סיור ביום שלישי.', rating: 4, followUpDays: 4, createdDays: 21 }),

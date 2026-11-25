@@ -56,10 +56,12 @@ type Draft = {
   /** parking spaces: null = not chosen yet, 3 = three or more */
   parking: number | null
   renewal: boolean
+  /** "מצב הנכס": one of CONDITIONS, or '' until it is picked */
+  condition: string
   /** what an ad pasted from Yad2 says and the card has no field for (floor, size, entry, the description): the card's note */
   notes: string
 }
-const emptyDraft: Draft = { kind: 'property', city: 'פתח תקווה', rooms: '4', price: '', extras: [], category: '', ptype: '', sqm: '', hood: '', street: '', houseNo: '', aptNo: '', placeManual: [], showHouseNo: false, asStory: false, coopPct: null, parking: null, renewal: false, notes: '' }
+const emptyDraft: Draft = { kind: 'property', city: 'פתח תקווה', rooms: '4', price: '', extras: [], category: '', ptype: '', sqm: '', hood: '', street: '', houseNo: '', aptNo: '', placeManual: [], showHouseNo: false, asStory: false, coopPct: null, parking: null, renewal: false, condition: '', notes: '' }
 /** no rooms, a size in square metres: a commercial property, or a plot of land */
 const bySize = (d: Draft) => d.kind === 'property' && !!d.category && !hasRooms(d.category, d.ptype || DEFAULT_KIND[d.category])
 const toDraft = (p: Parsed): Draft => ({ ...emptyDraft, kind: p.kind, city: p.city || 'פתח תקווה', rooms: p.rooms ? String(p.rooms) : '', price: p.price ? String(p.price) : '', extras: p.extras })
@@ -136,6 +138,8 @@ const PARKING: [number, string][] = [
   [2, '2'],
   [3, '3+'],
 ]
+/** "מצב הנכס" (Itzik 25.11.2026): five tags, one is picked */
+export const CONDITIONS = ['חדש מקבלן', 'חדש עד 5 שנים', 'משופץ', 'שמור', 'דרוש שיפוץ']
 /** the cities shown first, before "עוד ערים" */
 const FIRST_CITIES = ['תל אביב', 'רמת גן', 'פתח תקווה', 'חיפה', 'ירושלים', 'באר שבע', 'נתניה', 'ראשון לציון']
 
@@ -323,6 +327,20 @@ function Fields({ draft, set, kinds, categories = false, full = false, missing =
       )}
 
       {full && property && (
+        <div className="field" data-f="condition">
+          <span className="field-label">מצב הנכס</span>
+          <div className="ga-picks" role="group" aria-label="מצב הנכס">
+            {CONDITIONS.map((c) => (
+              <button key={c} type="button" className="ga-pick" aria-pressed={draft.condition === c} onClick={() => set({ condition: draft.condition === c ? '' : c })} data-condition={c}>
+                {draft.condition === c && <Check aria-hidden />}
+                {c}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {full && property && (
         <button type="button" role="switch" aria-checked={draft.renewal} className="ga-renew" onClick={() => set({ renewal: !draft.renewal })} data-f="renewal">
           <span className="ga-renew-box" aria-hidden>
             {draft.renewal && <Check />}
@@ -468,6 +486,7 @@ export default function GreenActions() {
             showHouseNo: card.showHouseNo,
             parking: card.parking ?? undefined,
             renewal: card.renewal || undefined,
+            condition: card.condition || undefined,
             extras: card.extras.length ? card.extras : undefined,
             asStory: card.asStory || undefined,
             coopPct: card.coopPct ?? undefined,

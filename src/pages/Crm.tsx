@@ -224,10 +224,19 @@ export default function Crm() {
               )}
             </div>
             <h3>{it.title}</h3>
-            {it.renewal && (
-              <span className="kan-renew" data-renewal>
-                התחדשות עירונית
-              </span>
+            {(it.renewal || it.condition) && (
+              <div className="kan-tags">
+                {it.condition && (
+                  <span className="kan-cond" data-condition={it.condition}>
+                    {it.condition}
+                  </span>
+                )}
+                {it.renewal && (
+                  <span className="kan-renew" data-renewal>
+                    התחדשות עירונית
+                  </span>
+                )}
+              </div>
             )}
             {it.street && (
               <p className="kan-address" data-exact title="רק אתם רואים את הכתובת המלאה">
