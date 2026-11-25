@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import type { ReactNode } from 'react'
 import { motion } from 'framer-motion'
-import { BedDouble, Check, Handshake, Lock, MapPin, Send, Wallet } from 'lucide-react'
+import { BedDouble, Check, Clock, Handshake, Lock, MapPin, MessageCircle, Send, UserRoundCheck, Wallet, X } from 'lucide-react'
 import { brokerById } from '../data/demo'
 import { nameSlots } from '../config/navExtras'
 import { useMember } from '../config/member'
@@ -10,8 +11,8 @@ import ClientPicker from './ClientPicker'
 import NewClient from './NewClient'
 import { clientActions, useClients } from './clients'
 import type { Client } from './clients'
-import { PCTS, REFERRAL_NOTE, brokersIn, budgetText, offerOf, referralActions, referralCities, roomsText, sideText, useReferrals, watchOffer } from './referral'
-import type { Pct } from './referral'
+import { PCTS, REFERRAL_NOTE, STATUS_WORDS, brokersIn, budgetText, giverOf, offerOf, openChat, referralActions, referralCities, roomsText, sideText, takerOf, useReferrals, watchOffer } from './referral'
+import type { Pct, RefStatus, Referral } from './referral'
 import '../styles/referral.css'
 
 /**
@@ -39,13 +40,16 @@ export default function ReferClient({ client, onClose }: { client: Client | null
   const list = useMemo(() => (city ? brokersIn(city, cl?.neighborhoods) : []), [city, cl])
   const offer = cl && city ? offerOf(cl, city) : null
   const sent = refs.find((r) => r.id === sentId) ?? null
+  // the other broker said "מעוניין": the chat waits (it is opened from here or from the referrals)
+  const talking = !!sent && sent.status !== 'sent' && sent.status !== 'pending'
   // a few cities at first: the client's own, then the others behind "עוד ערים"
   const shownCities = allCities ? cities : cities.slice(0, Math.max(6, (cl?.cities.length ?? 0) + 1))
   if (city && !shownCities.includes(city)) shownCities.push(city)
   // while this window shows the offer, its answer appears here and not as a word on top
   useEffect(() => {
-    watchOffer(client ? sentId : null)
-    return () => watchOffer(null)
+    if (!client || !sentId) return
+    watchOffer(sentId, true)
+    return () => watchOffer(sentId, false)
   }, [client, sentId])
 
   // a new window starts at the client it was opened for, in the first city of the client that has brokers
@@ -68,19 +72,31 @@ export default function ReferClient({ client, onClose }: { client: Client | null
   const other = to ? brokerById(to) : null
   return (
     <>
-      <Modal open={!!client && !adding} onClose={onClose} title={sent ? (sent.status === 'accepted' ? 'ההפניה אושרה' : 'ההצעה נשלחה') : 'העברה למתווך בקהילה'} subtitle={sent ? undefined : 'יש לך לקוח בעיר שאתם לא עובדים בה? מעבירים אותו למתווך מקומי, על עמלת הפניה.'}>
+      <Modal open={!!client && !adding} onClose={onClose} title={sent ? (talking ? 'יש תגובה להפניה' : 'ההצעה נשלחה') : 'העברה למתווך בקהילה'} subtitle={sent ? undefined : 'יש לך לקוח בעיר שאתם לא עובדים בה? מעבירים אותו למתווך מקומי, על עמלת הפניה.'}>
         {sent && other ? (
           <div className="modal-body sh rf-sent" data-sheet="refer-sent" data-status={sent.status}>
-            <motion.span className="rf-sent-ico" initial={{ scale: 0.4, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 320, damping: 18 }}>
-              {sent.status === 'accepted' ? <Check /> : <Send />}
+            <motion.span key={String(talking)} className="rf-sent-ico" initial={{ scale: 0.4, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 320, damping: 18 }}>
+              {talking ? <MessageCircle /> : <Send />}
             </motion.span>
             <div className="rf-sent-faces">
               <Avatar src={other.avatar} name={other.name} size={56} ring />
             </div>
-            {sent.status === 'accepted' ? (
+            <StatusPill status={sent.status} />
+            {talking ? (
               <>
-                <h3 data-sent-title>סוכם עם {other.name}</h3>
-                <Summary pct={sent.pct} otherName={other.name} dir="out" />
+                <h3 data-sent-title>{other.name} רוצה לדבר על ההפניה</h3>
+                <p className="rf-wait is-done">נפתחה ביניכם שיחה. פרטי הלקוח עוברים רק כשתחליטו לשלוח אותם, מתוך השיחה.</p>
+                <button
+                  type="button"
+                  className="btn btn-gold rf-to-chat"
+                  onClick={() => {
+                    onClose()
+                    openChat(sent.id)
+                  }}
+                  data-act="open-ref-chat"
+                >
+                  <MessageCircle /> לשיחה עם {other.name.split(' ')[0]}
+                </button>
               </>
             ) : (
               <>
@@ -89,7 +105,7 @@ export default function ReferClient({ client, onClose }: { client: Client | null
                   <i aria-hidden />
                   <i aria-hidden />
                   <i aria-hidden />
-                  ממתינים לאישור. הפרטים של הלקוח יעברו רק אחרי אישור.
+                  ממתינים לתגובה. אם זה מתאים, תיפתח ביניכם שיחה. פרטי הלקוח לא עוברים עד שתשלחו אותם.
                 </p>
               </>
             )}
@@ -194,7 +210,7 @@ export default function ReferClient({ client, onClose }: { client: Client | null
                 <OfferCard r={{ ...offer, pct }} from="הפניה ממך" preview />
                 <p className="sh-safe">
                   <Lock aria-hidden />
-                  השם והטלפון של הלקוח לא נשלחים. הם עוברים רק אחרי אישור.
+                  השם והטלפון של הלקוח לא נשלחים. הם עוברים רק אם תשלחו אותם בעצמכם, מתוך השיחה.
                 </p>
               </div>
             )}
@@ -276,25 +292,55 @@ export function OfferCard({ r, from, preview = false }: { r: Parameters<typeof b
   )
 }
 
-/** What was agreed, the same words on both sides. */
-export function Summary({ pct, otherName, dir }: { pct: Pct; otherName: string; dir: 'in' | 'out' }) {
+/**
+ * What was agreed, the same words on both sides: who referred, to whom, and the fee. It shows only once both agreed in
+ * the chat (25.11.2026).
+ */
+export function Summary({ r }: { r: Referral }) {
+  const giver = brokerById(giverOf(r)).name
+  const taker = brokerById(takerOf(r)).name
   return (
     <div className="rf-sum" data-summary="referral">
       <span className="rf-sum-head">
         <Check aria-hidden /> סיכום ההפניה
       </span>
-      <p>
-        {dir === 'out' ? (
-          <>
-            אם תיסגר עסקה עם הלקוח, <b className="num">{pct}%</b> מהעמלה של {otherName} בעסקה הזאת יעברו אליך.
-          </>
-        ) : (
-          <>
-            אם תיסגר עסקה עם הלקוח, <b className="num">{pct}%</b> מהעמלה שלך בעסקה הזאת יעברו ל{otherName}.
-          </>
-        )}
-      </p>
-      <small>הסיכום נשלח לשני המתווכים.</small>
+      <dl className="rf-sum-rows">
+        <div>
+          <dt>הפניה מ</dt>
+          <dd data-sum="from">{giver}</dd>
+        </div>
+        <div>
+          <dt>אל</dt>
+          <dd data-sum="to">{taker}</dd>
+        </div>
+        <div>
+          <dt>עמלת הפניה</dt>
+          <dd data-sum="pct">
+            <b className="num">{r.pct}%</b> מהעמלה של {taker} בעסקה עם הלקוח
+          </dd>
+        </div>
+      </dl>
+      <small className="rf-sum-note" data-note="referral">
+        {REFERRAL_NOTE}
+      </small>
     </div>
+  )
+}
+
+const STATUS_ICON: Record<RefStatus, ReactNode> = {
+  sent: <Send />,
+  pending: <Clock />,
+  talking: <MessageCircle />,
+  shared: <UserRoundCheck />,
+  closed: <Handshake />,
+  declined: <X />,
+}
+/** Where a referral stands, in words and an icon (never by colour alone). */
+export function StatusPill({ status }: { status: RefStatus }) {
+  return (
+    <span className={`rf-status is-${status}`} data-ref-status={status}>
+      {STATUS_ICON[status]}
+      {STATUS_WORDS[status]}
+    </span>
   )
 }

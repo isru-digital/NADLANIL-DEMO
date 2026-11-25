@@ -1,0 +1,543 @@
+/* The referral's chat and where a referral stands (25.11.2026). The chat is the messenger of chat.css (docked on a
+   computer, the whole screen on a phone), with the offer pinned under the header, a locked note until the details are
+   sent, the details as a card bubble, the summary at the end, and the "לשלוח?" question rising from the bottom. */
+
+/* ------------------------------------------------------------ the status, the same word on both sides */
+.rf-status {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  width: max-content;
+  padding: 3px 10px 3px 9px;
+  border-radius: 99px;
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.5;
+  white-space: nowrap;
+  background: var(--surface-2);
+  color: var(--text-dim);
+}
+.rf-status svg {
+  width: 13px;
+  height: 13px;
+  stroke-width: 2.4;
+}
+.rf-status.is-pending {
+  background: rgba(214, 150, 20, 0.14);
+  color: #8a5a00;
+}
+.rf-status.is-talking {
+  background: rgba(24, 119, 242, 0.12);
+  color: #1559b8;
+}
+.rf-status.is-shared {
+  background: rgba(12, 127, 82, 0.13);
+  color: #0a6b45;
+}
+.rf-status.is-closed {
+  background: #0c7f52;
+  color: #fff;
+}
+.rf-status.is-declined {
+  background: var(--surface-2);
+  color: var(--text-faint, var(--text-dim));
+}
+html[data-mode='night'] .rf-status.is-pending {
+  background: rgba(240, 190, 80, 0.14);
+  color: #f3c66a;
+}
+html[data-mode='night'] .rf-status.is-talking {
+  background: rgba(110, 170, 255, 0.14);
+  color: #9cc3ff;
+}
+html[data-mode='night'] .rf-status.is-shared {
+  background: rgba(111, 224, 173, 0.14);
+  color: #8ce9bf;
+}
+
+/* ------------------------------------------------------------ the cards in "שיתופי פעולה" */
+.rfi-head h2 small {
+  margin-inline-start: 6px;
+  font-family: var(--font-body, inherit);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+.rfi-item.is-off {
+  opacity: 0.72;
+}
+.rfi-locked {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  line-height: 1.5;
+}
+.rfi-locked svg {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  margin-top: 2px;
+}
+.rfi-chat {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  column-gap: 10px;
+  width: 100%;
+  min-height: 52px;
+  padding: 9px 14px;
+  border: 0;
+  border-radius: 14px;
+  background: rgba(24, 119, 242, 0.08);
+  color: var(--text);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition: background 0.18s ease, transform 0.12s ease;
+}
+.rfi-chat:hover {
+  background: rgba(24, 119, 242, 0.13);
+}
+.rfi-chat:active {
+  transform: scale(0.985);
+}
+.rfi-chat svg {
+  grid-row: span 2;
+  width: 22px;
+  height: 22px;
+  color: #1877f2;
+}
+.rfi-chat span {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 800;
+}
+.rfi-chat-last {
+  overflow: hidden;
+  font-size: 13.5px;
+  color: var(--text-dim);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+html[data-mode='night'] .rfi-chat {
+  background: rgba(110, 170, 255, 0.1);
+}
+html[data-mode='night'] .rfi-chat svg {
+  color: #9cc3ff;
+}
+
+/* the summary: who referred, to whom, and the fee */
+.rf-sum-rows {
+  display: grid;
+  gap: 4px;
+  margin: 2px 0 0;
+}
+.rf-sum-rows > div {
+  display: flex;
+  gap: 8px;
+  font-size: 14.5px;
+  line-height: 1.5;
+}
+.rf-sum-rows dt {
+  flex: none;
+  min-width: 82px;
+  color: var(--text-dim);
+}
+.rf-sum-rows dd {
+  margin: 0;
+  color: var(--text);
+  font-weight: 600;
+}
+.rf-sum-note {
+  display: block;
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--line-gold, var(--line));
+}
+
+/* after sending, the other broker wants to talk */
+.rf-sent .rf-status {
+  justify-self: center;
+}
+.rf-wait.is-done {
+  max-width: 30em;
+  text-align: center;
+  line-height: 1.55;
+}
+.rf-to-chat {
+  justify-self: center;
+  min-height: 50px;
+}
+
+/* ------------------------------------------------------------ the chat */
+.rfc {
+  grid-template-rows: auto auto 1fr auto;
+  width: 380px;
+  height: min(620px, calc(100vh - 64px));
+}
+.rfc .cw-who {
+  display: grid;
+  gap: 3px;
+  justify-items: start;
+}
+.rfc .cw-who .rf-status {
+  font-size: 12px;
+  padding: 2px 9px 2px 8px;
+}
+.rfc-offer {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+  background: rgb(var(--g) / 0.06);
+}
+.rfc-offer-ico {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--card);
+  border: 1px solid var(--line-gold, var(--line));
+  color: var(--gold-soft, #0a6b45);
+}
+.rfc-offer-ico svg {
+  width: 20px;
+  height: 20px;
+}
+.rfc-offer-text {
+  display: grid;
+  min-width: 0;
+}
+.rfc-offer-text b {
+  font-family: var(--font-display);
+  font-size: 14.5px;
+  color: var(--text);
+}
+.rfc-offer-text small {
+  overflow: hidden;
+  font-size: 13px;
+  color: var(--text-dim);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.rfc-offer-pct {
+  display: grid;
+  justify-items: center;
+  padding: 4px 10px;
+  border-radius: 12px;
+  background: var(--card);
+  border: 1px solid var(--line);
+}
+.rfc-offer-pct b {
+  font-family: var(--font-display);
+  font-size: 18px;
+  line-height: 1.1;
+  color: var(--text);
+}
+.rfc-offer-pct small {
+  font-size: 11.5px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.rfc-lock {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 2px auto 6px;
+  max-width: 300px;
+  padding: 9px 12px;
+  border-radius: 14px;
+  background: var(--surface, rgba(127, 127, 127, 0.06));
+  border: 1px solid var(--line);
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--text-dim);
+  text-align: start;
+}
+.rfc-lock svg {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  margin-top: 2px;
+}
+.rfc-start small {
+  max-width: 260px;
+  text-align: center;
+}
+
+/* the details of the client, as a card in the chat */
+.rfc-contact-row {
+  align-items: flex-end;
+}
+.rfc-contact {
+  display: grid;
+  gap: 4px;
+  min-width: 210px;
+  max-width: 78%;
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: var(--card);
+  border: 1.5px solid rgba(12, 127, 82, 0.35);
+  box-shadow: 0 10px 24px -18px rgba(8, 52, 36, 0.6);
+}
+.rfc-contact-row.is-me .rfc-contact {
+  border-end-end-radius: 6px;
+}
+.rfc-contact-row.is-them .rfc-contact {
+  border-end-start-radius: 6px;
+}
+.rfc-contact-head {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #0a6b45;
+}
+html[data-mode='night'] .rfc-contact-head {
+  color: #8ce9bf;
+}
+.rfc-contact-head svg {
+  width: 15px;
+  height: 15px;
+}
+.rfc-contact b {
+  font-family: var(--font-display);
+  font-size: 16px;
+  color: var(--text);
+}
+.rfc-contact-phone {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  justify-self: start;
+  min-height: 40px;
+  padding: 0 12px;
+  border-radius: 99px;
+  background: #0c7f52;
+  color: #fff;
+  font-weight: 700;
+  text-decoration: none;
+}
+.rfc-contact-phone svg {
+  width: 15px;
+  height: 15px;
+}
+.rfc-contact small {
+  font-size: 12.5px;
+  color: var(--text-dim);
+}
+.rfc-time {
+  align-self: flex-end;
+  margin-inline: 6px;
+  font-size: 11.5px;
+  color: var(--text-faint, var(--text-dim));
+}
+
+/* the summary, the end of the talk */
+.rfc-sum {
+  display: grid;
+  gap: 8px;
+  margin: 8px 4px 2px;
+}
+.rfc-marks {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+.rfc-mark {
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 99px;
+  border: 1px solid var(--line-gold, var(--line));
+  background: var(--card);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.rfc-mark.is-quiet {
+  border-color: var(--line);
+  color: var(--text-dim);
+}
+
+/* the foot: the share button, WhatsApp, the box */
+.rfc-foot {
+  display: grid;
+  border-top: 1px solid var(--line);
+  background: var(--card);
+}
+.rfc-foot .cw-compose {
+  border-top: 0;
+}
+.rfc-share {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 10px 12px 0;
+  min-height: 48px;
+  border: 0;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #0a7a4f, #12a36c);
+  color: #fff;
+  font: inherit;
+  font-family: var(--font-display);
+  font-size: 15.5px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 10px 22px -14px rgba(10, 122, 79, 0.9);
+  transition: transform 0.12s ease, filter 0.18s ease;
+}
+.rfc-share:hover {
+  filter: brightness(1.05);
+}
+.rfc-share:active {
+  transform: scale(0.98);
+}
+.rfc-share svg {
+  width: 19px;
+  height: 19px;
+}
+.rfc-wa-row {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px 0;
+}
+.rfc-wa {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 42px;
+  padding: 0 14px;
+  border-radius: 99px;
+  border: 1px solid rgba(37, 211, 102, 0.45);
+  background: rgba(37, 211, 102, 0.1);
+  color: #0b6b34;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.18s ease, transform 0.12s ease;
+}
+.rfc-wa:hover {
+  background: rgba(37, 211, 102, 0.18);
+}
+.rfc-wa:active {
+  transform: scale(0.97);
+}
+.rfc-wa svg {
+  width: 18px;
+  height: 18px;
+}
+html[data-mode='night'] .rfc-wa {
+  color: #7ee2a8;
+}
+.rfc-wa-note {
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+
+/* "לשלוח את שם הלקוח והטלפון?": rises from the bottom of the chat */
+.rfc-ask {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: grid;
+  align-items: end;
+  padding: 12px;
+  background: rgba(6, 24, 17, 0.5);
+}
+.rfc-ask-card {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 22px 18px calc(18px + env(safe-area-inset-bottom));
+  border-radius: 22px;
+  background: var(--card);
+  box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.5);
+  text-align: center;
+}
+.rfc-ask-ico {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(12, 127, 82, 0.12);
+  color: #0a6b45;
+}
+html[data-mode='night'] .rfc-ask-ico {
+  background: rgba(111, 224, 173, 0.14);
+  color: #8ce9bf;
+}
+.rfc-ask-ico svg {
+  width: 26px;
+  height: 26px;
+}
+.rfc-ask-card h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 800;
+  line-height: 1.35;
+  color: var(--text);
+  text-wrap: balance;
+}
+.rfc-ask-what {
+  margin: 0;
+  padding: 8px 14px;
+  border-radius: 12px;
+  background: var(--surface, rgba(127, 127, 127, 0.06));
+  font-size: 15px;
+  color: var(--text);
+}
+.rfc-ask-sub {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--text-dim);
+}
+.rfc-ask-acts {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: 8px;
+  width: 100%;
+  margin-top: 4px;
+}
+.rfc-ask-acts .btn {
+  justify-content: center;
+  min-height: 50px;
+}
+
+@media (max-width: 720px) {
+  .rfc {
+    width: auto;
+    height: auto;
+  }
+  .rfc-wa-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+  .rfc-wa {
+    justify-content: center;
+  }
+  .rfc-wa-note {
+    text-align: center;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rfi-chat,
+  .rfc-share,
+  .rfc-wa {
+    transition: none;
+  }
+}
