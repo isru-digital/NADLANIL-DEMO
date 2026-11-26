@@ -7,6 +7,7 @@ import { saveOwnProfile, signedIn } from '../auth/session'
 import { initials } from '../config/initials'
 import { Modal } from '../components/ui'
 import { PlacePicker } from '../components/PlacePicker'
+import { CityFind } from '../components/CityFind'
 import '../styles/profile-edit.css'
 
 /**
@@ -182,6 +183,7 @@ function Form({ onClose }: { onClose: () => void }) {
             )
           })}
         </div>
+        <CityFind id="profile" many picked={cities} onPick={toggle} />
         <div className="pfe-other">
           <input
             className="input"

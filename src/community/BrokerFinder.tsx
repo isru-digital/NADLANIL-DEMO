@@ -5,6 +5,7 @@ import { REFERRAL_TERMS } from '../config/topics'
 import { brokers } from '../data/demo'
 import type { Broker } from '../data/demo'
 import { knownCities } from '../green/whatsapp'
+import { findCities } from '../config/cities'
 import { useStore } from '../store'
 import { Avatar, Modal } from '../components/ui'
 import { nameSlots } from '../config/navExtras'
@@ -54,7 +55,7 @@ export default function BrokerFinder({ onOpenReferral }: { onOpenReferral: (city
   const withBrokers = useMemo(citiesWithBrokers, [])
   const q = query.trim()
   // suggestions while typing: every known city that holds the letters, the ones with brokers first
-  const suggest = q && q !== city ? knownCities.filter((c) => c.includes(q)).sort((a, b) => brokersIn(b).length - brokersIn(a).length || a.localeCompare(b, 'he')).slice(0, 6) : []
+  const suggest = q && q !== city ? [...new Set([...knownCities.filter((c) => c.includes(q)), ...findCities(q, 12)])].sort((a, b) => brokersIn(b).length - brokersIn(a).length || a.localeCompare(b, 'he')).slice(0, 6) : []
   const found = city ? brokersIn(city) : []
   // a deal in the community is a "עסקאות שנסגרו" post the broker shared; posts are everything else they shared
   const deals = (id: string) => items.filter((it) => it.authorId === id && it.topicId === 'wins').length

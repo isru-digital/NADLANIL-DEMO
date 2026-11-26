@@ -257,7 +257,8 @@ for (const [label, vp] of DEVICES) {
     await d.page.type('[data-f="city-find"]', 'רמת')
     await wait(400)
     const hits = await d.page.evaluate(() => [...document.querySelectorAll('[data-city-opt]')].map((b) => b.dataset.cityOpt))
-    check(`${label}: typing narrows the list to the cities of that name`, hits.join() === 'רמת גן,רמת השרון', hits)
+    // every city of Israel is looked in (26.11.2026): the platform's own cities first, then the others of that name
+    check(`${label}: typing narrows the list to the cities of that name`, hits.join() === 'רמת גן,רמת השרון,רמת ישי', hits)
     await d.shot(`${label}-5-find-city`)
     await d.click('[data-city-opt="רמת גן"]')
     await d.click('.modal-foot .btn-gold')

@@ -1,0 +1,107 @@
+/* The search of a city, wherever a city is picked (26.11.2026): one box, and under it the cities the typing found.
+   It takes its colours from the page's own tokens, so it reads by day and by night. */
+.cf {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+  min-width: 0;
+}
+.cf-box {
+  position: relative;
+  display: block;
+}
+.cf-box > svg {
+  position: absolute;
+  inset-inline-start: 14px;
+  top: 50%;
+  width: 18px;
+  height: 18px;
+  margin-top: -9px;
+  color: var(--text-dim);
+  pointer-events: none;
+}
+.cf-box .input {
+  width: 100%;
+  min-height: 48px;
+  padding-inline: 42px;
+  font-size: 16px;
+}
+.cf-box .input::-webkit-search-cancel-button {
+  display: none;
+}
+.cf-clear {
+  position: absolute;
+  inset-inline-end: 2px;
+  top: 50%;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-top: -22px;
+  border-radius: 12px;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+.cf-clear svg {
+  width: 18px;
+  height: 18px;
+}
+.cf-hits {
+  display: grid;
+  max-height: 264px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--card);
+}
+.cf-hit {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--line);
+  font-size: 15.5px;
+  font-weight: 600;
+  text-align: start;
+  color: var(--text);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.cf-hit:last-child {
+  border-bottom: 0;
+}
+.cf-hit:hover {
+  background: var(--surface);
+}
+.cf-hit:focus-visible,
+.cf-clear:focus-visible {
+  outline: 2px solid var(--gold, currentColor);
+  outline-offset: -2px;
+}
+.cf-tick {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border: 2px solid var(--line-strong);
+  color: #fff;
+}
+.cf-hit[aria-pressed='true'] .cf-tick {
+  border-color: #1f5fcf;
+  background: #1f5fcf;
+}
+.cf-tick svg {
+  width: 15px;
+  height: 15px;
+  stroke-width: 3;
+}
+.cf-none {
+  margin: 0;
+  padding: 12px 14px;
+  font-size: 14.5px;
+  color: var(--text-dim);
+}

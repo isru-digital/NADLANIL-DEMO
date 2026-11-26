@@ -4,6 +4,7 @@ import { Check, LoaderCircle, Lock, Send } from 'lucide-react'
 import { PLATFORM_NAME } from '../config'
 import { Modal } from '../components/ui'
 import { cities as knownCities } from '../data/demo'
+import { ALL_CITIES } from '../config/cities'
 import { call } from '../auth/session'
 import '../styles/leads.css'
 
@@ -13,7 +14,8 @@ import '../styles/leads.css'
  * A phone opens it as a sheet from the bottom, like a post box on Facebook. What is typed here is for the staff only.
  */
 type F = 'name' | 'phone' | 'city'
-const CITY_LIST = [...new Set([...knownCities, 'טבריה', 'אשקלון', 'אילת', 'קריית שמונה', 'כרמיאל', 'בת ים', 'בני ברק'])]
+// every city and local council of Israel is offered while typing (26.11.2026), the platform's own cities first
+const CITY_LIST = [...new Set([...knownCities, 'טבריה', 'אשקלון', 'אילת', 'קריית שמונה', 'כרמיאל', 'בת ים', 'בני ברק', ...ALL_CITIES])]
 
 export default function LeadSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [name, setName] = useState('')

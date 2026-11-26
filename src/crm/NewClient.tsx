@@ -11,6 +11,7 @@ import { GROUPS, KINDS } from '../config/propertyTypes'
 import type { PropGroup } from '../config/propertyTypes'
 import '../styles/new-client.css'
 import { PlacePicker } from '../components/PlacePicker'
+import { CityFind } from '../components/CityFind'
 import '../styles/post-form.css'
 
 /**
@@ -135,7 +136,7 @@ export default function NewClient({ open, onClose, isOffice, onAdd, searchOnly =
     })
   }
 
-  const cityList = allCities ? [...knownCities].sort((a, b) => a.localeCompare(b, 'he')) : [...new Set([...cities, ...myCities, ...FIRST_CITIES])].filter((c) => knownCities.includes(c)).slice(0, Math.max(9, cities.length))
+  const cityList = allCities ? [...new Set([...knownCities, ...cities])].sort((a, b) => a.localeCompare(b, 'he')) : [...new Set([...cities, ...myCities, ...FIRST_CITIES])].filter((c) => cities.includes(c) || knownCities.includes(c)).slice(0, Math.max(9, cities.length))
   const pct = (i: number) => (i / (steps.length - 1)) * 100
   const fill = { '--lo': `${pct(lo)}%`, '--hi': `${100 - pct(hi)}%` } as CSSProperties
 
@@ -244,6 +245,7 @@ export default function NewClient({ open, onClose, isOffice, onAdd, searchOnly =
                     {allCities ? 'פחות ערים' : 'עוד ערים'}
                   </button>
                 </div>
+                <CityFind id="buyer" many picked={cities} onPick={(c) => flip(cities, c, setCities)} />
               </div>
 
               {/* streets and neighbourhoods, several, from the cities' lists or the map */}

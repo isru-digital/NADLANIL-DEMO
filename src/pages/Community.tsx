@@ -41,6 +41,7 @@ import { ShareBanner } from '../community/ShareBanner'
 import { nameKey } from '../config/places'
 import { streetOf } from '../community/place'
 import { Toggle } from '../components/Toggle'
+import { findCities } from '../config/cities'
 import { shrinkPhoto } from '../green/PhotoPicker'
 import '../styles/post-form.css'
 import { useStore } from '../store'
@@ -249,7 +250,8 @@ export default function Community() {
   // one letter or more narrows the list; a city already chosen stays in it, with its tick, so it can be removed there
   const cityHits = useMemo(() => {
     const typed = cityFind.trim()
-    return typed ? cities.filter((c) => c.includes(typed)) : cities
+    // typing looks in every city of Israel (26.11.2026), the platform's own cities first
+    return typed ? [...new Set([...cities.filter((c) => c.includes(typed)), ...findCities(typed, 12)])] : cities
   }, [cityFind])
   // the box starts empty every time the picker opens
   useEffect(() => {

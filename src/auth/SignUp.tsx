@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { ArrowLeft, BadgeCheck, Building2, Check, Info, LoaderCircle, Lock, MailCheck, Plus, User, X } from 'lucide-react'
 import { COMMUNITY_HOME, COMMUNITY_NAME } from '../config/community'
 import { cities as knownCities } from '../data/demo'
+import { CityFind } from '../components/CityFind'
 import { PlacePicker } from '../components/PlacePicker'
 import CommunityBrand from '../community/CommunityBrand'
 import { call, pending } from './session'
@@ -298,6 +299,7 @@ export default function SignUp() {
                   )
                 })}
               </div>
+              <CityFind id="signup" many picked={cities} onPick={toggle} />
               <div className="au-other">
                 <input
                   className="input"

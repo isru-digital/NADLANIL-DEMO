@@ -4,6 +4,7 @@ import { BedDouble, Check, ChevronLeft, Home, MapPin, Plus, Search, UserRound } 
 import { CURRENT_BROKER_ID, asset } from '../config'
 import { REFERRAL_TERMS } from '../config/topics'
 import { knownCities } from '../green/whatsapp'
+import { CityFind } from '../components/CityFind'
 import { actionSlots } from '../config/navExtras'
 import { formatPriceShort, roomsLabel } from '../data/demo'
 import type { CommunityItem, CrmItem, SearchSpec } from '../data/demo'
@@ -297,6 +298,7 @@ export function ReferralSheet({ open, onClose, initialCity = '' }: { open: boole
               {all ? 'פחות ערים' : 'עוד ערים'}
             </button>
           </div>
+          <CityFind id="referral" picked={city ? [city] : []} onPick={setCity} />
         </div>
         <label className="rf-field">
           <span className="rf-label">במשפט אחד (לא חובה)</span>

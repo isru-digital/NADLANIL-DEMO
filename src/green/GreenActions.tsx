@@ -21,6 +21,7 @@ import type { PropCategory } from '../crm/categories'
 import { DEFAULT_KIND, KINDS, closestKind, hasRooms, isKind, kindTitle } from '../config/propertyTypes'
 import { streetName } from '../community/place'
 import { Toggle } from '../components/Toggle'
+import { CityFind } from '../components/CityFind'
 import CommunityCard from '../components/CommunityCard'
 import { topicById } from '../config/topics'
 import { PlacePicker } from '../components/PlacePicker'
@@ -148,7 +149,8 @@ const FIRST_CITIES = ['תל אביב', 'רמת גן', 'פתח תקווה', 'חי
 function CityPick({ city, onPick }: { city: string; onPick: (c: string) => void }) {
   const { myCities } = useStore()
   const [all, setAll] = useState(false)
-  const first = [...new Set([city, ...myCities, ...FIRST_CITIES])].filter((c) => knownCities.includes(c)).slice(0, 9)
+  // a city found by the search (26.11.2026) is not one of the shortcuts, and still shows as the one picked
+  const first = [...new Set([city, ...myCities, ...FIRST_CITIES])].filter((c) => c && (c === city || knownCities.includes(c))).slice(0, 9)
   const shown = all ? [...knownCities].sort((a, b) => a.localeCompare(b, 'he')) : first
   return (
     <div className="field" data-f="city">
@@ -163,6 +165,7 @@ function CityPick({ city, onPick }: { city: string; onPick: (c: string) => void 
           {all ? 'פחות ערים' : 'עוד ערים'}
         </button>
       </div>
+      <CityFind id="property" picked={city ? [city] : []} onPick={onPick} />
     </div>
   )
 }
