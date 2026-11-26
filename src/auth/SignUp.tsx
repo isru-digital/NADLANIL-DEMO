@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { ArrowLeft, BadgeCheck, Building2, Check, Info, LoaderCircle, Lock, MailCheck, Plus, User, X } from 'lucide-react'
 import { COMMUNITY_HOME, COMMUNITY_NAME } from '../config/community'
 import { cities as knownCities } from '../data/demo'
+import { PlacePicker } from '../components/PlacePicker'
 import CommunityBrand from '../community/CommunityBrand'
 import { call, pending } from './session'
 import '../styles/join-green.css'
@@ -30,7 +31,10 @@ export default function SignUp() {
   const [officeName, setOfficeName] = useState('')
   const [cities, setCities] = useState<string[]>([])
   const [other, setOther] = useState('')
-  const [areas, setAreas] = useState('')
+  // the neighbourhoods are picked from the lists of the cities that were ticked (26.11.2026), and sent as before:
+  // one line of names
+  const [places, setPlaces] = useState<{ hoods: string[]; manual: string[] }>({ hoods: [], manual: [] })
+  const areas = places.hoods.join(', ')
   const [errors, setErrors] = useState<Partial<Record<Fields, string>>>({})
   const [busy, setBusy] = useState(false)
   const [failure, setFailure] = useState('')
@@ -316,14 +320,15 @@ export default function SignUp() {
               {err('cities')}
             </fieldset>
 
-            <label className="au-field">
-              {/* the neighbourhoods are optional, the city above is what is required (Itzik 18.11.2026) */}
+            <div className="au-field au-areas" data-f="areas" data-areas={areas} data-open={cities.length > 0}>
+              {/* the neighbourhoods are optional, the city above is what is required (Itzik 18.11.2026). The field
+                  opens once a city is ticked, with the neighbourhoods of the ticked cities (26.11.2026) */}
               <span>
                 שכונות ואזורים <em className="au-opt">רשות</em>
               </span>
-              <input className="input" data-f="areas" value={areas} onChange={(e) => setAreas(e.target.value)} placeholder="למשל: כפר גנים, אם המושבות" />
-              <small className="au-hint">אפשר להשאיר ריק ולהוסיף בהמשך.</small>
-            </label>
+              <PlacePicker id="signup" what="client" cities={cities} value={{ streets: [], hoods: places.hoods, manual: places.manual }} onChange={(next) => setPlaces({ hoods: next.hoods, manual: next.manual })} many streets={false} />
+              <small className="au-hint">{cities.length ? 'אפשר להשאיר ריק ולהוסיף בהמשך.' : 'נפתח אחרי שמסמנים עיר. אפשר גם להשאיר ריק.'}</small>
+            </div>
 
             {failure && (
               <p className="au-fail" role="alert">

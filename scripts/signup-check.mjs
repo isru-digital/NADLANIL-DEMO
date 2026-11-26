@@ -38,6 +38,20 @@ const fresh = async (vp) => {
   await page.evaluate(() => localStorage.setItem('nadlanup-mode-v1', JSON.stringify({ mode: 'day', until: Date.now() + 9e9 })))
   return { ctx, page }
 }
+// the neighbourhoods are picked from the lists of the cities ticked (26.11.2026): a name of the list, or one added by hand
+const pickAreas = async (page, names) => {
+  const box = '[data-places="signup"] [data-f="hood-search"]'
+  await page.waitForSelector(box, { timeout: 8000 })
+  for (const n of names) {
+    await page.evaluate((s) => { const i = document.querySelector(s); i.scrollIntoView({ block: 'center' }); i.focus(); i.select?.() }, box)
+    await page.keyboard.press('Backspace')
+    await page.type(box, n)
+    await wait(700)
+    await page.evaluate((name) => (document.querySelector(`[data-places="signup"] [data-pick="${name}"]`) ?? document.querySelector('[data-places="signup"] [data-act="manual"]')).click(), n)
+    await wait(250)
+  }
+}
+
 const fill = async (page, sel, value) => {
   await page.evaluate((s) => { const i = document.querySelector(s); i.focus(); i.select?.() }, sel)
   await page.keyboard.press('Backspace')
@@ -102,7 +116,7 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
   await page.evaluate(() => document.querySelector('[data-city="רמת גן"]')?.click())
   await fill(page, '[data-f="other-city"]', 'ראש העין')
   await page.keyboard.press('Enter')
-  await fill(page, '[data-f="areas"]', 'כפר גנים, אם המושבות')
+  await pickAreas(page, ['כפר גנים', 'אם המושבות'])
   await wait(300)
   const picked = await page.evaluate(() => [...document.querySelectorAll('.au-cities button.is-on')].map((b) => b.textContent.trim()))
   check(`${d} cities: from the list, and one written by hand`, picked.join() === 'רמת גן,ראש העין', picked.join())
@@ -249,7 +263,7 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
   await fill(b.page, '[data-f="license"]', '2718281')
   await tap(b.page, '[data-v="solo"]')
   await b.page.evaluate(() => document.querySelector('[data-city="נתניה"]')?.click())
-  await fill(b.page, '[data-f="areas"]', 'קריית שרת')
+  await pickAreas(b.page, ['קריית שרת'])
   await tap(b.page, '[data-act="register"]')
   await b.page.waitForSelector('[data-state="waiting"]', { timeout: 15000 }).catch(async (e) => {
     console.error('second sign-up stuck:', await b.page.evaluate(() => [...document.querySelectorAll('.au-err, .au-fail, [role="alert"]')].map((x) => x.textContent).join(' | ')))
@@ -291,7 +305,7 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
   await fill(b.page, '[data-f="license"]', '2718281')
   await tap(b.page, '[data-v="solo"]')
   await b.page.evaluate(() => document.querySelector('[data-city="נתניה"]')?.click())
-  await fill(b.page, '[data-f="areas"]', 'קריית שרת')
+  await pickAreas(b.page, ['קריית שרת'])
   await tap(b.page, '[data-act="register"]')
   await b.page.waitForSelector('[data-state="waiting"]', { timeout: 15000 })
   const asks = (await outbox()).filter((m) => m.to_email === 'ofek@test.local' && m.subject.includes(other.name))

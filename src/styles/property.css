@@ -379,6 +379,63 @@ html[data-mode='night'] .pp-split.is-full svg {
   outline: 0;
   border-color: var(--gold);
 }
+/* "שכונה" before a city is picked (26.11.2026): the same box, locked; a tap says "קודם בוחרים עיר" */
+.flt-locked {
+  position: relative;
+  display: grid;
+  gap: 3px;
+  flex: 1 1 130px;
+  min-width: 0;
+}
+.flt-locked > span {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-faint);
+}
+.flt-lock {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1.5px dashed var(--line-strong);
+  background: var(--surface);
+  font: inherit;
+  font-size: 15px;
+  color: var(--text-dim);
+  text-align: start;
+  cursor: not-allowed;
+  touch-action: manipulation;
+}
+.flt-lock svg {
+  flex: none;
+  width: 16px;
+  height: 16px;
+}
+.flt-lock:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+/* the note floats under the box, so the row of fields does not jump when it shows */
+.flt-lock-msg {
+  position: absolute;
+  top: 100%;
+  inset-inline-start: 0;
+  z-index: 3;
+  margin-top: 4px;
+  padding: 6px 11px;
+  border-radius: 9px;
+  border: 1px solid var(--line-gold, var(--line-strong));
+  background: var(--card);
+  box-shadow: var(--shadow-1);
+  white-space: nowrap;
+  font-size: 13.5px;
+  font-style: normal;
+  font-weight: 700;
+  color: var(--text);
+}
 /* the money of the filter: two boxes written by hand, and the usual ranges in one tap (23.11.2026) */
 .flt-money {
   display: grid;

@@ -21,6 +21,8 @@ import type { PropCategory } from '../crm/categories'
 import { DEFAULT_KIND, KINDS, closestKind, hasRooms, isKind, kindTitle } from '../config/propertyTypes'
 import { streetName } from '../community/place'
 import { Toggle } from '../components/Toggle'
+import CommunityCard from '../components/CommunityCard'
+import { topicById } from '../config/topics'
 import { PlacePicker } from '../components/PlacePicker'
 import { CoopField, PriceField } from './PriceCoop'
 import '../styles/green-actions.css'
@@ -576,18 +578,31 @@ export default function GreenActions() {
     navigate(`/app/community?topic=${item.topicId}&item=${id}`)
   }
 
+  /** the post a share puts in the feed: the window shows this very post before it goes up */
+  const sharedPost = (src: CommunityItem, id: string): CommunityItem => ({
+    ...src,
+    id,
+    authorId: me.id,
+    time: 'עכשיו',
+    likes: 0,
+    comments: [],
+    fresh: true,
+    sourceId: undefined,
+    show: 'feed',
+    body: `${words.trim() ? `${words.trim()} ` : ''}(שיתוף של פוסט מאת ${brokerById(src.authorId).name}) ${src.body}`,
+  })
   const share = () => {
     if (ask?.kind !== 'share') return
-    const src = ask.item
-    const from = brokerById(src.authorId).name
     const id = `s${Date.now()}`
-    addItem({ ...src, id, authorId: me.id, time: 'עכשיו', likes: 0, comments: [], fresh: true, sourceId: undefined, show: 'feed', body: `${words.trim() ? `${words.trim()} ` : ''}(שיתוף של פוסט מאת ${from}) ${src.body}` })
+    addItem(sharedPost(ask.item, id))
     close()
     toast('השיתוף פורסם בקהילה')
     window.setTimeout(() => document.getElementById(`ci-${id}`)?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 350)
   }
 
   const shared = ask?.kind === 'share' ? ask.item : null
+  // where the shared post goes, in the words of the feed's own tabs (26.11.2026)
+  const sharedTo = !shared ? '' : shared.topicId === 'seeking' ? 'בלשונית קונים' : shared.topicId === 'coop' ? 'בלשונית נכסים' : `ב"${topicById(shared.topicId).name}"`
   return (
     <>
       {/* ------------------------------------------------------------ a new CRM card */}
@@ -784,18 +799,25 @@ export default function GreenActions() {
       {/* ------------------------------------------------------------ sharing a post */}
       <Modal open={!!shared} onClose={close} title="שיתוף עם הקהילה" subtitle="הפוסט יופיע בפיד בשמכם.">
         {shared && (
-          <div className="modal-body ga">
-            <label className="field">
-              <span className="field-label">רוצים להוסיף משהו? (לא חובה)</span>
-              <textarea className="textarea" rows={3} value={words} onChange={(e) => setWords(e.target.value)} placeholder="כמה מילים משלכם" autoFocus />
-            </label>
-            <div className="ga-quote">
+          <div className="modal-body ga" data-share={shared.topicId}>
+            {/* what goes up, and where (Ofek and Ariel, 26.11.2026: the window did not say) */}
+            <p className="ga-where" data-where>
+              <ShieldCheck aria-hidden />
               <span>
-                <UserRound />
+                הפוסט יתפרסם בקהילה, {sharedTo}. {shared.topicId === 'seeking' ? 'שם הלקוח והטלפון שלו לא יוצגו.' : 'שמות וטלפונים של לקוחות לא יוצגו.'}
               </span>
-              <div>
-                <b>{brokerById(shared.authorId).name}</b>
-                <p>{shared.title ?? shared.body}</p>
+            </p>
+            <label className="field">
+              <span className="field-label">טקסט שיופיע בפוסט (לא חובה)</span>
+              <textarea className="textarea" rows={2} value={words} onChange={(e) => setWords(e.target.value)} placeholder="לדוגמה: שווה לראות, מתאים למשפחה" data-f="share-words" />
+              <small className="ga-words-hint">מה שכותבים כאן מופיע בתחילת הפוסט, וכל המתווכים בקהילה רואים אותו.</small>
+            </label>
+            <div className="ga-preview" data-preview>
+              <span className="field-label">
+                <Eye aria-hidden /> כך הפוסט ייראה בפיד
+              </span>
+              <div className="ga-preview-card">
+                <CommunityCard item={sharedPost(shared, 'share-preview')} preview />
               </div>
             </div>
             <button type="button" className="btn btn-gold btn-lg ga-go" onClick={share}>

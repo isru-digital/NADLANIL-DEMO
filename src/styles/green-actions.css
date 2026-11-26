@@ -684,3 +684,60 @@ html[data-mode='night'] .ga-photo-err {
     grid-template-columns: 1fr;
   }
 }
+
+/* the share window says what goes up and where, and shows the post as the feed will (26.11.2026) */
+.ga-where {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgb(var(--g) / 0.12);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--text);
+}
+.ga-where svg {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+  color: var(--gold-soft);
+}
+.ga-words-hint {
+  font-size: 13.5px;
+  line-height: 1.4;
+  color: var(--text-dim);
+}
+.ga-preview {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+.ga-preview > .field-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.ga-preview > .field-label svg {
+  width: 16px;
+  height: 16px;
+}
+/* small: the whole post, a little reduced, so it is seen at a glance and the button stays near */
+.ga-preview-card {
+  max-height: 300px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: 16px;
+  border: 1px dashed var(--line-strong);
+  padding: 8px;
+  zoom: 0.82;
+}
+.ga-preview-card .ci {
+  margin: 0;
+}
+.ga-preview-card .ci {
+  pointer-events: none;
+}

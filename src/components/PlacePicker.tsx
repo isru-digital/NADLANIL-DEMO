@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { Check, MapPin, Map as MapIcon, PenLine, Search, X } from 'lucide-react'
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
+import { Check, Lock, MapPin, Map as MapIcon, PenLine, Search, X } from 'lucide-react'
 import { clearMatch, findNames, hasMap, loadPlaces, samePlace } from '../config/places'
 import type { CityPlaces } from '../config/places'
 import { HoodMap } from './HoodMap'
@@ -12,13 +12,17 @@ import '../styles/places.css'
  * neighbourhood; a buyer's search may have several of each. A name that is not in the list is added by hand, and
  * kept marked as such ("ידני"). A name that was typed freely before the lists existed stays as it was; when it is
  * clearly one of the list, the list's name is offered.
+ *
+ * The order is always city, then neighbourhood, then street (Ofek and Ariel, 26.11.2026): "שכונה" is the first of
+ * the two and the one that is open. Until a city is picked the field is locked, and a tap on it says "קודם בוחרים
+ * עיר". With several cities, the names in the list are grouped under their city.
  */
 export type Picked = { streets: string[]; hoods: string[]; manual: string[] }
 type Kind = 'street' | 'hood'
 
 export function PlacePicker({
   id,
-  cities,
+  cities: given,
   value,
   onChange,
   many = false,
@@ -36,15 +40,25 @@ export function PlacePicker({
   /** what the place is being picked for, so the map says the right thing (23.11.2026) */
   what?: 'property' | 'client'
 }) {
-  const [kind, setKind] = useState<Kind>(streets ? 'street' : 'hood')
+  const cities = useMemo(() => given.filter(Boolean), [given.join('|')]) // eslint-disable-line react-hooks/exhaustive-deps
+  const [kind, setKind] = useState<Kind>('hood')
   const [typed, setTyped] = useState('')
   const [data, setData] = useState<CityPlaces[]>([])
+  // which cities the lists were asked for and have answered: a city with no list says so, and is added by hand
+  const [loadedFor, setLoadedFor] = useState('')
+  // the locked field was tapped before a city was picked
+  const [lockSaid, setLockSaid] = useState(false)
   const [mapOf, setMapOf] = useState<CityPlaces | null>(null)
   const box = useRef<HTMLInputElement>(null)
   const key = cities.join('|')
   useEffect(() => {
     let live = true
-    Promise.all(cities.map(loadPlaces)).then((all) => live && setData(all.filter(Boolean) as CityPlaces[]))
+    Promise.all(cities.map(loadPlaces)).then((all) => {
+      if (!live) return
+      setData(all.filter(Boolean) as CityPlaces[])
+      setLoadedFor(key)
+    })
+    if (cities.length) setLockSaid(false)
     return () => {
       live = false
     }
@@ -76,8 +90,10 @@ export function PlacePicker({
       seen.add(n)
       out.push(...(rows.get(n) ?? []))
     }
-    return out.slice(0, 80)
-  }, [names, typed])
+    const top = out.slice(0, 80)
+    // several cities: each city's names together, under its name, in the order the cities were picked
+    return data.length > 1 ? cities.flatMap((c) => top.filter((x) => x.city === c)) : top
+  }, [names, typed, data.length, cities])
 
   const list = kind === 'street' ? value.streets : value.hoods
   const set = (k: Kind, next: string[], manualAdd?: string) => {
@@ -144,20 +160,34 @@ export function PlacePicker({
       </div>
       {(value.streets.length > 0 || value.hoods.length > 0) && (
         <div className="pl-chips" aria-live="polite">
-          {chips('street')}
           {chips('hood')}
+          {chips('street')}
         </div>
+      )}
+      {cities.length === 0 && (
+        <>
+          {/* no city yet: the field is there, locked, and a tap on it says what comes first */}
+          <button type="button" className="pl-lock" aria-disabled="true" aria-describedby={lockSaid ? `${id}-lock-msg` : undefined} onClick={() => setLockSaid(true)} data-lock="hood">
+            <Lock aria-hidden />
+            <span>{streets ? 'שכונה ורחוב' : 'שכונה'}</span>
+          </button>
+          {lockSaid && (
+            <p className="pl-lock-msg" id={`${id}-lock-msg`} role="status" data-msg="city-first">
+              קודם בוחרים עיר
+            </p>
+          )}
+        </>
       )}
       {cities.length > 0 && (
         <>
           {/* with nothing to choose between (a field of neighbourhoods alone) one tab on its own says nothing */}
           {streets && (
             <div className="pl-kinds" role="radiogroup" aria-label="מה בוחרים">
-              <button type="button" role="radio" aria-checked={kind === 'street'} onClick={() => setKind('street')} data-kind="street">
-                רחוב{value.streets.length > 0 && <b className="num">{value.streets.length}</b>}
-              </button>
               <button type="button" role="radio" aria-checked={kind === 'hood'} onClick={() => setKind('hood')} data-kind="hood">
                 שכונה{value.hoods.length > 0 && <b className="num">{value.hoods.length}</b>}
+              </button>
+              <button type="button" role="radio" aria-checked={kind === 'street'} onClick={() => setKind('street')} data-kind="street">
+                רחוב{value.streets.length > 0 && <b className="num">{value.streets.length}</b>}
               </button>
             </div>
           )}
@@ -168,6 +198,8 @@ export function PlacePicker({
               className="input"
               value={typed}
               onChange={(e) => setTyped(e.target.value)}
+              // inside a form (the sign-up page) Enter must not send the form
+              onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
               placeholder={kind === 'street' ? 'מקלידים שם של רחוב' : 'מקלידים שם של שכונה'}
               aria-label={kind === 'street' ? 'חיפוש רחוב' : 'חיפוש שכונה'}
               autoComplete="off"
@@ -178,20 +210,26 @@ export function PlacePicker({
           {typed.trim() && (
             <div className="pl-list" role="listbox" aria-multiselectable={many} data-list={kind}>
               {shown.length ? (
-                shown.map((x) => {
+                shown.map((x, i) => {
                   const on = list.includes(x.name)
                   return (
-                    <button key={`${x.city}:${x.name}`} type="button" role="option" aria-selected={on} className="pl-row" onClick={() => toggle(x.name)} data-pick={x.name}>
-                      <span className="pl-box" aria-hidden>
-                        {on && <Check />}
-                      </span>
-                      <span className="pl-row-name">{x.name}</span>
-                      {several && <small>{x.city}</small>}
-                    </button>
+                    <Fragment key={`${x.city}:${x.name}`}>
+                      {several && shown[i - 1]?.city !== x.city && (
+                        <span className="pl-group" role="presentation" data-group={x.city}>
+                          {x.city}
+                        </span>
+                      )}
+                      <button type="button" role="option" aria-selected={on} className="pl-row" onClick={() => toggle(x.name)} data-pick={x.name} data-of={several ? x.city : undefined} aria-label={several ? `${x.name}, ${x.city}` : undefined}>
+                        <span className="pl-box" aria-hidden>
+                          {on && <Check />}
+                        </span>
+                        <span className="pl-row-name">{x.name}</span>
+                      </button>
+                    </Fragment>
                   )
                 })
               ) : (
-                <p className="pl-none">{data.length ? 'לא נמצא ברשימה.' : 'טוענים את הרשימה'}</p>
+                <p className="pl-none">{data.length ? 'לא נמצא ברשימה.' : loadedFor === key ? 'אין לנו עדיין רשימה לעיר הזאת. אפשר להוסיף ידנית.' : 'טוענים את הרשימה'}</p>
               )}
               <button type="button" className="pl-manual" onClick={addByHand} data-act="manual">
                 <PenLine aria-hidden /> לא מצאתי, להוסיף ידנית: <b>{typed.trim()}</b>

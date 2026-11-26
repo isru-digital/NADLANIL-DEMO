@@ -39,7 +39,8 @@ export const topics: Topic[] = [
     tone: 'gold',
     fromCrm: ['property'],
     compose: false,
-    cta: 'אני רוצה לשתף פעולה',
+    // "יש לי קונה" (Ofek and Ariel, 26.11.2026): the same button, said the way a broker says it
+    cta: 'יש לי קונה',
   },
   {
     id: 'referrals',

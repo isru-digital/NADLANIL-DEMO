@@ -681,3 +681,69 @@ div.hm-stage.hm-wait {
   cursor: pointer;
   padding: 6px 12px;
 }
+
+/* the order is city, neighbourhood, street (26.11.2026). Before a city is picked the field is there but locked:
+   it looks like the search box, greyed, with a lock; a tap on it says "קודם בוחרים עיר" */
+.pl-lock {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 50px;
+  padding: 0 14px;
+  border-radius: 14px;
+  border: 1.5px dashed var(--line-strong);
+  background: var(--surface);
+  font-size: 16px;
+  color: var(--text-dim);
+  text-align: start;
+  cursor: not-allowed;
+  touch-action: manipulation;
+}
+.pl-lock svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+}
+.pl-lock:focus-visible {
+  outline: 2px solid var(--pl-blue);
+  outline-offset: 2px;
+}
+.pl-lock-msg {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  margin: 0;
+  padding: 7px 12px;
+  border-radius: 10px;
+  background: var(--pl-blue-soft);
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--text);
+  animation: pl-lock-in 0.2s ease-out;
+}
+@keyframes pl-lock-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pl-lock-msg {
+    animation: none;
+  }
+}
+/* several cities: each city's names under its own name. The name is a line of its own in the list and scrolls with
+   it: it does not stay stuck at the top, where the names passing under it were read through it (26.11.2026) */
+.pl-group {
+  display: flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text-dim);
+}

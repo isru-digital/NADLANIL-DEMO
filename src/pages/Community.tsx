@@ -14,6 +14,7 @@ import {
   Home,
   ImagePlus,
   LayoutGrid,
+  Lock,
   MapPin,
   MessageCircle,
   Plus,
@@ -866,11 +867,21 @@ function FilterBar({ kind, filter, onChange, count, cities, hoods }: { kind: 'pr
           ? `מ-${digits(filter.priceMin)} ₪ ומעלה`
           : `${digits(filter.priceMin)} - ${digits(filter.priceMax)} ₪`
   const on = filter.city || filter.rooms || filter.priceMin || filter.priceMax || filter.deal || filter.renewal || filter.kind || filter.hood || filter.fullCoop
+  // "שכונה" is locked until a city is picked (26.11.2026): a tap on it says so, for a few seconds
+  const [lockSaid, setLockSaid] = useState(false)
+  useEffect(() => {
+    if (!lockSaid) return
+    const t = window.setTimeout(() => setLockSaid(false), 3500)
+    return () => window.clearTimeout(t)
+  }, [lockSaid])
+  useEffect(() => {
+    if (filter.city) setLockSaid(false)
+  }, [filter.city])
   return (
     <section className="flt" aria-label={kind === 'properties' ? 'סינון נכסים' : 'סינון קונים'} data-filters={kind}>
       <label>
         <span>עיר</span>
-        <select value={filter.city} onChange={(e) => set({ city: e.target.value, hood: filter.hood && e.target.value && !filter.hood.startsWith(`${e.target.value}|`) ? '' : filter.hood })} data-filter="city">
+        <select value={filter.city} onChange={(e) => set({ city: e.target.value, hood: filter.hood.startsWith(`${e.target.value}|`) && e.target.value ? filter.hood : '' })} data-filter="city">
           <option value="">כל הערים</option>
           {cities.map((c) => (
             <option key={c} value={c}>
@@ -880,21 +891,36 @@ function FilterBar({ kind, filter, onChange, count, cities, hoods }: { kind: 'pr
         </select>
       </label>
       {/* the neighbourhoods of the posts in this room, written one way (22.11.2026); of the city picked, when there is one */}
-      {hoods.length > 0 && (
-        <label>
-          <span>שכונה</span>
-          <select value={filter.hood} onChange={(e) => set({ hood: e.target.value })} data-filter="hood">
-            <option value="">כל השכונות</option>
-            {hoods
-              .filter((h) => !filter.city || h.city === filter.city)
-              .map((h) => (
-                <option key={h.value} value={h.value}>
-                  {filter.city ? h.label : `${h.label}, ${h.city}`}
-                </option>
-              ))}
-          </select>
-        </label>
-      )}
+      {hoods.length > 0 &&
+        (filter.city ? (
+          <label>
+            <span>שכונה</span>
+            <select value={filter.hood} onChange={(e) => set({ hood: e.target.value })} data-filter="hood">
+              <option value="">כל השכונות</option>
+              {hoods
+                .filter((h) => h.city === filter.city)
+                .map((h) => (
+                  <option key={h.value} value={h.value}>
+                    {h.label}
+                  </option>
+                ))}
+            </select>
+          </label>
+        ) : (
+          // no city yet: the field is there, locked; a tap on it says what comes first
+          <div className="flt-locked">
+            <span id="flt-hood-name">שכונה</span>
+            <button type="button" className="flt-lock" aria-disabled="true" aria-labelledby="flt-hood-name" aria-describedby={lockSaid ? 'flt-hood-msg' : undefined} onClick={() => setLockSaid(true)} data-filter="hood-locked">
+              <Lock aria-hidden />
+              כל השכונות
+            </button>
+            {lockSaid && (
+              <em className="flt-lock-msg" id="flt-hood-msg" role="status" data-msg="city-first">
+                קודם בוחרים עיר
+              </em>
+            )}
+          </div>
+        ))}
       {/* the same two lists as in the property form: the whole group, or one kind of it */}
       <label>
         <span>סוג נכס</span>
@@ -950,6 +976,9 @@ function FilterBar({ kind, filter, onChange, count, cities, hoods }: { kind: 'pr
             <MoneyInput value={Number(filter.priceMax) || 0} onValue={(n) => set({ priceMax: n ? String(n) : '' })} label={`${money}, עד`} placeholder="הכול" name="price-max" />
           </label>
         </div>
+        {/* the quick ranges are for properties only: in "קונים" the slider and the two boxes are enough
+            (Ofek and Ariel, 26.11.2026) */}
+        {kind === 'properties' && (
         <div className="flt-bands" role="group" aria-label={`טווחים של ${money}`}>
           {bands.map(([label, min, max]) => {
             const on = filter.priceMin === min && filter.priceMax === max
@@ -960,6 +989,7 @@ function FilterBar({ kind, filter, onChange, count, cities, hoods }: { kind: 'pr
             )
           })}
         </div>
+        )}
       </div>
       <div className="flt-deal" role="group" aria-label="מכירה או השכרה">
         {(

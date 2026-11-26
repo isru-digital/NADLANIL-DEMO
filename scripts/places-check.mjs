@@ -120,7 +120,7 @@ const picker = (page, id) =>
     return {
       cities: [...p.querySelectorAll('.pl-city')].map((c) => c.textContent.trim()),
       kinds: [...p.querySelectorAll('.pl-kinds [data-kind]')].map((b) => `${b.dataset.kind}:${b.getAttribute('aria-checked')}`),
-      rows: [...p.querySelectorAll('[data-list] [data-pick]')].map((b) => ({ n: b.dataset.pick, on: b.getAttribute('aria-selected'), box: !!b.querySelector('.pl-box'), city: b.querySelector('small')?.textContent ?? null, h: Math.round(b.getBoundingClientRect().height) })),
+      rows: [...p.querySelectorAll('[data-list] [data-pick]')].map((b) => ({ n: b.dataset.pick, on: b.getAttribute('aria-selected'), box: !!b.querySelector('.pl-box'), city: b.dataset.of ?? null, h: Math.round(b.getBoundingClientRect().height) })),
       list: (() => {
         const l = p.querySelector('[data-list]')
         return l ? { max: parseFloat(getComputedStyle(l).maxHeight), scroll: l.scrollHeight > l.clientHeight } : null
@@ -209,7 +209,9 @@ for (const [dev, vp] of DEVICES) {
   await t.click('.ga .pf-kind[data-kind="דירה"]')
   await page.$eval('[data-places="property"]', (el) => el.scrollIntoView({ block: 'start' }))
   let p = await picker(page, 'property')
-  check(`${dev}: the address starts from the city as a blue chip, with "רחוב" and "שכונה" under it`, p && p.cities.join() === 'תל אביב' && p.cityBg === 'rgb(31, 95, 207)' && p.kinds.join() === 'street:true,hood:false' && !p.list, p)
+  check(`${dev}: the address starts from the city as a blue chip, with "רחוב" and "שכונה" under it`, p && p.cities.join() === 'תל אביב' && p.cityBg === 'rgb(31, 95, 207)' && p.kinds.join() === 'hood:true,street:false' && !p.list, p)
+  // the order is city, neighbourhood, street (26.11.2026): "שכונה" is the open one, the street is one tap away
+  await t.click('[data-places="property"] [data-kind="street"]')
   await typeIn(t, '[data-places="property"] [data-f="street-search"]', 'ד')
   p = await picker(page, 'property')
   check(`${dev}: one letter opens a list to scroll, with a box to tick by each name, a finger high`, p.rows.length > 10 && p.rows.every((r) => r.box && r.h >= 44) && p.list.max <= 300 && p.list.scroll && p.manual?.startsWith('לא מצאתי, להוסיף ידנית'), { n: p.rows.length, list: p.list, manual: p.manual })
@@ -230,11 +232,11 @@ for (const [dev, vp] of DEVICES) {
   await typeIn(t, '[data-places="property"] [data-f="hood-search"]', 'צפון')
   p = await picker(page, 'property')
   const north = p.rows.find((r) => r.n.startsWith('הצפון הישן'))?.n
-  check(`${dev}: "שכונה" searches the neighbourhoods`, p.kinds.join() === 'street:false,hood:true' && !!north, p.rows.map((r) => r.n))
+  check(`${dev}: "שכונה" searches the neighbourhoods`, p.kinds.join() === 'hood:true,street:false' && !!north, p.rows.map((r) => r.n))
   await pickRow(page, 'property', north)
   await wait(250)
   p = await picker(page, 'property')
-  check(`${dev}: one street and one neighbourhood, two blue chips`, p.chips.join() === `street:אבן גבירול,hood:${north}` && p.hood === north, p.chips)
+  check(`${dev}: one street and one neighbourhood, two blue chips`, p.chips.join() === `hood:${north},street:אבן גבירול` && p.hood === north, p.chips)
   const seen = await page.evaluate(() => document.querySelector('[data-seen] b')?.textContent.trim())
   check(`${dev}: "כך יראו המתווכים" follows the list's names`, seen === `תל אביב - ${north}, רחוב אבן גבירול`, seen)
   await t.shot(`${dev}-2-two-chips`)
@@ -439,9 +441,19 @@ for (const [dev, vp] of DEVICES) {
   // ---------------------------------------------------------------- 3. the feed's filter by neighbourhood
   await page.goto(green + '/app/community?topic=coop', { waitUntil: 'networkidle0' })
   await wait(800)
-  const opts = await page.evaluate(() => [...document.querySelectorAll('[data-filter="hood"] option')].map((o) => ({ v: o.value, t: o.textContent })))
-  const target = opts.find((o) => o.t.startsWith('נווה שאנן'))
-  check(`${dev}: the feed's filter has "שכונה", from the posts`, opts.length > 3 && opts[0].t === 'כל השכונות' && !!target, opts.slice(0, 5))
+  // "שכונה" is locked until a city is picked (26.11.2026): the city of "נווה שאנן" is picked first
+  const lockedFirst = await page.evaluate(() => !!document.querySelector('[data-filter="hood-locked"]') && !document.querySelector('[data-filter="hood"]'))
+  check(`${dev}: the feed's filter keeps "שכונה" locked until a city is picked`, lockedFirst)
+  let opts = []
+  let target
+  for (const c of await page.evaluate(() => [...document.querySelectorAll('[data-filter="city"] option')].map((o) => o.value).filter(Boolean))) {
+    await page.select('[data-filter="city"]', c)
+    await wait(250)
+    opts = await page.evaluate(() => [...document.querySelectorAll('[data-filter="hood"] option')].map((o) => ({ v: o.value, t: o.textContent })))
+    target = opts.find((o) => o.t.startsWith('נווה שאנן'))
+    if (target) break
+  }
+  check(`${dev}: the feed's filter has "שכונה", from the posts of the city picked`, opts.length > 1 && opts[0].t === 'כל השכונות' && !!target, opts.slice(0, 5))
   await page.select('[data-filter="hood"]', target.v)
   await page.waitForFunction(() => document.querySelectorAll('article').length === Number(document.querySelector('[data-count]')?.textContent), { timeout: 3000 }).catch(() => {})
   await wait(400)
