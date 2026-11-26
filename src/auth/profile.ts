@@ -35,6 +35,7 @@ const KEYS = [
   'nadlanup-city-watch-v1',
   'nadlanup-crm-draft-v1',
   'nadlanup-match-v1',
+  'nadlanup-match-shown-v1',
   'nadlanup-referrals-sent-v1',
   'nadlanup-sim-interest-v1',
 ]

@@ -9,7 +9,7 @@ import type { CommunityItem, Notice, SearchSpec } from '../data/demo'
 import { useStore } from '../store'
 import { Avatar } from '../components/ui'
 import ChatWindow from './ChatWindow'
-import { matchStore, matchUi, matchesFor, otherSideInterested, isMutual, placeOf, propertyKind, scoreOf } from './match'
+import { matchShown, matchStore, matchUi, matchesFor, otherSideInterested, isMutual, placeOf, propertyKind, scoreOf, sourceKey } from './match'
 import { DEFAULT_KIND, hasRooms, isKind, searchGroup } from '../config/propertyTypes'
 import { CoopBadge } from '../components/CoopBadge'
 import type { Match, Pair } from './match'
@@ -102,10 +102,12 @@ export default function MatchMoment({ sim = false }: { sim?: boolean }) {
   /* --------------------------------------------- the other broker's side, played in the demo */
   const playOtherSide = useCallback(
     (mine: CommunityItem) => {
-      if (simDone().includes(mine.id)) return
+      // by the card or the client the post came from: the same property going up again is not played a second time
+      const simKey = sourceKey(mine)
+      if (simDone().includes(simKey) || simDone().includes(mine.id)) return
       timers.current.push(
         window.setTimeout(() => {
-          simMark(mine.id)
+          simMark(simKey)
           const theirs = counterpartOf(mine)
           if (!theirs) return
           const r = mine.property && theirs.search ? scoreOf(mine.city, mine.property, theirs.search) : mine.search && theirs.property ? scoreOf(theirs.city, theirs.property, mine.search) : null
@@ -163,8 +165,16 @@ export default function MatchMoment({ sim = false }: { sim?: boolean }) {
     const mine = fresh.find(mineToMatch)
     if (!mine) return
     const t = window.setTimeout(() => {
-      setSession((cur) => cur ?? { mine, matches: matchesFor(mine, itemsRef.current), stage: 'meet', index: 0, yes: 0 })
       if (sim) playOtherSide(mine)
+      // once only (26.11.2026): "אין עדיין התאמה" once for a property or a buyer, and a match once for each match.
+      // What was shown is remembered in the browser, so a refresh or a new entry does not bring the window back.
+      const key = sourceKey(mine)
+      const all = matchesFor(mine, itemsRef.current)
+      const news = all.filter((m) => !matchShown.pair(key, m.item.id))
+      if (all.length ? !news.length : matchShown.none(key)) return
+      if (all.length) matchShown.markPairs(key, news.map((m) => m.item.id))
+      else matchShown.markNone(key)
+      setSession((cur) => cur ?? { mine, matches: news, stage: 'meet', index: 0, yes: 0 })
     }, 650)
     timers.current.push(t)
   }, [items, sim, playOtherSide])

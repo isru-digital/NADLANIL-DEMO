@@ -291,6 +291,64 @@
   }
 }
 
+/* a client with no phone, where the pick is for a WhatsApp message (26.11.2026): grey, not to be picked, with a small
+   "חסר טלפון" and a way to add the number */
+.cp-row.is-off {
+  cursor: default;
+  flex-wrap: wrap;
+  row-gap: 0;
+}
+.cp-row.is-off:hover {
+  background: transparent;
+}
+.cp-row.is-off:active {
+  transform: none;
+}
+.cp-row.is-off .cp-face,
+.cp-row.is-off .cp-text {
+  opacity: 0.5;
+  filter: grayscale(1);
+}
+.cp-tag {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 99px;
+  border: 1px solid var(--line-strong);
+  background: var(--surface-2);
+  color: var(--text-dim);
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  font-style: normal;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.cp-add-phone {
+  flex: none;
+  min-height: 44px;
+  padding: 0 6px;
+  border: 0;
+  background: none;
+  color: var(--gold-soft);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  white-space: nowrap;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.cp-add-phone:hover {
+  color: var(--text);
+}
+.cp-add-phone:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
 /* ------------------------------------------------------------ the WhatsApp message */
 .sh-wa {
   display: grid;

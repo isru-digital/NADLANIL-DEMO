@@ -8,6 +8,8 @@ import type { Client } from './clients'
  * Picking a client of the CRM inside a window (24.11.2026): one tap on a row, like picking a friend on a phone. The
  * first row is "+ לקוח חדש", which opens the CRM's own new client form and comes back here with the new client picked.
  * Once a client is picked the list folds to that one row, with "החלפה" to open it again.
+ * Where the pick is for a WhatsApp message (`needPhone`, 26.11.2026), a client with no phone cannot be picked: the row
+ * is grey, says "חסר טלפון", and has a small "הוסף טלפון" that asks for the number and keeps it on the client's card.
  */
 export default function ClientPicker({
   clients,
@@ -16,6 +18,8 @@ export default function ClientPicker({
   onNew,
   fits,
   label,
+  needPhone = false,
+  onAddPhone,
 }: {
   clients: Client[]
   value: string | null
@@ -24,6 +28,10 @@ export default function ClientPicker({
   /** why a client fits (a word on the row), or null; the ones that fit come first */
   fits?: (cl: Client) => string | null
   label: string
+  /** the pick is for a message to the client's phone: one without a phone is shown, but cannot be picked */
+  needPhone?: boolean
+  /** "הוסף טלפון" on such a row */
+  onAddPhone?: (cl: Client) => void
 }) {
   const [open, setOpen] = useState(!value)
   const [q, setQ] = useState('')
@@ -35,8 +43,10 @@ export default function ClientPicker({
   const rows = useMemo(() => {
     const term = q.trim()
     const list = clients.filter((c) => !term || c.name.includes(term) || c.about.includes(term))
-    return fits ? [...list].sort((a, b) => Number(!!fits(b)) - Number(!!fits(a))) : list
-  }, [clients, q, fits])
+    const off = (c: Client) => Number(needPhone && !c.phone)
+    // the ones that fit first, and the ones that cannot be picked last
+    return [...list].sort((a, b) => off(a) - off(b) || (fits ? Number(!!fits(b)) - Number(!!fits(a)) : 0))
+  }, [clients, q, fits, needPhone])
 
   if (picked && !open) {
     return (
@@ -80,6 +90,22 @@ export default function ClientPicker({
         {rows.map((cl) => {
           const on = cl.id === value
           const why = fits?.(cl) ?? null
+          if (needPhone && !cl.phone)
+            return (
+              <div key={cl.id} className="cp-row is-off" data-id={cl.id} data-no-phone aria-disabled="true">
+                <Face cl={cl} />
+                <span className="cp-text">
+                  <b>{cl.name}</b>
+                  <small>{cl.about || typeOf(cl.type).one}</small>
+                </span>
+                <em className="cp-tag" data-tag="no-phone">
+                  חסר טלפון
+                </em>
+                <button type="button" className="cp-add-phone" onClick={() => onAddPhone?.(cl)} aria-label={`הוסף טלפון ל${cl.name}`} data-act="add-phone-row">
+                  הוסף טלפון
+                </button>
+              </div>
+            )
           return (
             <button
               key={cl.id}

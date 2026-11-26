@@ -536,3 +536,80 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ------------------------------------------------------------------ the board's search (26.11.2026) */
+.crm-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 46px;
+  margin-bottom: 12px;
+  padding: 0 14px;
+  border-radius: 99px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+.crm-search:focus-within {
+  border-color: var(--line-gold);
+  box-shadow: 0 0 0 3px rgb(var(--g) / 0.14);
+}
+.crm-search svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  color: var(--text-faint);
+}
+.crm-search input {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  border: 0;
+  outline: 0;
+  background: none;
+  font: inherit;
+  font-size: 16px;
+  color: var(--text);
+}
+.crm-search input::placeholder {
+  color: var(--text-faint);
+}
+.crm-none {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding: 30px 18px;
+  border-radius: var(--r-md);
+  border: 1px dashed var(--line-strong);
+  text-align: center;
+}
+.crm-none-ico {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--text-dim);
+}
+.crm-none-ico svg {
+  width: 24px;
+  height: 24px;
+}
+.crm-none b {
+  font-size: 18px;
+  color: var(--text);
+}
+.crm-none p {
+  margin: 0;
+  max-width: 34ch;
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--text-dim);
+  overflow-wrap: anywhere;
+}
+.crm-none .btn {
+  min-height: 44px;
+  margin-top: 6px;
+}

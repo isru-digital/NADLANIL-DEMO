@@ -64,11 +64,36 @@ const withSamples = (saved: CommunityItem[]): CommunityItem[] => {
   return saved.map((it) => (it.property && marks.has(it.id) ? { ...it, property: { ...it.property, coopPct: marks.get(it.id)!.coopPct, sample: true } } : it))
 }
 
+/**
+ * A photo the broker uploaded is kept once (26.11.2026). It used to be written three times for every property: the
+ * card's `image`, the first of its `images`, and the photo of its post in the community. A few properties with photos
+ * filled the browser's storage, nothing more could be saved, and the property's post was published again on every
+ * entry (with the match window on top of it). On the way to the storage the two copies become short marks, and on
+ * the way back they are the photo again. Nothing else of the state changes.
+ */
+const SAME = '@first-photo'
+const FROM_CARD = '@card-photo'
+const isUpload = (v?: string) => !!v && v.startsWith('data:')
+const slim = (s: State): State => {
+  const photoOf = new Map(s.crm.filter((c) => isUpload(c.image)).map((c) => [c.id, c.image]))
+  if (!photoOf.size) return s
+  return {
+    ...s,
+    crm: s.crm.map((c) => (isUpload(c.image) && c.images?.[0] === c.image ? { ...c, image: SAME } : c)),
+    items: s.items.map((it) => (it.sourceId && isUpload(it.image) && photoOf.get(it.sourceId) === it.image ? { ...it, image: FROM_CARD } : it)),
+  }
+}
+const full = (s: State): State => {
+  const crm = s.crm.map((c) => (c.image === SAME ? { ...c, image: c.images?.[0] } : c))
+  const photoOf = new Map(crm.map((c) => [c.id, c.image]))
+  return { ...s, crm, items: s.items.map((it) => (it.image === FROM_CARD ? { ...it, image: it.sourceId ? photoOf.get(it.sourceId) : undefined } : it)) }
+}
+
 const load = (): State => {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (raw) {
-      const kept = { ...initial(), ...(JSON.parse(raw) as Partial<State>) }
+      const kept = full({ ...initial(), ...(JSON.parse(raw) as Partial<State>) })
       return { ...kept, items: withSamples(kept.items) }
     }
   } catch {
@@ -113,7 +138,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(slim(state)))
     } catch {
       /* ignore */
     }
@@ -139,7 +164,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           ...s,
           // the moment it was published (22.11.2026): it is what puts the post at the top of the feed, and what the
           // two days before it may be lifted are counted from. Every way of publishing passes through here.
-          items: [{ at: Date.now(), ...item }, ...s.items.map((c) => (c.fresh ? { ...c, fresh: false } : c))],
+          // the post remembers the CRM card or the client it came from (26.11.2026), so the match window knows it
+          // has already been shown for that property or buyer
+          items: [{ at: Date.now(), ...item, sourceId: item.sourceId ?? sourceId }, ...s.items.map((c) => (c.fresh ? { ...c, fresh: false } : c))],
           publishedIds: sourceId ? { ...s.publishedIds, [sourceId]: item.topicId } : s.publishedIds,
         })),
       /**

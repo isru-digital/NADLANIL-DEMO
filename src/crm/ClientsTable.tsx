@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, BedDouble, Building2, CalendarClock, Check, Download, Forward, Lock, MapPin, Phone, Plus, Search, Send, Share2, Sparkles, Star, UserRound, Wallet } from 'lucide-react'
+import { ArrowLeft, BedDouble, Building2, CalendarClock, Check, Download, Forward, Lock, MapPin, Phone, Plus, Search, Send, Share2, Sparkles, Star, UserRound, Wallet, X } from 'lucide-react'
 import { brokerById, formatPriceShort } from '../data/demo'
 import type { CrmItem } from '../data/demo'
 import { asset } from '../config'
@@ -20,6 +20,7 @@ import type { SendProp } from './sendProperty'
 import { WhatsAppIcon } from '../templates/LandingTemplate'
 import NewClient from './NewClient'
 import { AskPhone } from './AskPhone'
+import { found, hasQuery } from './searchText'
 import { groupLabel } from '../config/propertyTypes'
 import '../styles/green-actions.css'
 import '../styles/clients.css'
@@ -51,11 +52,8 @@ export default function ClientsTable({ onPublish }: { onPublish: (item: CrmItem)
   const mine = useMemo(() => all.filter((x) => isOffice || !typeOf(x.type).office), [all, isOffice])
   const counts = useMemo(() => Object.fromEntries(TYPES.map((t) => [t.id, mine.filter((x) => x.type === t.id).length])) as Record<ClientType, number>, [mine])
   const shown = useMemo(() => {
-    const term = q.trim()
-    const digits = term.replace(/\D/g, '')
-    const rows = mine.filter(
-      (x) => (picked.length === 0 || picked.includes(x.type)) && (!term || x.name.includes(term) || (digits.length > 1 && x.phone.replace(/\D/g, '').includes(digits))),
-    )
+    // by name, phone, city and neighbourhood, as the broker types, together with the types picked (26.11.2026)
+    const rows = mine.filter((x) => (picked.length === 0 || picked.includes(x.type)) && found(q, [x.name, ...x.cities, ...(x.neighborhoods ?? [])], x.phone))
     const by: Record<Sort, (a: Client, b: Client) => number> = {
       recent: (a, b) => a.lastDays - b.lastDays || (b.touched ?? 0) - (a.touched ?? 0),
       name: (a, b) => a.name.localeCompare(b.name, 'he'),
@@ -89,7 +87,7 @@ export default function ClientsTable({ onPublish }: { onPublish: (item: CrmItem)
         </button>
         <label className="ct-search">
           <Search aria-hidden />
-          <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="חיפוש לפי שם או טלפון" aria-label="חיפוש לפי שם או טלפון" />
+          <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="חיפוש: שם, טלפון, עיר או שכונה" aria-label="חיפוש לפי שם, טלפון, עיר או שכונה" enterKeyHint="search" autoComplete="off" data-f="client-search" />
         </label>
         <label className="ct-sort">
           <span>מיון</span>
@@ -251,7 +249,28 @@ export default function ClientsTable({ onPublish }: { onPublish: (item: CrmItem)
             })}
           </tbody>
         </table>
-        {shown.length === 0 && <p className="ct-empty">אין לקוחות שמתאימים לחיפוש או לסינון.</p>}
+        {shown.length === 0 && (
+          <div className="ct-empty" role="status" data-empty="clients">
+            <span className="ct-empty-ico" aria-hidden>
+              <Search />
+            </span>
+            <b>לא נמצאו לקוחות</b>
+            <p>{hasQuery(q) ? `אין לקוח שמתאים ל"${q.trim()}"${picked.length ? ' בסוגים שנבחרו' : ''}. אפשר לנסות שם, טלפון, עיר או שכונה.` : 'אין לקוחות בסוגים שנבחרו.'}</p>
+            <span className="ct-empty-acts">
+              {hasQuery(q) && (
+                <button type="button" className="btn btn-ghost" onClick={() => setQ('')} data-act="clear-search">
+                  <X />
+                  ניקוי חיפוש
+                </button>
+              )}
+              {picked.length > 0 && (
+                <button type="button" className="btn btn-ghost" onClick={() => setPicked([])} data-act="clear-types">
+                  ניקוי הסינון
+                </button>
+              )}
+            </span>
+          </div>
+        )}
       </div>
       <p className="ct-demo">
         <b className="num">{shown.length}</b> לקוחות מוצגים.
@@ -369,13 +388,15 @@ function Details({
   // keep the last client mounted while the window animates out
   const [last, setLast] = useState<Client | null>(client)
   // an action that needs a phone, waiting for one to be written (23.11.2026: the phone is not a must any more)
-  const [ask, setAsk] = useState<null | 'send' | 'call'>(null)
+  const [ask, setAsk] = useState<null | 'send' | 'call' | 'add'>(null)
   if (client && client !== last) setLast(client)
   const cl = client ?? last
   if (!cl) return null
   const set = (p: Partial<Client>) => clientActions.patch(cl.id, p)
   const digits = (p: string) => p.replace(/\D/g, '').replace(/^0/, '972')
-  const run = (which: 'send' | 'call', phone: string) => {
+  const run = (which: 'send' | 'call' | 'add', phone: string) => {
+    // "הוסף טלפון" only keeps the number on the card
+    if (which === 'add') return
     if (which === 'send') window.open(`https://wa.me/${digits(phone)}`, '_blank', 'noopener')
     else window.location.href = `tel:${phone.replace(/-/g, '')}`
   }
@@ -402,11 +423,26 @@ function Details({
           )}
           <span className="ct-det-last">עדכון אחרון: {lastText(cl.lastDays)}</span>
         </div>
-        <button type="button" className="ct-send" onClick={() => need('send')} data-act="send-client">
-          <Send aria-hidden />
-          שליחה ללקוח
-          <small>נכס, סיור או הודעה קצרה בוואטסאפ</small>
-        </button>
+        {/* a client with no phone (26.11.2026): the line is grey and cannot be pressed, it says "חסר טלפון", and a small
+            "הוסף טלפון" beside it asks for the number and keeps it on this card */}
+        {cl.phone ? (
+          <button type="button" className="ct-send" onClick={() => need('send')} data-act="send-client">
+            <Send aria-hidden />
+            שליחה ללקוח
+            <small>נכס, סיור או הודעה קצרה בוואטסאפ</small>
+          </button>
+        ) : (
+          <div className="ct-send is-off" aria-disabled="true" data-act="send-client" data-no-phone>
+            <Send aria-hidden />
+            <span className="ct-send-word">שליחה ללקוח</span>
+            <em className="cp-tag" data-tag="no-phone">
+              חסר טלפון
+            </em>
+            <button type="button" className="cp-add-phone" onClick={() => setAsk('add')} data-act="send-add-phone">
+              הוסף טלפון
+            </button>
+          </div>
+        )}
         {sideOf(cl.type) === 'wants' && (
           <button type="button" className="ct-send ct-refer" onClick={() => onRefer(cl.id)} data-act="refer-client">
             <Forward aria-hidden />

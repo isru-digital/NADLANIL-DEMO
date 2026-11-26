@@ -16,11 +16,14 @@ import {
   MapPin,
   Plus,
   Ruler,
+  Search,
   Share2,
   Sparkles,
   UserSearch,
+  X,
   Zap,
 } from 'lucide-react'
+import { found, hasQuery } from '../crm/searchText'
 import { CURRENT_BROKER_ID } from '../config'
 import { REFERRAL_DISCLAIMER, REFERRAL_TERMS, topicById, topics } from '../config/topics'
 import type { TopicId } from '../config/topics'
@@ -152,7 +155,12 @@ export default function Crm() {
   const [cat, setCat] = useState('all')
   // properties marked for urban renewal, on their own
   const [renewalOnly, setRenewalOnly] = useState(false)
-  const ofKind = kind === 'all' ? crm : crm.filter((c) => c.kind === kind)
+  // the board's search (26.11.2026): by title, city, neighbourhood and street, as the broker types, together with
+  // the category and the urban renewal filter. A client's card on the old board is also found by the client's name.
+  const [q, setQ] = useState('')
+  const searching = hasQuery(q)
+  const ofKindAll = kind === 'all' ? crm : crm.filter((c) => c.kind === kind)
+  const ofKind = searching ? ofKindAll.filter((c) => found(q, [c.title, c.city, c.neighborhood, c.street, c.area, ...(c.placeManual ?? []), c.kind === 'client' ? c.client : undefined])) : ofKindAll
   const ofCat = cats && catOf && cat !== 'all' ? ofKind.filter((c) => c.kind !== 'property' || catOf(c) === cat) : ofKind
   const items = renewalOnly ? ofCat.filter((c) => c.kind === 'property' && c.renewal) : ofCat
 
@@ -383,6 +391,20 @@ export default function Crm() {
       </button>
       )}
 
+      <label className="crm-search" data-search="board">
+        <Search aria-hidden />
+        <input
+          type="search"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="חיפוש: כותרת, עיר, שכונה או רחוב"
+          aria-label="חיפוש נכסים לפי כותרת, עיר, שכונה או רחוב"
+          enterKeyHint="search"
+          autoComplete="off"
+          data-f="board-search"
+        />
+      </label>
+
       {cats && catOf && (
         <div className="ct-types crm-cats" role="group" aria-label="סינון לפי קטגוריה">
           <span className="ct-types-label">קטגוריה</span>
@@ -399,11 +421,25 @@ export default function Crm() {
         </div>
       )}
 
+      {searching && items.length === 0 && (
+        <div className="crm-none" role="status" data-empty="board">
+          <span className="crm-none-ico" aria-hidden>
+            <Search />
+          </span>
+          <b>לא נמצאו נכסים</b>
+          <p>{`אין נכס שמתאים ל"${q.trim()}". אפשר לנסות כותרת, עיר, שכונה או רחוב.`}</p>
+          <button type="button" className="btn btn-ghost" onClick={() => setQ('')} data-act="clear-search">
+            <X />
+            ניקוי חיפוש
+          </button>
+        </div>
+      )}
+
       {flat ? (
         <LayoutGroup>
           <div className="kan-flat" data-flat>
             {items.map((it) => cardOf(it))}
-            {items.length === 0 && <div className="kan-empty">אין נכסים להצגה.</div>}
+            {items.length === 0 && !searching && <div className="kan-empty">אין נכסים להצגה.</div>}
           </div>
         </LayoutGroup>
       ) : (

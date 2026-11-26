@@ -118,7 +118,8 @@ for (const [dev, vp] of [
     await wait(500)
     const det = await page.evaluate(() => ({ add: document.querySelector('[data-act="add-phone"]')?.textContent.trim() ?? null, send: !!document.querySelector('[data-act="send-client"]'), tall: Math.round(document.querySelector('[data-act="send-client"]')?.getBoundingClientRect().height ?? 0) }))
     check(`${dev}, ${mode}: the card of a client with no phone offers "הוספת טלפון" and "שליחה ללקוח"`, det.add === 'הוספת טלפון' && det.send && det.tall >= 44, det)
-    await page.evaluate(() => document.querySelector('[data-act="send-client"]').click())
+    // since 26.11.2026 "שליחה ללקוח" of a client with no phone is grey, and the small "הוסף טלפון" beside it asks
+    await page.evaluate(() => document.querySelector('[data-act="send-add-phone"]').click())
     await page.waitForSelector('[data-ask-phone]', { visible: true, timeout: 8000 })
     await wait(400)
     const ask = await page.evaluate(() => ({
@@ -138,11 +139,14 @@ for (const [dev, vp] of [
     const after = await clientNamed()
     check(`${dev}, ${mode}: "לא עכשיו" keeps nothing and sends nothing`, after.phone === '' && (await page.evaluate(() => window.__opened.length)) === 0, after.phone)
     // and with a number: it is kept on the card, and the action goes on
-    await page.evaluate(() => document.querySelector('[data-act="send-client"]').click())
+    await page.evaluate(() => document.querySelector('[data-act="send-add-phone"]').click())
     await page.waitForSelector('[data-f="ask-phone"]', { visible: true, timeout: 8000 })
     await type('[data-f="ask-phone"]', PHONE)
     await page.evaluate(() => document.querySelector('[data-act="ask-phone-save"]').click())
     await wait(900)
+    // with the number on the card "שליחה ללקוח" is a button again, and a press on it opens WhatsApp
+    await page.evaluate(() => document.querySelector('button[data-act="send-client"]')?.click())
+    await wait(500)
     const done = await clientNamed()
     const sent = await page.evaluate(() => ({ opened: window.__opened, shown: document.querySelector('.ct-det-phone')?.textContent.trim() ?? null, gone: !document.querySelector('[data-f="ask-phone"]') }))
     check(`${dev}, ${mode}: the number is kept on the client's card, and what was asked for goes on (wa.me with that number)`, done.phone === PHONE && sent.opened.length === 1 && sent.opened[0] === 'https://wa.me/972505550177' && sent.shown === PHONE && sent.gone, { done: done.phone, sent })

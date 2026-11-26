@@ -9,6 +9,7 @@ import { WhatsAppIcon } from '../templates/LandingTemplate'
 import type { CrmItem } from '../data/demo'
 import ClientPicker from './ClientPicker'
 import NewClient from './NewClient'
+import { AskPhone } from './AskPhone'
 import { clientActions, useClients } from './clients'
 import type { Client } from './clients'
 import { buyerLink, fromCard, messageFor, priceWords, waLink } from './sendProperty'
@@ -33,12 +34,18 @@ export default function SendToBuyer({ prop, preset, onClose }: { prop: SendProp 
   const [text, setText] = useState('')
   const [edited, setEdited] = useState(false)
   const closeAdd = useCallback(() => setAdding(false), [])
+  // a client with no phone cannot be picked for a WhatsApp message (26.11.2026): "הוסף טלפון" on the row asks for it
+  const [askFor, setAskFor] = useState<string | null>(null)
+  const closeAsk = useCallback(() => setAskFor(null), [])
 
   // a property for sale goes to buyers, a rent to renters; the ones looking in its city first
   const side = p?.rent ? 'renter' : 'buyer'
   const people = useMemo(() => all.filter((c) => c.type === 'buyer' || c.type === 'renter'), [all])
   const fits = useCallback((cl: Client) => (p && cl.type === side && cl.cities.includes(p.city) ? `מחפש ב${p.city}` : null), [p, side])
-  const client = people.find((c) => c.id === pick) ?? null
+  const picked = people.find((c) => c.id === pick) ?? null
+  // only a client with a phone is really picked; one that came in without a phone waits, grey, in the list
+  const client = picked?.phone ? picked : null
+  const asking = people.find((c) => c.id === askFor) ?? null
   const link = p ? buyerLink(p, signedIn ? { name: signedIn.name } : undefined) : ''
 
   // a new window starts clean; the message follows the picked buyer until the broker writes in it
@@ -53,7 +60,7 @@ export default function SendToBuyer({ prop, preset, onClose }: { prop: SendProp 
 
   if (!p) return null
   const open = () => {
-    if (!client) return
+    if (!client || !client.phone) return
     window.open(waLink(client.phone, text), '_blank', 'noopener')
     clientActions.patch(client.id, {})
     toast('וואטסאפ נפתח עם ההודעה. בודקים ושולחים בעצמכם.')
@@ -62,7 +69,7 @@ export default function SendToBuyer({ prop, preset, onClose }: { prop: SendProp 
 
   return (
     <>
-      <Modal open={!!prop && !adding} onClose={onClose} title="שליחה ללקוח בוואטסאפ" subtitle="בוחרים קונה, רואים את ההודעה, ושולחים מהוואטסאפ שלכם.">
+      <Modal open={!!prop && !adding && !askFor} onClose={onClose} title="שליחה ללקוח בוואטסאפ" subtitle="בוחרים קונה, רואים את ההודעה, ושולחים מהוואטסאפ שלכם.">
         <div className="modal-body sh" data-sheet="send-buyer">
           <article className="sh-prop" data-prop={p.id}>
             {p.image ? <img src={asset(p.image)} alt="" /> : <i className="sh-prop-ph" aria-hidden><BedDouble /></i>}
@@ -86,7 +93,7 @@ export default function SendToBuyer({ prop, preset, onClose }: { prop: SendProp 
             </span>
           </article>
 
-          <ClientPicker clients={people} value={pick} onChange={setPick} onNew={() => setAdding(true)} fits={fits} label="למי לשלוח" />
+          <ClientPicker clients={people} value={client ? pick : null} onChange={setPick} onNew={() => setAdding(true)} fits={fits} label="למי לשלוח" needPhone onAddPhone={(cl) => setAskFor(cl.id)} />
 
           {client && (
             <div className="sh-wa" data-preview>
@@ -110,7 +117,6 @@ export default function SendToBuyer({ prop, preset, onClose }: { prop: SendProp 
                 <Lock aria-hidden />
                 בלי הטלפון של בעל הנכס ובלי מספר הדירה. רק עיר, שכונה, חדרים, מחיר וקישור.
               </p>
-              {!client.phone && <p className="sh-nophone">ללקוח הזה אין טלפון ב-CRM. וואטסאפ ייפתח ותבחרו למי לשלוח.</p>}
             </div>
           )}
         </div>
@@ -124,6 +130,7 @@ export default function SendToBuyer({ prop, preset, onClose }: { prop: SendProp 
           </button>
         </div>
       </Modal>
+      <AskPhone open={!!askFor && !!prop} client={asking} what="לשלוח ללקוח בוואטסאפ" onClose={closeAsk} onReady={() => asking && setPick(asking.id)} />
       <NewClient
         open={adding}
         onClose={closeAdd}

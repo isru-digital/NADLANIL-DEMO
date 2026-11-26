@@ -503,6 +503,27 @@ html[data-mode='night'] .ct-type.is-pro {
     display: none;
   }
 }
+/* no phone on the card (26.11.2026): the line is grey and is not a button; the tag and "הוסף טלפון" stay clear */
+.ct-send.is-off {
+  cursor: default;
+  flex-wrap: wrap;
+  background: var(--surface-2);
+  border-style: dashed;
+}
+.ct-send.is-off:hover {
+  border-color: var(--line);
+  background: var(--surface-2);
+}
+.ct-send.is-off > svg,
+.ct-send-word {
+  opacity: 0.5;
+}
+.ct-send.is-off > svg {
+  color: var(--text-dim);
+}
+.ct-send.is-off .cp-add-phone {
+  margin-inline-start: auto;
+}
 .ct-field {
   display: grid;
   gap: 7px;
@@ -906,4 +927,47 @@ html[data-mode='night'] .ct-err {
   .ct-m-by {
     flex-wrap: wrap;
   }
+}
+
+/* ------------------------------------------------------------------ nothing found (26.11.2026): a friendly word and a way back */
+div.ct-empty {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 30px 18px;
+}
+.ct-empty-ico {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--text-dim);
+}
+.ct-empty-ico svg {
+  width: 24px;
+  height: 24px;
+}
+div.ct-empty b {
+  font-size: 18px;
+  color: var(--text);
+}
+div.ct-empty p {
+  margin: 0;
+  max-width: 34ch;
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--text-dim);
+  overflow-wrap: anywhere;
+}
+.ct-empty-acts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+.ct-empty-acts .btn {
+  min-height: 44px;
 }

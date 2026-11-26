@@ -145,6 +145,48 @@ export const matchStore = {
   },
 }
 
+/* ------------------------------------------------------------ what the match window already showed (26.11.2026)
+ * The window comes up once: "אין עדיין התאמה" once for a property or a buyer, and a match once for each match. It is
+ * kept by the CRM card or the client the post came from (the post's own id changes when it goes up again), in a small
+ * key of its own, so a refresh, or going out and in again, never brings the same window back. */
+
+const SHOWN = 'nadlanup-match-shown-v1'
+type Shown = { none: string[]; pairs: string[] }
+// also kept in memory, for a browser whose storage is full or closed
+let shownMem: Shown | null = null
+const readShown = (): Shown => {
+  if (shownMem) return shownMem
+  try {
+    shownMem = { none: [], pairs: [], ...(JSON.parse(localStorage.getItem(SHOWN) ?? '{}') as Partial<Shown>) }
+  } catch {
+    shownMem = { none: [], pairs: [] }
+  }
+  return shownMem
+}
+const writeShown = (s: Shown) => {
+  shownMem = s
+  try {
+    localStorage.setItem(SHOWN, JSON.stringify(s))
+  } catch {
+    /* storage unavailable: remembered until the page is closed */
+  }
+}
+/** what a post of mine is known by: the CRM card or the client it came from, and only without one its own id */
+export const sourceKey = (it: CommunityItem) => it.sourceId ?? it.id
+export const matchShown = {
+  none: (key: string) => readShown().none.includes(key),
+  markNone(key: string) {
+    const s = readShown()
+    if (!s.none.includes(key)) writeShown({ ...s, none: [...s.none, key] })
+  },
+  pair: (key: string, theirs: string) => readShown().pairs.includes(pairKey(key, theirs)),
+  markPairs(key: string, theirs: string[]) {
+    const s = readShown()
+    const add = theirs.map((t) => pairKey(key, t)).filter((k) => !s.pairs.includes(k))
+    if (add.length) writeShown({ ...s, pairs: [...s.pairs, ...add] })
+  },
+}
+
 /**
  * In the demo the other broker's side is played: a broker whose post fits well (70 and up) is taken as interested
  * too, so "מעניין אותי" on such a card makes a match. Said so on the screen.
