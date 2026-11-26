@@ -31,7 +31,6 @@ export default function SignUp() {
   const [work, setWork] = useState<'office' | 'solo' | ''>('')
   const [officeName, setOfficeName] = useState('')
   const [cities, setCities] = useState<string[]>([])
-  const [other, setOther] = useState('')
   // the neighbourhoods are picked from the lists of the cities that were ticked (26.11.2026), and sent as before:
   // one line of names
   const [places, setPlaces] = useState<{ hoods: string[]; manual: string[] }>({ hoods: [], manual: [] })
@@ -91,12 +90,6 @@ export default function SignUp() {
   }, [])
 
   const toggle = (c: string) => setCities((list) => (list.includes(c) ? list.filter((x) => x !== c) : [...list, c]))
-  const addOther = () => {
-    const c = other.replace(/\s+/g, ' ').trim()
-    if (c.length < 2) return
-    setCities((list) => (list.includes(c) ? list : [...list, c]))
-    setOther('')
-  }
 
   const check = (): Partial<Record<Fields, string>> => {
     const e: Partial<Record<Fields, string>> = {}
@@ -300,25 +293,6 @@ export default function SignUp() {
                 })}
               </div>
               <CityFind id="signup" many picked={cities} onPick={toggle} />
-              <div className="au-other">
-                <input
-                  className="input"
-                  value={other}
-                  onChange={(e) => setOther(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault()
-                      addOther()
-                    }
-                  }}
-                  placeholder="עיר אחרת"
-                  aria-label="עיר אחרת"
-                  data-f="other-city"
-                />
-                <button type="button" className="btn btn-ghost" onClick={addOther}>
-                  הוספה
-                </button>
-              </div>
               {err('cities')}
             </fieldset>
 

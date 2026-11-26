@@ -205,15 +205,6 @@ html[data-mode='night'] .pfe-chip[aria-checked='true'] {
   outline: 2px solid var(--gold);
   outline-offset: 2px;
 }
-.pfe-other {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 8px;
-  margin-top: 10px;
-}
-.pfe-other .btn {
-  min-height: 48px;
-}
 
 /* ---------------------------------------------------------------- one button, always in reach */
 /* a field that takes the focus is brought clear of the bar that holds the button */

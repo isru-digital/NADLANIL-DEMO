@@ -42,7 +42,6 @@ function Form({ onClose }: { onClose: () => void }) {
   const [name, setName] = useState(me.name)
   const [phone, setPhone] = useState(me.phone)
   const [cities, setCities] = useState<string[]>(me.cities)
-  const [other, setOther] = useState('')
   // the neighbourhoods of work: kept as one line ("כפר גנים, אם המושבות"), picked from the cities' lists
   const [{ hoods, manual }, setPlaces] = useState<{ hoods: string[]; manual: string[] }>(() => ({ hoods: splitHoods(me.areas), manual: [] }))
   const areas = hoods.join(', ')
@@ -68,17 +67,10 @@ function Form({ onClose }: { onClose: () => void }) {
     mended('cities')
     setCities((list) => (list.includes(c) ? list.filter((x) => x !== c) : [...list, c]))
   }
-  const addOther = () => {
-    const c = other.trim()
-    if (c.length < 2) return
-    mended('cities')
-    setCities((list) => (list.includes(c) ? list : [...list, c]))
-    setOther('')
-  }
 
   const save = (e: FormEvent) => {
     e.preventDefault()
-    const list = other.trim().length >= 2 && !cities.includes(other.trim()) ? [...cities, other.trim()] : cities
+    const list = cities
     const digits = phone.replace(/\D/g, '')
     const bad: Errors = {}
     if (name.trim().length < 2) bad.name = 'כותבים שם של לפחות 2 אותיות.'
@@ -184,26 +176,6 @@ function Form({ onClose }: { onClose: () => void }) {
           })}
         </div>
         <CityFind id="profile" many picked={cities} onPick={toggle} />
-        <div className="pfe-other">
-          <input
-            className="input"
-            value={other}
-            onChange={(e) => setOther(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault()
-                addOther()
-              }
-            }}
-            maxLength={30}
-            placeholder="עיר אחרת"
-            aria-label="עיר אחרת"
-            data-f="other-city"
-          />
-          <button type="button" className="btn btn-ghost" onClick={addOther} disabled={other.trim().length < 2}>
-            הוספה
-          </button>
-        </div>
         {err('cities')}
       </fieldset>
 

@@ -383,14 +383,17 @@ for (const [dev, vp] of [
     await setField(page, 'name', p.now)
     await setField(page, 'phone', p.newPhone)
     if (p.tag === 'broker') await tap(page, '[data-city="נתניה"]') // one city off
-    await setField(page, 'other-city', 'קריית אתא')
+    // the old "עיר אחרת" field with "הוספה" is gone (27.11.2026): a city out of the shortcuts comes from the search
+    const oldField = await page.evaluate(() => ({ field: !!document.querySelector('[data-f="other-city"], .pfe-other'), find: !!document.querySelector('[data-city-find="profile"] [data-f="city-find-all"]') }))
+    check(`${t}: the old "עיר אחרת" field and its "הוספה" button are gone, the search replaces them`, !oldField.field && oldField.find, oldField)
+    await setField(page, 'city-find-all', 'קריית אתא')
     await page.keyboard.press('Enter')
     const fromList = [await pickHood(page, 'נווה שאנן'), await pickHood(page, 'אחוזה')]
     await wait(300)
     f = await formNow(page)
     check(`${t}: the lines of "what is wrong" leave once the fields are put right`, Object.keys(f.errors).length === 0, f.errors)
     const CITIES = p.tag === 'broker' ? ['חיפה', 'קריית אתא'] : ['קריית אתא']
-    check(`${t}: a city that is not in the list is added from the field`, same(f.cities, CITIES), f.cities)
+    check(`${t}: a city that is not in the shortcuts is added from the search`, same(f.cities, CITIES), f.cities)
     const clear = await page.evaluate(() => {
       const el = document.querySelector('[data-places="profile"] [data-f="hood-search"]').getBoundingClientRect()
       const bar = document.querySelector('.pfe-foot').getBoundingClientRect()
