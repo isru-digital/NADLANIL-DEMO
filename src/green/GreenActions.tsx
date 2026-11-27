@@ -18,7 +18,8 @@ import { clientKey } from '../community/PublishPickers'
 import PhotoPicker from './PhotoPicker'
 import { CATEGORIES, commercialExtras } from '../crm/categories'
 import type { PropCategory } from '../crm/categories'
-import { DEFAULT_KIND, KINDS, closestKind, hasRooms, isKind, kindTitle } from '../config/propertyTypes'
+import { DEFAULT_KIND, KINDS, closestKind, hasRooms, isKind, kindTitle, oneKind } from '../config/propertyTypes'
+import { DESC_MAX, cleanDesc, descProblem } from '../config/propDesc'
 import { streetName } from '../community/place'
 import { Toggle } from '../components/Toggle'
 import { CityFind } from '../components/CityFind'
@@ -28,6 +29,7 @@ import { PlacePicker } from '../components/PlacePicker'
 import { CoopField, PriceField } from './PriceCoop'
 import '../styles/green-actions.css'
 import '../styles/post-form.css'
+import '../styles/crm-15.css'
 
 /**
  * The pop-ups of the actions that work in the browser in the green version: a new CRM card, sharing a post with
@@ -63,8 +65,10 @@ type Draft = {
   condition: string
   /** what an ad pasted from Yad2 says and the card has no field for (floor, size, entry, the description): the card's note */
   notes: string
+  /** "תיאור הנכס": free words that go up with the property (never a phone, never a client's name) */
+  desc: string
 }
-const emptyDraft: Draft = { kind: 'property', city: 'פתח תקווה', rooms: '4', price: '', extras: [], category: '', ptype: '', sqm: '', hood: '', street: '', houseNo: '', aptNo: '', placeManual: [], showHouseNo: false, asStory: false, coopPct: null, parking: null, renewal: false, condition: '', notes: '' }
+const emptyDraft: Draft = { kind: 'property', city: 'פתח תקווה', rooms: '4', price: '', extras: [], category: '', ptype: '', sqm: '', hood: '', street: '', houseNo: '', aptNo: '', placeManual: [], showHouseNo: false, asStory: false, coopPct: null, parking: null, renewal: false, condition: '', notes: '', desc: '' }
 /** no rooms, a size in square metres: a commercial property, or a plot of land */
 const bySize = (d: Draft) => d.kind === 'property' && !!d.category && !hasRooms(d.category, d.ptype || DEFAULT_KIND[d.category])
 const toDraft = (p: Parsed): Draft => ({ ...emptyDraft, kind: p.kind, city: p.city || 'פתח תקווה', rooms: p.rooms ? String(p.rooms) : '', price: p.price ? String(p.price) : '', extras: p.extras })
@@ -105,7 +109,8 @@ type Saved = { card: Draft; client: string; photos: string[]; at: number }
 const readDraft = (): Saved | null => {
   try {
     const d = JSON.parse(localStorage.getItem(DRAFT_KEY) ?? 'null') as Saved | null
-    return d && d.card ? { ...d, client: d.client ?? '', card: { ...emptyDraft, ...d.card }, photos: d.photos ?? [] } : null
+    // a property has one kind: a draft that somehow kept several continues with the first
+    return d && d.card ? { ...d, client: d.client ?? '', card: { ...emptyDraft, ...d.card, ptype: oneKind(d.card.ptype) ?? '' }, photos: d.photos ?? [] } : null
   } catch {
     return null
   }
@@ -377,6 +382,48 @@ function Fields({ draft, set, kinds, categories = false, full = false, missing =
   )
 }
 
+/**
+ * "תיאור הנכס" (Itzik 27.11.2026): a few free lines, not a must. They show on the property's page and on its post, so
+ * the note under the box says what does not belong there, and a phone number or the owner's name is said at the box.
+ */
+function DescField({ desc, owner, onChange, showProblem }: { desc: string; owner: string; onChange: (v: string) => void; showProblem: boolean }) {
+  const problem = descProblem(desc, owner)
+  // a phone number is said the moment it is typed; the owner's name only once saving was tried, so typing is not nagged
+  const say = problem === 'phone' || (problem === 'name' && showProblem) ? problem : ''
+  return (
+    <div className="field ga-desc" data-f="desc">
+      <label className="field-label" htmlFor="ga-desc">
+        תיאור הנכס <small>(לא חובה)</small>
+      </label>
+      <textarea
+        id="ga-desc"
+        className="textarea"
+        rows={4}
+        maxLength={DESC_MAX}
+        value={desc}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="לדוגמה: דירה מוארת עם שלושה כיווני אוויר, משופצת מהיסוד, קרובה לפארק ולבתי הספר."
+        aria-describedby="ga-desc-note"
+        aria-invalid={say ? true : undefined}
+        data-f="desc-text"
+      />
+      <div className="ga-desc-foot">
+        <p className="ga-desc-note" id="ga-desc-note" data-note="desc">
+          <Lock aria-hidden /> התיאור מופיע בדף הנכס ובפוסט בקהילה. בלי טלפון ובלי שם של לקוח.
+        </p>
+        <span className="ga-desc-count num" aria-hidden data-count>
+          {desc.length}/{DESC_MAX}
+        </span>
+      </div>
+      {say && (
+        <em className="pf-err" role="alert" data-err="desc">
+          {say === 'phone' ? 'יש מספר טלפון בתיאור. מוחקים אותו, והתיאור יישמר.' : 'שם בעל הנכס מופיע בתיאור. מוחקים אותו, והתיאור יישמר.'}
+        </em>
+      )}
+    </div>
+  )
+}
+
 export default function GreenActions() {
   const { addCrm, addItem, toast } = useStore()
   const navigate = useNavigate()
@@ -394,7 +441,7 @@ export default function GreenActions() {
   const [paste, setPaste] = useState('')
   const [pasting, setPasting] = useState(false)
   // what stops the card from being saved, shown at its field: no kind of property, or a story with no photo
-  const [cardMiss, setCardMiss] = useState<{ kind?: boolean; coop?: boolean; story?: boolean }>({})
+  const [cardMiss, setCardMiss] = useState<{ kind?: boolean; coop?: boolean; story?: boolean; desc?: boolean }>({})
   // the WhatsApp confirmation of a property needs its "עמלת שת"פ" too
   const [waMiss, setWaMiss] = useState(false)
   // ---- an ad pasted from Yad2: the text, and what was filled from it
@@ -464,10 +511,11 @@ export default function GreenActions() {
     const rooms = num(card.rooms)
     const property = card.kind === 'property'
     // a property needs its kind, and a story needs a picture: said at the field itself, and brought into view
-    const miss = { kind: property && (!card.category || !card.ptype), coop: property && card.coopPct === null, story: property && card.asStory && photos.length === 0 }
-    if (miss.kind || miss.coop || miss.story) {
+    // the description is read by every broker: one with a phone number or the owner's name in it does not go up
+    const miss = { kind: property && (!card.category || !card.ptype), coop: property && card.coopPct === null, desc: property && !!descProblem(card.desc, client), story: property && card.asStory && photos.length === 0 }
+    if (miss.kind || miss.coop || miss.desc || miss.story) {
       setCardMiss(miss)
-      const first = miss.kind ? '.ga [data-f="category"]' : miss.coop ? '.ga [data-f="coop"]' : '.ga [data-toggle="as-story"]'
+      const first = miss.kind ? '.ga [data-f="category"]' : miss.coop ? '.ga [data-f="coop"]' : miss.desc ? '.ga [data-f="desc"]' : '.ga [data-toggle="as-story"]'
       window.setTimeout(() => document.querySelector(first)?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 60)
       return
     }
@@ -492,6 +540,7 @@ export default function GreenActions() {
             parking: card.parking ?? undefined,
             renewal: card.renewal || undefined,
             condition: card.condition || undefined,
+            desc: cleanDesc(card.desc) || undefined,
             extras: card.extras.length ? card.extras : undefined,
             asStory: card.asStory || undefined,
             coopPct: card.coopPct ?? undefined,
@@ -703,6 +752,13 @@ export default function GreenActions() {
             </div>
           )}
           <Fields draft={card} set={(d) => setCard((c) => ({ ...c, ...d }))} categories full missing={!!cardMiss.kind} missingCoop={!!cardMiss.coop} />
+          {card.kind === 'property' && <DescField desc={card.desc} owner={client} onChange={(desc) => {
+                setCard((c) => ({ ...c, desc }))
+                // the message about the owner's name belongs to the try that was stopped: writing again starts clean
+                if (cardMiss.desc) setCardMiss((m) => ({ ...m, desc: false }))
+              }}
+              showProblem={!!cardMiss.desc}
+            />}
           {card.kind === 'property' && (adDone || card.notes) && (
             <label className="field">
               <span className="field-label">עוד מהמודעה (נשאר אצלכם בכרטיס)</span>

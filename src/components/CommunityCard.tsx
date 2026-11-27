@@ -37,6 +37,7 @@ import '../styles/feed.css'
 import '../styles/topics.css'
 import '../styles/property.css'
 import '../styles/post-form.css'
+import '../styles/crm-15.css'
 import { propertyKind } from '../community/match'
 import { searchGroup } from '../config/propertyTypes'
 import { streetOf } from '../community/place'
@@ -299,7 +300,14 @@ export default function CommunityCard({
           עסקה נסגרה
         </span>
       )}
-      {item.body && <p className={`fb-text${item.body.length < 90 && topic.kind === 'post' && !item.image ? ' is-big' : ''}`}>{item.body}</p>}
+      {/* a property with a description (27.11.2026) says it in the broker's own words, in place of the fixed line */}
+      {item.desc ? (
+        <p className="fb-text ci-desc" data-desc>
+          {item.desc}
+        </p>
+      ) : (
+        item.body && <p className={`fb-text${item.body.length < 90 && topic.kind === 'post' && !item.image ? ' is-big' : ''}`}>{item.body}</p>
+      )}
 
       {/* ------------------------------------------------ property (שת"פ) */}
       {item.property && (

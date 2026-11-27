@@ -16,6 +16,7 @@ import { CoopBadge } from '../components/CoopBadge'
 import { coopAmount, coopText, hasCoop, shekels } from '../config/coop'
 import '../styles/property.css'
 import '../styles/post-form.css'
+import '../styles/crm-15.css'
 
 /** The price as it is said: an asking price, or a monthly rent. */
 export const priceText = (p: NonNullable<CommunityItem['property']>) => (p.deal === 'rent' ? `${formatPrice(p.price)} לחודש` : formatPrice(p.price))
@@ -191,7 +192,14 @@ export default function PropertyPage() {
             </ul>
           )}
 
-          <p className="pp-body">{item.body}</p>
+          {item.desc ? (
+            <div className="pp-desc" data-desc>
+              <h2>תיאור הנכס</h2>
+              <p>{item.desc}</p>
+            </div>
+          ) : (
+            <p className="pp-body">{item.body}</p>
+          )}
           {/* "עמלת שת"פ" took the place of the old "חלוקת עמלה": what working together earns, in shekels too */}
           {hasCoop(p.coopPct) && (
             <p className={`pp-split${p.coopPct === 0 ? ' is-full' : ''}`} data-coop-line>

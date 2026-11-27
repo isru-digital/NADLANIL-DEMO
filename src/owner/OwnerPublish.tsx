@@ -10,6 +10,7 @@ import { signedIn } from '../auth/session'
 import { CardPhotos } from '../green/PhotoPicker'
 import { cardKind, categoryOf, commercialBody, commercialSeedIds, isCommercial } from '../crm/categories'
 import { hasRooms } from '../config/propertyTypes'
+import { cleanDesc } from '../config/propDesc'
 import { publicPlace } from '../community/place'
 import { dateHe, ownerActions, ownerLink, usePublishDates, viewersIn } from './ownerLink'
 import '../styles/owner.css'
@@ -42,6 +43,8 @@ export const postOf = (item: CrmItem, authorId: string): CommunityItem => {
     city: item.city,
     title: item.title,
     body: isCommercial(item) ? commercialBody : 'נכס חדש אצלי. פתוח לשיתוף פעולה עם מתווך שיש לו קונה מתאים.',
+    // the broker's own description, cleaned of any phone number once more on its way out
+    desc: cleanDesc(item.desc) || undefined,
     image: item.image,
     show: item.asStory && item.image ? 'both' : 'feed',
     // a commercial property and a plot of land have no rooms: their size is given in square metres

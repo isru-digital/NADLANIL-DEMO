@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react'
 import type { CSSProperties, FormEvent, KeyboardEvent } from 'react'
-import { ArrowUpDown, Car, Home, KeyRound, Lock, Minus, Plus, Shield, ShieldCheck, Sun, X } from 'lucide-react'
+import { ArrowUpDown, Car, Check, Home, KeyRound, Lock, Minus, Plus, Shield, ShieldCheck, Sun, X } from 'lucide-react'
 import { Modal } from '../components/ui'
 import { formatPriceShort } from '../data/demo'
 import { knownCities } from '../green/whatsapp'
 import { useStore } from '../store'
 import { TYPES } from './clients'
 import type { Client, ClientType } from './clients'
-import { GROUPS, KINDS } from '../config/propertyTypes'
+import { GROUPS, KINDS, searchGroup } from '../config/propertyTypes'
 import type { PropGroup } from '../config/propertyTypes'
 import '../styles/new-client.css'
 import { PlacePicker } from '../components/PlacePicker'
@@ -20,7 +20,7 @@ import '../styles/post-form.css'
  * everything has a sensible default, so a broker on the phone is done in under a minute. Sellers and the office's
  * types keep the short form (name, phone, type).
  */
-export type NewClientInput = Pick<Client, 'name' | 'phone' | 'type'> & Partial<Pick<Client, 'about' | 'cities' | 'rooms' | 'sum' | 'budgetMin' | 'neighborhoods' | 'streets' | 'kinds' | 'group' | 'roomsMin' | 'roomsMax' | 'must' | 'wants'>>
+export type NewClientInput = Pick<Client, 'name' | 'phone' | 'type'> & Partial<Pick<Client, 'about' | 'cities' | 'rooms' | 'sum' | 'budgetMin' | 'neighborhoods' | 'streets' | 'kinds' | 'group' | 'roomsMin' | 'roomsMax' | 'must' | 'wants' | 'note'>>
 
 const SALE = [500000, 750000, 1000000, 1250000, 1500000, 1750000, 2000000, 2250000, 2500000, 2750000, 3000000, 3500000, 4000000, 4500000, 5000000, 6000000, 7000000, 8000000, 10000000, 12000000, 15000000]
 const RENT = [1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000, 5500, 6000, 6500, 7000, 8000, 9000, 10000, 12000, 15000, 20000]
@@ -47,8 +47,23 @@ export function aboutOf(p: { rent: boolean; cities: string[]; hoods: string[]; r
   return `${p.rent ? 'מחפש לשכור' : 'מחפש לקנות'} ${what}${where ? ` ב${where}` : ''}, ${budget}`
 }
 
-export default function NewClient({ open, onClose, isOffice, onAdd, searchOnly = false }: { open: boolean; onClose: () => void; isOffice: boolean; onAdd: (p: NewClientInput) => void; searchOnly?: boolean }) {
+/** the step of the budget's scale that is closest to a sum */
+const near = (steps: number[], n: number) => steps.reduce((best, s, i) => (Math.abs(s - n) < Math.abs(steps[best] - n) ? i : best), 0)
+
+/**
+ * `edit` (Itzik 27.11.2026): the same form opens filled with a client's details, and saving changes that client.
+ * Everything can be changed there, the phone too; a client of a short kind (a seller, a landlord, the office's kinds)
+ * also gets the line about them, their cities, the rooms and the sum.
+ */
+export default function NewClient({ open, onClose, isOffice, onAdd, searchOnly = false, edit = null }: { open: boolean; onClose: () => void; isOffice: boolean; onAdd: (p: NewClientInput) => void; searchOnly?: boolean; edit?: Client | null }) {
   const { myCities } = useStore()
+  // what the short kinds of client keep, and the note: asked only when a client is edited
+  const [about, setAbout] = useState('')
+  const [sumText, setSumText] = useState('')
+  const [roomsText1, setRoomsText1] = useState('')
+  const [note, setNote] = useState('')
+  // the sums as they were saved: the scale has fixed steps, so a budget that is not touched keeps its own number
+  const [orig, setOrig] = useState<{ lo: number; hi: number; min?: number; max: number; rent: boolean } | null>(null)
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [type, setType] = useState<ClientType>('buyer')
@@ -90,10 +105,46 @@ export default function NewClient({ open, onClose, isOffice, onAdd, searchOnly =
     setRoomsMax(4)
     setMust([])
     setWants('')
+    setAbout('')
+    setSumText('')
+    setRoomsText1('')
+    setNote('')
+    setOrig(null)
+  }
+  /** the form as this client was saved */
+  const load = (cl: Client) => {
+    const isRent = cl.type === 'renter'
+    const scale = isRent ? RENT : SALE
+    const def = isRent ? DEFAULTS.rent : DEFAULTS.sale
+    const top = cl.sum > 0 ? near(scale, cl.sum) : def[1]
+    const low = cl.budgetMin ? near(scale, cl.budgetMin) : cl.sum > 0 ? 0 : def[0]
+    const hiIdx = Math.max(top, 1)
+    setName(cl.name)
+    setPhone(cl.phone)
+    setType(cl.type)
+    setErr('')
+    setRange([Math.min(low, hiIdx - 1), hiIdx])
+    setOrig(cl.sum > 0 ? { lo: Math.min(low, hiIdx - 1), hi: hiIdx, min: cl.budgetMin, max: cl.sum, rent: isRent } : null)
+    setCities(cl.cities)
+    setAllCities(false)
+    setHoods(cl.neighborhoods ?? [])
+    setStreetList(cl.streets ?? [])
+    setManual([])
+    setGroup(searchGroup({ group: cl.group, kinds: cl.kinds }))
+    setKinds(cl.kinds ?? [])
+    setRoomsMin(cl.roomsMin ?? (cl.rooms > 0 ? cl.rooms : 3))
+    setRoomsMax(cl.roomsMax ?? (cl.rooms > 0 ? cl.rooms : 4))
+    setMust(cl.must ?? [])
+    setWants(cl.wants ?? '')
+    setAbout(cl.about)
+    setSumText(cl.sum > 0 ? String(cl.sum) : '')
+    setRoomsText1(cl.rooms > 0 ? String(cl.rooms) : '')
+    setNote(cl.note)
   }
   useEffect(() => {
     if (!open) return
-    reset()
+    if (edit) load(edit)
+    else reset()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
 
@@ -102,6 +153,11 @@ export default function NewClient({ open, onClose, isOffice, onAdd, searchOnly =
     if ((t === 'renter') !== rent) setRange(t === 'renter' ? [...DEFAULTS.rent] : [...DEFAULTS.sale])
     setType(t)
   }
+  // a handle that was not moved since the client was opened for editing stands for the sum that was saved
+  const keepMin = !!orig && orig.rent === rent && orig.lo === lo
+  const keepMax = !!orig && orig.rent === rent && orig.hi === hi
+  const sumLo = (keepMin ? orig?.min : undefined) ?? steps[lo]
+  const sumHi = keepMax && orig ? orig.max : steps[hi]
   const flip = (list: string[], v: string, set: (l: string[]) => void) => set(list.includes(v) ? list.filter((x) => x !== v) : [...list, v])
   const submit = (e: FormEvent) => {
     e.preventDefault()
@@ -109,13 +165,15 @@ export default function NewClient({ open, onClose, isOffice, onAdd, searchOnly =
     // the phone is not a must since 23.11.2026 (Itzik). Written but too short, it is still said, so a half number
     // is not kept by mistake; left empty it is asked for later, when something really needs it.
     if (phone.trim() && phone.replace(/\D/g, '').length < 9) return setErr('מספר הטלפון קצר מדי. למשל: 050-555-0199')
+    const digitsOf = (s: string) => Number(s.replace(/[^\d.]/g, '')) || 0
     if (!searching) {
-      onAdd({ name: name.trim(), phone: phone.trim(), type })
+      // a new client of a short kind is a name, a phone and a kind; an edited one keeps everything the card shows
+      onAdd(edit ? { name: name.trim(), phone: phone.trim(), type, about: about.trim(), cities, rooms: digitsOf(roomsText1), sum: digitsOf(sumText), note: note.trim() } : { name: name.trim(), phone: phone.trim(), type })
       return
     }
     const allHoods = hoods
-    const min = steps[lo]
-    const max = steps[hi]
+    const min = keepMin ? orig?.min : steps[lo]
+    const max = sumHi
     onAdd({
       name: name.trim(),
       phone: phone.trim(),
@@ -132,7 +190,8 @@ export default function NewClient({ open, onClose, isOffice, onAdd, searchOnly =
       sum: max,
       must,
       wants: wants.trim(),
-      about: aboutOf({ rent, cities, hoods: allHoods, roomsMin, roomsMax, lo: min, hi: max, hiIsTop: hi === steps.length - 1, business: group === 'business', kinds }),
+      ...(edit ? { note: note.trim() } : {}),
+      about: aboutOf({ rent, cities, hoods: allHoods, roomsMin, roomsMax, lo: sumLo, hi: max, hiIsTop: !keepMax && hi === steps.length - 1, business: group === 'business', kinds }),
     })
   }
 
@@ -141,9 +200,9 @@ export default function NewClient({ open, onClose, isOffice, onAdd, searchOnly =
   const fill = { '--lo': `${pct(lo)}%`, '--hi': `${100 - pct(hi)}%` } as CSSProperties
 
   return (
-    <Modal open={open} onClose={onClose} title="לקוח חדש" subtitle={searching ? 'מה הוא מחפש, בכמה לחיצות. רק שם חובה.' : 'שם וסוג, והשאר מסמנים אחר כך בחלון הפרטים. רק שם חובה.'}>
+    <Modal open={open} onClose={onClose} title={edit ? 'עריכת לקוח' : 'לקוח חדש'} subtitle={edit ? 'כל הפרטים של הלקוח במקום אחד, כולל הטלפון. רק שם חובה.' : searching ? 'מה הוא מחפש, בכמה לחיצות. רק שם חובה.' : 'שם וסוג, והשאר מסמנים אחר כך בחלון הפרטים. רק שם חובה.'}>
       <form onSubmit={submit} noValidate>
-        <div className="modal-body ct-new nc">
+        <div className="modal-body ct-new nc" data-form={edit ? 'edit-client' : 'new-client'}>
           <div className="nc-row">
             <label className="ct-field">
               <span className="ct-label">שם הלקוח</span>
@@ -191,14 +250,14 @@ export default function NewClient({ open, onClose, isOffice, onAdd, searchOnly =
                   <span>
                     <small>מ-</small>
                     <b className="num" data-budget="min">
-                      {money(steps[lo], rent, false)}
+                      {money(sumLo, rent, false)}
                     </b>
                   </span>
                   <i aria-hidden />
                   <span>
                     <small>עד</small>
                     <b className="num" data-budget="max">
-                      {money(steps[hi], rent, hi === steps.length - 1)}
+                      {money(sumHi, rent, !keepMax && hi === steps.length - 1)}
                     </b>
                   </span>
                   {rent && <em>לחודש</em>}
@@ -328,6 +387,45 @@ export default function NewClient({ open, onClose, isOffice, onAdd, searchOnly =
             </section>
           )}
 
+          {/* editing a seller, a landlord or one of the office's kinds: the lines their card shows */}
+          {edit && !searching && (
+            <section className="nc-edit-more" aria-label="פרטי הלקוח" data-edit-more>
+              <label className="ct-field">
+                <span className="ct-label">תיאור קצר</span>
+                <input className="input" value={about} maxLength={90} onChange={(e) => setAbout(e.target.value)} placeholder="לדוגמה: דירת 4 חדרים בגבעתיים, למכירה" autoComplete="off" data-f="about" />
+              </label>
+              <div className="ct-field" data-f="cities">
+                <span className="ct-label">ערים {cities.length > 0 && <b className="nc-count num">{cities.length}</b>}</span>
+                {cities.length > 0 && (
+                  <div className="nc-picks">
+                    {cities.map((c) => (
+                      <button key={c} type="button" className="nc-pick" aria-pressed="true" onClick={() => flip(cities, c, setCities)} data-city={c}>
+                        {c}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <CityFind id="client-edit" many picked={cities} onPick={(c) => flip(cities, c, setCities)} />
+              </div>
+              <div className="nc-edit-two">
+                <label className="ct-field">
+                  <span className="ct-label">חדרים</span>
+                  <input className="input num" inputMode="decimal" value={roomsText1} onChange={(e) => setRoomsText1(e.target.value)} placeholder="4" autoComplete="off" data-f="rooms-one" />
+                </label>
+                <label className="ct-field">
+                  <span className="ct-label">{type === 'landlord' ? 'שכירות לחודש, בשקלים' : 'מחיר, בשקלים'}</span>
+                  <input className="input num" inputMode="numeric" value={sumText} onChange={(e) => setSumText(e.target.value)} placeholder={type === 'landlord' ? '5200' : '2650000'} autoComplete="off" data-f="sum" />
+                </label>
+              </div>
+            </section>
+          )}
+          {edit && (
+            <label className="ct-field">
+              <span className="ct-label">הערה קצרה</span>
+              <input className="input" value={note} maxLength={120} onChange={(e) => setNote(e.target.value)} placeholder="למשל: לחזור אחרי החג" autoComplete="off" data-f="note" />
+            </label>
+          )}
+
           {err && (
             <em className="ct-err" role="alert">
               {err}
@@ -335,9 +433,9 @@ export default function NewClient({ open, onClose, isOffice, onAdd, searchOnly =
           )}
         </div>
         <div className="modal-foot">
-          <button className="btn btn-gold" type="submit" data-act="add-client">
-            <Plus />
-            הוספת הלקוח
+          <button className="btn btn-gold" type="submit" data-act={edit ? 'save-client' : 'add-client'}>
+            {edit ? <Check /> : <Plus />}
+            {edit ? 'שמירת השינויים' : 'הוספת הלקוח'}
           </button>
           <button className="btn btn-quiet" type="button" onClick={onClose}>
             ביטול

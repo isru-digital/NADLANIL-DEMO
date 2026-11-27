@@ -127,14 +127,27 @@ for (const dev of [
     await page.$eval('.ct-table tbody tr[data-id="k3"] .ct-name button', (b) => b.click())
     await page.waitForSelector('.ct-det', { visible: true })
     await wait(450)
-    const det = await page.evaluate(() => ({
-      stage: !!document.querySelector('.ct-det .ct-stage'),
-      marks: document.querySelectorAll('.ct-det .ct-mark').length,
-      words: ['סימון מהיר', 'חזרתי לבעלים', 'תואם סיור', 'בלעדיות'].filter((w) => document.querySelector('.ct-det')?.textContent.includes(w)),
-      labels: [...document.querySelectorAll('.ct-det .ct-label')].map((l) => l.textContent.trim()),
-      note: !!document.querySelector('.ct-det input.input'),
-      renewal: document.querySelector('.ct-det [data-f="client-renewal"]')?.getAttribute('aria-checked'),
-    }))
+    // the card is in tabs since 27.11.2026: every tab is walked, and the walk ends on "הערות", where the note is
+    const det = await page.evaluate(async () => {
+      const r = { stage: false, marks: 0, words: [], labels: [], note: false, renewal: undefined, tabs: [] }
+      const all = []
+      for (const id of ['details', 'search', 'fits', 'notes']) {
+        const b = document.querySelector(`.ct-det [data-tab="${id}"]`)
+        if (!b) continue
+        b.click()
+        await new Promise((res) => setTimeout(res, 250))
+        const d = document.querySelector('.ct-det')
+        r.tabs.push(id)
+        r.stage ||= !!d.querySelector('.ct-stage')
+        r.marks += d.querySelectorAll('.ct-mark').length
+        all.push(d.textContent)
+        r.labels.push(...[...d.querySelectorAll('.ct-label')].map((l) => l.textContent.trim()))
+        if (id === 'search') r.renewal = d.querySelector('[data-f="client-renewal"]')?.getAttribute('aria-checked')
+        if (id === 'notes') r.note = !!d.querySelector('input.input')
+      }
+      r.words = ['סימון מהיר', 'חזרתי לבעלים', 'תואם סיור', 'בלעדיות'].filter((w) => all.join(' ').includes(w))
+      return r
+    })
     check(`${tag}: the client's window has no "שלב" and no "סימון מהיר"`, !det.stage && det.marks === 0 && det.words.length === 0 && !det.labels.includes('שלב'), det)
     check(`${tag}: the note is still in the window`, det.note, det)
     await page.click('.ct-det input.input', { clickCount: 3 })
@@ -146,6 +159,8 @@ for (const dev of [
     // ------------------------------------------------------------ 3. urban renewal on a renter (k3)
     check(`${tag}: a renter's window has the urban renewal switch, off`, det.renewal === 'false', det)
     if (mode === 'day') await shot('2-client-window', '.ct-det')
+    await page.$eval('.ct-det [data-tab="search"]', (b) => b.click())
+    await wait(300)
     await page.$eval('.ct-det [data-f="client-renewal"]', (b) => {
       b.scrollIntoView({ block: 'center' })
       b.click()
@@ -167,7 +182,9 @@ for (const dev of [
     await page.$eval('.ct-table tbody tr[data-id="k2"] .ct-name button', (b) => b.click())
     await page.waitForSelector('.ct-det', { visible: true })
     await wait(350)
-    check(`${tag}: a seller's window has no urban renewal switch`, await page.evaluate(() => document.querySelector('.ct-det')?.dataset.id === 'k2' && !document.querySelector('.ct-det [data-f="client-renewal"]')))
+    await page.$eval('.ct-det [data-tab="search"]', (b) => b.click())
+    await wait(300)
+    check(`${tag}: a seller's window has no urban renewal switch`, await page.evaluate(() => document.querySelector('.ct-det')?.dataset.id === 'k2' && document.querySelector('.ct-det [role="tabpanel"]')?.dataset.panel === 'search' && !document.querySelector('.ct-det [data-f="client-renewal"]')))
     await page.keyboard.press('Escape')
     await wait(400)
     // kept after a reload, and the tag on the renter's card (on a phone)

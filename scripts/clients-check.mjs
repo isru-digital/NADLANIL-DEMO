@@ -133,12 +133,16 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
   st = await page.evaluate(() => ({
     stages: [...document.querySelectorAll('.ct-det .ct-stage button')].map((b) => b.textContent.trim()),
     marks: [...document.querySelectorAll('.ct-det .ct-mark')].map((b) => b.textContent.trim()),
-    note: !!document.querySelector('.ct-det input.input'),
+    note: !!document.querySelector('.ct-det [data-tab="notes"]'),
     office: document.querySelector('.ct-det .ct-office')?.textContent ?? '',
     fields: !!document.querySelector('.ct-office-fields'),
   }))
   check(`${d} a click on a row opens the details: a short note, and no stage or quick marks any more`, st.stages.length === 0 && st.marks.length === 0 && st.note, JSON.stringify(st))
   check(`${d} for a community member the office's fields are locked there too`, !st.fields && st.office.includes('זמין לחברי המשרד'))
+  // the note has a tab of its own since 27.11.2026
+  await page.evaluate(() => document.querySelector('.ct-det [data-tab="notes"]').click())
+  await page.waitForSelector('.ct-det input.input', { visible: true })
+  await wait(300)
   await page.type('.ct-det input.input', 'סיור ביום חמישי')
   await wait(400)
   check(`${d} typing the note keeps the focus in the field`, await page.evaluate(() => document.activeElement?.matches('.ct-det input.input') && document.activeElement.value === 'סיור ביום חמישי'))

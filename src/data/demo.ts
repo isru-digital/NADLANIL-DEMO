@@ -70,6 +70,8 @@ export type CrmItem = {
   renewal?: boolean
   /** "מצב הנכס" (25.11.2026): one of PROPERTY_CONDITIONS, picked on the new property form */
   condition?: string
+  /** "תיאור הנכס" (27.11.2026): free words, a few lines. They are read by the community, so never a phone or a client's name */
+  desc?: string
   /** clients only: what the buyer is looking for (never includes name or phone) */
   search?: SearchSpec
 }
@@ -678,6 +680,8 @@ export type CommunityItem = {
   image?: string
   /** topic "נכסים לשיתוף פעולה" */
   property?: PropertyInfo
+  /** "תיאור הנכס" as the broker wrote it on the property form (27.11.2026): the post's own words, in place of the fixed line */
+  desc?: string
   /** topic "מחפש לקונה": a saved search, never a client name */
   search?: SearchSpec
   /** topic "מתווך בעיר אחרת" (referrals) */

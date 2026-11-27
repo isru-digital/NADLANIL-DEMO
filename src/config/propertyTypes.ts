@@ -78,6 +78,17 @@ const WORDS: Record<PropGroup, [RegExp, string][]> = {
   ],
 }
 
+/**
+ * A property has ONE kind (Itzik 27.11.2026). A record that somehow carries several (a list, or "דירה, פנטהאוז" in one
+ * line) is read as its first one. Nothing saved is rewritten: it is read this way everywhere, through `kindOf`.
+ * "משרדי/עסקי" is one older label, not two kinds, so a slash does not split.
+ */
+export function oneKind(kind: unknown): string | undefined {
+  const first = Array.isArray(kind) ? kind.find((k) => typeof k === 'string' && k.trim()) : kind
+  if (typeof first !== 'string') return undefined
+  return first.split(/[,،;|\n]/)[0].trim() || undefined
+}
+
 /** the closest kind of the group's list to a free word or a title; the group's plainest kind when nothing fits */
 export function closestKind(group: PropGroup, ...words: (string | undefined | null)[]): string {
   for (const w of words) {
@@ -93,9 +104,10 @@ export function closestKind(group: PropGroup, ...words: (string | undefined | nu
  * The group and the kind of anything that holds a property: a CRM card, a post in the community, a search.
  * `group` and `kind` as they were saved win; an older record is read from its old label and its title.
  */
-export function kindOf(x: { group?: PropGroup | null; kind?: string | null; oldCategory?: string | null; title?: string | null; business?: boolean }): { group: PropGroup; kind: string } {
-  const group: PropGroup = x.group ?? (x.business || (x.oldCategory && x.oldCategory !== 'home') || (!isKind('home', x.kind) && isBusinessWord(x.kind)) ? 'business' : 'home')
-  return { group, kind: closestKind(group, x.kind, x.title) }
+export function kindOf(x: { group?: PropGroup | null; kind?: string | string[] | null; oldCategory?: string | null; title?: string | null; business?: boolean }): { group: PropGroup; kind: string } {
+  const one = oneKind(x.kind)
+  const group: PropGroup = x.group ?? (x.business || (x.oldCategory && x.oldCategory !== 'home') || (!isKind('home', one) && isBusinessWord(one)) ? 'business' : 'home')
+  return { group, kind: closestKind(group, one, x.title) }
 }
 
 /** "דירת 4 חדרים בפתח תקווה", "פנטהאוז 5 חדרים בתל אביב", "משרד 120 מ"ר בחולון", "מגרש בחדרה" */

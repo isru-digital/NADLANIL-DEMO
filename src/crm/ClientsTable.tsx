@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
-import type { FormEvent } from 'react'
+import type { FormEvent, KeyboardEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, BedDouble, Building2, CalendarClock, Check, Download, Forward, Lock, MapPin, Phone, Plus, Search, Send, Share2, Sparkles, Star, UserRound, Wallet, X } from 'lucide-react'
+import { ArrowLeft, BedDouble, Building2, CalendarClock, Check, Download, Forward, Lock, MapPin, Pencil, Phone, Plus, Search, Send, Share2, Sparkles, Star, StickyNote, UserRound, Wallet, X } from 'lucide-react'
 import { brokerById, formatPriceShort } from '../data/demo'
 import type { CrmItem } from '../data/demo'
 import { asset } from '../config'
@@ -24,6 +24,7 @@ import { found, hasQuery } from './searchText'
 import { groupLabel } from '../config/propertyTypes'
 import '../styles/green-actions.css'
 import '../styles/clients.css'
+import '../styles/crm-15.css'
 
 /**
  * The clients of the CRM as one simple table (green version): search, filter by type, sort, a match button that
@@ -367,6 +368,9 @@ function Stars({ value, onPick }: { value: number; onPick?: (n: number) => void 
   )
 }
 
+/** the tabs of the client's card (27.11.2026) */
+type DetTab = 'details' | 'search' | 'fits' | 'notes'
+
 /** The details window: what the client looks for, the note and, for a buyer or a renter, urban renewal. Every change is saved at once. */
 function Details({
   client,
@@ -385,14 +389,44 @@ function Details({
   onPublish?: () => void
   published?: string
 }) {
+  const { toast } = useStore()
   // keep the last client mounted while the window animates out
   const [last, setLast] = useState<Client | null>(client)
   // an action that needs a phone, waiting for one to be written (23.11.2026: the phone is not a must any more)
   const [ask, setAsk] = useState<null | 'send' | 'call' | 'add'>(null)
+  // the card in tabs (27.11.2026): it opens on "פרטים" every time, for every client
+  const [tab, setTab] = useState<DetTab>('details')
+  const [seen, setSeen] = useState<string | null>(null)
+  const [editing, setEditing] = useState(false)
   if (client && client !== last) setLast(client)
+  const openId = client?.id ?? null
+  if (openId !== seen) {
+    setSeen(openId)
+    if (openId) setTab('details')
+  }
   const cl = client ?? last
   if (!cl) return null
   const set = (p: Partial<Client>) => clientActions.patch(cl.id, p)
+  const side = sideOf(cl.type)
+  const fits = side ? matchesFor(cl) : []
+  const tabs: { id: DetTab; label: string; icon: typeof Phone; n?: number }[] = [
+    { id: 'details', label: 'פרטים', icon: UserRound },
+    { id: 'search', label: side === 'wants' ? 'מה מחפש' : side === 'has' ? 'על הנכס' : 'תיאור', icon: side === 'wants' ? Search : Building2 },
+    ...(side ? [{ id: 'fits' as const, label: matchLabel(cl.type) ?? 'התאמות', icon: Sparkles, n: fits.length }] : []),
+    { id: 'notes', label: 'הערות', icon: StickyNote },
+  ]
+  /** the arrows move between the tabs, as in any row of tabs (right is the next one's opposite in Hebrew) */
+  const onTabKey = (e: KeyboardEvent<HTMLButtonElement>) => {
+    const step = e.key === 'ArrowLeft' ? 1 : e.key === 'ArrowRight' ? -1 : e.key === 'Home' ? -99 : e.key === 'End' ? 99 : 0
+    if (!step) return
+    e.preventDefault()
+    const at = tabs.findIndex((t) => t.id === tab)
+    const next = tabs[Math.abs(step) === 99 ? (step < 0 ? 0 : tabs.length - 1) : (at + step + tabs.length) % tabs.length]
+    setTab(next.id)
+    window.requestAnimationFrame(() => document.getElementById(`ct-tab-${next.id}`)?.focus())
+  }
+  const rent = cl.type === 'renter' || cl.type === 'landlord'
+  const sumWord = side === 'wants' ? (rent ? 'שכירות לחודש, עד' : 'תקציב, עד') : rent ? 'שכירות לחודש' : 'מחיר'
   const digits = (p: string) => p.replace(/\D/g, '').replace(/^0/, '972')
   const run = (which: 'send' | 'call' | 'add', phone: string) => {
     // "הוסף טלפון" only keeps the number on the card
@@ -402,12 +436,30 @@ function Details({
   }
   /** with a phone it happens at once; without one, the window asks for it and then it happens */
   const need = (which: 'send' | 'call') => (cl.phone ? run(which, cl.phone) : setAsk(which))
-  const label = matchLabel(cl.type)
   return (
     <Modal open={!!client} onClose={onClose} title={cl.name} subtitle={cl.about || typeOf(cl.type).one}>
-      <div className="modal-body ct-det" data-id={cl.id}>
-        <div className="ct-det-top">
+      <div className="modal-body ct-det has-tabs" data-id={cl.id} data-tab-on={tab}>
+        {/* the head stays put above the tabs: who it is, when it was last touched, and "עריכה" for everything */}
+        <div className="ct-head">
           <span className={`ct-type is-${cl.type}`}>{typeOf(cl.type).one}</span>
+          <span className="ct-det-last">עדכון אחרון: {lastText(cl.lastDays)}</span>
+          <button type="button" className="ct-edit" onClick={() => setEditing(true)} data-act="edit-client">
+            <Pencil aria-hidden /> עריכה
+          </button>
+        </div>
+        <div className="ct-tabs" role="tablist" aria-label="כרטיס הלקוח" data-tabs>
+          {tabs.map((t) => (
+            <button key={t.id} type="button" role="tab" id={`ct-tab-${t.id}`} aria-selected={tab === t.id} aria-controls="ct-panel" tabIndex={tab === t.id ? 0 : -1} className="ct-tab" onClick={() => setTab(t.id)} onKeyDown={onTabKey} data-tab={t.id}>
+              <t.icon aria-hidden />
+              {t.label}
+              {t.n != null && t.n > 0 && <b className="ct-tab-n num">{t.n}</b>}
+            </button>
+          ))}
+        </div>
+        <div className="ct-panel" role="tabpanel" id="ct-panel" aria-labelledby={`ct-tab-${tab}`} key={tab} data-panel={tab}>
+        {tab === 'details' && (
+        <>
+        <div className="ct-det-top">
           {cl.phone ? (
             <a href={`tel:${cl.phone.replace(/-/g, '')}`} className="ct-det-phone">
               <Phone aria-hidden />
@@ -421,7 +473,6 @@ function Details({
               הוספת טלפון
             </button>
           )}
-          <span className="ct-det-last">עדכון אחרון: {lastText(cl.lastDays)}</span>
         </div>
         {/* a client with no phone (26.11.2026): the line is grey and cannot be pressed, it says "חסר טלפון", and a small
             "הוסף טלפון" beside it asks for the number and keeps it on this card */}
@@ -450,8 +501,38 @@ function Details({
             <small>יש לך לקוח בעיר שאתם לא עובדים בה? על עמלת הפניה של 25% או 50%</small>
           </button>
         )}
+        </>
+        )}
 
-        {cl.roomsMin != null && <SearchSummary cl={cl} />}
+        {tab === 'search' && (
+        <>
+        {cl.roomsMin != null ? (
+          <SearchSummary cl={cl} />
+        ) : (
+          // a client with no full search (a seller, a landlord, an older buyer): the short lines of the card
+          <dl className="ct-about" data-about>
+            <div>
+              <dt>{side === 'wants' ? 'מה מחפש' : 'תיאור'}</dt>
+              <dd>{cl.about || 'לא צוין'}</dd>
+            </div>
+            <div>
+              <dt>ערים</dt>
+              <dd>{cl.cities.length ? cl.cities.join(', ') : 'לא צוין'}</dd>
+            </div>
+            {cl.rooms > 0 && (
+              <div>
+                <dt>חדרים</dt>
+                <dd className="num">{cl.rooms}</dd>
+              </div>
+            )}
+            {cl.sum > 0 && (
+              <div>
+                <dt>{sumWord}</dt>
+                <dd className="num">{rent ? `${cl.sum.toLocaleString('he-IL')} ₪` : formatPriceShort(cl.sum)}</dd>
+              </div>
+            )}
+          </dl>
+        )}
 
         {/* "התחדשות עירונית" for a buyer or a renter (25.11.2026): the same mark as on the property form. The stage and
             the quick marks left this window the same day; what was saved in them stays in the client's data. */}
@@ -466,13 +547,54 @@ function Details({
             </span>
           </button>
         )}
+        </>
+        )}
 
+        {tab === 'fits' && (
+        <>
+        {fits.length === 0 ? (
+          <p className="ct-fit-empty" data-fit-empty>
+            אין כרגע התאמות בקהילה ללקוח הזה.
+          </p>
+        ) : (
+          <ul className="ct-fit" data-fit-list>
+            {fits.map((m) => (
+              <li key={m.id} data-fit-row={m.id}>
+                <strong>{m.title}</strong>
+                <span>
+                  {m.city} · <span className="num">{m.rooms}</span> חדרים · {side === 'wants' ? '' : 'עד '}
+                  <b className="num">{money({ sum: m.sum }, m.rent)}</b>
+                </span>
+                <small>
+                  {m.line} · {brokerById(m.brokerId).name}
+                </small>
+              </li>
+            ))}
+          </ul>
+        )}
+        {fits.length > 0 && (
+          <button type="button" className="btn btn-gold ct-all" onClick={() => onMatch(cl.id)} data-act="match-all">
+            <Sparkles aria-hidden />
+            פתיחת ההתאמות
+          </button>
+        )}
+        </>
+        )}
+
+        {tab === 'notes' && (
+        <>
         <label className="ct-field">
           <span className="ct-label">הערה קצרה</span>
-          <input className="input" value={cl.note} maxLength={120} onChange={(e) => set({ note: e.target.value })} placeholder="למשל: לחזור אליו אחרי החג" />
+          <input className="input ct-note-area" value={cl.note} maxLength={120} onChange={(e) => set({ note: e.target.value })} placeholder="למשל: לחזור אחרי החג" />
         </label>
+        <p className="ct-note-hint">
+          <Lock aria-hidden /> ההערה נשמרת רק אצלך, ונשמרת בזמן הכתיבה.
+        </p>
+        </>
+        )}
 
-        {isOffice ? (
+        {tab === 'details' &&
+          (isOffice ? (
           <div className="ct-office-fields">
             <div className="ct-field">
               <span className="ct-label">דירוג</span>
@@ -504,15 +626,11 @@ function Details({
               {UPGRADE_LABEL} <ArrowLeft />
             </em>
           </Link>
-        )}
+          ))}
+        </div>
       </div>
       <div className="modal-foot ct-det-foot">
-        {label && (
-          <button className="btn btn-gold" data-act="match" onClick={() => onMatch(cl.id)}>
-            <Sparkles />
-            {label}
-          </button>
-        )}
+        {/* the matches open from their tab since 27.11.2026: no second button here */}
         {onPublish &&
           (published ? (
             <span className="tag tag-green">
@@ -529,6 +647,18 @@ function Details({
         </button>
       </div>
       <AskPhone open={!!ask} client={cl} what={ask === 'call' ? 'להתקשר ללקוח' : 'לשלוח ללקוח'} onClose={() => setAsk(null)} onReady={(p) => run(ask ?? 'send', p)} />
+      {/* "עריכה": the new client form, filled with this client; saving changes the card under it */}
+      <NewClient
+        open={editing}
+        edit={cl}
+        isOffice={isOffice}
+        onClose={() => setEditing(false)}
+        onAdd={(p) => {
+          set(p)
+          setEditing(false)
+          toast('הפרטים נשמרו')
+        }}
+      />
     </Modal>
   )
 }

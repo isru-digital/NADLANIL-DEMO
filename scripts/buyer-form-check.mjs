@@ -169,6 +169,9 @@ for (const [tag, vp] of [
 
   // the details keep the whole search
   await tap(page, '.ct-table tbody tr .ct-name button')
+  // the card is in tabs since 27.11.2026: the search is under "מה מחפש"
+  await page.waitForSelector('.ct-det [data-tab="search"]', { visible: true })
+  await page.$eval('.ct-det [data-tab="search"]', (b) => b.click())
   await page.waitForSelector('[data-summary]', { visible: true })
   await wait(400)
   const sum = await page.evaluate(() => document.querySelector('[data-summary]').innerText.replace(/\s+/g, ' '))

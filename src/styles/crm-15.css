@@ -1,0 +1,343 @@
+/* Prompt 15 (Itzik 27.11.2026): "תיאור הנכס" on the property form, on the property's page and on its post; and the
+   client's card in tabs, with a full edit form. The colours are the page's own tokens: readable by day and by night. */
+
+/* ------------------------------------------------------------ the description box on the property form */
+.ga-desc {
+  display: grid;
+  gap: 8px;
+}
+.ga-desc .field-label small {
+  font-weight: 500;
+  color: var(--text-dim);
+}
+.ga-desc .textarea {
+  min-height: 108px;
+  font-size: 16px;
+  line-height: 1.55;
+  resize: vertical;
+}
+.ga-desc .textarea[aria-invalid='true'] {
+  border-color: #b3261e;
+}
+html[data-mode='night'] .ga-desc .textarea[aria-invalid='true'] {
+  border-color: #ffb4ab;
+}
+.ga-desc-foot {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.ga-desc-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+.ga-desc-note svg {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  margin-top: 3px;
+}
+.ga-desc-count {
+  flex: none;
+  font-size: 12.5px;
+  color: var(--text-dim);
+}
+
+/* ------------------------------------------------------------ the description on the post and on the page */
+.fb-text.ci-desc {
+  overflow-wrap: anywhere;
+}
+.pp-desc {
+  display: grid;
+  gap: 6px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+}
+.pp-desc h2 {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: var(--text-dim);
+}
+.pp-desc p {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.65;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+  color: var(--text);
+}
+
+/* ------------------------------------------------------------ the client's card: a head, tabs, one panel at a time */
+.ct-det.has-tabs {
+  gap: 14px;
+}
+.ct-head {
+  display: flex;
+  align-items: center;
+  gap: 10px 12px;
+  flex-wrap: wrap;
+}
+.ct-head .ct-det-last {
+  margin-inline-start: 0;
+}
+.ct-edit {
+  margin-inline-start: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 99px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition:
+    background-color var(--t) var(--ease),
+    border-color var(--t) var(--ease),
+    transform 120ms var(--ease);
+}
+.ct-edit svg {
+  width: 16px;
+  height: 16px;
+  color: var(--gold-soft);
+}
+.ct-edit:hover {
+  border-color: var(--line-gold);
+  background: rgb(var(--g) / 0.08);
+}
+.ct-edit:active {
+  transform: scale(0.97);
+}
+.ct-edit:focus-visible,
+.ct-tab:focus-visible,
+.ct-all:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+.ct-tabs {
+  position: sticky;
+  top: -1px;
+  z-index: 2;
+  display: flex;
+  gap: 2px;
+  margin-inline: -4px;
+  padding-inline: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  border-bottom: 1px solid var(--line);
+  background: var(--panel);
+}
+.ct-tabs::-webkit-scrollbar {
+  display: none;
+}
+.ct-tab {
+  position: relative;
+  flex: 1 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 48px;
+  padding: 0 12px;
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--text-dim);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: color var(--t) var(--ease);
+}
+.ct-tab svg {
+  width: 16px;
+  height: 16px;
+}
+.ct-tab::after {
+  content: '';
+  position: absolute;
+  inset-inline: 8px;
+  bottom: -1px;
+  height: 3px;
+  border-radius: 3px 3px 0 0;
+  background: var(--gold);
+  transform: scaleX(0);
+  transition: transform 220ms var(--ease);
+}
+.ct-tab:hover {
+  color: var(--text);
+}
+.ct-tab[aria-selected='true'] {
+  font-weight: 700;
+  color: var(--text);
+}
+.ct-tab[aria-selected='true']::after {
+  transform: scaleX(1);
+}
+.ct-tab-n {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 700;
+  background: rgb(var(--g) / 0.16);
+  color: var(--text);
+}
+.ct-panel {
+  display: grid;
+  gap: 14px;
+  animation: ct-panel-in 220ms var(--ease) both;
+}
+@keyframes ct-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ct-panel {
+    animation: none;
+  }
+  .ct-tab::after {
+    transition: none;
+  }
+}
+
+/* the short lines of a client who has no full search (a seller, a landlord, the office's types) */
+.ct-about {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+.ct-about > div {
+  display: grid;
+  grid-template-columns: 112px 1fr;
+  gap: 10px;
+  padding: 11px 14px;
+}
+.ct-about > div + div {
+  border-top: 1px solid var(--line);
+}
+.ct-about dt {
+  font-size: 13.5px;
+  color: var(--text-dim);
+}
+.ct-about dd {
+  margin: 0;
+  font-size: 15.5px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+/* the matches inside the card: short rows, and one button to all of them */
+.ct-fit {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ct-fit li {
+  display: grid;
+  gap: 3px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+}
+.ct-fit strong {
+  font-size: 15.5px;
+}
+.ct-fit span {
+  font-size: 14px;
+  color: var(--text-dim);
+}
+.ct-fit b {
+  color: var(--text);
+}
+.ct-fit small {
+  font-size: 13px;
+  color: var(--text-dim);
+}
+.ct-fit-empty {
+  margin: 0;
+  padding: 18px 14px;
+  border-radius: 14px;
+  border: 1px dashed var(--line);
+  text-align: center;
+  font-size: 15px;
+  color: var(--text-dim);
+}
+.ct-all {
+  justify-self: start;
+  min-height: 44px;
+}
+.ct-note-area {
+  min-height: 46px;
+}
+.ct-note-hint {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13.5px;
+  color: var(--text-dim);
+}
+.ct-note-hint svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* the edit form: the same form as a new client, with what the short kinds of client also keep */
+.nc-edit-more {
+  display: grid;
+  gap: 14px;
+}
+.nc-edit-two {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 520px) {
+  .ct-about > div {
+    grid-template-columns: 92px 1fr;
+  }
+  /* four tabs in one row of a phone: the words alone, the icons stay on wider screens */
+  .ct-tab {
+    flex: 1 1 auto;
+    padding: 0 7px;
+    font-size: 14.5px;
+  }
+  .ct-tab > svg {
+    display: none;
+  }
+  .ct-edit {
+    padding: 0 14px;
+  }
+}
+
+/* the buttons at the foot of the client's card on a phone: one under the other, so no word is cut */
+@media (max-width: 640px) {
+  .ct-det-foot .btn {
+    flex: 1 1 100%;
+  }
+}
