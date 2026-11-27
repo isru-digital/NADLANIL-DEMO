@@ -21,12 +21,12 @@ import {
   Sparkles,
   ThumbsUp,
   Trophy,
-  Wallet, Building2, ArrowUp } from 'lucide-react'
+  Wallet, Building2, ArrowUp, Home, Repeat2 } from 'lucide-react'
 import { CURRENT_BROKER_ID } from '../config'
 import { reactionById, reactions, topicReactions } from '../config/reactions'
 import type { ReactionId } from '../config/reactions'
 import { REFERRAL_DISCLAIMER, topicById } from '../config/topics'
-import { brokerById, bumpReadyAt, canBump, formatPrice, roomsLabel, waitWords } from '../data/demo'
+import { brokerById, bumpReadyAt, canBump, formatPrice, postedWords, roomsLabel, waitWords } from '../data/demo'
 import { priceText } from '../community/PropertyPage'
 import type { Comment, CommunityItem } from '../data/demo'
 import { useStore } from '../store'
@@ -41,6 +41,9 @@ import { propertyKind } from '../community/match'
 import { searchGroup } from '../config/propertyTypes'
 import { streetOf } from '../community/place'
 import { CoopBadge } from './CoopBadge'
+import OfferProperty from '../community/OfferProperty'
+import type { PropCard } from '../community/OfferProperty'
+import ChatWindow from '../community/ChatWindow'
 
 /**
  * One community post, Facebook-style. The same component renders the feed and the
@@ -69,6 +72,9 @@ export default function CommunityCard({
   const [replyTo, setReplyTo] = useState<number | null>(null)
   const [picker, setPicker] = useState(false)
   const [menu, setMenu] = useState(false)
+  // "הצעת נכס" on a buyer's post (27.11.2026): the window of my properties, then the chat with the property's card
+  const [offering, setOffering] = useState(false)
+  const [offered, setOffered] = useState<PropCard | null>(null)
   const pickerTimer = useRef<number>()
   const inputRef = useRef<HTMLInputElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -122,29 +128,36 @@ export default function CommunityCard({
    * once in two days. Before the two days are up the button is quiet and grey and says how long is left, so nobody
    * presses it for nothing. Only the broker who shared the property sees it: `mine`.
    */
+  // "הקפצה" (27.11.2026): on every post of mine that has this line (a property, a buyer, a referral), once in 24 hours.
+  // The button can always be pressed: before the 24 hours are up it says when it will be possible again.
   const ready = canBump(item)
-  const bump = mine && !preview && item.property && (
+  const bump = mine && !preview && (
     <button
       type="button"
       className={`ci-bump${ready ? '' : ' is-waiting'}`}
       onClick={() => {
-        if (!ready) return
+        if (!ready) return toast(`אפשר להקפיץ שוב ${waitWords(bumpReadyAt(item) - Date.now())}`)
         bumpItem(item.id)
-        toast('הנכס עלה לראש הפיד')
+        toast('הפוסט עלה לראש הפיד')
       }}
-      disabled={!ready}
       aria-disabled={!ready}
-      title={ready ? 'הנכס יחזור לראש הפיד' : 'אפשר להקפיץ פעם ביומיים'}
+      title={ready ? 'הפוסט יחזור לראש הפיד' : 'אפשר להקפיץ פעם ב-24 שעות'}
       data-act="bump"
       data-ready={ready ? '1' : '0'}
     >
       <ArrowUp aria-hidden />
-      {ready ? 'הקפצה למעלה' : `אפשר להקפיץ ${waitWords(bumpReadyAt(item) - Date.now())}`}
+      הקפצה
     </button>
   )
 
   const cta = topic.cta && !preview && (
-    <div className="fb-embed-cta">
+    <div className={`fb-embed-cta${!mine && item.search ? ' has-offer' : ''}`}>
+      {!mine && item.search && (
+        <button type="button" className="btn btn-sm btn-gold ci-offer" onClick={() => setOffering(true)} data-act="offer-property">
+          <Home aria-hidden />
+          הצעת נכס
+        </button>
+      )}
       {mine ? (
         <>
           <span className="tag tag-green">
@@ -153,7 +166,7 @@ export default function CommunityCard({
           </span>
           {bump}
         </>
-      ) : (
+      ) : item.search ? null : (
         <button
           className={`btn btn-sm ci-cta ${sent ? 'btn-ghost is-sent' : 'btn-gold'}`}
           aria-pressed={sent}
@@ -206,7 +219,7 @@ export default function CommunityCard({
             {item.fresh && !preview && <span className="fb-new">חדש</span>}
             {/* the date stays the day it was published, also after "הקפצה למעלה": a post that was lifted says so, so
                 that nobody reads it as brand new (22.11.2026) */}
-            <span>{item.time}</span>
+            <span data-posted>{preview ? item.time : postedWords(item)}</span>
             {!!item.bumpedAt && !preview && (
               <>
                 <i aria-hidden>·</i>
@@ -378,6 +391,12 @@ export default function CommunityCard({
                 <Radar />
               </i>
               בקשת חיפוש שמורה
+              {item.otherCity && (
+                <em className="ci-othercity" data-other-city>
+                  <Repeat2 aria-hidden />
+                  הפניה מעיר אחרת
+                </em>
+              )}
               {item.search.sample && (
                 <em className="sample-tag" data-sample>
                   דוגמה
@@ -596,6 +615,20 @@ export default function CommunityCard({
               </motion.div>
             )}
           </AnimatePresence>
+        </>
+      )}
+      {!preview && !mine && item.search && (
+        <>
+          <OfferProperty
+            buyer={item}
+            open={offering}
+            onClose={() => setOffering(false)}
+            onSend={(card) => {
+              setOffering(false)
+              setOffered(card)
+            }}
+          />
+          {offered && <ChatWindow key={`${item.id}-${offered.id}`} item={item} open offer={offered} onClose={() => setOffered(null)} />}
         </>
       )}
     </article>

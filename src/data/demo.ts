@@ -701,6 +701,8 @@ export type CommunityItem = {
    * stays where it was: in the feed, and in the stories when it has a photo.
    */
   show?: 'feed' | 'story' | 'both'
+  /** a buyer who looks in a city its broker does not work in (27.11.2026): the post carries "הפניה מעיר אחרת" */
+  otherCity?: boolean
 }
 
 /** Is it in the feed (and in every list that is made of the feed's posts)? */
@@ -769,9 +771,9 @@ export const feedAt = (it: Pick<CommunityItem, 'at' | 'time' | 'bumpedAt'>) => M
 /** newest first, by the moment that puts each post in its place */
 export const sortFeed = <T extends Pick<CommunityItem, 'at' | 'time' | 'bumpedAt'>>(list: T[]): T[] => [...list].sort((a, b) => feedAt(b) - feedAt(a))
 
-/** how long a post waits between one lift and the next: two days */
-export const BUMP_GAP = 48 * 60 * 60 * 1000
-/** the moment this post may be lifted again: two days after it was published, or after the last lift */
+/** how long a post waits between one lift and the next: 24 hours (27.11.2026; it was two days) */
+export const BUMP_GAP = 24 * 60 * 60 * 1000
+/** the moment this post may be lifted again: 24 hours after it was published, or after the last lift */
 export const bumpReadyAt = (it: Pick<CommunityItem, 'at' | 'time' | 'bumpedAt'>) => feedAt(it) + BUMP_GAP
 /** may it be lifted now? */
 export const canBump = (it: Pick<CommunityItem, 'at' | 'time' | 'bumpedAt'>, now = Date.now()) => now >= bumpReadyAt(it)
@@ -784,6 +786,23 @@ export function waitWords(ms: number): string {
   if (hours === 2) return 'בעוד שעתיים'
   return `בעוד ${hours} שעות`
 }
+
+/** how long ago, in words: "לפני 3 שעות", "לפני יומיים" */
+export function agoWords(at: number, now = Date.now()): string {
+  const mins = Math.floor((now - at) / 60000)
+  if (mins < 1) return 'עכשיו'
+  if (mins < 60) return mins === 1 ? 'לפני דקה' : `לפני ${mins} דקות`
+  const hours = Math.floor(mins / 60)
+  if (hours < 24) return hours === 1 ? 'לפני שעה' : hours === 2 ? 'לפני שעתיים' : `לפני ${hours} שעות`
+  const days = Math.floor(hours / 24)
+  if (days < 14) return days === 1 ? 'לפני יום' : days === 2 ? 'לפני יומיים' : `לפני ${days} ימים`
+  const weeks = Math.floor(days / 7)
+  if (weeks < 9) return `לפני ${weeks} שבועות`
+  const months = Math.floor(days / 30)
+  return months < 12 ? `לפני ${months} חודשים` : 'לפני יותר משנה'
+}
+/** the line on every post (27.11.2026): how long since it was published, or since "הקפצה" lifted it */
+export const postedWords = (it: Pick<CommunityItem, 'at' | 'time' | 'bumpedAt'>, now = Date.now()) => `פורסם ${agoWords(feedAt(it), now)}`
 
 const home = (
   id: string,

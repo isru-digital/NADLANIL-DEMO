@@ -616,6 +616,13 @@ for (const [dev, vp] of DEVICES) {
   await t.click('.nc [data-city="חיפה"]')
   await page.evaluate(() => document.querySelector('.nc')?.closest('form')?.requestSubmit())
   await wait(1200)
+  // חיפה is not one of the example broker's cities: since 27.11.2026 the buyer's post asks where it goes
+  const asked = !!(await page.$('[data-other-city-ask]'))
+  check(`${dev}: a buyer in a city the broker does not work in asks first: a broker of that city, or the whole community`, asked)
+  if (asked) {
+    await t.click('[data-act="publish-all"]')
+    await wait(1200)
+  }
   const buyer = await page.evaluate(() => {
     const a = [...document.querySelectorAll('article')].find((x) => x.querySelector('h3')?.textContent.includes('משרד'))
     const s = JSON.parse(localStorage.getItem('brokers-demo-state-v5') ?? '{}')

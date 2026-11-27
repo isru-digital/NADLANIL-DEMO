@@ -106,7 +106,8 @@ for (const [tag, vp] of [
   await tap(page, '[data-act="pick-property"]')
   await wait(500)
   const again = await page.evaluate((id) => document.querySelector(`[data-pick="${id}"]`)?.textContent, first.id)
-  check(`${tag}: the shared one now says "כבר בקהילה"`, /כבר בקהילה/.test(again ?? ''), again)
+  // "הקפצה" took the place of the "כבר בקהילה" mark (27.11.2026)
+  check(`${tag}: the shared one now carries "הקפצה" in place of "כבר בקהילה"`, /הקפצה/.test(again ?? '') && !/כבר בקהילה/.test(again ?? ''), again)
   await page.keyboard.press('Escape')
   await wait(400)
 

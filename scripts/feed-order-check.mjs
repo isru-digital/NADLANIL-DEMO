@@ -119,7 +119,11 @@ for (const [label, vp] of DEVICES) {
 
     const order = await d.page.evaluate(() => {
       const age = (t) => {
+        // every post says "פורסם לפני X" since 27.11.2026
+        t = t.replace(/^פורסם /, '')
         if (t === 'עכשיו') return 0
+        if (t === 'לפני דקה') return 1
+        if (t === 'לפני יום') return 1440
         const n = (re) => Number(t.match(re)?.[1] ?? 1)
         if (/דקות/.test(t)) return n(/(\d+)/)
         if (t === 'לפני שעה') return 60
@@ -141,7 +145,7 @@ for (const [label, vp] of DEVICES) {
       const card = b?.closest('article')
       return { id: card?.id, ready: b?.dataset.ready, text: b?.textContent.trim(), disabled: b?.disabled, h: b?.getBoundingClientRect().height, count: document.querySelectorAll('[data-act="bump"]').length }
     })
-    check(`${label}: "הקפצה למעלה" is on my own property, and on no other post`, mine.count === 1 && mine.text === 'הקפצה למעלה' && mine.ready === '1' && mine.disabled === false, mine)
+    check(`${label}: "הקפצה" is on my own property (24 hours between lifts since 27.11.2026)`, mine.count >= 1 && mine.text === 'הקפצה' && mine.ready === '1' && mine.disabled === false, mine)
     check(`${label}: a thumb hits the button (44px)`, mine.h >= 44, mine.h)
     const others = await d.page.evaluate(() => [...document.querySelectorAll('.ci-list article')].filter((a) => !a.querySelector('.ci-mine')).some((a) => a.querySelector('[data-act="bump"]')))
     check(`${label}: another broker's property has no such button`, others === false)
@@ -161,14 +165,17 @@ for (const [label, vp] of DEVICES) {
         mark: first?.querySelector('[data-bumped]')?.textContent.trim(),
         text: b?.textContent.trim(),
         ready: b?.dataset.ready,
-        disabled: b?.disabled,
+        disabled: b?.getAttribute('aria-disabled'),
         toast: document.querySelector('.toast')?.textContent.trim(),
       }
     })
     check(`${label}: the lift puts the property at the top of the feed`, after.first === 'ci-p14', after.first)
-    check(`${label}: and says so, quietly`, after.toast === 'הנכס עלה לראש הפיד', after.toast)
-    check(`${label}: the day it was published does not change ("${was}"), and the post is marked as lifted`, after.date === was && after.mark === 'הוקפץ', after)
-    check(`${label}: right after a lift it cannot be lifted again: the button is grey and says the wait`, after.ready === '0' && after.disabled === true && after.text === 'אפשר להקפיץ בעוד 48 שעות', after)
+    check(`${label}: and says so, quietly`, after.toast === 'הפוסט עלה לראש הפיד', after.toast)
+    check(`${label}: the lift updates the time (it was "${was}", now "פורסם עכשיו"), and the post is marked as lifted`, was !== 'פורסם עכשיו' && after.date === 'פורסם עכשיו' && after.mark === 'הוקפץ', after)
+    check(`${label}: right after a lift the button is grey`, after.ready === '0' && after.disabled === 'true' && after.text === 'הקפצה', after)
+    await d.click('[data-act="bump"]')
+    const again = await d.page.evaluate(() => ({ toast: document.querySelector('.toast')?.textContent.trim(), first: document.querySelector('.ci-list article')?.id }))
+    check(`${label}: pressed again, it says when it will be possible`, again.toast === 'אפשר להקפיץ שוב בעוד 24 שעות', again)
     await d.focus('.ci-list article')
     await d.shot(`${label}-2-lifted`)
 
@@ -178,21 +185,22 @@ for (const [label, vp] of DEVICES) {
     const page14 = await d.page.evaluate(() => ({ posted: document.querySelector('[data-posted]')?.textContent.trim(), bumped: !!document.querySelector('[data-posted] [data-bumped]') }))
     check(`${label}: the property's page still says the day it was published, with the lift beside it`, page14.posted.includes(was) && page14.bumped, page14)
 
-    // the two days, from both sides of the line: 47 hours after the lift it still waits, 49 hours after it is ready
-    await d.patch(`s.items = s.items.map((it) => (it.id === 'p14' ? { ...it, bumpedAt: Date.now() - ${47 * HOUR} } : it))`)
+    // the 24 hours, from both sides of the line: 23 hours after the lift it still waits, 25 hours after it is ready
+    await d.patch(`s.items = s.items.map((it) => (it.id === 'p14' ? { ...it, bumpedAt: Date.now() - ${23 * HOUR} } : it))`)
     await d.feed('?topic=coop')
+    await d.click('#ci-p14 [data-act="bump"]')
     const at47 = await d.page.evaluate(() => {
-      const b = document.querySelector('[data-act="bump"]')
-      return { text: b?.textContent.trim(), ready: b?.dataset.ready }
+      const b = document.querySelector('#ci-p14 [data-act="bump"]')
+      return { text: document.querySelector('.toast')?.textContent.trim(), ready: b?.dataset.ready, posted: document.querySelector('#ci-p14 [data-posted]')?.textContent.trim() }
     })
-    check(`${label}: 47 hours after the lift it still waits, and the words say an hour`, at47.ready === '0' && at47.text === 'אפשר להקפיץ בעוד שעה', at47)
-    await d.patch(`s.items = s.items.map((it) => (it.id === 'p14' ? { ...it, bumpedAt: Date.now() - ${49 * HOUR} } : it))`)
+    check(`${label}: 23 hours after the lift it still waits, and the words say an hour`, at47.ready === '0' && at47.text === 'אפשר להקפיץ שוב בעוד שעה' && at47.posted === 'פורסם לפני 23 שעות', at47)
+    await d.patch(`s.items = s.items.map((it) => (it.id === 'p14' ? { ...it, bumpedAt: Date.now() - ${25 * HOUR} } : it))`)
     await d.feed('?topic=coop')
     const at49 = await d.page.evaluate(() => {
-      const b = document.querySelector('[data-act="bump"]')
-      return { text: b?.textContent.trim(), ready: b?.dataset.ready }
+      const b = document.querySelector('#ci-p14 [data-act="bump"]')
+      return { text: b?.textContent.trim(), ready: b?.dataset.ready, posted: document.querySelector('#ci-p14 [data-posted]')?.textContent.trim() }
     })
-    check(`${label}: 49 hours after the lift it may be lifted again`, at49.ready === '1' && at49.text === 'הקפצה למעלה', at49)
+    check(`${label}: 25 hours after the lift it may be lifted again`, at49.ready === '1' && at49.text === 'הקפצה' && at49.posted === 'פורסם לפני יום', at49)
 
     // a property published a moment ago waits its two days like any other
     await d.patch(`s.items = [{ ...s.items.find((x) => x.id === 'p14'), id: 'p99', at: Date.now(), bumpedAt: undefined, time: 'עכשיו' }, ...s.items]`)
@@ -200,10 +208,10 @@ for (const [label, vp] of DEVICES) {
     const fresh = await d.page.evaluate(() => {
       const card = document.querySelector('#ci-p99')
       const b = card?.querySelector('[data-act="bump"]')
-      return { first: document.querySelector('.ci-list article')?.id, text: b?.textContent.trim(), ready: b?.dataset.ready, disabled: b?.disabled }
+      return { first: document.querySelector('.ci-list article')?.id, text: b?.textContent.trim(), ready: b?.dataset.ready, disabled: b?.getAttribute('aria-disabled') }
     })
     check(`${label}: a property published now is at the top of the feed`, fresh.first === 'ci-p99', fresh.first)
-    check(`${label}: and before 48 hours it cannot be lifted: the button is grey and carries the wait`, fresh.ready === '0' && fresh.disabled === true && fresh.text === 'אפשר להקפיץ בעוד 48 שעות', fresh)
+    check(`${label}: and before 24 hours it cannot be lifted: the button is grey`, fresh.ready === '0' && fresh.disabled === 'true' && fresh.text === 'הקפצה', fresh)
     const press = await d.page.evaluate(() => {
       const before = JSON.parse(localStorage.getItem('brokers-demo-state-v5')).items.find((x) => x.id === 'p99').bumpedAt ?? null
       document.querySelector('#ci-p99 [data-act="bump"]').click()

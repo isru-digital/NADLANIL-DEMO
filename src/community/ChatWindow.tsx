@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { createPortal } from 'react-dom'
-import { CheckCheck, Search, Send, X } from 'lucide-react'
+import { CheckCheck, Home, Search, Send, X } from 'lucide-react'
 import { asset } from '../config'
 import { brokerById, formatPriceShort, roomsLabel } from '../data/demo'
 import type { CommunityItem } from '../data/demo'
 import { Avatar } from '../components/ui'
 import { priceText } from './PropertyPage'
+import type { PropCard } from './OfferProperty'
+import '../styles/offer.css'
 import '../styles/chat.css'
 
 /**
@@ -15,7 +17,7 @@ import '../styles/chat.css'
  * property's small photo at the top. There is no server yet: the talk is kept in this browser, and the other broker's
  * answer in the demo is automatic (said so once, quietly, at the top of the talk).
  */
-type Msg = { id: string; from: 'me' | 'them'; text: string; at: number; read?: boolean }
+type Msg = { id: string; from: 'me' | 'them'; text: string; at: number; read?: boolean; /** a property of mine, offered to the other broker's buyer (27.11.2026) */ card?: PropCard }
 const KEY = 'nadlanup-chats-v1'
 const load = (): Record<string, Msg[]> => {
   try {
@@ -46,7 +48,29 @@ const REPLIES_BUYER = [
   'מעולה. נדבר בטלפון ונסגור את חלוקת העמלה.',
 ]
 
-export default function ChatWindow({ item, open, onClose, opener }: { item: CommunityItem; open: boolean; onClose: () => void; opener?: string }) {
+// a property of mine was sent as a card: the other broker's first answer is about it
+const REPLY_CARD = 'תודה, קיבלתי את הנכס. נראה שמתאים לקונה שלי. מתי אפשר לתאם סיור?'
+// my own buyer, sent to a broker of the city the buyer looks in (27.11.2026)
+const QUICK_REFER = ['יש לי קונה שמחפש בעיר שלך', 'מתאים לך לקבל אותו בהפניה?', 'אפשר לדבר היום?']
+const REPLIES_REFER = ['היי! בשמחה. מה הקונה מחפש ומה התקציב?', 'מתאים לי. נסכם דמי הפניה ונתקדם.', 'מעולה. נדבר בטלפון עוד היום.']
+
+export default function ChatWindow({
+  item,
+  open,
+  onClose,
+  opener,
+  offer,
+  refer = false,
+}: {
+  item: CommunityItem
+  open: boolean
+  onClose: () => void
+  opener?: string
+  /** "הצעת נכס": the property that opens the talk, as a small card */
+  offer?: PropCard
+  /** the talk is about my own buyer, referred to this broker */
+  refer?: boolean
+}) {
   const broker = brokerById(item.authorId)
   const first = broker.name.split(' ')[0]
   const [msgs, setMsgs] = useState<Msg[]>(() => load()[item.id] ?? [])
@@ -54,7 +78,7 @@ export default function ChatWindow({ item, open, onClose, opener }: { item: Comm
   const [text, setText] = useState(() => (opener && !(load()[item.id] ?? []).length ? opener : ''))
   const [typing, setTyping] = useState(false)
   const buyer = !item.property && !!item.search
-  const replies = buyer ? REPLIES_BUYER : REPLIES
+  const replies = refer ? REPLIES_REFER : buyer ? REPLIES_BUYER : REPLIES
   const list = useRef<HTMLDivElement>(null)
   const input = useRef<HTMLTextAreaElement>(null)
   const timers = useRef<number[]>([])
@@ -83,20 +107,27 @@ export default function ChatWindow({ item, open, onClose, opener }: { item: Comm
   }, [open, onClose])
 
   const later = (fn: () => void, ms: number) => timers.current.push(window.setTimeout(fn, ms))
-  const send = (body: string) => {
+  const send = (body: string, card?: PropCard) => {
     const t = body.trim()
-    if (!t) return
+    if (!t && !card) return
     const id = `m${Date.now()}`
-    setMsgs((m) => [...m, { id, from: 'me', text: t, at: Date.now() }])
-    setText('')
+    // the same property is not sent twice to the same buyer
+    setMsgs((m) => (card && m.some((x) => x.card?.id === card.id) ? m : [...m, { id, from: 'me', text: t, at: Date.now(), card }]))
+    if (!card) setText('')
     // read a moment later, then a short answer (the demo's answers are automatic)
     later(() => setMsgs((m) => m.map((x) => (x.from === 'me' ? { ...x, read: true } : x))), 1200)
     later(() => setTyping(true), 1800)
     later(() => {
       setTyping(false)
-      setMsgs((m) => [...m, { id: `r${Date.now()}`, from: 'them', text: replies[m.filter((x) => x.from === 'them').length % replies.length], at: Date.now() }])
+      setMsgs((m) => [...m, { id: `r${Date.now()}`, from: 'them', text: card ? REPLY_CARD : replies[m.filter((x) => x.from === 'them').length % replies.length], at: Date.now() }])
     }, 3600)
   }
+  // "הצעת נכס": the chat opens with the property already sent
+  useEffect(() => {
+    if (!open || !offer) return
+    if ((load()[item.id] ?? []).some((x) => x.card?.id === offer.id)) return
+    send('', offer)
+  }, [open, offer?.id]) // eslint-disable-line react-hooks/exhaustive-deps
   const submit = (e: FormEvent) => {
     e.preventDefault()
     send(text)
@@ -149,7 +180,7 @@ export default function ChatWindow({ item, open, onClose, opener }: { item: Comm
             <b>{broker.name}</b>
             <small>כותבים ל{first} על {buyer ? 'הקונה' : 'הנכס'}, או בוחרים משפט מוכן:</small>
             <div className="cw-quick">
-              {(buyer ? QUICK_BUYER : QUICK).map((q) => (
+              {(refer ? QUICK_REFER : buyer ? QUICK_BUYER : QUICK).map((q) => (
                 <button key={q} type="button" onClick={() => send(q)} data-quick={q}>
                   {q}
                 </button>
@@ -163,8 +194,30 @@ export default function ChatWindow({ item, open, onClose, opener }: { item: Comm
           return (
             <div key={m.id} className={`cw-row is-${m.from}${tail ? ' is-tail' : ''}`} data-msg={m.from}>
               {m.from === 'them' && <span className="cw-face">{tail && <Avatar src={broker.avatar} name={broker.name} size={28} />}</span>}
-              <div className="cw-bubble">
-                <span>{m.text}</span>
+              <div className={`cw-bubble${m.card ? ' has-card' : ''}`}>
+                {m.card && (
+                  <>
+                    <span className="cw-card-label">נכס שלי שמתאים לקונה שלך</span>
+                    <span className="cw-card" data-chat-card={m.card.id}>
+                      {m.card.image ? (
+                        <img src={asset(m.card.image)} alt="" />
+                      ) : (
+                        <span className="cw-card-ph" aria-hidden>
+                          <Home />
+                        </span>
+                      )}
+                      <span>
+                        <b>{m.card.title}</b>
+                        <small>
+                          {m.card.area}
+                          {m.card.rooms ? ` · ${m.card.rooms} חדרים` : ''}
+                        </small>
+                        <strong className="num">{m.card.price}</strong>
+                      </span>
+                    </span>
+                  </>
+                )}
+                {m.text && <span>{m.text}</span>}
                 <time className="num">{timeOf(m.at)}</time>
               </div>
               {m === lastMine && (

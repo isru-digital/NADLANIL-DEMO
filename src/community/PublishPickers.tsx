@@ -1,15 +1,18 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { BedDouble, Check, ChevronLeft, Home, MapPin, Plus, Search, UserRound } from 'lucide-react'
+import { ArrowUp, BedDouble, Check, ChevronLeft, Globe2, Home, MapPin, MessageCircle, Plus, Search, UserRound, UserRoundSearch } from 'lucide-react'
 import { CURRENT_BROKER_ID, asset } from '../config'
 import { REFERRAL_TERMS } from '../config/topics'
 import { knownCities } from '../green/whatsapp'
 import { CityFind } from '../components/CityFind'
 import { actionSlots } from '../config/navExtras'
-import { formatPriceShort, roomsLabel } from '../data/demo'
+import { brokerById, bumpReadyAt, canBump, formatPriceShort, roomsLabel, waitWords } from '../data/demo'
 import type { CommunityItem, CrmItem, SearchSpec } from '../data/demo'
 import { useStore } from '../store'
-import { Modal } from '../components/ui'
+import { Avatar, Modal } from '../components/ui'
+import { signedIn } from '../auth/session'
+import { brokersIn } from './BrokerFinder'
+import ChatWindow from './ChatWindow'
 import { postOf } from '../owner/OwnerPublish'
 import { clientActions, useClients } from '../crm/clients'
 import { searchGroup } from '../config/propertyTypes'
@@ -17,6 +20,7 @@ import type { Client } from '../crm/clients'
 import NewClient from '../crm/NewClient'
 import type { NewClientInput } from '../crm/NewClient'
 import '../styles/publish-pickers.css'
+import '../styles/offer.css'
 
 /**
  * Sharing with the community in as few taps as possible (Itzik 17.11.2026):
@@ -58,10 +62,43 @@ export function buyerPost(cl: Client, authorId: string): CommunityItem {
   }
 }
 
+/**
+ * Does the broker work in this city (27.11.2026)? A signed-in broker's own list of cities; the demo's example broker
+ * works where her card says ("תל אביב ורמת גן").
+ */
+export const worksIn = (city: string) => (signedIn ? signedIn.cities.includes(city) : brokerById(CURRENT_BROKER_ID).area.includes(city))
+/** a buyer whose every city is outside the broker's own: the post is a referral from another city */
+export const outsideMyCities = (cities: string[]) => (signedIn && !signedIn.cities.length ? false : cities.length > 0 && cities.every((c) => !worksIn(c)))
+
+/**
+ * "הקפצה" in place of the "כבר בקהילה" mark (27.11.2026): what is already published is lifted to the top of the feed
+ * from the list itself, once in 24 hours. Pressed before that, it says when it will be possible again.
+ */
+function BumpHere({ post }: { post: CommunityItem }) {
+  const { bumpItem, toast } = useStore()
+  const ready = canBump(post)
+  return (
+    <button
+      type="button"
+      className={`pk-bump${ready ? '' : ' is-waiting'}`}
+      aria-disabled={!ready}
+      data-act="bump"
+      data-ready={ready ? '1' : '0'}
+      onClick={() => {
+        if (!ready) return toast(`אפשר להקפיץ שוב ${waitWords(bumpReadyAt(post) - Date.now())}`)
+        bumpItem(post.id)
+        toast('הפוסט עלה לראש הפיד')
+      }}
+    >
+      <ArrowUp aria-hidden /> הקפצה
+    </button>
+  )
+}
+
 /* ============================================================ my properties */
 
 export function PropertyPicker({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { crm, publishedIds, addItem, toast } = useStore()
+  const { crm, items, publishedIds, addItem, toast } = useStore()
   const navigate = useNavigate()
   const mine = crm.filter((c) => c.kind === 'property')
   const share = (item: CrmItem) => {
@@ -98,25 +135,39 @@ export function PropertyPicker({ open, onClose }: { open: boolean; onClose: () =
           <ul className="pk-list">
             {mine.map((it) => {
               const done = publishedIds[it.id] === 'coop'
+              // the post it became: with it the row carries "הקפצה" in place of the "כבר בקהילה" mark
+              const post = done ? items.find((x) => x.sourceId === it.id && x.authorId === CURRENT_BROKER_ID && x.property) : undefined
+              const inner = (
+                <>
+                  <span className="pk-thumb">{it.image ? <img src={asset(it.image)} alt="" loading="lazy" /> : <Home />}</span>
+                  <span className="pk-text">
+                    <b>{it.title}</b>
+                    <small>
+                      <MapPin /> {it.area}
+                      {it.rooms && it.rooms !== '-' && (
+                        <>
+                          {' · '}
+                          <BedDouble /> <span className="num">{it.rooms}</span>
+                        </>
+                      )}
+                    </small>
+                    <strong className="num">{formatPriceShort(it.price)}</strong>
+                  </span>
+                </>
+              )
               return (
                 <li key={it.id}>
-                  <button type="button" className={`pk-row${done ? ' is-done' : ''}`} onClick={() => !done && share(it)} disabled={done} data-pick={it.id}>
-                    <span className="pk-thumb">{it.image ? <img src={asset(it.image)} alt="" loading="lazy" /> : <Home />}</span>
-                    <span className="pk-text">
-                      <b>{it.title}</b>
-                      <small>
-                        <MapPin /> {it.area}
-                        {it.rooms && it.rooms !== '-' && (
-                          <>
-                            {' · '}
-                            <BedDouble /> <span className="num">{it.rooms}</span>
-                          </>
-                        )}
-                      </small>
-                      <strong className="num">{formatPriceShort(it.price)}</strong>
-                    </span>
-                    <span className="pk-state">{done ? <><Check /> כבר בקהילה</> : 'שיתוף'}</span>
-                  </button>
+                  {post ? (
+                    <div className="pk-row has-bump" data-pick={it.id} data-done>
+                      {inner}
+                      <BumpHere post={post} />
+                    </div>
+                  ) : (
+                    <button type="button" className={`pk-row${done ? ' is-done' : ''}`} onClick={() => !done && share(it)} disabled={done} data-pick={it.id}>
+                      {inner}
+                      <span className="pk-state">{done ? <><Check /> כבר בקהילה</> : 'שיתוף'}</span>
+                    </button>
+                  )}
                 </li>
               )
             })}
@@ -130,7 +181,7 @@ export function PropertyPicker({ open, onClose }: { open: boolean; onClose: () =
 /* ============================================================ my buyers */
 
 export function BuyerPicker({ open, onClose, startNew = false }: { open: boolean; onClose: () => void; startNew?: boolean }) {
-  const { publishedIds, addItem, toast } = useStore()
+  const { items, publishedIds, addItem, toast } = useStore()
   const navigate = useNavigate()
   const clients = useClients().filter((c) => c.type === 'buyer' || c.type === 'renter')
   const [adding, setAdding] = useState(false)
@@ -138,8 +189,27 @@ export function BuyerPicker({ open, onClose, startNew = false }: { open: boolean
   useEffect(() => {
     if (open) setAdding(startNew)
   }, [open, startNew])
-  const publish = (cl: Client, isNew: boolean) => {
-    const post = buyerPost(cl, CURRENT_BROKER_ID)
+  // a buyer who looks in a city I do not work in (27.11.2026): straight to a broker of that city, or to everybody
+  const [ask, setAsk] = useState<{ cl: Client; isNew: boolean } | null>(null)
+  const [direct, setDirect] = useState(false)
+  const [chat, setChat] = useState<{ item: CommunityItem; opener: string } | null>(null)
+  const start = (cl: Client, isNew: boolean) => {
+    if (!outsideMyCities(cl.cities)) return publish(cl, isNew)
+    setDirect(false)
+    setAsk({ cl, isNew })
+  }
+  const askCities = ask?.cl.cities ?? []
+  const locals = [...new Map(askCities.flatMap((c) => brokersIn(c)).map((b) => [b.id, b])).values()]
+  const referTo = (brokerId: string) => {
+    if (!ask) return
+    const b = brokerById(brokerId)
+    // what the other broker sees of the buyer: the search only. No name, no phone.
+    const item: CommunityItem = { ...buyerPost(ask.cl, b.id), id: `ref-${ask.cl.id}-${b.id}`, otherCity: true, fresh: false }
+    setChat({ item, opener: `היי ${b.name.split(' ')[0]}, יש לי ${ask.cl.type === 'renter' ? 'שוכר' : 'קונה'} שמחפש ב${askCities.join(' או ב')}. זה מחוץ לאזור שלי. מתאים לך לקבל אותו בהפניה?` })
+    setAsk(null)
+  }
+  const publish = (cl: Client, isNew: boolean, otherCity = false) => {
+    const post: CommunityItem = { ...buyerPost(cl, CURRENT_BROKER_ID), ...(otherCity ? { otherCity: true } : {}) }
     addItem(post, clientKey(cl.id))
     toast(isNew ? `${cl.type === 'renter' ? 'השוכר' : 'הקונה'} נשמר ב-CRM ופורסם במחפש לקונה` : 'הבקשה פורסמה במחפש לקונה')
     navigate(`/app/community?topic=seeking&item=${post.id}`)
@@ -148,7 +218,7 @@ export function BuyerPicker({ open, onClose, startNew = false }: { open: boolean
     const id = clientActions.add(p)
     setAdding(false)
     onClose()
-    publish({ ...(p as Client), id, stage: 'new', lastDays: 0, backToOwner: false, tourSet: false, exclusive: false, note: '', rating: 3, followUpDays: null, createdDays: 0, about: p.about ?? '', cities: p.cities ?? [], rooms: p.rooms ?? 0, sum: p.sum ?? 0 }, true)
+    start({ ...(p as Client), id, stage: 'new', lastDays: 0, backToOwner: false, tourSet: false, exclusive: false, note: '', rating: 3, followUpDays: null, createdDays: 0, about: p.about ?? '', cities: p.cities ?? [], rooms: p.rooms ?? 0, sum: p.sum ?? 0 }, true)
   }
   return (
     <>
@@ -173,31 +243,45 @@ export function BuyerPicker({ open, onClose, startNew = false }: { open: boolean
             <ul className="pk-list">
               {clients.map((cl) => {
                 const done = !!publishedIds[clientKey(cl.id)]
+                // the post it became: with it the row carries "הקפצה" in place of the "כבר בקהילה" mark
+                const post = done ? items.find((x) => x.sourceId === clientKey(cl.id) && x.authorId === CURRENT_BROKER_ID) : undefined
+                const inner = (
+                  <>
+                    <span className="pk-thumb is-person">{cl.type === 'renter' ? <Search /> : <UserRound />}</span>
+                    <span className="pk-text">
+                      <b>
+                        {cl.name} <em>{cl.type === 'renter' ? 'שוכר' : 'קונה'}</em>
+                      </b>
+                      <small>{cl.about || (cl.cities.length ? cl.cities.join(', ') : 'בלי אזור')}</small>
+                      <strong className="num">
+                        עד {cl.type === 'renter' ? `${cl.sum.toLocaleString('he-IL')} ₪ לחודש` : formatPriceShort(cl.sum)}
+                      </strong>
+                    </span>
+                  </>
+                )
                 return (
                   <li key={cl.id}>
-                    <button
-                      type="button"
-                      className={`pk-row${done ? ' is-done' : ''}`}
-                      onClick={() => {
-                        if (done) return
-                        onClose()
-                        publish(cl, false)
-                      }}
-                      disabled={done}
-                      data-pick={cl.id}
-                    >
-                      <span className="pk-thumb is-person">{cl.type === 'renter' ? <Search /> : <UserRound />}</span>
-                      <span className="pk-text">
-                        <b>
-                          {cl.name} <em>{cl.type === 'renter' ? 'שוכר' : 'קונה'}</em>
-                        </b>
-                        <small>{cl.about || (cl.cities.length ? cl.cities.join(', ') : 'בלי אזור')}</small>
-                        <strong className="num">
-                          עד {cl.type === 'renter' ? `${cl.sum.toLocaleString('he-IL')} ₪ לחודש` : formatPriceShort(cl.sum)}
-                        </strong>
-                      </span>
-                      <span className="pk-state">{done ? <><Check /> כבר בקהילה</> : 'פרסום'}</span>
-                    </button>
+                    {post ? (
+                      <div className="pk-row has-bump" data-pick={cl.id} data-done>
+                        {inner}
+                        <BumpHere post={post} />
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        className={`pk-row${done ? ' is-done' : ''}`}
+                        onClick={() => {
+                          if (done) return
+                          onClose()
+                          start(cl, false)
+                        }}
+                        disabled={done}
+                        data-pick={cl.id}
+                      >
+                        {inner}
+                        <span className="pk-state">{done ? <><Check /> כבר בקהילה</> : 'פרסום'}</span>
+                      </button>
+                    )}
                   </li>
                 )
               })}
@@ -216,6 +300,66 @@ export function BuyerPicker({ open, onClose, startNew = false }: { open: boolean
         onAdd={addNew}
         searchOnly
       />
+      <Modal open={!!ask} onClose={() => setAsk(null)} title="הלקוח מחפש בעיר אחרת" subtitle="שם וטלפון של הלקוח נשארים אצלכם, בשתי האפשרויות.">
+        <div className="modal-body oc" data-other-city-ask>
+          <p className="oc-why">
+            <b>{askCities.join(', ')}</b> לא ברשימת אזורי הפעילות שלך. איך להמשיך?
+          </p>
+          <button type="button" className="oc-opt" aria-expanded={direct} onClick={() => setDirect((d) => !d)} data-act="refer-direct">
+            <span className="oc-ico">
+              <UserRoundSearch aria-hidden />
+            </span>
+            <span>
+              <b>הפניה ישירה למתווך מהעיר</b>
+              <small>בוחרים מתווך שעובד ב{askCities.join(' או ב')}, ונפתח איתו צ'אט</small>
+            </span>
+            <ChevronLeft className="oc-go" aria-hidden />
+          </button>
+          {direct &&
+            (locals.length ? (
+              <ul className="oc-brokers" data-brokers>
+                {locals.map((b) => (
+                  <li key={b.id}>
+                    <button type="button" className="oc-broker" onClick={() => referTo(b.id)} data-broker={b.id}>
+                      <Avatar src={b.avatar} name={b.name} size={44} />
+                      <span>
+                        <b>{b.name}</b>
+                        <small>
+                          {b.area} · {b.title}
+                        </small>
+                      </span>
+                      <MessageCircle className="oc-go" aria-hidden />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="oc-none" role="status" data-no-brokers>
+                עדיין אין בקהילה מתווך שעובד ב{askCities.join(' או ב')}. אפשר לפרסם לכל הקהילה.
+              </p>
+            ))}
+          <button
+            type="button"
+            className="oc-opt"
+            onClick={() => {
+              const a = ask
+              setAsk(null)
+              if (a) publish(a.cl, a.isNew, true)
+            }}
+            data-act="publish-all"
+          >
+            <span className="oc-ico is-all">
+              <Globe2 aria-hidden />
+            </span>
+            <span>
+              <b>פרסום לכל הקהילה</b>
+              <small>הפוסט עולה לפיד עם התג "הפניה מעיר אחרת"</small>
+            </span>
+            <ChevronLeft className="oc-go" aria-hidden />
+          </button>
+        </div>
+      </Modal>
+      {chat && <ChatWindow key={chat.item.id} item={chat.item} open refer opener={chat.opener} onClose={() => setChat(null)} />}
     </>
   )
 }
