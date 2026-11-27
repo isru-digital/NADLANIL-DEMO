@@ -17,7 +17,10 @@ export const COMMUNITY_JOIN = '/kehila/join'
 export const COMMUNITY_FEED = '/app/community'
 
 /** The one call that leads from the community to the office's page. */
-export const UPGRADE_LABEL = `שדרג למשרד ${PLATFORM_NAME}`
+// 27.11.2026 (Itzik): the same neutral words everywhere, in place of "שדרג למשרד NadlanUP"
+export const UPGRADE_LABEL = 'בדיקת התאמה למשרד'
+/** On a locked tool of the office (Itzik 27.11.2026): the office picks who joins, so the call is to check the fit, not to buy. */
+export const FIT_LABEL = UPGRADE_LABEL
 /** Inside the app the office's page is "המשרד" itself; outside it (the community's public page) the same page stands alone. */
 export const OFFICE_PAGE = '/app/office'
 export const OFFICE_STORY = '/office'

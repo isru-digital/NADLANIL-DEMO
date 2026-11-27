@@ -172,7 +172,8 @@ for (const [tag, vp] of [
     const sw = await page.evaluate(() => [...document.querySelectorAll('.dn, .dn-compact')].filter((e) => e.getBoundingClientRect().width > 0).length)
     check('phone: no day / night switch in the top bar or over the feed (it is in the profile menu)', sw === 0 && !cover.compact, { sw, compact: cover.compact })
   } else {
-    check('desktop: the profile card says "0% עמלה למשרד" (no "גזירות")', cover.tagline.some((t) => t.replace(/\s/g, '') === '0%עמלהלמשרד') && !cover.old, cover.tagline)
+    // the small 0% / 100% box left the side menu on 27.11.2026 (scripts/prompt16-check.mjs walks it)
+    check('desktop: the side menu has no 0% / 100% box, and no "גזירות"', cover.tagline.length === 0 && !cover.old, cover.tagline)
   }
 
   // ---- the line opens the sheet: four clear choices, from the bottom on a phone

@@ -14,7 +14,7 @@ import {
   RotateCcw,
   Users,
 } from 'lucide-react'
-import { CURRENT_BROKER_ID, SIDE_TAGLINE } from '../config'
+import { CURRENT_BROKER_ID } from '../config'
 import { extraNav, extraResets, shellSlots } from '../config/navExtras'
 import type { ShellNav } from '../config/navExtras'
 import { brokerById } from '../data/demo'
@@ -155,17 +155,7 @@ export default function AppShell() {
 
         <div className="sidebar-foot">
           {Account && <Account place="side" />}
-          <div className="side-principle">
-            {SIDE_TAGLINE.map((part) => {
-              const [num, ...rest] = part.split(' ')
-              return (
-                <div key={part}>
-                  <strong className="gold-text num">{num}</strong>
-                  <span>{rest.join(' ')}</span>
-                </div>
-              )
-            })}
-          </div>
+          {/* the small 0% / 100% box that stood here is gone (Itzik 27.11.2026): the message lives on the office's page */}
           <div className="side-user">
             <Avatar src={me.avatar} name={me.name} size={40} ring />
             <div>

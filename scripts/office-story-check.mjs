@@ -1,4 +1,4 @@
-// The office's page for a community member (17.11.2026): "המשרד" and "שדרג למשרד NadlanUP" open a page that speaks to
+// The office's page for a community member (17.11.2026): "המשרד" and "בדיקת התאמה למשרד" open a page that speaks to
 // the feeling (independence, a back behind you, not alone, a business of your own), not a list of the community's
 // features. 0% to the office and 100% to the broker, said clearly; the envelope (Yad2 and Madlan ads, guidance,
 // branding, tools) by the price list; a clear button to join and one to be called back. No invented numbers or
@@ -93,7 +93,8 @@ for (const [tag, vp, phone] of [
       joinVisible: r.top >= 0 && r.bottom <= innerHeight + (innerWidth < 600 ? 400 : 0),
     }
   })
-  check(`${tag}: "0% עמלה למשרד, 100% עמלה למתווך" in big numbers (it slides there from half-and-half)`, hero.share === 100 && hero.broker === '100% עמלה למתווך' && hero.office === '0% עמלה למשרד' && hero.label === 'מכל עסקה: 0% עמלה למשרד, 100% עמלה למתווך', hero)
+  // 27.11.2026: the office's page says "סוכן", not "מתווך"
+  check(`${tag}: "0% עמלה למשרד, 100% עמלה לסוכן" in big numbers (it slides there from half-and-half)`, hero.share === 100 && hero.broker === '100% עמלה לסוכן' && hero.office === '0% עמלה למשרד' && hero.label === 'מכל עסקה: 0% עמלה למשרד, 100% עמלה לסוכן', hero)
   check(`${tag}: a clear button to join and one to ask for details ("מעוניינים לקבל מידע? לחצו כאן"), big`, hero.join === 'אני רוצה להצטרף' && hero.call === 'מעוניינים לקבל מידע? לחצו כאן' && hero.joinH >= 52, hero)
   await page.evaluate(() => scrollTo(0, 0))
   await wait(300)
@@ -117,7 +118,7 @@ for (const [tag, vp, phone] of [
   // the Madlan packs carried prices, and left with them (24.11.2026)
   check(`${tag}: the envelope: פרסום (יד2), ליווי, מיתוג, כלים`, all.env.join('|') === 'פרסום|ליווי|מיתוג|כלים וידע' && /יד2/.test(all.text) && /אריאל/.test(all.text), all.env)
   check(`${tag}: no price on the page: no plan prices, no Madlan packs, no "דמי חבר", no ₪`, PRICES.every((p) => !all.text.includes(p)) && !all.text.includes('₪') && all.plans.length === 0, PRICES.filter((p) => all.text.includes(p)))
-  check(`${tag}: the fee reads "0% עמלה למשרד, 100% עמלה למתווך", and the ask for details stands where the prices were`, (all.text.match(/0% עמלה למשרד, 100% עמלה למתווך/g) ?? []).length >= 3 && all.ask, all.ask)
+  check(`${tag}: the fee reads "0% עמלה למשרד, 100% עמלה לסוכן", and the ask for details stands where the prices were`, (all.text.match(/0% עמלה למשרד, 100% עמלה לסוכן/g) ?? []).length >= 3 && all.ask, all.ask)
   check(`${tag}: no dashes in the copy`, !/[\u2013\u2014]/.test(all.text), all.text.match(/.{0,20}[\u2013\u2014].{0,20}/)?.[0])
   check(`${tag}: no headline ends with a full stop`, all.heads.every((h) => !/\.$/.test(h)), all.heads)
   check(`${tag}: no reviews, no counts of members or deals`, !/ממליצ|ביקורת|★|לקוחות מרוצים|מתווכים כבר|\d+\+? מתווכים/.test(all.text), all.text.match(/.{0,20}(ממליצ|ביקורת|מתווכים כבר).{0,20}/)?.[0])
@@ -161,7 +162,7 @@ for (const [tag, vp, phone] of [
   check(`${tag}: "אני רוצה להצטרף" goes to the office's joining, open at once`, joined.path.endsWith('/join/office') && joined.search === '' && joined.dialog, joined)
   await page.screenshot({ path: `${out}/${tag}-9-join.png` })
 
-  // ---- 5. "שדרג למשרד NadlanUP" from the feed leads to the same page
+  // ---- 5. "בדיקת התאמה למשרד" from the feed leads to the same page
   await page.goto(green + '/app/community', { waitUntil: 'networkidle0' })
   await wait(600)
   // 19.11.2026: the strip above the feed is gone; the same call is one quiet post among the posts (and a line of
@@ -172,7 +173,7 @@ for (const [tag, vp, phone] of [
     await page.waitForSelector('[data-office-story]', { visible: true, timeout: 5000 }).catch(() => {})
   }
   const viaBanner = await page.evaluate(() => ({ path: location.pathname, story: !!document.querySelector('[data-office-story]') }))
-  check(`${tag}: "שדרג למשרד NadlanUP" in the community opens the same page`, !!hasBanner && viaBanner.story && viaBanner.path.endsWith('/app/office'), viaBanner)
+  check(`${tag}: "בדיקת התאמה למשרד" in the community opens the same page`, !!hasBanner && viaBanner.story && viaBanner.path.endsWith('/app/office'), viaBanner)
 
   // ---- 6. the community's own page: its button leads to the page standing alone
   await page.goto(green + '/kehila', { waitUntil: 'networkidle0' })

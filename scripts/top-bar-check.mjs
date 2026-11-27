@@ -3,7 +3,7 @@
 //     broker's picture
 //  2. the name with "יציאה" is in the menu that the picture opens (with the way in for whoever is not signed in)
 //  3. the search field and "כל הערים" left the page: the search icon opens a search screen, with the cities in it
-//  4. "שדרג למשרד NadlanUP" left the top of the feed: it is in that menu, and once, quietly, among the posts
+//  4. "בדיקת התאמה למשרד" left the top of the feed: it is in that menu, and once, quietly, among the posts
 //  5. day / night is in that menu
 // Nothing was removed. Against the LOCAL test server (for a real session) and the green dev server; saves screenshots.
 // Usage: node scripts/top-bar-check.mjs [outDir]
@@ -246,7 +246,7 @@ for (const [dev, vp] of [
     }
   })
   check(`${dev}: the picture opens "החשבון שלי": who it is, and for whoever is not signed in the way in`, menu.who === 'מאיה לנדאו' && menu.signin?.endsWith('/kehila/login') && !menu.exit && menu.rows.every((h) => h >= 44), menu)
-  check(`${dev}: "שדרג למשרד NadlanUP" is in the menu, and leads to the office's page`, menu.upgrade.text === 'שדרג למשרד NadlanUP' && menu.upgrade.to?.endsWith('/app/office'), menu.upgrade)
+  check(`${dev}: "בדיקת התאמה למשרד" is in the menu, and leads to the office's page`, menu.upgrade.text === 'בדיקת התאמה למשרד' && menu.upgrade.to?.endsWith('/app/office'), menu.upgrade)
   check(`${dev}: day / night is in the menu: בהיר, כהה, לפי השעה`, menu.look.map((l) => l.t).join('|') === 'בהיר|כהה|לפי השעה' && menu.look.every((l) => l.h >= 44) && menu.look.filter((l) => l.on === 'true').length === 1, menu.look)
   if (phone) check('phone: the menu comes from the bottom of the screen', menu.bottom === 0, menu.bottom)
   await page.screenshot({ path: `${out}/${dev}-5-menu.png` })
@@ -278,7 +278,7 @@ for (const [dev, vp] of [
     const before = p[0] ? list.slice(0, list.indexOf(p[0])).filter((e) => e.querySelector('.fb.ci')).length : -1
     return { n: p.length, before, text: p[0]?.textContent.replace(/\s+/g, ' ').trim(), to: p[0]?.getAttribute('href'), h: p[0] ? Math.round(p[0].getBoundingClientRect().height) : 0, vh: innerHeight }
   })
-  check(`${dev}: the upgrade is one quiet post inside the feed, once, after the fourth post, marked as the office's word`, post.n === 1 && post.before === 4 && /^מהמשרד/.test(post.text ?? '') && /שדרג למשרד NadlanUP/.test(post.text ?? '') && post.to?.endsWith('/app/office') && post.h >= 44 && post.h <= 110, post)
+  check(`${dev}: the upgrade is one quiet post inside the feed, once, after the fourth post, marked as the office's word`, post.n === 1 && post.before === 4 && /^מהמשרד/.test(post.text ?? '') && /בדיקת התאמה למשרד/.test(post.text ?? '') && post.to?.endsWith('/app/office') && post.h >= 44 && post.h <= 110, post)
   await page.evaluate(() => document.querySelector('[data-upgrade="post"]').scrollIntoView({ block: 'center' }))
   await wait(600)
   await page.screenshot({ path: `${out}/${dev}-7-quiet-post.png` })
@@ -321,7 +321,7 @@ for (const [dev, vp] of [
   await page.waitForSelector('[data-profile-menu]', { visible: true, timeout: 4000 })
   await wait(500)
   const fromCrm = await page.evaluate(() => document.querySelector('[data-profile-menu] [data-upgrade="menu"]')?.getAttribute('href'))
-  check(`${dev}: from the CRM too, the menu has "שדרג למשרד NadlanUP"`, !!fromCrm && fromCrm.endsWith('/app/office'), fromCrm)
+  check(`${dev}: from the CRM too, the menu has "בדיקת התאמה למשרד"`, !!fromCrm && fromCrm.endsWith('/app/office'), fromCrm)
   await page.screenshot({ path: `${out}/${dev}-10-crm-menu.png` })
   await closeAll(page)
   if (phone) {

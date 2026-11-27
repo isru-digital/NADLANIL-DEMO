@@ -16,7 +16,7 @@ import LeadSheet from './LeadSheet'
 import '../styles/join-green.css'
 import '../styles/leads.css'
 
-const FEE = '0% עמלה למשרד, 100% עמלה למתווך'
+const FEE = '0% עמלה למשרד, 100% עמלה לסוכן'
 // the calculator compares the plans' monthly prices, so it left the page with them (24.11.2026)
 const SHOW_CALC = false
 
@@ -40,13 +40,13 @@ const gains: { icon: LucideIcon; title: string; text: string }[] = [
   { icon: BadgeCheck, title: 'דף אישי שמופיע בגוגל', text: 'הסוכן שלנו: דף מרשים בשם שלך, שנבנה כדי שיחפשו אותך ויגיעו אליך.' },
   { icon: Building2, title: 'שם ומותג של משרד ארצי', text: 'מציגים את עצמכם כחלק ממשרד תיווך בפריסה ארצית.' },
   { icon: ShieldCheck, title: 'צוות מאחורי הקלעים', text: 'אנשי מקצוע מהתחום שמלווים, מנהלים ומפקחים.' },
-  { icon: Wallet, title: '0% עמלה למשרד, 100% עמלה למתווך', text: 'המשרד לא לוקח אחוז מהעסקה.' },
+  { icon: Wallet, title: '0% עמלה למשרד, 100% עמלה לסוכן', text: 'המשרד לא לוקח אחוז מהעסקה.' },
   { icon: Gem, title: 'כל הכלים המתקדמים כלולים', text: 'טינדר של הדירות, רדאר ביקוש, ארנק עמלות ועוד, בלי קרדיטים, בתוך מכסה חודשית.' },
-  { icon: Users, title: 'קהילה ארצית ושת"פים', text: 'מתווכים מכל הארץ, במקום אחד, וכל העבודה ביחד.' },
+  { icon: Users, title: 'קהילה ארצית ושת"פים', text: 'סוכנים מכל הארץ, במקום אחד, וכל העבודה ביחד.' },
 ]
 
 const rows: { what: string; community: boolean; office: boolean }[] = [
-  { what: 'קהילת מתווכים ארצית ופיד שת"פים', community: true, office: true },
+  { what: 'קהילת סוכנים ארצית ופיד שת"פים', community: true, office: true },
   { what: 'CRM ללקוחות ולנכסים', community: true, office: true },
   { what: 'מוואטסאפ למערכת, מדד אמינות והתאמות', community: true, office: true },
   { what: 'דף נחיתה אישי לפי תבנית', community: false, office: true },
@@ -60,14 +60,14 @@ const rows: { what: string; community: boolean; office: boolean }[] = [
 const faq = [
   // the prices left this page (24.11.2026): who wants to know more leaves details
   { q: 'איך מקבלים פרטים על ההצטרפות?', a: 'לוחצים על "מעוניינים לקבל מידע? לחצו כאן", משאירים שם, טלפון ועיר, וצוות המשרד חוזר אליכם.' },
-  { q: 'האם לוקחים אחוז מהעמלה?', a: 'לא. 0% עמלה למשרד, 100% עמלה למתווך.' },
+  { q: 'האם לוקחים אחוז מהעמלה?', a: 'לא. 0% עמלה למשרד, 100% עמלה לסוכן.' },
   { q: 'מתי אפשר להתחיל?', a: 'מיד אחרי ההצטרפות נפתח האזור "הסוכן שלנו", שהוא חלק מהמשרד. עונים על 15 שאלות קלילות, ואנחנו בונים את הדף.' },
   { q: 'אפשר להתחיל בקהילה ולעבור למשרד אחר כך?', a: 'כן. מצטרפים לקהילה בחינם, ועוברים למשרד בכל שלב.' },
-  { q: 'צריך רישיון מתווך?', a: 'כן. מעלים אותו בשאלון, והצוות בודק אותו.' },
+  { q: 'צריך רישיון תיווך?', a: 'כן. מעלים אותו בשאלון, והצוות בודק אותו.' },
 ]
 
-const same = ['שם ומותג של משרד תיווך ארצי', 'צוות מקצועי מאחורי הקלעים', 'קהילת מתווכים ושת"פים בכל הארץ', 'CRM ופולדר דיגיטלי']
-const more = ['הסוכן שלנו: דף אישי שמופיע בגוגל', 'כל הכלים המתקדמים כלולים', '0% עמלה למשרד, 100% עמלה למתווך', 'צוות שמלווה עסקה עד החתימה']
+const same = ['שם ומותג של משרד תיווך ארצי', 'צוות מקצועי מאחורי הקלעים', 'קהילת סוכנים ושת"פים בכל הארץ', 'CRM ופולדר דיגיטלי']
+const more = ['הסוכן שלנו: דף אישי שמופיע בגוגל', 'כל הכלים המתקדמים כלולים', '0% עמלה למשרד, 100% עמלה לסוכן', 'צוות שמלווה עסקה עד החתימה']
 
 /** Money paid over the years: the office that takes a share climbs steeply, the fixed fee climbs slowly; the space between is what stays. */
 function MarathonChart({ perYearToday, perYearOurs, years }: { perYearToday: number; perYearOurs: number; years: number }) {
@@ -216,7 +216,7 @@ export default function JoinOffice() {
           <motion.h1 initial={{ opacity: 0, y: 22 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.1, ease: EASE }}>
             משרד תיווך ארצי
             <br />
-            <span>0% עמלה למשרד, 100% עמלה למתווך</span>
+            <span>0% עמלה למשרד, 100% עמלה לסוכן</span>
           </motion.h1>
           <motion.p className="jo-sub" initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.2, ease: EASE }}>
             המשרד נותן את השם, את הכלים ואת הצוות.
@@ -225,7 +225,7 @@ export default function JoinOffice() {
             <b className="num">0%</b>
             <span>
               <strong>עמלה למשרד</strong>
-              <small>100% עמלה למתווך</small>
+              <small>100% עמלה לסוכן</small>
             </span>
           </motion.div>
           <motion.div className="jo-actions" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.4, ease: EASE }}>
@@ -246,7 +246,7 @@ export default function JoinOffice() {
           </motion.div>
           <ul className="jo-chips">
             <li>
-              <Check /> 100% עמלה למתווך
+              <Check /> 100% עמלה לסוכן
             </li>
             <li>
               <Check /> דף אישי בגוגל
@@ -690,7 +690,7 @@ export default function JoinOffice() {
       <div className="jo-sticky">
         <div>
           <b className="num">0%</b>
-          <small>עמלה למשרד, 100% עמלה למתווך</small>
+          <small>עמלה למשרד, 100% עמלה לסוכן</small>
         </div>
         <button className="btn btn-gold btn-lg" onClick={joined ? cta : ask} data-act={joined ? undefined : 'ask-info'}>
           {joined ? 'לאזור הסוכן' : 'לקבלת מידע'}
@@ -721,7 +721,7 @@ export default function JoinOffice() {
                   <dd className="num">0%</dd>
                 </div>
                 <div>
-                  <dt>עמלה למתווך</dt>
+                  <dt>עמלה לסוכן</dt>
                   <dd className="num">100%</dd>
                 </div>
                 <div>

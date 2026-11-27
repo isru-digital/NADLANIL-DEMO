@@ -126,7 +126,7 @@ for (const [label, vp, phone] of [
     sticky: getComputedStyle(document.querySelector('.jo-sticky')).display,
   }))
   // 24.11.2026: the prices left the office page; the fee reads "0% עמלה למשרד, 100% עמלה למתווך"
-  check(`${tag}: the office page shows 0% to the office and 100% to the broker, and no monthly fee`, st.path.endsWith('/join/office') && st.price === '0%' && st.min.includes('100% עמלה למתווך') && !st.min.includes('₪'), JSON.stringify(st))
+  check(`${tag}: the office page shows 0% to the office and 100% to the broker, and no monthly fee`, st.path.endsWith('/join/office') && st.price === '0%' && st.min.includes('100% עמלה לסוכן') && !st.min.includes('₪'), JSON.stringify(st))
   check(`${tag}: it has six gains, a comparison table and questions`, st.gains === 6 && st.rows === 11 && st.faq === 5, `${st.gains} gains, ${st.rows} rows, ${st.faq} questions`)
   check(`${tag}: no sideways overflow on the office page`, st.overflowX <= 1, `${st.overflowX}px`)
   check(`${tag}: the bottom join bar ${phone ? 'shows on the phone' : 'is hidden on desktop'}`, phone ? st.sticky === 'flex' : st.sticky === 'none', st.sticky)
@@ -192,7 +192,7 @@ for (const [label, vp, phone] of [
   check(`${tag}: the table shows the community has the base and the office has all of it`, tableOk)
   await click(page, '.jo-faq li:nth-child(2) button', '')
   await wait(500)
-  check(`${tag}: the questions open and say there is no percentage of the commission`, await page.evaluate(() => document.querySelector('.jo-faq li.is-open')?.textContent.includes('לא. 0% עמלה למשרד, 100% עמלה למתווך')))
+  check(`${tag}: the questions open and say there is no percentage of the commission`, await page.evaluate(() => document.querySelector('.jo-faq li.is-open')?.textContent.includes('לא. 0% עמלה למשרד, 100% עמלה לסוכן')))
 
   // the area is closed to a community member, with no way around
   await page.goto(green + '/app/agent', { waitUntil: 'load' })

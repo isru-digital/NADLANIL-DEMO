@@ -1,0 +1,84 @@
+/* Prompt 16 (Itzik 27.11.2026): "מי אנחנו" on the office's page. The page's own tokens: readable by day and by night. */
+.os-who {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(24px, 4vw, 56px);
+  padding: clamp(24px, 4vw, 48px);
+  border-radius: 32px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  box-shadow: var(--shadow-1);
+}
+.os-who-copy {
+  display: grid;
+  justify-items: start;
+  gap: 14px;
+}
+.os-who-copy h2 {
+  max-width: 14em;
+  font-size: clamp(30px, 3.8vw, 50px);
+  font-weight: 900;
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+  color: var(--text);
+}
+.os-who-copy h2 em {
+  font-style: normal;
+  color: var(--gold-soft);
+}
+.os-who-copy p {
+  max-width: 30em;
+  font-size: 19px;
+  line-height: 1.55;
+  color: var(--text-dim);
+}
+.os-who-btn {
+  margin-block-start: 8px;
+  min-height: 52px;
+}
+.os-who-list {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.os-who-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px 18px;
+  border-radius: 20px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+}
+.os-who-row .os-feel-ico {
+  flex: none;
+  width: 46px;
+  height: 46px;
+}
+.os-who-row h3 {
+  font-size: 18.5px;
+  font-weight: 800;
+  line-height: 1.25;
+  color: var(--text);
+}
+.os-who-row p {
+  margin-block-start: 3px;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+@container os (max-width: 820px) {
+  .os-who {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 22px 18px;
+    border-radius: 26px;
+  }
+  .os-who-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

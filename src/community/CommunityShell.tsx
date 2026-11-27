@@ -4,7 +4,7 @@ import { ArrowLeft, BadgeCheck, Check, Home, Lock, UserRound } from 'lucide-reac
 import { useMember } from '../config/member'
 import { useStore } from '../store'
 import { demo } from '../auth/session'
-import { COMMUNITY_FEED, COMMUNITY_HOME, COMMUNITY_NAME, OFFICE_ONLY, OFFICE_PAGE, UPGRADE_LABEL } from '../config/community'
+import { COMMUNITY_FEED, COMMUNITY_HOME, COMMUNITY_NAME, FIT_LABEL, OFFICE_ONLY, OFFICE_PAGE, UPGRADE_LABEL } from '../config/community'
 import type { ShellNav } from '../config/navExtras'
 import { Logo } from '../components/ui'
 import Dashboard from '../pages/Dashboard'
@@ -166,8 +166,8 @@ export function OfficeOnly({ id, children }: { id: 'builder' | 'folder'; childre
             ))}
           </ul>
           <div className="of-locked-cta">
-            <Link to={OFFICE_PAGE} className="btn btn-gold btn-lg">
-              {UPGRADE_LABEL} <ArrowLeft />
+            <Link to={OFFICE_PAGE} className="btn btn-gold btn-lg" data-act="fit-check">
+              {FIT_LABEL} <ArrowLeft />
             </Link>
             <Link to="/upgrade" className="btn btn-ghost btn-lg">
               להשוואת המסלולים

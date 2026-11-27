@@ -58,7 +58,7 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
     const s = document.querySelector('[data-upgrade="post"]')
     return { slim: !document.querySelector('.upb') && document.querySelectorAll('[data-upgrade="post"]').length === 1, h: Math.round(s?.getBoundingClientRect().height ?? 0), text: s?.innerText.replace(/\s+/g, ' ') }
   })
-  check(`${d} "שדרג למשרד NadlanUP" is one small, quiet post in the feed, with no strip above the screen`, strip.slim && strip.h <= 110 && strip.text.includes('שדרג למשרד NadlanUP'), JSON.stringify(strip))
+  check(`${d} "בדיקת התאמה למשרד" is one small, quiet post in the feed, with no strip above the screen`, strip.slim && strip.h <= 110 && strip.text.includes('בדיקת התאמה למשרד'), JSON.stringify(strip))
   const me = await page.evaluate(() => document.querySelector('.me-card .me-body > span:not(.avatar)')?.textContent ?? '')
   check(`${d} the example broker is a regular broker, not luxury`, me.includes('מתווכת דירות יד שנייה') && !me.includes('יוקרה'), me)
   await shot('1-feed')

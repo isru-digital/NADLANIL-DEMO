@@ -89,7 +89,7 @@ for (const [label, vp, phone] of [
   await wait(1500)
   t = await pageText(page, true)
   // 24.11.2026: no prices on the office page any more; the fee is "0% עמלה למשרד, 100% עמלה למתווך"
-  check(`${tag}: office page: no price at all, and "0% עמלה למשרד, 100% עמלה למתווך"`, !t.includes('₪') && !t.includes('מחיר יקבע') && t.includes('0% עמלה למשרד, 100% עמלה למתווך'), '')
+  check(`${tag}: office page: no price at all, and "0% עמלה למשרד, 100% עמלה לסוכן"`, !t.includes('₪') && !t.includes('מחיר יקבע') && t.includes('0% עמלה למשרד, 100% עמלה לסוכן'), '')
   const whole = await pageText(page)
   // 14.11.2026 (the fair calculator, 8383937): the calculator is marked "חישוב לדוגמה בלבד" on purpose; the old "the
   // final price will be set" line stays gone

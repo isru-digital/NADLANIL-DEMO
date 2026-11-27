@@ -6,7 +6,7 @@
 //     test_inbox; nothing in the staff table is marked by this check
 //  3. the list is for staff only: nobody signed in gets 401, a broker gets 403; the statuses move
 //  4. the office page: no price left, the button, the sheet, the network's text word for word, a kept place for
-//     "מילון מונחים", and the fee always as "0% עמלה למשרד, 100% עמלה למתווך"
+//     "מילון מונחים", and the fee always as "0% עמלה למשרד, 100% עמלה לסוכן"
 //  5. the admin: the tab, the card with date, name, phone, city and note, the status buttons, the filter
 //  6. a lead's name and phone are on no public page
 //  7. the home page's map names נתניה, טבריה and אשדוד, with no label on top of another
@@ -41,7 +41,7 @@ const outbox = async () => (await api('/api/test/outbox')).data.outbox
 const lastTo = async (email, has = '') => (await outbox()).filter((m) => m.to_email === email && m.subject.includes(has)).at(-1)
 const links = (html) => [...html.matchAll(/href="([^"]+)"/g)].map((m) => m[1].replace(/&amp;/g, '&'))
 const tokenOf = (html) => new URL(links(html).find((l) => l.includes('/kehila/enter'))).searchParams.get('t')
-const FEE = '0% עמלה למשרד, 100% עמלה למתווך'
+const FEE = '0% עמלה למשרד, 100% עמלה לסוכן'
 const ABOUT = [
   'NADLANUP | רשת תיווך נדל"ן ארצית',
   'NADLANUP היא רשת תיווך נדל"ן ארצית הפועלת באמצעות סוכני נדל"ן בעלי רישיון תיווך בתוקף, המצטרפים למשרד במסגרת הסכם התקשרות והשתייכות מקצועית.',
@@ -176,8 +176,8 @@ for (const [t, vp] of devices) {
       ask: [...document.querySelectorAll('[data-act="ask-info"]')].some((b) => b.textContent.includes('מעוניינים לקבל מידע? לחצו כאן')),
       about: [...document.querySelectorAll('.jo-about h2, .jo-about p')].map((e) => e.textContent.replace(/\s+/g, ' ').trim()),
       glossary: document.querySelector('[data-glossary="placeholder"]')?.textContent ?? '',
-      fees: (text.match(/0% עמלה למשרד, 100% עמלה למתווך/g) ?? []).length,
-      loneFee: text.split('\n').filter((l) => l.includes('עמלה למשרד') && !l.includes('100% עמלה למתווך') && l.trim() !== 'עמלה למשרד').map((l) => l.trim()),
+      fees: (text.match(/0% עמלה למשרד, 100% עמלה לסוכן/g) ?? []).length,
+      loneFee: text.split('\n').filter((l) => l.includes('עמלה למשרד') && !l.includes('100% עמלה לסוכן') && l.trim() !== 'עמלה למשרד').map((l) => l.trim()),
     }
   })
   check(`${t}: the office page shows no price: no ₪, no monthly plans, no price list or calculator`, office.shekel === 0 && !office.month && !office.priceList, office)

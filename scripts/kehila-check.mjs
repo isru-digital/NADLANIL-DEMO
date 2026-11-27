@@ -55,7 +55,7 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
   check(`${d} entry page: the description, word for word`, t.includes('הקהילה החינמית שמחברת בין מתווכים מכל הארץ, לשיתוף נכסים, איתור קונים, התייעצויות ויצירת הזדמנויות עסקיות.'))
   check(`${d} entry page: its own name, not the office's logo, and its own tab title`, !hero.office && hero.title.startsWith(NAME), hero.title)
   check(`${d} entry page: the landing page and the folder are marked "זמין לחברי המשרד"`, (t.match(/זמין לחברי המשרד/g) ?? []).length === 2)
-  check(`${d} entry page: a way to the office's page ("שדרג למשרד NadlanUP")`, await page.evaluate(() => [...document.querySelectorAll('a')].some((a) => a.textContent.includes('שדרג למשרד NadlanUP') && a.pathname.endsWith('/office'))))
+  check(`${d} entry page: a way to the office's page ("בדיקת התאמה למשרד")`, await page.evaluate(() => [...document.querySelectorAll('a')].some((a) => a.textContent.includes('בדיקת התאמה למשרד') && a.pathname.endsWith('/office'))))
   check(`${d} entry page: nothing scrolls sideways`, (await overflow(page)) <= 1)
   await shot(page, `${d}-1-entry`)
   await page.screenshot({ path: `${out}/${d}-1-entry-full.png`, fullPage: true })
@@ -86,14 +86,14 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
     const r = a?.getBoundingClientRect()
     return a ? { text: a.textContent.replace(/\s+/g, ' ').trim(), to: a.pathname, top: Math.round(r.top), h: Math.round(r.height), inside: r.left >= 0 && r.right <= innerWidth, strip: !!document.querySelector('.upb'), n: document.querySelectorAll('[data-upgrade="post"]').length } : null
   })
-  check(`${d} the feed has "שדרג למשרד NadlanUP" as one quiet post among the posts, and no strip at its top`, !!banner && banner.text.includes('שדרג למשרד NadlanUP') && banner.n === 1 && !banner.strip && banner.inside && banner.h >= 44, JSON.stringify(banner))
+  check(`${d} the feed has "בדיקת התאמה למשרד" as one quiet post among the posts, and no strip at its top`, !!banner && banner.text.includes('בדיקת התאמה למשרד') && banner.n === 1 && !banner.strip && banner.inside && banner.h >= 44, JSON.stringify(banner))
   check(`${d} nothing scrolls sideways in the feed`, (await overflow(page)) <= 1)
   await shot(page, `${d}-2-feed`)
   await page.evaluate(() => document.querySelector('[data-upgrade="post"]')?.click())
   await wait(1700)
   check(`${d} the post leads to the office's page`, (await path(page)) === '/app/office', await path(page))
   // 24.11.2026: no price on the office's page any more (Itzik)
-  check(`${d} the office's page shows "0% עמלה למשרד, 100% עמלה למתווך" and no price at all`, (await text(page)).includes('0% עמלה למשרד, 100% עמלה למתווך') && !/549|887|1,219|דמי חבר|מחירון|חבילות מדלן|₪/.test(await text(page)), (await text(page)).match(/.{0,40}(549|887|1,219|דמי חבר|מחירון|חבילות מדלן|₪).{0,40}/)?.[0] ?? '')
+  check(`${d} the office's page shows "0% עמלה למשרד, 100% עמלה לסוכן" and no price at all`, (await text(page)).includes('0% עמלה למשרד, 100% עמלה לסוכן') && !/549|887|1,219|דמי חבר|מחירון|חבילות מדלן|₪/.test(await text(page)), (await text(page)).match(/.{0,40}(549|887|1,219|דמי חבר|מחירון|חבילות מדלן|₪).{0,40}/)?.[0] ?? '')
 
   // ---- 4. the two tools that belong to the office
   for (const [id, title] of [['builder', 'בונה דף נחיתה'], ['folder', 'פולדר דיגיטלי']]) {
@@ -106,7 +106,8 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
       real: !!document.querySelector('.builder, .bld, .folder, .lp'),
     }))
     check(`${d} /app/${id} is closed to a community member, with "זמין לחברי המשרד"`, s.tag === 'זמין לחברי המשרד' && s.h1 === title && !s.real, JSON.stringify(s))
-    check(`${d} /app/${id}: its button is "שדרג למשרד NadlanUP" and leads to the office's page`, s.cta.some((c) => c.startsWith('שדרג למשרד NadlanUP') && c.endsWith('>/app/office')), s.cta.join(' , '))
+    // 27.11.2026: the office picks who joins, so a locked tool says "בדיקת התאמה למשרד"
+    check(`${d} /app/${id}: its button is "בדיקת התאמה למשרד" and leads to the office's page`, s.cta.some((c) => c.startsWith('בדיקת התאמה למשרד') && c.endsWith('>/app/office')), s.cta.join(' , '))
     check(`${d} /app/${id}: nothing scrolls sideways`, (await overflow(page)) <= 1)
     await shot(page, `${d}-3-locked-${id}`)
   }

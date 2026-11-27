@@ -72,7 +72,7 @@ for (const dev of [{ name: 'desktop', vp: { width: 1440, height: 900 } }, { name
   check(`${d} the columns: name, type, phone, last update`, st.head.join() === 'שם הלקוח,סוג,טלפון,עדכון אחרון', st.head.join())
   check(`${d} four types to filter by, each with its count`, st.chips.join() === 'קונים4,מוכרים3,שוכרים2,משכירים2', st.chips.join())
   check(`${d} the office's four types are there, locked`, st.locked.join() === 'ניהול נכסים,מסחרי,מגרש,אנשי מקצוע', st.locked.join())
-  check(`${d} the office's fields are marked "זמין לחברי המשרד", with the way to the office`, st.office.includes('זמין לחברי המשרד') && st.office.includes('דירוג') && st.office.includes('פולואפ') && st.office.includes('תאריך יצירה') && st.office.includes('שדרג למשרד NadlanUP'), st.office)
+  check(`${d} the office's fields are marked "זמין לחברי המשרד", with the way to the office`, st.office.includes('זמין לחברי המשרד') && st.office.includes('דירוג') && st.office.includes('פולואפ') && st.office.includes('תאריך יצירה') && st.office.includes('בדיקת התאמה למשרד') && !st.office.includes('שדרג'), st.office)
   let r = await rows(page)
   check(`${d} eleven clients, none of the office's types`, r.length === 11 && r.every((x) => ['buyer', 'seller', 'renter', 'landlord'].includes(x.type)), `${r.length}`)
   check(`${d} the button follows the type`, r.every((x) => x.btn === (x.type === 'buyer' || x.type === 'renter' ? 'נכסים מתאימים' : 'קונים מתאימים')), JSON.stringify(r.map((x) => [x.kind, x.btn])))

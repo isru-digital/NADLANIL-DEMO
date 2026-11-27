@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowLeft, BadgeCheck, Building2, Check, Compass, HeartHandshake, Megaphone, PhoneCall, ShieldCheck, Sparkles, Sprout, UserRound, X } from 'lucide-react'
+import { ArrowLeft, BadgeCheck, Building2, Check, Compass, HeartHandshake, Megaphone, PhoneCall, ShieldCheck, Sparkles, Sprout, UserCheck, UserRound, Wallet, X } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { PLATFORM_NAME, asset, CURRENT_BROKER_ID } from '../config'
 import { useMember } from '../config/member'
@@ -12,11 +12,21 @@ import { BackButton, Logo, Reveal } from '../components/ui'
 import LeadSheet from '../join/LeadSheet'
 import '../styles/office-story.css'
 import '../styles/leads.css'
+import '../styles/office-16.css'
+import { FIT_LABEL } from '../config/community'
 
 // 24.11.2026 (Itzik): no prices on this page. The price list, the Madlan packs and the fee line are not shown; the
 // leads form of the office page takes their place, and the fee reads "0% עמלה למשרד, 100% עמלה למתווך"
 const SHOW_PRICES = false
-const FEE = '0% עמלה למשרד, 100% עמלה למתווך'
+// 27.11.2026 (Itzik): on the office's page the word is "סוכן", not "מתווך"
+const FEE = '0% עמלה למשרד, 100% עמלה לסוכן'
+
+/** "מי אנחנו" (Itzik 27.11.2026): his two lines, and that the office picks who joins. No promise and no number of its own. */
+const who: { icon: LucideIcon; title: string; text: string }[] = [
+  { icon: ShieldCheck, title: 'גב משרדי מלא', text: 'השם, הליווי והכלים של משרד ארצי, מאחורי כל סוכן.' },
+  { icon: Wallet, title: '100% מהעמלה אצל הסוכן', text: 'המשרד לא לוקח אחוז מהעסקה.' },
+  { icon: UserCheck, title: 'המשרד בוחר את הסוכנים שלו', text: 'לא כל אחד מצטרף. קודם בודקים התאמה, ורק אחר כך מצטרפים.' },
+]
 
 /**
  * The office's page for a member of the community (Itzik, 17.11.2026): what opens from "המשרד" and from
@@ -48,7 +58,7 @@ const feelings: { icon: LucideIcon; word: string; title: string; text: string }[
     icon: HeartHandshake,
     word: 'לא לבד',
     title: 'מישהו בצד שלכם, כל שבוע',
-    text: 'פגישה אישית שבועית עם אריאל, מענה לכל שאלה מקצועית, וקהילה של מתווכים מכל הארץ.',
+    text: 'פגישה אישית שבועית עם אריאל, מענה לכל שאלה מקצועית, וקהילה של סוכנים מכל הארץ.',
   },
   {
     icon: Sprout,
@@ -127,7 +137,7 @@ function Split() {
   }, [still])
 
   return (
-    <div className={`os-split${done ? ' is-done' : ''}`} data-share={share} role="img" aria-label="מכל עסקה: 0% עמלה למשרד, 100% עמלה למתווך">
+    <div className={`os-split${done ? ' is-done' : ''}`} data-share={share} role="img" aria-label="מכל עסקה: 0% עמלה למשרד, 100% עמלה לסוכן">
       <small className="os-split-cap" aria-hidden>
         מכל עסקה שאתם סוגרים
       </small>
@@ -137,7 +147,7 @@ function Split() {
             <UserRound />
           </i>
           <b className="num">{share}%</b>
-          <span>עמלה למתווך</span>
+          <span>עמלה לסוכן</span>
         </div>
         <div className="os-split-n is-office">
           <i>
@@ -345,6 +355,36 @@ export default function OfficeStory({ standalone = false }: { standalone?: boole
           </div>
           <Split />
         </div>
+      </section>
+
+      {/* ------------------------------------------------------------ מי אנחנו (27.11.2026) */}
+      <section className="os-who" id="who" data-section="who" aria-labelledby="os-who-h">
+        <Reveal className="os-who-copy">
+          <span className="os-tag">מי אנחנו</span>
+          <h2 id="os-who-h">
+            הגיע הזמן להרוויח את הכסף <em>שבאמת מגיע לכם</em>
+          </h2>
+          <p data-who="lead">גב משרדי מלא לסוכנים שלנו, שנהנים מ-100% מהעמלה שלהם.</p>
+          {!isOffice && (
+            <button type="button" className="btn btn-gold btn-lg os-who-btn" onClick={() => setLead(true)} data-act="fit-check">
+              {FIT_LABEL}
+              <ArrowLeft />
+            </button>
+          )}
+        </Reveal>
+        <ul className="os-who-list">
+          {who.map((w, i) => (
+            <Reveal as="li" key={w.title} className="os-who-row" delay={0.06 + i * 0.07}>
+              <span className="os-feel-ico">
+                <w.icon aria-hidden />
+              </span>
+              <div>
+                <h3>{w.title}</h3>
+                <p>{w.text}</p>
+              </div>
+            </Reveal>
+          ))}
+        </ul>
       </section>
 
       {/* ------------------------------------------------------------ the moment every broker knows */}

@@ -127,7 +127,7 @@ export default function TieredLab({ view, setView }: { view: LabView; setView: (
                 </p>
                 <p className="tl-hint">חברי המשרד מקבלים את כל הכלים המתקדמים בלי קרדיטים, בתוך מכסה חודשית.</p>
                 <button className="btn btn-gold btn-lg tl-go" onClick={compare}>
-                  להשוואת המסלולים ולשדרוג למשרד <ArrowLeft />
+                  להשוואת המסלולים ולבדיקת התאמה למשרד <ArrowLeft />
                 </button>
                 <button
                   className="tl-alt"

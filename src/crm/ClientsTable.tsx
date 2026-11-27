@@ -5,7 +5,7 @@ import { ArrowLeft, BedDouble, Building2, CalendarClock, Check, Download, Forwar
 import { brokerById, formatPriceShort } from '../data/demo'
 import type { CrmItem } from '../data/demo'
 import { asset } from '../config'
-import { OFFICE_ONLY, OFFICE_PAGE, UPGRADE_LABEL } from '../config/community'
+import { FIT_LABEL, OFFICE_ONLY, OFFICE_PAGE } from '../config/community'
 import { useMember } from '../config/member'
 import { nameSlots } from '../config/navExtras'
 import { useStore } from '../store'
@@ -146,7 +146,7 @@ export default function ClientsTable({ onPublish }: { onPublish: (item: CrmItem)
             <b>{OFFICE_ONLY}:</b> דירוג, פולואפ עם תאריך, תאריך יצירה, והסוגים ניהול נכסים, מסחרי, מגרש ואנשי מקצוע.
           </span>
           <em>
-            {UPGRADE_LABEL} <ArrowLeft />
+            {FIT_LABEL} <ArrowLeft />
           </em>
         </Link>
       )}
@@ -623,7 +623,7 @@ function Details({
               <b>{OFFICE_ONLY}:</b> דירוג, פולואפ עם תאריך ותאריך יצירה.
             </span>
             <em>
-              {UPGRADE_LABEL} <ArrowLeft />
+              {FIT_LABEL} <ArrowLeft />
             </em>
           </Link>
           ))}
